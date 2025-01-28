@@ -1,0 +1,239 @@
+.action-button {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex; /* Make buttons flex items */
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+    background-color: #4CAF50;
+    color: white;
+}
+
+.block-actions {
+    display: flex; /* Align items in a row */
+    gap: 7.5px;
+    position: absolute; /* Position the buttons relative to the block */
+    top: 10px; /* Distance from the top of the block */
+    right: 10px; /* Distance from the right of the block */
+    flex-direction: row; /* Ensure horizontal layout */
+}
+
+.action-icon {
+    pointer-events: none; /* Ensure the icon itself doesn’t block button clicks */
+    font-size: 15px; /* Adjust font size of the icon */
+    opacity: 0.75;
+}
+
+.action-button:hover {
+    opacity: 0.8;
+}
+
+.add-block-float, .bin-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 32px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s, background-color 0.3s;
+}
+
+.action-button:hover, .add-block-float:hover, .bin-button:hover {
+    transform: scale(1.1);
+}
+
+.bin-button {
+    background-color: #ff6b6b;  /* Red background */
+    font-size: 24px;  /* Font size for the "X" */
+}
+
+/* General Button Styling */
+.button {
+    padding: 8px 12px;
+    margin-top: 15px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s, transform 0.2s;
+    text-align: center;
+    display: inline-block;
+    width: auto;
+}
+
+.cleardata-form .button {
+    width: 40%;
+    margin-top: 30px;
+    margin-bottom: 10px;
+}
+
+.remove_button {
+    background-color: #ff6b6b;
+    color: white;
+}
+
+.remove_button:hover {
+    background-color: #d45656;
+}
+
+.green_button {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.green_button:hover {
+    background-color: #388e3c;
+}
+
+.orange_button {
+    background-color: #f4a261;
+    color: white;
+}
+
+.orange_button:hover {
+    background-color: #e68a3a;
+}
+
+#clear_tags_button {
+    background-color: #008CBA;
+    color: white;
+}
+
+#clear_tags_button:hover {
+    background-color: #007bb5;
+}
+
+#save_block_button {
+    background-color: #4CAF50;
+    height: 100%;
+    color: white;
+}
+
+#save_block_button:hover {
+    background-color: #45a049;
+}
+
+.red-button {
+    background-color: #ff6b6b;
+    color: white;
+}
+
+.red-button:hover {
+    background-color: #d45656;
+}
+
+#confirm_clear_button {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#confirm_clear_button:hover {
+    background-color: #388e3c;
+}
+
+#cancel_clear_button {
+    background-color: #ff6b6b;
+    color: white;
+}
+
+#cancel_clear_button:hover {
+    background-color: #d45656;
+}
+
+
+
+/* function Buttons */
+.function-buttons {
+    position: fixed;
+    bottom: 40px;
+    left: 40px;
+    display: flex;
+    gap: 15px;
+}
+
+.function-button, .add-block-float, .bin-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 32px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s, background-color 0.3s;
+}
+
+.bin-button {
+    background-color: #d45656;
+}
+
+.function-button:hover, .add-block-float:hover, .bin-button:hover {
+    transform: scale(1.1);
+}
+
+/* SVGs */
+.function-button svg, .bin-button svg {
+    width: 24px;
+    height: 24px;
+    stroke: white;
+    fill: none;
+    stroke-width: 2px;
+}
+
+.add-block-float svg {
+    width: 32px;
+    height: 32px;
+    stroke: white;
+    fill: none;
+    stroke-width: 2px;
+}
+
+
+
+
+
+/* Tag Button Styles */
+.tag-button {
+    display: inline-block;
+    background-color: #9261cc;
+    color: #fff;
+    padding: 6px 14px;
+    margin: 5px;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.tag-button:hover {
+    transform: scale(1.05);
+}
+
+.tag-button.selected {
+    background-color: #d1a5ff;
+    color: #000;
+}
+
+#tags_list,
+#part_type_tags_overlay,
+#action_type_tags_overlay,
+#ability_type_tags_overlay {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start; /* Align buttons similarly */
+}

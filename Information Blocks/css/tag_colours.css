@@ -1,0 +1,77 @@
+
+/* Ensure all tags align in a row */
+.tags-sections {
+    display: flex;
+    flex-wrap: wrap; /* Allows wrapping if necessary */
+    align-items: center;
+    justify-content: flex-start; /* Aligns all tags in one row */
+}
+
+/* Remove section-based visual separation but keep color coding */
+#part_type_tags_block,
+#action_type_tags_block,
+#ability_type_tags_block,
+#user_tags_block {
+    display: contents; /* Keeps tags inside but removes section spacing */
+}
+
+
+/* Tag Button Styles */
+    .tag-button {
+        color: #fff;
+        padding: 6px 14px;
+        background-color: #936BFF;
+        margin: 5px;
+        border: none;
+        border-radius: 15px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s, transform 0.2s;
+        white-space: nowrap; /* Prevents tags from breaking into multiple lines */
+        display: inline-flex;
+        align-items: center;    
+    }
+
+
+/* predefined tag lists  */
+    #ability_type_tags_overlay .tag-button,
+    #ability_type_tags_edit_overlay .tag-button,
+    #ability_type_tags_list .tag-button,
+    #ability_type_tags_block .tag-button {
+        background-color: #FF7D85;
+    }
+
+    #action_type_tags_overlay .tag-button,
+    #action_type_tags_edit_overlay .tag-button,
+    #action_type_tags_list .tag-button,
+    #action_type_tags_block .tag-button {
+        background-color: #567FFF;
+    }
+
+    #part_type_tags_overlay .tag-button,
+    #part_type_tags_edit_overlay .tag-button,
+    #part_type_tags_list .tag-button,
+    #part_type_tags_block .tag-button {
+        background-color: #4EC07A;
+    }
+
+
+/* clear tags button  */
+    .tag-button.selected {
+        transition: opacity 0.3s, transform 0.2s;
+        opacity: 50%;
+        color: #fff;
+    }
+
+
+/* clear tags button  */
+    #clear_tags_button {
+        background-color: #06ade4;
+        color: white;
+    }
+
+
+/* hover states  */
+    .tag-button:hover {
+        transform: scale(1.05);
+    }

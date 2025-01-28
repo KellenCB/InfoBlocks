@@ -1,0 +1,62 @@
+/* forms.css */
+
+/* Add Block Form */
+.add-block-form textarea, .add-block-form input, .edit-block-form textarea, .edit-block-form input {
+    width: 100%;
+    margin: 10px 0;
+    padding: 12px;
+    font-size: 16px;
+    background-color: #444;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+
+/* Overlay Styles */
+.add-block-overlay, .cleardata-overlay, .edit-block-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.4s;
+    z-index: 1000;
+}
+
+.add-block-overlay.show, .cleardata-overlay.show, .edit-block-overlay.show {
+    display: flex;
+    opacity: 1;
+}
+
+.add-block-form, .cleardata-form, .edit-block-form {
+    background-color: #333;
+    padding: 30px;
+    border-radius: 12px;
+    width: 350px;
+    text-align: center;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+    transform: translateY(-20px);
+    transition: transform 0.4s;
+}
+
+.add-block-form.show, .cleardata-form.show, .edit-block-overlay.show {
+    transform: translateY(0);
+    z-index: 1000;
+}
+
+
+#part_type_tags_overlay, #part_type_tags_edit_overlay,
+#action_type_tags_overlay, #action_type_tags_edit_overlay,
+#ability_type_tags_overlay, #ability_type_tags_edit_overlay {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}

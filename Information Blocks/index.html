@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Information Blocks</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="./css/base-layout.css">
+    <link rel="stylesheet" href="./css/buttons-actions.css">
+    <link rel="stylesheet" href="./css/function-buttons.css">
+    <link rel="stylesheet" href="./css/forms.css">
+    <link rel="stylesheet" href="./css/scrollbar.css">
+    <link rel="stylesheet" href="./css/tag_colours.css">
+    
+
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="title-section">
+            <h1 contenteditable="true">INFORMATION BLOCKS</h1>
+        </header>
+    
+        <div class="circle-section">
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="filter-section">
+            <h2>Search & Filter</h2>
+            <input id="search_input" type="text" placeholder="Search by text" />
+        
+            <!-- Tags Lists -->
+            <hr style="border: 1px solid #444; margin: 15px 0;" />
+            <div id="tags_list"></div>
+            <hr style="border: 1px solid #444; margin: 15px 0;" />
+            <div id="part_type_tags_list"></div>
+            <hr style="border: 1px solid #444; margin: 15px 0;" />
+            <div id="action_type_tags_list"></div>
+            <hr style="border: 1px solid #444; margin: 15px 0;" />
+            <div id="ability_type_tags_list"></div>
+            <hr style="border: 1px solid #444; margin: 15px 0;" />
+
+        
+            <button id="clear_tags_button" class="button">Clear Selected Tags</button>
+        </div>
+        
+
+        <div id="results_section" class="results-section">
+            <h2>Results:</h2>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="function-buttons">
+        <button id="add_block_button" class="add-block-float">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <!-- Plus Sign -->
+                <path d="M12 4V20" stroke="white" stroke-width="2"/>
+                <path d="M4 12H20" stroke="white" stroke-width="2"/>
+            </svg>
+            
+        </button>
+    
+        <button id="upload_button" class="function-button up-arrow">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M12 4v16M8 8l4-4 4 4" stroke-width="2.5" />
+            </svg>
+        </button>
+
+        <button id="download_button" class="function-button down-arrow">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M12 4v16M8 16l4 4 4-4" stroke-width="2.5"/>
+            </svg>
+        </button>
+    
+        <button class="bin-button">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">                
+                <!-- X Sign -->
+                <path d="M4 4L20 20" stroke="white" stroke-width="3"/>
+                <path d="M4 20L20 4" stroke="white" stroke-width="3"/>
+            </svg>
+            
+       </button>
+    </div>
+        
+    <!-- Overlay for Adding Block -->
+    <div class="add-block-overlay">
+        <div class="add-block-form">
+            <h2>Add Information Block</h2>
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+            <input type="text" id="title_input_overlay" placeholder="Enter title block" />
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+            <textarea id="block_text_overlay" placeholder="Enter block text here" rows="5"></textarea>
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+            <input type="text" id="tags_input_overlay" placeholder="Enter tags (comma separated)" />
+           
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+
+            <div class="tag-section">
+                <div id="part_type_tags_overlay">
+                </div>
+            </div>
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+
+            <div class="tag-section">
+                <div id="action_type_tags_overlay"></div>
+            </div>
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+
+            <div class="tag-section">
+                <div id="ability_type_tags_overlay"></div>
+            </div>
+
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+
+            <button id="save_block_button" class="button">Save Block</button>
+            <button id="clear_block_button" class="button orange_button">Clear</button>
+            <button id="cancel_add_block" class="button cancel-button red-button">Cancel</button>
+        </div>
+    </div>
+    
+    <!-- Overlay for Editing Block -->
+    <div class="edit-block-overlay">
+        <div class="edit-block-form">
+            <h2>Edit Information Block</h2>
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+            <input type="text" id="title_input_edit_overlay" placeholder="Edit title block" />
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+            <textarea id="block_text_edit_overlay" placeholder="Edit block text here" rows="5"></textarea>
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+            <input type="text" id="tags_input_edit_overlay" placeholder="Edit tags (comma separated)" />
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+
+            <div class="tag-section">
+                <div id="part_type_tags_edit_overlay"></div>
+            </div>
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+
+            <div class="tag-section">
+                <div id="action_type_tags_edit_overlay"></div>
+            </div>
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+
+            <div class="tag-section">
+                <div id="ability_type_tags_edit_overlay"></div>
+            </div>
+            <hr style="border: 1px solid #444; margin: 5px 0;" />
+
+            <!-- Save Edit Button -->
+            <button id="save_edit_button" class="button green_button">Save Changes</button>
+            <button id="clear_edit_button" class="button orange_button">Clear</button>
+            <button id="cancel_edit_block" class="button red-button">Cancel</button>
+            </div>
+    </div>
+
+
+
+    <!-- Overlay for Clearing Data -->
+    <div class="cleardata-overlay">
+        <div class="cleardata-form">
+            <h2>Clear All Data</h2>
+            <p>Are you sure you want to clear all data?<br> <br> This action cannot be undone.<br> </p>
+            <button id="confirm_clear_button" class="button">Yes</button>
+            <button id="cancel_clear_button" class="button">No</button>
+        </div>
+    </div>
+
+    <script type="module" src="js/dataManager.js"></script>
+    <script type="module" src="js/uiManager.js"></script>
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/handlers/blockActionsHandler.js"></script>
+    <script type="module" src="js/handlers/overlayHandler.js"></script>
+    <script type="module" src="js/handlers/tagHandler.js"></script>
+    <script src="js/circleToggle.js"></script>
+    <script src="js/upload_download.js"></script>
+    <script src="js/page-title.js"></script>
+
+</body>
+</html>
