@@ -1,35 +1,11 @@
 /* base-layout.css */
 
 /* General Styles */
-* {
-    font-family: 'Roboto', sans-serif; /* Apply Roboto font globally */
-    margin: 0; 
-    padding: 0;
-    box-sizing: border-box;
-}
-
 html {
     height: 100%;
     margin: 0;
     display: flex;
     flex-direction: column;
-}
-
-body {
-    background-color: #1e1e1e;
-    color: #ddd;
-    display: flex; 
-    flex-direction: column;
-    align-items: center; 
-    overflow: hidden;
-    height: 100%;
-    padding: 20px; /* Replaces margin */
-    gap: 20px;
-}
-
-p {
-    margin-top: 10px;
-    line-height: 1.3;
 }
 
 .container {
@@ -91,24 +67,6 @@ p {
     background-color: rgba(2, 178, 248, 0.35);
 }
 
-h1 {
-    font-size: 1.75rem; /* Smaller title size */
-}
-
-.title-section h1[contenteditable="true"]:focus {
-    /* no changes */
-}
-
-h2 {
-    margin-bottom: 20px;
-}
-
-h3, h4 {
-    font-size: 18px;
-    color: #fff;
-    margin-bottom: 15px;
-}
-
 /* Layout for sections */
 .filter-section, .results-section {
     background-color: #2a2a2a;
@@ -123,23 +81,6 @@ h3, h4 {
 
 .results-section {
     flex: 1 1 66%;
-}
-
-/* Form and input styles */
-#search_input {
-    width: 100%; 
-    margin: 10px 0;
-    padding: 12px; 
-    font-size: 16px;
-    background-color: #444; 
-    color: #fff;
-    border: 1px solid #555; 
-    border-radius: 8px;
-    transition: border-color 0.3s;
-}
-
-#search_input:focus { 
-    border-color: #4CAF50; 
 }
 
 .block {

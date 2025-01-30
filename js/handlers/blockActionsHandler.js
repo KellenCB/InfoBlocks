@@ -11,8 +11,6 @@ export const blockActionsHandler = (() => {
         resultsSection.addEventListener("click", (event) => {
             const target = event.target;
 
-
-            
             if (target.classList.contains("remove_button")) {
                 console.log("Remove button clicked");
                 const blockId = target.getAttribute("data-id");

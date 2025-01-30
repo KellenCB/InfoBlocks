@@ -22,4 +22,16 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('circleStates', JSON.stringify(circleStates));
         });
     });
+
+    const resetCircles = () => {
+        const circles = document.querySelectorAll(".circle");
+        circles.forEach(circle => {
+            circle.classList.remove("filled"); // Adjust based on how the fill is applied
+        });
+        console.log("Circles reset to default state.");
+    };
+    
+    // Expose resetCircles to global scope (so it can be called in clearData)
+    window.resetCircles = resetCircles;
+    
 });

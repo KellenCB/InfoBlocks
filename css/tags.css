@@ -1,4 +1,3 @@
-
 /* Ensure all tags align in a row */
 .tags-sections {
     display: flex;
@@ -62,14 +61,6 @@
         opacity: 50%;
         color: #fff;
     }
-
-
-/* clear tags button  */
-    #clear_tags_button {
-        background-color: #06ade4;
-        color: white;
-    }
-
 
 /* hover states  */
     .tag-button:hover {

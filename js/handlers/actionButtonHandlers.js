@@ -14,8 +14,14 @@ export const actionButtonHandlers = (() => {
         addBlockButton.addEventListener("click", () => {
             console.log("Add Block button clicked");
             addBlockOverlay.classList.add("show");
-        });
         
+            // Automatically focus inside the "Enter title block" field
+            const titleInput = document.getElementById("title_input_overlay");
+            if (titleInput) {
+                setTimeout(() => titleInput.focus(), 50); // Small delay to ensure visibility
+            }
+        });
+                
         // Bin Button
         binButton.addEventListener("click", () => {
             console.log("Bin button clicked");

@@ -35,9 +35,6 @@ export const overlayHandler = (() => {
         });
     };
     
-
-
-
     const handleSaveBlock = () => {
         const saveBlockButton = document.getElementById("save_block_button");
         if (!saveBlockButton) return;

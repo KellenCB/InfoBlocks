@@ -14,6 +14,27 @@
     transition: border-color 0.3s;
 }
 
+.add-block-overlay .add-block-form,
+.edit-block-overlay .edit-block-form {
+    width: 40vw; /* Set width to 50% of the viewport width */
+}
+
+/* Form and input styles */
+#search_input {
+    width: 100%; 
+    margin: 10px 0;
+    padding: 12px; 
+    font-size: 16px;
+    background-color: #444; 
+    color: #fff;
+    border: 1px solid #555; 
+    border-radius: 8px;
+    transition: border-color 0.3s;
+}
+
+#search_input:focus { 
+    border-color: #4CAF50; 
+}
 
 /* Overlay Styles */
 .add-block-overlay, .cleardata-overlay, .edit-block-overlay {
@@ -51,7 +72,6 @@
     transform: translateY(0);
     z-index: 1000;
 }
-
 
 #part_type_tags_overlay, #part_type_tags_edit_overlay,
 #action_type_tags_overlay, #action_type_tags_edit_overlay,

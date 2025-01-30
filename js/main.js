@@ -44,7 +44,7 @@ const attachEventListeners = () => {
 
     // Attach clear tags button listener
     document.getElementById("clear_tags_button").addEventListener("click", () => {
-        overlayHandler.clearSelectedTags();
+        dataManager.clearFilters();
     });
 };
 
