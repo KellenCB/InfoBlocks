@@ -32,14 +32,14 @@ export const uiManager = (() => {
         return `
             <div class="block">
                 <div class="block-actions">
-                    <button class="action-button duplicate_button" data-id="${block.id}" title="Duplicate">
-                        <span class="action-icon">⧉</span>
+                    <button class="action-button duplicate_button green-button" data-id="${block.id}" title="Duplicate">
+                        <span class="duplicate-action-icon">❐</span>
                     </button>
-                    <button class="action-button edit_button orange_button" data-id="${block.id}" title="Edit">
-                        <span class="action-icon">✎</span>
+                    <button class="action-button edit_button orange-button" data-id="${block.id}" title="Edit">
+                        <span class="edit-action-icon">✎</span>
                     </button>
-                    <button class="action-button remove_button" data-id="${block.id}" title="Remove">
-                        <span class="action-icon">×</span>
+                    <button class="action-button remove_button red-button" data-id="${block.id}" title="Remove">
+                        <span class="remove-action-icon">×</span>
                     </button>
                 </div>
                 <h4>${block.title}</h4>
