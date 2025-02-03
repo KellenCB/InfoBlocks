@@ -11,7 +11,7 @@ export const dataManager = (() => {
     const predefinedTags = [
         "helm", "torso", "left arm", "right arm", "legs", "boots",
         "action", "reaction", "bonus action",
-        "Damage", "buff", "heal"
+        "Damage", "buff", "heal", "move speed",
     ];
 
     const saveBlock = (blockTitle, text, tags, blockId = null) => {
@@ -130,7 +130,7 @@ export const dataManager = (() => {
         const categoryTags = {
             partType: ["Helm", "Torso", "Left arm", "Right arm", "Legs", "Boots", "Other"],
             actionType: ["Action", "Reaction", "Bonus action"],
-            abilityType: ["Damage", "Buff", "Heal"]
+            abilityType: ["Damage", "Buff", "Heal", "Move speed"]
         };
     
         return categoryTags[tagCategory] || [];
