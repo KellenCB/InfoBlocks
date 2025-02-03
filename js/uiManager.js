@@ -29,6 +29,9 @@ export const uiManager = (() => {
             ![...partTypeTags, ...actionTypeTags, ...abilityTypeTags].includes(tag)
         );
     
+        // Replace newline characters with <br> for proper line breaks
+        const formattedText = block.text.replace(/\n/g, '<br>');
+    
         return `
             <div class="block">
                 <div class="block-actions">
@@ -57,11 +60,11 @@ export const uiManager = (() => {
                         ${abilityTypeTags.map(tag => `<span class="tag-button">${tag}</span>`).join("")}
                     </div>
                 </div>
-                <p>${block.text}</p>
+                <p>${formattedText}</p>
             </div>
         `;
     };
-    
+        
 
     // Render tags in the tags list🖉
     const renderTags = (tags, containerId, selectedTags = []) => {
