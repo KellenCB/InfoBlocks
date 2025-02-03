@@ -26,6 +26,11 @@ export const keyboardShortcutsHandler = (() => {
         }
 
         document.addEventListener("keydown", (event) => {
+            // If any modifier key is pressed, don't trigger the shortcut
+            if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+                return;
+            }
+
             const isAddBlockVisible = addBlockOverlay.classList.contains("show");
             const isClearDataVisible = clearDataOverlay.classList.contains("show");
             const isEditBlockVisible = editBlockOverlay.classList.contains("show");
