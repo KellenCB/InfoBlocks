@@ -43,7 +43,8 @@ const attachEventListeners = () => {
     });
 
     // Attach clear tags button listener
-    document.getElementById("clear_tags_button").addEventListener("click", () => {
+    document.getElementById("clear_filters_button").addEventListener("click", () => {
+        console.log("Clear Filters button clicked");  // Debugging line
         dataManager.clearFilters();
     });
 };

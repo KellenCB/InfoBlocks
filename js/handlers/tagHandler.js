@@ -23,23 +23,29 @@ export const tagHandler = (() => {
                         const tag = target.getAttribute("data-tag");
     
                         if (selectedTags.includes(tag)) {
+                            // Unselect the tag
                             selectedTags = selectedTags.filter(t => t !== tag);
                             target.classList.remove("selected");
                         } else {
+                            // Select the tag
                             selectedTags.push(tag);
                             target.classList.add("selected");
                         }
     
-                        const filteredBlocks = dataManager.getBlocks().filter(block =>
-                            selectedTags.every(t => block.tags.includes(t))
-                        );
+                        // Apply the filter based on updated selectedTags
+                        const filteredBlocks = selectedTags.length
+                            ? dataManager.getBlocks().filter(block =>
+                                  selectedTags.every(t => block.tags.includes(t))
+                              )
+                            : dataManager.getBlocks(); // If no tags are selected, show all blocks
+    
                         uiManager.renderBlocks(filteredBlocks);
                     }
                 });
             }
         });
     };
-
+    
     // Clear selected tags from all lists
     const clearSelectedTags = () => {
         selectedTags = [];
