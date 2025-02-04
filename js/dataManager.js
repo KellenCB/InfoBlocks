@@ -129,8 +129,8 @@ export const dataManager = (() => {
     const getPredefinedTags = (tagCategory) => {
         const categoryTags = {
             partType: ["Helm", "Torso", "Left arm", "Right arm", "Legs", "Boots", "Other"],
-            actionType: ["Action", "Reaction", "Bonus action"],
-            abilityType: ["Damage", "Buff", "Heal", "Move speed"]
+            actionType: ["Action", "Reaction", "Bonus action", "Free action",],
+            abilityType: ["Damage", "Buff", "Heal", "Movement", "Ranged", "Melee", "Spell",]
         };
     
         return categoryTags[tagCategory] || [];

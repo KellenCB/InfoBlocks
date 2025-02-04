@@ -73,6 +73,7 @@ html {
     padding: 20px; 
     border-radius: 25px;
     overflow-y: auto;
+    max-width: 370px;
 }
 
 .filter-section {
