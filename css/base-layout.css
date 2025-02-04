@@ -73,11 +73,11 @@ html {
     padding: 20px; 
     border-radius: 25px;
     overflow-y: auto;
-    max-width: 370px;
 }
 
 .filter-section {
-    flex: 1 1 33%; 
+    flex: 1 1 33%;
+    max-width: 370px;
 }
 
 .results-section {

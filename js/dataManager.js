@@ -11,7 +11,7 @@ export const dataManager = (() => {
     const predefinedTags = [
         "helm", "torso", "left arm", "right arm", "legs", "boots",
         "action", "reaction", "bonus action",
-        "Damage", "buff", "heal", "move speed",
+        "Damage", "Buff", "Heal", "Movement", "Ranged", "Melee", "Spell",
     ];
 
     const saveBlock = (blockTitle, text, tags, blockId = null) => {
