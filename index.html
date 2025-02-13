@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="./css/scrollbar.css">
     <link rel="stylesheet" href="./css/tags.css">
     <link rel="stylesheet" href="./css/type.css">
+    <link rel="stylesheet" href="./css/sortControlls.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
@@ -37,27 +38,41 @@
 
     <div class="container">
         <div class="filter-section">
-            <h2>Search & Filter</h2>
-            <input id="search_input" type="text" placeholder="Search by text" />
-        
+            <h2 class="section-header">Search & Filter</h2>
+            <div class="search-container">
+                <input id="search_input" type="text" placeholder="Search by text" />
+                <button id="clear_search_button" class="clear-search">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="clear-icon">
+                        <path d="M4 4L20 20"/>
+                        <path d="M4 20L20 4"/>
+                    </svg>
+                </button>
+            </div>
+                                
             <!-- Tags Lists -->
-            <hr style="border: 1px solid #444; margin: 15px 0;" />
-            <div id="tags_list"></div>
-            <hr style="border: 1px solid #444; margin: 15px 0;" />
-            <div id="part_type_tags_list"></div>
-            <hr style="border: 1px solid #444; margin: 15px 0;" />
-            <div id="action_type_tags_list"></div>
-            <hr style="border: 1px solid #444; margin: 15px 0;" />
-            <div id="ability_type_tags_list"></div>
-            <hr style="border: 1px solid #444; margin: 15px 0;" />
-
-        
+            <div id="all_tags_container" class="tag-section">
+                <div id="user_tags_list"></div>
+                <div id="dynamic_tags_section"></div>
+                            </div>                                                        
             <button id="clear_filters_button" class="button">Clear Filters</button>
         </div>
         
-
         <div id="results_section" class="results-section">
-            <h2>Results:</h2>
+            <div id="results_header" class="results-header">
+                <h2 class="section-header">Magic Items</h2>
+                <div id="sort_controls" class="sort-controls">
+                    <span>Sort by:</span>
+                    <button id="sort_newest" class="sort-button">
+                        <i class="fas fa-sort-numeric-down"></i> Newest
+                    </button>
+                    <button id="sort_oldest" class="sort-button">
+                        <i class="fas fa-sort-numeric-up"></i> Oldest
+                    </button>
+                    <button id="sort_alpha" class="sort-button">
+                        <i class="fas fa-sort-alpha-down"></i> A-Z
+                    </button>
+                </div>
+            </div>            
         </div>
     </div>
 
@@ -98,31 +113,11 @@
     <div class="add-block-overlay">
         <div class="add-block-form">
             <h2>Add Information Block</h2>
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
             <input type="text" id="title_input_overlay" placeholder="Enter block title here..." />
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
-            <textarea id="block_text_overlay" placeholder="Enter block text here..." rows="5"></textarea>
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
+            <textarea id="block_text_overlay" class="auto-resize" placeholder="Enter block text here..." rows="1"></textarea>
             <input type="text" id="tags_input_overlay" placeholder="Enter custom tags here..."  />
            
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
-
-            <div class="tag-section">
-                <div id="part_type_tags_overlay">
-                </div>
-            </div>
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
-
-            <div class="tag-section">
-                <div id="action_type_tags_overlay"></div>
-            </div>
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
-
-            <div class="tag-section">
-                <div id="ability_type_tags_overlay"></div>
-            </div>
-
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
+            <div class="overlay-tags" id="dynamic_edit_overlay_tags"></div>
 
             <button id="save_block_button" class="button green-button">Save Block</button>
             <button id="clear_block_button" class="button orange-button">Clear</button>
@@ -134,34 +129,20 @@
     <div class="edit-block-overlay">
         <div class="edit-block-form">
             <h2>Edit Information Block</h2>
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
             <input type="text" id="title_input_edit_overlay" placeholder="Edit title block" />
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
-            <textarea id="block_text_edit_overlay" placeholder="Edit block text here" rows="5"></textarea>
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
+            <textarea id="block_text_edit_overlay" class="auto-resize" placeholder="Edit block text here..." rows="1"></textarea>
             <input type="text" id="tags_input_edit_overlay" placeholder="Edit tags (comma separated)" />
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
 
-            <div class="tag-section">
-                <div id="part_type_tags_edit_overlay"></div>
+            <!-- Section where predefined tags should be displayed -->
+            <div class="overlay-tags" id="dynamic_overlay_tags">
+                <div id="predefined_tags_edit"></div>
             </div>
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
-
-            <div class="tag-section">
-                <div id="action_type_tags_edit_overlay"></div>
-            </div>
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
-
-            <div class="tag-section">
-                <div id="ability_type_tags_edit_overlay"></div>
-            </div>
-            <hr style="border: 1px solid #444; margin: 5px 0;" />
-
+            
             <!-- Save Edit Button -->
             <button id="save_edit_button" class="button green-button">Save Changes</button>
             <button id="clear_edit_button" class="button orange-button">Clear</button>
             <button id="cancel_edit_block" class="button red-button">Cancel</button>
-            </div>
+        </div>
     </div>
 
     <!-- Overlay for Clearing Data -->
@@ -174,12 +155,15 @@
         </div>
     </div>
 
-    <script type="module" src="js/dataManager.js"></script>
-    <script type="module" src="js/uiManager.js"></script>
+    <script type="module" src="js/tagConfig.js"></script>
+   <!-- <script type="module" src="js/appManager.js"></script> -->
+   <!-- <script type="module" src="js/appManager.js"></script> -->
+    <script type="module" src="js/appManager.js"></script>
     <script type="module" src="js/main.js"></script>
-    <script type="module" src="js/handlers/blockActionsHandler.js"></script>
-    <script type="module" src="js/handlers/overlayHandler.js"></script>
-    <script type="module" src="js/handlers/tagHandler.js"></script>
+    <script type="module" src="js/blockActionsHandler.js"></script>
+    <script type="module" src="js/overlayHandler.js"></script>
+    <script type="module" src="js/tagHandler.js"></script>
+    <script type="module" src="js/textareaAutoResize.js"></script>
     <script src="js/circleToggle.js"></script>
     <script src="js/upload_download.js"></script>
     <script src="js/page-title.js"></script>

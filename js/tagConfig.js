@@ -1,37 +1,38 @@
-export const tagConfig = {
-    partType: {
-        label: "Part Type",
-        containerId: "partType_tags_list",
-        overlayId: "partType_tags_overlay",
-        editOverlayId: "partType_tags_edit_overlay",
-        tags: ["Helm", "Torso", "Left arm", "Right arm", "Legs", "Boots", "Other"]
+export const categoryTags = {
+    Charges: {
+        tags: ["0", "1", "2", "3", "1pC", "1pD", "1pLR", "1pSR",],
+        className: "tag-Charges"
     },
-    actionType: {
-        label: "Action Type",
-        containerId: "actionType_tags_list",
-        overlayId: "actionType_tags_overlay",
-        editOverlayId: "actionType_tags_edit_overlay",
-        tags: ["Action", "Reaction", "Bonus action", "Free action"]
+    part_type: { 
+        tags: ["Helm", "Torso", "Left arm", "Right arm", "Legs", "Boots", "Other"], 
+        className: "tag-partType"
     },
-    abilityType: {
-        label: "Ability Type",
-        containerId: "abilityType_tags_list",
-        overlayId: "abilityType_tags_overlay",
-        editOverlayId: "abilityType_tags_edit_overlay",
-        tags: ["Damage", "Buff", "Debuff", "Heal", "Movement", "Ranged", "Melee", "Spell"]
+    action_type: { 
+        tags: ["Action", "Reaction", "Bonus action", "Free action"], 
+        className: "tag-actionType"
     },
-    modifierType: {
-        label: "Modifier Type",
-        containerId: "modifierType_tags_list",
-        overlayId: "modifierType_tags_overlay",
-        editOverlayId: "modifierType_tags_edit_overlay",
-        tags: ["STR", "DEX", "CON", "INT", "WIS", "CHA"]
+    ability_type: { 
+        tags: ["Buff", "Debuff", "Heal", "Movement", "Ranged", "Melee", "Spell", "Utility", "AC",], 
+        className: "tag-abilityType"
     },
-    damageType: {
-        label: "Damage Type",
-        containerId: "damageType_tags_list",
-        overlayId: "damageType_tags_overlay",
-        editOverlayId: "damageType_tags_edit_overlay",
-        tags: ["Acid", "Bludgeoning", "Cold", "Fire", "Force", "Lightning", "Necrotic", "Piercing", "Poison", "Psychic", "Radiant", "Slashing", "Thunder"]
+    damage_type: { 
+        tags: ["Arcane", "Acid", "Bludgeoning", "Cold", "Fire", "Force", "Frost", "Lightning", "Necrotic", "Piercing", "Poison", "Psychic", "Radiant", "Slashing", "Thunder"], 
+        className: "tag-damageType"
+    },
+    condition_type: { 
+        tags: ["Blinded", "Charmed", "Deafened", "Frightened", "Grappled", "Incapacitated", "Invisible", "Paralyzed", "Petrified", "Poisoned", "Prone", "Restrained", "Stunned", "Unconscious", "Push", "Pull", "Banish",], 
+        className: "tag-conditionType"
+    },
+    spell_type: { 
+        tags: ["Abjuration", "Conjuration", "Divination", "Enchantment", "Evocation", "Illusion", "Necromancy", "Transmutation", "Concerntration", "Ritual"], 
+        className: "tag-spellType"
+    },
+    spell_level: { 
+        tags: ["Cantrip", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"], 
+        className: "tag-spellLevel"
+    },
+    modifier_type: { 
+        tags: ["STR", "DEX", "CON", "INT", "WIS", "CHA", "Check", "Save"], 
+        className: "tag-modifierType"
     }
 };

@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
     
-                // Capture circle states from the page
+                // Capture circle states
                 const circles = document.querySelectorAll(".circle");
                 let filledCount = 0;
                 let unfilledCount = 0;

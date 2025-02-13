@@ -30,7 +30,7 @@
     pointer-events: none; /* Ensure the icon itself doesn’t block button clicks */
     font-size: 14px; /* Adjust font size of the icon */
     opacity: 0.75;
-    margin-top: -2px;
+    margin-top: -10px;
 }
 
 .edit-action-icon{
@@ -73,6 +73,10 @@
 #clear_filters_button {
     background-color: #06ade4;
     color: white;
+    margin-top: 10px;
+    height: 3rem;
+    width: 95%;
+    border-radius: 1.5rem;    
 }
 
 #clear_filters_button:hover {
@@ -157,39 +161,6 @@
     stroke-width: 2px;
 }
 
-/* Tag Button Styles */
-.tag-button {
-    display: inline-block;
-    background-color: #9261cc;
-    color: #fff;
-    padding: 6px 14px;
-    margin: 5px;
-    border: none;
-    border-radius: 15px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s, transform 0.2s;
-}
-
-.tag-button:hover {
-    transform: scale(1.05);
-}
-
-.tag-button.selected {
-    background-color: #d1a5ff;
-    color: #000;
-}
-
-#tags_list,
-#part_type_tags_overlay,
-#action_type_tags_overlay,
-#ability_type_tags_overlay {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start; /* Align buttons similarly */
-}
-
-
 /* Green, Orange, Red Button Styling */
 
 .green-button {
@@ -218,3 +189,10 @@
 .red-button:hover {
     background-color: #d45656;
 }
+
+.search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
