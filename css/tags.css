@@ -1,68 +1,73 @@
-/* Ensure all tags align in a row */
-.tags-sections {
+.tag-section{
+    display: contents;
+    flex-wrap: wrap;
+}
+
+#all_tags_container {
     display: flex;
-    flex-wrap: wrap; /* Allows wrapping if necessary */
+    flex-wrap: wrap;
+    justify-content: flex-start; 
     align-items: center;
-    justify-content: flex-start; /* Aligns all tags in one row */
+    text-align: left;
+    max-width: 100%;
+    padding: 15px 0px 15px 0px;
 }
 
-/* Remove section-based visual separation but keep color coding */
-#part_type_tags_block,
-#action_type_tags_block,
-#ability_type_tags_block,
-#user_tags_block {
-    display: contents; /* Keeps tags inside but removes section spacing */
+.overlay-tags, #dynamic_overlay_tags, #dynamic_edit_overlay_tags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    text-align: left;
+    max-width: 100%;
 }
 
+.overlay-tags {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    margin-left: -5px;
+    margin-right: -5px;
+    justify-content: center;
+    align-items: center;   
+}
 
-/* Tag Button Styles */
-    .tag-button {
-        color: #fff;
-        padding: 6px 14px;
-        background-color: #936BFF;
-        margin: 5px;
-        border: none;
-        border-radius: 15px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background-color 0.3s, transform 0.2s;
-        white-space: nowrap; /* Prevents tags from breaking into multiple lines */
-        display: inline-flex;
-        align-items: center;    
-    }
+#user_tags_list, #dynamic_tags_section {
+    display: contents;
+}
+
+.tag-button {
+    color: #ffffff;
+    background-color: #b963d3;
+    padding: 14px;
+    height: 35px;
+    margin: 6px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s, transform 0.2s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center; 
+}
+
+.tag-partType { background-color: #41af26; }
+.tag-actionType { background-color: #eb861b; }
+.tag-abilityType { background-color: #f137e2; }
+.tag-damageType { background-color: #9527fc; }
+.tag-conditionType { background-color: #34b469; }
+.tag-spellType { background-color: #4A90E2; }
+.tag-spellLevel { background-color: #49c1e6; }
+.tag-modifierType { background-color: #ee6270; }
+.tag-Charges { background-color: #444; border: 1px solid #49c1e6; color: #49c1e6;}
 
 
-/* predefined tag lists  */
-    #ability_type_tags_overlay .tag-button,
-    #ability_type_tags_edit_overlay .tag-button,
-    #ability_type_tags_list .tag-button,
-    #ability_type_tags_block .tag-button {
-        background-color: #FF7D85;
-    }
+.tag-button.selected {
+    transition: opacity 0.3s, transform 0.2s;
+    opacity: 50%;
+}
 
-    #action_type_tags_overlay .tag-button,
-    #action_type_tags_edit_overlay .tag-button,
-    #action_type_tags_list .tag-button,
-    #action_type_tags_block .tag-button {
-        background-color: #567FFF;
-    }
+.tag-button:hover {
+    transform: scale(1.05);
+}
 
-    #part_type_tags_overlay .tag-button,
-    #part_type_tags_edit_overlay .tag-button,
-    #part_type_tags_list .tag-button,
-    #part_type_tags_block .tag-button {
-        background-color: #4EC07A;
-    }
-
-
-/* clear tags button  */
-    .tag-button.selected {
-        transition: opacity 0.3s, transform 0.2s;
-        opacity: 50%;
-        color: #fff;
-    }
-
-/* hover states  */
-    .tag-button:hover {
-        transform: scale(1.05);
-    }
