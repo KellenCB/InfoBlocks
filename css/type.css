@@ -11,14 +11,12 @@ letter-spacing: 1px;
 }
 
 h2 {
-margin-bottom: 20px;
 letter-spacing: 1px;
 }
 
 h3 {
 font-size: 18px;
 color: #fff;
-    margin-bottom: 15px;
 }
 
 h4 {
@@ -28,16 +26,11 @@ color: #fff;
 margin-bottom: 4px;
 }
 
-body {
-background-color: #1e1e1e;
-color: #ddd;
-display: flex; 
-flex-direction: column;
-align-items: center; 
-overflow: hidden;
-height: 100%;
-padding: 20px; /* Replaces margin */
-gap: 20px;
+.section-header {
+    font-size: 20px;
+    padding-bottom: 30px;
+    font-weight: bold;
+    color: #ffffff;
 }
 
 p {

@@ -1,37 +1,39 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const titleElement = document.querySelector("header.title-section h1");
+    const pageTitle = document.querySelector("header.title-section h1");
+    const resultsTitle = document.getElementById("results_title");
 
-    if (!titleElement) {
-        console.error("Title element not found in the DOM.");
+    if (!pageTitle || !resultsTitle) {
+        console.error("❌ Title elements not found.");
         return;
     }
 
-    // Load the title from localStorage or use the default
-    const savedTitle = localStorage.getItem("pageTitle");
-    if (savedTitle) {
-        titleElement.textContent = savedTitle;
-    }
+    // Set placeholders dynamically if no stored title exists
+    const defaultPageTitle = "Enter Custom Title Here...";
+    const defaultResultsTitle = "Magic Items";
 
-    // Make the title editable and listen for changes
-    titleElement.setAttribute("contenteditable", "true");
+    pageTitle.textContent = localStorage.getItem("pageTitle") || defaultPageTitle;
+    resultsTitle.textContent = localStorage.getItem("resultsTitle") || defaultResultsTitle;
 
-    // Save the title to localStorage when editing is done
-    titleElement.addEventListener("blur", () => {
-        const newTitle = titleElement.textContent.trim();
-        if (newTitle) {
-            localStorage.setItem("pageTitle", newTitle);
-            console.log("Page title updated and saved:", newTitle);
-        } else {
-            console.error("Title cannot be empty. Reverting to previous title.");
-            titleElement.textContent = localStorage.getItem("pageTitle") || "INFORMATION BLOCKS";
-        }
-    });
+    const saveTitle = (element, storageKey, placeholderText) => {
+        element.addEventListener("blur", () => {
+            const newTitle = element.textContent.trim();
+            if (newTitle) {
+                localStorage.setItem(storageKey, newTitle);
+            } else {
+                localStorage.removeItem(storageKey); // Remove if empty
+                element.textContent = placeholderText; // Set back to placeholder
+            }
+        });
 
-    // Optionally, save on Enter key press
-    titleElement.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-            event.preventDefault(); // Prevent adding a new line
-            titleElement.blur(); // Trigger the blur event to save the title
-        }
-    });
+        element.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                element.blur(); // Save on enter
+            }
+        });
+    };
+
+    // Apply logic to both titles
+    saveTitle(pageTitle, "Info Blocks", defaultPageTitle);
+    saveTitle(resultsTitle, "Results", defaultResultsTitle);
 });
