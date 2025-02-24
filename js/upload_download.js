@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 // ✅ Ensure correct filename suggestion
-                let filename = prompt("Enter a name for your file:", `InfoBlocks_${pageTitle}_${resultsTitle}`);
+                let filename = prompt("Enter a name for your file:", `InfoBlocks_${pageTitle}`);
                 if (!filename) return; // If user cancels, do nothing
 
                 // Ensure .json extension

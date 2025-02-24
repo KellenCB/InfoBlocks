@@ -14,36 +14,30 @@ export const appManager = (() => {
 
     // Render blocks in the results section
     const renderBlocks = (blocks) => {
-        // ❗ Store the currently selected sort button
-        const activeSort = document.querySelector(".sort-button.selected")?.id || "sort_newest";
-    
-        // ❗ Full reset to prevent incorrect stacking and duplication
-        resultsSection.innerHTML = ""; // Clear previous results
-    
-        // ✅ Add sorting controls at the top
-        resultsSection.insertAdjacentHTML("afterbegin", `
-           <div id="results_header" class="results-header">
-            <h2 class="section-header">Magic Items</h2>
-            <div id="sort_controls" class="sort-controls">
-                <span>Sort by:</span>
-                <button id="sort_newest" class="sort-button">
-                    <i class="fas fa-sort-numeric-down"></i> Newest
-                </button>
-                <button id="sort_oldest" class="sort-button">
-                    <i class="fas fa-sort-numeric-up"></i> Oldest
-                </button>
-                <button id="sort_alpha" class="sort-button">
-                    <i class="fas fa-sort-alpha-down"></i> A-Z
-                </button>
+        // ✅ Render only the HTML structure; do NOT set results_title text
+        resultsSection.innerHTML = `
+            <div id="results_header" class="results-header">
+                <h2 id="results_title" class="section-header" contenteditable="true"></h2>
+                <div id="sort_controls" class="sort-controls">
+                    <span>Sort by:</span>
+                    <button id="sort_newest" class="sort-button">
+                        <i class="fas fa-sort-numeric-down"></i> Newest
+                    </button>
+                    <button id="sort_oldest" class="sort-button">
+                        <i class="fas fa-sort-numeric-up"></i> Oldest
+                    </button>
+                    <button id="sort_alpha" class="sort-button">
+                        <i class="fas fa-sort-alpha-down"></i> A-Z
+                    </button>
+                </div>
             </div>
-        </div>
-        `);
+        `;
     
-        // ✅ Restore the previously selected sort button
-        const activeButton = document.getElementById(activeSort);
-        if (activeButton) activeButton.classList.add("selected");
+        // ✅ Restore the active sort button
+        const activeSort = document.querySelector(".sort-button.selected")?.id || "sort_newest";
+        document.getElementById(activeSort)?.classList.add("selected");
     
-        // ✅ Render all blocks correctly
+        // ✅ Render the blocks
         blocks.forEach(block => {
             resultsSection.insertAdjacentHTML("beforeend", blockTemplate(block));
         });
@@ -56,8 +50,11 @@ export const appManager = (() => {
         document.getElementById("sort_alpha").addEventListener("click", () => sortBlocks("alpha"));
     
         appManager.updateTags(); // ✅ Ensure tags update
+    
+        // ✅ After rendering, initialize the title handling in page-title.js
+        initializeTitles();
     };
-        
+
     // ✅ Sorting function
     const sortBlocks = (mode) => {
         currentSortMode = mode; // ✅ Update global sorting mode
