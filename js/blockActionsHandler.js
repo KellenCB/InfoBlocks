@@ -79,61 +79,89 @@ export const saveEditHandler = () => {
 export let selectedFilterTags = []; // ✅ Stores the search & filter tags before editing
 
 export const blockActionsHandler = (() => {
-    const handleBlockActions = () => {
-        const resultsSection = document.getElementById("results_section");
+    const handleBlockActions = (event) => {
+        const target = event.target;
+        const blockId = target.getAttribute("data-id");
 
-        resultsSection.addEventListener("click", (event) => {
-            const target = event.target;
+        if (!blockId) return;
 
-            if (target.classList.contains("edit_button")) {
-                const blockId = target.getAttribute("data-id");
-                const blockToEdit = appManager.getBlocks().find(block => block.id === blockId);
+        const selectedTags = tagHandler.getSelectedTags(); // ✅ Get selected tags
+        const searchQuery = document.getElementById("search_input")?.value.trim().toLowerCase(); // ✅ Get current search input
 
-                if (!blockToEdit) {
-                    console.error(`❌ Block with ID ${blockId} not found.`);
-                    return;
-                }
+        const block = appManager.getBlocks().find(b => b.id === blockId);
+        if (!block) {
+            console.error(`❌ Block with ID ${blockId} not found.`);
+            return;
+        }
 
-                console.log(`🟢 Editing block: ${blockId}`);
-                console.log("🔹 Block data before processing:", blockToEdit);
+        if (target.classList.contains("duplicate_button")) {
+            console.log("📄 Duplicating block:", blockId);
+            appManager.saveBlock(block.title + " (Copy)", block.text, block.tags, null, block.timestamp);
 
-                isEditing = true;
-                currentEditingBlockId = blockId;
+        } else if (target.classList.contains("edit_button")) {
+            console.log("📝 Editing block:", blockId);
+            isEditing = true;
+            currentEditingBlockId = blockId;
 
-                selectedFilterTags = tagHandler.getSelectedTags();
-                console.log("✅ Stored search & filter tags BEFORE editing:", selectedFilterTags);
+            selectedFilterTags = tagHandler.getSelectedTags();
+            console.log("✅ Stored search & filter tags BEFORE editing:", selectedFilterTags);
 
-                document.getElementById("title_input_edit_overlay").value = blockToEdit.title;
-                document.getElementById("block_text_edit_overlay").value = blockToEdit.text;
+            document.getElementById("title_input_edit_overlay").value = block.title;
+            document.getElementById("block_text_edit_overlay").value = block.text;
 
-                const predefinedTags = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
+            const predefinedTags = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
+            const userDefinedTags = block.tags.filter(tag => !predefinedTags.has(tag));
+            const attachedPredefinedTags = block.tags.filter(tag => predefinedTags.has(tag));
 
-                const userDefinedTags = blockToEdit.tags.filter(tag => !predefinedTags.has(tag));
-                const attachedPredefinedTags = blockToEdit.tags.filter(tag => predefinedTags.has(tag));
+            document.getElementById("tags_input_edit_overlay").value = userDefinedTags.length > 0 ? userDefinedTags.join(", ") : "";
 
-                console.log("✅ User-defined tags (to appear in input field):", userDefinedTags);
-                console.log("✅ Predefined tags (to appear selected):", attachedPredefinedTags);
+            // ✅ Set a small delay to avoid premature deselection
+            setTimeout(() => {
+                document.querySelectorAll(".edit-block-overlay .tag-button").forEach(button => {
+                    button.classList.remove("selected");
+                    if (attachedPredefinedTags.includes(button.dataset.tag)) {
+                        button.classList.add("selected");
+                    }
+                });
+            }, 100); // Prevents premature clearing
 
-                const tagInputField = document.getElementById("tags_input_edit_overlay");
-                tagInputField.value = userDefinedTags.length > 0 ? userDefinedTags.join(", ") : "";
+            console.log("🟢 Edit Block Overlay Opened Successfully");
+            document.querySelector(".edit-block-overlay").classList.add("show");
 
-                console.log("🛠 Setting tags_input_edit_overlay to:", tagInputField.value);
+        } else if (target.classList.contains("remove_button")) {
+            console.log("🗑 Removing block:", blockId);
+            appManager.removeBlock(blockId);
+        }
 
-                // ✅ Set a small delay to avoid premature deselection
-                setTimeout(() => {
-                    document.querySelectorAll(".edit-block-overlay .tag-button").forEach(button => {
-                        button.classList.remove("selected");
-                        if (attachedPredefinedTags.includes(button.dataset.tag)) {
-                            button.classList.add("selected");
-                        }
-                    });
-                }, 100); // Prevents premature clearing
+        // ✅ Ensure blocks are filtered correctly after any action
+        let filteredBlocks = appManager.getBlocks();
 
-                console.log("🟢 Edit Block Overlay Opened Successfully");
-                document.querySelector(".edit-block-overlay").classList.add("show");
-            }
-        });
+        // ✅ Apply search filter if there's a query
+        if (searchQuery) {
+            filteredBlocks = filteredBlocks.filter(block =>
+                block.title.toLowerCase().includes(searchQuery) ||
+                block.text.toLowerCase().includes(searchQuery) ||
+                block.tags.some(tag => tag.toLowerCase().includes(searchQuery))
+            );
+        }
+
+        // ✅ Apply tag filter if tags are selected
+        if (selectedTags.length > 0) {
+            filteredBlocks = filteredBlocks.filter(block =>
+                selectedTags.every(tag => block.tags.includes(tag))
+            );
+        }
+
+        // ✅ Render only filtered blocks
+        appManager.renderBlocks(filteredBlocks);
+        appManager.updateTags();
     };
 
-    return { handleBlockActions };
+    const attachBlockActions = () => {
+        const resultsSection = document.getElementById("results_section");
+        resultsSection.addEventListener("click", handleBlockActions);
+        console.log("✅ Block action handlers attached!");
+    };
+
+    return { attachBlockActions };
 })();

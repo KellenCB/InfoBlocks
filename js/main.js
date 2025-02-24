@@ -15,7 +15,7 @@ const attachEventListeners = () => {
     keyboardShortcutsHandler.handleKeyboardShortcuts();
 
     // Block action buttons (Duplicate, Edit, Remove)
-    document.addEventListener("click", handleBlockActions);
+    blockActionsHandler.attachBlockActions();
 
     // Tag selection for filtering
     document.getElementById("dynamic_tags_section")?.addEventListener("click", handleTagFilter);
@@ -28,61 +28,6 @@ const attachEventListeners = () => {
 };
 
 // 📌 Handle block actions (Duplicate, Edit, Remove)
-const handleBlockActions = (event) => {
-    const target = event.target;
-    const blockId = target.dataset.id;
-
-    if (!blockId) return;
-
-    const selectedTags = tagHandler.getSelectedTags(); // ✅ Get currently selected tags
-    const searchQuery = document.getElementById("search_input")?.value.trim().toLowerCase(); // ✅ Get current search input
-
-    if (target.classList.contains("duplicate_button")) {
-        console.log("Duplicating block:", blockId);
-        const block = appManager.getBlocks().find(b => b.id === blockId);
-        if (block) {
-            appManager.saveBlock(block.title + " (Copy)", block.text, block.tags, null, block.timestamp);
-        }
-    } else if (target.classList.contains("edit_button")) {
-        console.log("Editing block:", blockId);
-        const block = appManager.getBlocks().find(b => b.id === blockId);
-        if (block) {
-            document.getElementById("title_input_edit_overlay").value = block.title;
-            document.getElementById("block_text_edit_overlay").value = block.text;
-            const predefinedTags = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
-            const userDefinedTags = block.tags.filter(tag => !predefinedTags.has(tag));
-            
-            document.getElementById("tags_input_edit_overlay").value = userDefinedTags.length > 0 ? userDefinedTags.join(", ") : "";
-            document.querySelector(".edit-block-overlay").classList.add("show");
-        }
-    } else if (target.classList.contains("remove_button")) {
-        console.log("Removing block:", blockId);
-        appManager.removeBlock(blockId);
-    }
-
-    // ✅ Ensure blocks are filtered correctly after any action
-    let filteredBlocks = appManager.getBlocks();
-
-    // ✅ Apply search filter if there's a query
-    if (searchQuery) {
-        filteredBlocks = filteredBlocks.filter(block =>
-            block.title.toLowerCase().includes(searchQuery) ||
-            block.text.toLowerCase().includes(searchQuery) ||
-            block.tags.some(tag => tag.toLowerCase().includes(searchQuery))
-        );
-    }
-
-    // ✅ Apply tag filter if tags are selected
-    if (selectedTags.length > 0) {
-        filteredBlocks = filteredBlocks.filter(block =>
-            selectedTags.every(tag => block.tags.includes(tag))
-        );
-    }
-
-    // ✅ Render only filtered blocks
-    appManager.renderBlocks(filteredBlocks);
-    appManager.updateTags();
-};
 
 // 📌 Handle tag filtering
 const handleTagFilter = (event) => {
@@ -202,6 +147,7 @@ const initializeDynamicTags = () => {
     });
 };
 
+// KEYBOARD SHORTCUTS //
 const keyboardShortcutsHandler = (() => {
     const handleKeyboardShortcuts = () => {
         document.addEventListener("keydown", (event) => {
@@ -256,7 +202,7 @@ window.onload = async () => {
     console.log("🔄 Window Loaded - Initializing App");
 
     attachEventListeners(); 
-    blockActionsHandler.handleBlockActions();
+    blockActionsHandler.attachBlockActions();
     console.log("✅ Block Actions Handler Attached!");
 
     const saveEditButton = document.getElementById("save_edit_button");
