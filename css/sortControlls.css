@@ -1,31 +1,25 @@
 .sort-controls {
     display: flex;
     justify-content: flex-end;  /* Aligns items to the right */
+    align-items: top;
+    height: auto;
     gap: 10px;  /* Adds spacing between buttons */
-    padding: 0px 10px 20px 0px;
-    border-radius: 8px;
 }
 
 .sort-controls span {
-    color: white;
     font-weight: bold;
     margin-right: 5px;
 }
 
 .sort-button {
-    background: none;
-    border: none;
     color: white;
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
-}
-
-
-
-.sort-button {
     opacity: 0.5;
     transition: opacity 0.3s ease-in-out;
+    background: none;
+    border: none;
+    height: 20px;
 }
 
 .sort-button:hover {

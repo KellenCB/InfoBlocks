@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Information Blocks</title>
+    <link rel="stylesheet" href="./css/type.css">
     <link rel="icon" type="image/svg+xml" href="favicon.svg" sizes="any">
     <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
     <link rel="stylesheet" href="./css/base-layout.css">
@@ -11,7 +12,6 @@
     <link rel="stylesheet" href="./css/forms.css">
     <link rel="stylesheet" href="./css/scrollbar.css">
     <link rel="stylesheet" href="./css/tags.css">
-    <link rel="stylesheet" href="./css/type.css">
     <link rel="stylesheet" href="./css/sortControlls.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
@@ -19,20 +19,10 @@
 <body>
     <div class="container">
         <header class="title-section">
-            <h1 contenteditable="true">Enter Custom Title Here...</h1>
+            <h1 id="page_title" contenteditable="true"></h1>
         </header>
     
         <div class="circle-section">
-            <div class="circle"></div>
-            <div class="circle"></div>
-            <div class="circle"></div>
-            <div class="circle"></div>
-            <div class="circle"></div>
-            <div class="circle"></div>
-            <div class="circle"></div>
-            <div class="circle"></div>
-            <div class="circle"></div>
-            <div class="circle"></div>
         </div>
     </div>
 
@@ -59,7 +49,7 @@
         
         <div id="results_section" class="results-section">
             <div id="results_header" class="results-header">
-                <h2 class="section-header">Magic Items</h2>
+                <h2 id="results_title" class="section-header" contenteditable="true"></h2>
                 <div id="sort_controls" class="sort-controls">
                     <span>Sort by:</span>
                     <button id="sort_newest" class="sort-button">
@@ -72,10 +62,9 @@
                         <i class="fas fa-sort-alpha-down"></i> A-Z
                     </button>
                 </div>
-            </div>            
+            </div>
         </div>
-    </div>
-
+                                
     <!-- Action Buttons -->
     <div class="function-buttons">
         <button id="add_block_button" class="add-block-float">

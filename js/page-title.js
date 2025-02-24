@@ -1,37 +1,52 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const titleElement = document.querySelector("header.title-section h1");
+const initializeTitles = () => {
+    const pageTitle = document.getElementById("page_title");
+    const resultsTitle = document.getElementById("results_title");
 
-    if (!titleElement) {
-        console.error("Title element not found in the DOM.");
+    if (!pageTitle || !resultsTitle) {
+        console.error("❌ Page title or results title element not found.");
         return;
     }
 
-    // Load the title from localStorage or use the default
-    const savedTitle = localStorage.getItem("pageTitle");
-    if (savedTitle) {
-        titleElement.textContent = savedTitle;
-    }
+    const defaultPageTitle = "Enter Custom Title Here...";
+    const defaultResultsTitle = "Custom Results Title...";
 
-    // Make the title editable and listen for changes
-    titleElement.setAttribute("contenteditable", "true");
+    // ✅ Set initial titles from localStorage or defaults
+    pageTitle.textContent = localStorage.getItem("pageTitle") || defaultPageTitle;
+    resultsTitle.textContent = localStorage.getItem("Results") || defaultResultsTitle;
 
-    // Save the title to localStorage when editing is done
-    titleElement.addEventListener("blur", () => {
-        const newTitle = titleElement.textContent.trim();
-        if (newTitle) {
-            localStorage.setItem("pageTitle", newTitle);
-            console.log("Page title updated and saved:", newTitle);
-        } else {
-            console.error("Title cannot be empty. Reverting to previous title.");
-            titleElement.textContent = localStorage.getItem("pageTitle") || "INFORMATION BLOCKS";
-        }
-    });
+    // ✅ Generic function to handle editing & saving
+    const saveTitle = (element, storageKey, defaultText) => {
+        element.addEventListener("focus", () => {
+            // ✅ Clear only if it's the default title
+            if (element.textContent === defaultText) {
+                element.textContent = "";
+            }
+        });
 
-    // Optionally, save on Enter key press
-    titleElement.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-            event.preventDefault(); // Prevent adding a new line
-            titleElement.blur(); // Trigger the blur event to save the title
-        }
-    });
-});
+        element.addEventListener("blur", () => {
+            const newTitle = element.textContent.trim();
+            if (newTitle) {
+                localStorage.setItem(storageKey, newTitle);
+            } else {
+                element.textContent = defaultText; // Reset if empty
+                localStorage.removeItem(storageKey);
+            }
+        });
+
+        element.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                element.blur(); // Save on Enter key
+            }
+        });
+    };
+
+    // ✅ Apply to both titles
+    saveTitle(pageTitle, "pageTitle", defaultPageTitle);
+    saveTitle(resultsTitle, "Results", defaultResultsTitle);
+
+    console.log("✅ Page and results titles initialized.");
+};
+
+// ✅ Ensure the function runs on page load
+document.addEventListener("DOMContentLoaded", initializeTitles);
