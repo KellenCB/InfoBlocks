@@ -1,6 +1,5 @@
 import { appManager } from './appManager.js';
 import { tagHandler } from './tagHandler.js';
-import { keyboardShortcutsHandler } from './keyboardShortcutsHandler.js';
 import { categoryTags } from './tagConfig.js';
 import { selectedFilterTagsBeforeAdd } from './actionButtonHandlers.js';
 
