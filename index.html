@@ -16,6 +16,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
+
 <body>
     <div class="container">
         <header class="title-section">
@@ -26,45 +27,64 @@
         </div>
     </div>
 
-    <div class="container">
-        <div class="filter-section">
-            <h2 class="section-header">Search & Filter</h2>
-            <div class="search-container">
-                <input id="search_input" type="text" placeholder="Search by text" />
-                <button id="clear_search_button" class="clear-search">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="clear-icon">
-                        <path d="M4 4L20 20"/>
-                        <path d="M4 20L20 4"/>
-                    </svg>
-                </button>
-            </div>
-                                
-            <!-- Tags Lists -->
-            <div id="all_tags_container" class="tag-section">
-                <div id="user_tags_list"></div>
-                <div id="dynamic_tags_section"></div>
-                            </div>                                                        
-            <button id="clear_filters_button" class="button">Clear Filters</button>
+    <div class="tabs-container">
+        <div class="tabs-nav">
+            <button class="tab-button active" data-tab="tab1" draggable="true">Magic Items</button>
+            <button class="tab-button" data-tab="tab2" draggable="true">Tab 2</button>
+            <button class="tab-button" data-tab="tab3" draggable="true">Tab 3</button>
         </div>
-        
-        <div id="results_section" class="results-section">
-            <div id="results_header" class="results-header">
-                <h2 id="results_title" class="section-header" contenteditable="true"></h2>
-                <div id="sort_controls" class="sort-controls">
-                    <span>Sort by:</span>
-                    <button id="sort_newest" class="sort-button">
-                        <i class="fas fa-sort-numeric-down"></i> Newest
-                    </button>
-                    <button id="sort_oldest" class="sort-button">
-                        <i class="fas fa-sort-numeric-up"></i> Oldest
-                    </button>
-                    <button id="sort_alpha" class="sort-button">
-                        <i class="fas fa-sort-alpha-down"></i> A-Z
-                    </button>
+    
+        <div class="tabs-content">
+            <!-- Tab 1: Existing Search & Results -->
+            <div class="tab-content active" id="tab1">
+                <div class="filter-section">
+                    <h2 class="section-header">Search & Filter</h2>
+                    <div class="search-container">
+                        <input id="search_input" type="text" placeholder="Search by text" />
+                        <button id="clear_search_button" class="clear-search">✖</button>
+                    </div>
+    
+                    <div id="all_tags_container" class="tag-section">
+                        <div id="user_tags_list"></div>
+                        <div id="dynamic_tags_section"></div>
+                    </div>
+    
+                    <button id="clear_filters_button" class="button">Clear Filters</button>
+                </div>
+    
+                <div id="results_section" class="results-section">
+                    <div id="results_header" class="results-header">
+                        <h2 id="results_title" class="section-header" contenteditable="true"></h2>
+                        <div id="sort_controls" class="sort-controls">
+                            <span>Sort by:</span>
+                            <button id="sort_newest" class="sort-button">
+                                <i class="fas fa-sort-numeric-down"></i> Newest
+                            </button>
+                            <button id="sort_oldest" class="sort-button">
+                                <i class="fas fa-sort-numeric-up"></i> Oldest
+                            </button>
+                            <button id="sort_alpha" class="sort-button">
+                                <i class="fas fa-sort-alpha-down"></i> A-Z
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
+    
+            <!-- Tab 2: Empty Placeholder -->
+            <div class="tab-content" id="tab2">
+                <h2>Tab 2 Content</h2>
+                <p>This tab is currently empty.</p>
+            </div>
+    
+            <!-- Tab 3: Another Empty Placeholder -->
+            <div class="tab-content" id="tab3">
+                <h2>Tab 3 Content</h2>
+                <p>This tab is also empty for now.</p>
+            </div>
         </div>
-                                
+    </div>
+                                                 
     <!-- Action Buttons -->
     <div class="function-buttons">
         <button id="add_block_button" class="add-block-float">
@@ -145,8 +165,6 @@
     </div>
 
     <script type="module" src="js/tagConfig.js"></script>
-   <!-- <script type="module" src="js/appManager.js"></script> -->
-   <!-- <script type="module" src="js/appManager.js"></script> -->
     <script type="module" src="js/appManager.js"></script>
     <script type="module" src="js/main.js"></script>
     <script type="module" src="js/blockActionsHandler.js"></script>

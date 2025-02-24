@@ -27,7 +27,65 @@ const attachEventListeners = () => {
     document.getElementById("clear_filters_button")?.addEventListener("click", clearFilters);
 };
 
-// 📌 Handle block actions (Duplicate, Edit, Remove)
+// 📌 Tab functionality
+document.addEventListener("DOMContentLoaded", () => {
+    const tabNav = document.querySelector(".tabs-nav");
+    const tabButtons = document.querySelectorAll(".tab-button");
+    const tabContents = document.querySelectorAll(".tab-content");
+
+    // Handle tab switching
+    tabButtons.forEach(button => {
+        button.addEventListener("click", () => {
+            const targetTab = button.dataset.tab;
+
+            // Remove active class from all tabs
+            tabButtons.forEach(btn => btn.classList.remove("active"));
+            tabContents.forEach(content => content.classList.remove("active"));
+
+            // Activate the clicked tab
+            button.classList.add("active");
+            document.getElementById(targetTab).classList.add("active");
+        });
+
+        // Enable dragging
+        button.setAttribute("draggable", "true");
+
+        button.addEventListener("dragstart", (e) => {
+            e.dataTransfer.setData("text/plain", button.dataset.tab);
+            button.classList.add("dragging");
+        });
+
+        button.addEventListener("dragend", () => {
+            button.classList.remove("dragging");
+        });
+    });
+
+    // Handle tab reordering
+    tabNav.addEventListener("dragover", (e) => {
+        e.preventDefault(); // Allow dropping
+        const draggingTab = document.querySelector(".dragging");
+        const afterElement = getDragAfterElement(tabNav, e.clientX);
+
+        if (afterElement == null) {
+            tabNav.appendChild(draggingTab);
+        } else {
+            tabNav.insertBefore(draggingTab, afterElement);
+        }
+    });
+
+    // Find the closest tab based on cursor position
+    function getDragAfterElement(container, x) {
+        const draggableElements = [...container.querySelectorAll(".tab-button:not(.dragging)")];
+
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = x - box.left - box.width / 2;
+
+            return offset < 0 && offset > closest.offset ? { offset, element: child } : closest;
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+});
+
 
 // 📌 Handle tag filtering
 const handleTagFilter = (event) => {
@@ -47,7 +105,6 @@ const handleTagFilter = (event) => {
 
     appManager.renderBlocks(filteredBlocks);
 };
-
 
 // 📌 Handle search functionality
 const handleSearch = () => {
