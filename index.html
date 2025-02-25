@@ -27,34 +27,35 @@
         </div>
     </div>
 
-    <div class="tabs-container">
+    <div class="container">
         <div class="tabs-nav">
             <button class="tab-button active" data-tab="tab1" draggable="true">Magic Items</button>
             <button class="tab-button" data-tab="tab2" draggable="true">Tab 2</button>
             <button class="tab-button" data-tab="tab3" draggable="true">Tab 3</button>
         </div>
-    
+    </div>
+
         <div class="tabs-content">
             <!-- Tab 1: Existing Search & Results -->
-            <div class="tab-content active" id="tab1">
+            <div class="tab-content" id="tab1">
                 <div class="filter-section">
                     <h2 class="section-header">Search & Filter</h2>
                     <div class="search-container">
-                        <input id="search_input" type="text" placeholder="Search by text" />
+                        <input id="search_input_1" class="search_input" type="text" placeholder="Search by text" />
                         <button id="clear_search_button" class="clear-search">✖</button>
                     </div>
     
                     <div id="all_tags_container" class="tag-section">
-                        <div id="user_tags_list"></div>
-                        <div id="dynamic_tags_section"></div>
+                        <div id="user_tags_list_1"></div>
+                        <div id="dynamic_tags_section_1"></div>
                     </div>
     
-                    <button id="clear_filters_button" class="button">Clear Filters</button>
+                    <button id="clear_filters_button_1" class="clear_filters_button">Clear Filters</button>
                 </div>
     
-                <div id="results_section" class="results-section">
+                <div id="results_section_1" class="results-section">
                     <div id="results_header" class="results-header">
-                        <h2 id="results_title" class="section-header" contenteditable="true"></h2>
+                        <h2 id="results_title_1" class="section-header" contenteditable="true"></h2>
                         <div id="sort_controls" class="sort-controls">
                             <span>Sort by:</span>
                             <button id="sort_newest" class="sort-button">
@@ -73,10 +74,40 @@
     
             <!-- Tab 2: Empty Placeholder -->
             <div class="tab-content" id="tab2">
-                <h2>Tab 2 Content</h2>
-                <p>This tab is currently empty.</p>
-            </div>
+                <div class="filter-section">
+                    <h2 class="section-header">Search & Filter</h2>
+                    <div class="search-container">
+                        <input id="search_input_2" class="search_input" type="text" placeholder="Search by text" />
+                        <button id="clear_search_button_2" class="clear-search">✖</button>
+                    </div>
     
+                    <div id="all_tags_container" class="tag-section">
+                        <div id="user_tags_list_2"></div>
+                        <div id="dynamic_tags_section_2"></div>
+                    </div>
+    
+                    <button id="clear_filters_button_2" class="clear_filters_button">Clear Filters</button>
+                </div>
+    
+                <div id="results_section_2" class="results-section">
+                    <div id="results_header" class="results-header">
+                        <h2 id="results_title_2" class="section-header" contenteditable="true"></h2>
+                        <div id="sort_controls" class="sort-controls">
+                            <span>Sort by:</span>
+                            <button id="sort_newest" class="sort-button">
+                                <i class="fas fa-sort-numeric-down"></i> Newest
+                            </button>
+                            <button id="sort_oldest" class="sort-button">
+                                <i class="fas fa-sort-numeric-up"></i> Oldest
+                            </button>
+                            <button id="sort_alpha" class="sort-button">
+                                <i class="fas fa-sort-alpha-down"></i> A-Z
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
             <!-- Tab 3: Another Empty Placeholder -->
             <div class="tab-content" id="tab3">
                 <h2>Tab 3 Content</h2>
@@ -126,7 +157,7 @@
             <textarea id="block_text_overlay" class="auto-resize" placeholder="Enter block text here..." rows="1"></textarea>
             <input type="text" id="tags_input_overlay" placeholder="Enter custom tags here..."  />
            
-            <div class="overlay-tags" id="dynamic_edit_overlay_tags"></div>
+            <div class="overlay-tags" id="dynamic_overlay_tags"></div>
 
             <button id="save_block_button" class="button green-button">Save Block</button>
             <button id="clear_block_button" class="button orange-button">Clear</button>

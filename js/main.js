@@ -29,53 +29,85 @@ const attachEventListeners = () => {
 
 // 📌 Tab functionality
 document.addEventListener("DOMContentLoaded", () => {
-    const tabNav = document.querySelector(".tabs-nav");
     const tabButtons = document.querySelectorAll(".tab-button");
     const tabContents = document.querySelectorAll(".tab-content");
 
-    // Handle tab switching
+    // ✅ Hide all tab contents except the first one
+    tabContents.forEach(content => {
+        content.classList.remove("active");
+        content.style.display = "none";
+    });
+
+    if (tabContents.length > 0) {
+        tabContents[0].classList.add("active");
+        tabContents[0].style.display = "flex";
+    }
+
     tabButtons.forEach(button => {
-        button.addEventListener("click", () => {
-            const targetTab = button.dataset.tab;
+        button.addEventListener("click", (event) => {
+            const targetTab = event.currentTarget.dataset.tab; // ✅ Ensures `targetTab` is properly defined
+            const targetContent = document.getElementById(targetTab);
 
-            // Remove active class from all tabs
+            if (!targetTab) {
+                console.error("❌ Error: targetTab is undefined.");
+                return;
+            }
+
+            if (!targetContent) {
+                console.error(`❌ Error: Tab content with ID "${targetTab}" not found.`);
+                return;
+            }
+
+            // ✅ Hide all tab contents before switching
             tabButtons.forEach(btn => btn.classList.remove("active"));
-            tabContents.forEach(content => content.classList.remove("active"));
+            tabContents.forEach(content => {
+                content.classList.remove("active");
+                content.style.display = "none";
+            });
 
-            // Activate the clicked tab
+            // ✅ Show the new active tab
             button.classList.add("active");
-            document.getElementById(targetTab).classList.add("active");
-        });
+            targetContent.classList.add("active");
+            targetContent.style.display = "flex";
 
-        // Enable dragging
-        button.setAttribute("draggable", "true");
+            console.log(`✅ Switched to Tab: ${targetTab}`);
 
-        button.addEventListener("dragstart", (e) => {
-            e.dataTransfer.setData("text/plain", button.dataset.tab);
-            button.classList.add("dragging");
-        });
+            // ✅ Ensure blocks refresh when switching tabs
+            if (typeof appManager !== "undefined" && appManager.renderBlocks) {
+                console.log("📦 Refreshing UI: Calling renderBlocks() for", targetTab);
+                appManager.renderBlocks(targetTab);
+                appManager.updateTags(); // ✅ Also refresh tags if applicable
+            } else {
+                console.warn("⚠️ appManager.renderBlocks() is not defined or not callable.");
+            }
 
-        button.addEventListener("dragend", () => {
-            button.classList.remove("dragging");
+            // ✅ Ensure the UI updates properly
+            setTimeout(() => {
+                console.log(`📌 Checking if content is visible for ${targetTab}`);
+                const computedStyle = window.getComputedStyle(targetContent);
+                if (computedStyle.display === "none") {
+                    console.warn(`⚠️ Tab ${targetTab} content is still hidden. Fixing visibility.`);
+                    targetContent.style.display = "flex";
+                }
+            }, 100);
         });
     });
 
     // Handle tab reordering
-    tabNav.addEventListener("dragover", (e) => {
-        e.preventDefault(); // Allow dropping
+    document.querySelector(".tabs-nav").addEventListener("dragover", (e) => {
+        e.preventDefault();
         const draggingTab = document.querySelector(".dragging");
-        const afterElement = getDragAfterElement(tabNav, e.clientX);
+        const afterElement = getDragAfterElement(e.clientX);
 
         if (afterElement == null) {
-            tabNav.appendChild(draggingTab);
+            document.querySelector(".tabs-nav").appendChild(draggingTab);
         } else {
-            tabNav.insertBefore(draggingTab, afterElement);
+            document.querySelector(".tabs-nav").insertBefore(draggingTab, afterElement);
         }
     });
 
-    // Find the closest tab based on cursor position
-    function getDragAfterElement(container, x) {
-        const draggableElements = [...container.querySelectorAll(".tab-button:not(.dragging)")];
+    function getDragAfterElement(x) {
+        const draggableElements = [...document.querySelectorAll(".tab-button:not(.dragging)")];
 
         return draggableElements.reduce((closest, child) => {
             const box = child.getBoundingClientRect();
@@ -84,8 +116,30 @@ document.addEventListener("DOMContentLoaded", () => {
             return offset < 0 && offset > closest.offset ? { offset, element: child } : closest;
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
-});
 
+    // Search functionality per tab
+    document.querySelectorAll(".search-container input").forEach(input => {
+        input.addEventListener("input", () => {
+            const tabNumber = input.id.split("_").pop();
+            const query = input.value.trim().toLowerCase();
+
+            let filteredBlocks = appManager.getBlocks(`tab${tabNumber}`).filter(block =>
+                block.title.toLowerCase().includes(query) || block.text.toLowerCase().includes(query)
+            );
+
+            document.getElementById(`results_section_${tabNumber}`).innerHTML = "";
+            filteredBlocks.forEach(block => {
+                const blockElement = document.createElement("div");
+                blockElement.classList.add("block");
+                blockElement.innerHTML = `<h4>${block.title}</h4><p>${block.text}</p>`;
+                document.getElementById(`results_section_${tabNumber}`).appendChild(blockElement);
+            });
+        });
+    });
+
+    // Initial render
+    appManager.renderBlocks(targetTab);
+});
 
 // 📌 Handle tag filtering
 const handleTagFilter = (event) => {
@@ -103,7 +157,7 @@ const handleTagFilter = (event) => {
         ? appManager.getBlocks().filter(block => selectedTags.every(t => block.tags.includes(t)))
         : appManager.getBlocks(); // Show all if no filters are active
 
-    appManager.renderBlocks(filteredBlocks);
+    appManager.renderBlocks();
 };
 
 // 📌 Handle search functionality
@@ -163,7 +217,7 @@ const handleSearch = () => {
 // Clear search input and refresh UI
 const clearSearch = () => {
     document.getElementById("search_input").value = "";
-    appManager.renderBlocks(appManager.getBlocks()); // Reset to all blocks
+    appManager.renderBlocks(appManager.getBlocks());
 };
 
 document.getElementById("clear_search_button")?.addEventListener("click", clearSearch);
@@ -183,24 +237,33 @@ const clearFilters = () => {
 const initializeDynamicTags = () => {
     console.log("Initializing dynamic tags and overlays");
 
-    const tagsSection = document.getElementById("dynamic_tags_section");
-    Object.keys(categoryTags).forEach(category => {
-        const tagContainer = document.createElement("div");
-        tagContainer.classList.add("tag-section");
-        tagContainer.id = `${category}_tags_list`;
-        tagsSection.appendChild(tagContainer);
-        appManager.renderTags(categoryTags[category]?.tags || [], tagContainer.id);
-    });
+    // ✅ Iterate through each tab
+    [1, 2].forEach(tabNumber => {
+        const tagsSection = document.getElementById(`dynamic_tags_section_${tabNumber}`);
+        if (!tagsSection) {
+            console.warn(`⚠️ Warning: dynamic_tags_section_${tabNumber} container not found. Skipping.`);
+            return;
+        }
 
-    ["dynamic_overlay_tags", "dynamic_edit_overlay_tags"].forEach(sectionId => {
-        const section = document.getElementById(sectionId);
+        // ✅ Clear previous content before appending new tags
+        tagsSection.innerHTML = "";
+
+        // ✅ Append tag categories dynamically
         Object.keys(categoryTags).forEach(category => {
-            const overlayContainer = document.createElement("div");
-            overlayContainer.classList.add("tag-section");
-            overlayContainer.id = `${category}_tags_${sectionId.includes("edit") ? "edit_" : ""}overlay`;
-            section.appendChild(overlayContainer);
-            appManager.renderTags(categoryTags[category]?.tags || [], overlayContainer.id);
+            const tagContainer = document.createElement("div");
+            tagContainer.classList.add("tag-section");
+            tagContainer.id = `${category}_tags_list_${tabNumber}`;
+
+            // ✅ Generate tag buttons
+            tagContainer.innerHTML = categoryTags[category].tags.map(tag =>
+                `<button class="tag-button ${categoryTags[category].className}" data-tag="${tag}">${tag}</button>`
+            ).join("");
+
+            // ✅ Append tag container to the correct dynamic_tags_section
+            tagsSection.appendChild(tagContainer);
         });
+
+        console.log(`✅ Populated dynamic_tags_section_${tabNumber} with all predefined tags.`);
     });
 };
 
@@ -276,7 +339,7 @@ window.onload = async () => {
 
     initializeDynamicTags();
     await appManager.loadBlocks();
-    appManager.renderBlocks(appManager.getBlocks());
+    appManager.renderBlocks(appManager.getActiveTab()); 
     appManager.updateTags();
 
     console.log("✅ All event listeners successfully attached.");

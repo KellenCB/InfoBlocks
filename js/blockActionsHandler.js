@@ -4,6 +4,7 @@ let currentEditingBlockId = null;
 import { categoryTags } from './tagConfig.js';
 import { tagHandler } from './tagHandler.js';
 import { appManager } from './appManager.js';
+import { overlayHandler } from './overlayHandler.js';
 
 export const saveEditHandler = () => {
     console.log("✅ Save Edit Button Clicked!");
@@ -19,9 +20,8 @@ export const saveEditHandler = () => {
         .map(tag => tag.dataset.tag);
 
     const predefinedTags = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
-    const filteredUserDefinedTags = tagsInput.map(tag => predefinedTags.has(tag) ? tag : tag);
-    const allTags = [...new Set([...filteredUserDefinedTags, ...selectedPredefinedTags])];
-    
+    const allTags = [...new Set([...tagsInput, ...selectedPredefinedTags])];
+
     if (!titleInput || !textInput) {
         alert("All fields (Title and Text) are required.");
         return;
@@ -32,26 +32,30 @@ export const saveEditHandler = () => {
         return;
     }
 
-    let blocks = appManager.getBlocks();
+    // ✅ Get the currently active tab
+    const activeTab = appManager.getActiveTab();
+    let blocks = appManager.getBlocks(activeTab);
+
+    // ✅ Find the block in the active tab
     const blockIndex = blocks.findIndex(block => block.id === currentEditingBlockId);
 
     if (blockIndex === -1) {
-        console.error(`❌ Block with ID ${currentEditingBlockId} not found.`);
+        console.error(`❌ Block with ID ${currentEditingBlockId} not found in active tab ${activeTab}.`);
         return;
     }
 
     // ✅ Save the edited block while keeping its original timestamp
-    appManager.saveBlock(titleInput, textInput, allTags, currentEditingBlockId, blocks[blockIndex].timestamp);
-    console.log("✅ Block updated successfully with tags:", allTags);
+    appManager.saveBlock(activeTab, titleInput, textInput, allTags, currentEditingBlockId, blocks[blockIndex].timestamp);
+    console.log(`✅ Block updated successfully in ${activeTab} with tags:`, allTags);
 
     // ✅ Close the edit overlay
     document.querySelector(".edit-block-overlay").classList.remove("show");
 
     // ✅ Preserve search input and selected tags
-    const selectedTags = tagHandler.getSelectedTags(); // ✅ Get selected tags
-    const searchQuery = document.getElementById("search_input")?.value.trim().toLowerCase(); // ✅ Get search input
-    
-    let filteredBlocks = appManager.getBlocks();
+    const selectedTags = tagHandler.getSelectedTags();
+    const searchQuery = document.getElementById("search_input")?.value.trim().toLowerCase();
+
+    let filteredBlocks = appManager.getBlocks(activeTab);
 
     // ✅ Apply search filter
     if (searchQuery) {
@@ -62,7 +66,7 @@ export const saveEditHandler = () => {
         );
     }
 
-    // ✅ Apply tag filters (ensures all selected tags must be present)
+    // ✅ Apply tag filters
     if (selectedTags.length > 0) {
         filteredBlocks = filteredBlocks.filter(block =>
             selectedTags.every(tag => block.tags.includes(tag))
@@ -71,8 +75,8 @@ export const saveEditHandler = () => {
 
     // ✅ Render only filtered blocks
     setTimeout(() => {
-        appManager.renderBlocks(filteredBlocks);
-        appManager.updateTags(); // Ensure the tags are refreshed correctly
+        appManager.renderBlocks();
+        appManager.updateTags();
     }, 50);
 };
 
@@ -96,26 +100,33 @@ export const blockActionsHandler = (() => {
 
         if (target.classList.contains("duplicate_button")) {
             console.log("📄 Duplicating block:", blockId);
-            appManager.saveBlock(block.title + " (Copy)", block.text, block.tags, null, block.timestamp);
-
+        
+            const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1"; // ✅ Ensure activeTab is defined
+            const blockTags = Array.isArray(block.tags) ? [...block.tags] : [];
+        
+            appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags);
+                        
         } else if (target.classList.contains("edit_button")) {
             console.log("📝 Editing block:", blockId);
             isEditing = true;
             currentEditingBlockId = blockId;
-
+        
             selectedFilterTags = tagHandler.getSelectedTags();
             console.log("✅ Stored search & filter tags BEFORE editing:", selectedFilterTags);
-
+        
             document.getElementById("title_input_edit_overlay").value = block.title;
             document.getElementById("block_text_edit_overlay").value = block.text;
-
+        
             const predefinedTags = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
             const userDefinedTags = block.tags.filter(tag => !predefinedTags.has(tag));
             const attachedPredefinedTags = block.tags.filter(tag => predefinedTags.has(tag));
-
+        
             document.getElementById("tags_input_edit_overlay").value = userDefinedTags.length > 0 ? userDefinedTags.join(", ") : "";
-
-            // ✅ Set a small delay to avoid premature deselection
+        
+            // *** NEW: Initialize the overlay’s predefined tags for editing ***
+            overlayHandler.initializeOverlayTagHandlers();
+        
+            // Set a small delay to avoid premature deselection
             setTimeout(() => {
                 document.querySelectorAll(".edit-block-overlay .tag-button").forEach(button => {
                     button.classList.remove("selected");
@@ -124,17 +135,13 @@ export const blockActionsHandler = (() => {
                     }
                 });
             }, 100); // Prevents premature clearing
-
+        
             console.log("🟢 Edit Block Overlay Opened Successfully");
             document.querySelector(".edit-block-overlay").classList.add("show");
-
         } else if (target.classList.contains("remove_button")) {
             console.log("🗑 Removing block:", blockId);
             appManager.removeBlock(blockId);
         }
-
-        // ✅ Ensure blocks are filtered correctly after any action
-        let filteredBlocks = appManager.getBlocks();
 
         // ✅ Apply search filter if there's a query
         if (searchQuery) {
@@ -153,15 +160,18 @@ export const blockActionsHandler = (() => {
         }
 
         // ✅ Render only filtered blocks
-        appManager.renderBlocks(filteredBlocks);
+        appManager.renderBlocks();
         appManager.updateTags();
     };
 
     const attachBlockActions = () => {
-        const resultsSection = document.getElementById("results_section");
-        resultsSection.addEventListener("click", handleBlockActions);
-        console.log("✅ Block action handlers attached!");
-    };
+        document.querySelectorAll(".results-section").forEach(resultsSection => {
+            resultsSection.removeEventListener("click", handleBlockActions); // Prevent duplicate listeners
+            resultsSection.addEventListener("click", handleBlockActions);
+        });
+    
+        console.log("✅ Block action handlers attached to all tabs!");
+    };        
 
     return { attachBlockActions };
 })();

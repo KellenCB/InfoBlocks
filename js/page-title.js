@@ -1,9 +1,12 @@
 const initializeTitles = () => {
     const pageTitle = document.getElementById("page_title");
-    const resultsTitle = document.getElementById("results_title");
+    const resultsTitles = {
+        tab1: document.getElementById("results_title_1"),
+        tab2: document.getElementById("results_title_2")
+    };
 
-    if (!pageTitle || !resultsTitle) {
-        console.error("❌ Page title or results title element not found.");
+    if (!pageTitle) {
+        console.error("❌ Page title element not found.");
         return;
     }
 
@@ -12,12 +15,16 @@ const initializeTitles = () => {
 
     // ✅ Set initial titles from localStorage or defaults
     pageTitle.textContent = localStorage.getItem("pageTitle") || defaultPageTitle;
-    resultsTitle.textContent = localStorage.getItem("Results") || defaultResultsTitle;
+    Object.keys(resultsTitles).forEach(tab => {
+        if (resultsTitles[tab]) {
+            resultsTitles[tab].textContent =
+                localStorage.getItem(`Results_${tab}`) || defaultResultsTitle;
+        }
+    });
 
     // ✅ Generic function to handle editing & saving
     const saveTitle = (element, storageKey, defaultText) => {
         element.addEventListener("focus", () => {
-            // ✅ Clear only if it's the default title
             if (element.textContent === defaultText) {
                 element.textContent = "";
             }
@@ -41,9 +48,15 @@ const initializeTitles = () => {
         });
     };
 
-    // ✅ Apply to both titles
+    // ✅ Apply to page title
     saveTitle(pageTitle, "pageTitle", defaultPageTitle);
-    saveTitle(resultsTitle, "Results", defaultResultsTitle);
+
+    // ✅ Apply to results titles for all tabs
+    Object.keys(resultsTitles).forEach(tab => {
+        if (resultsTitles[tab]) {
+            saveTitle(resultsTitles[tab], `Results_${tab}`, defaultResultsTitle);
+        }
+    });
 
     console.log("✅ Page and results titles initialized.");
 };

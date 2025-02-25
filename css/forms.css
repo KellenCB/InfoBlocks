@@ -9,7 +9,7 @@
     width: 100%;
 }
 
-#search_input {
+.search_input {
     width: 100%; 
     padding: 12px; 
     padding-right: 30px;
@@ -41,15 +41,15 @@
     padding: 0;
 }
 
+.clear-search:hover .clear-icon:hover {
+    stroke: rgb(255, 255, 255);
+}
+
 .clear-icon {
     width: 22px;
     height: 22px;
     stroke: #666;
     stroke-width: 2;
-}
-
-.clear-search:hover .clear-icon:hover {
-    stroke: rgb(255, 255, 255);
 }
 
 /* Add Block Form */

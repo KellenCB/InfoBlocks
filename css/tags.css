@@ -13,22 +13,16 @@
     padding: 15px 0px 15px 0px;
 }
 
-.overlay-tags, #dynamic_overlay_tags, #dynamic_edit_overlay_tags {
+.tag-category {
+    display: contents;
+}
+
+.overlay-tags, #dynamic_overlay_tags {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    align-items: center;
-    text-align: left;
+    align-items: flex-start;
     max-width: 100%;
-}
-
-.overlay-tags {
-    margin-top: 15px;
-    margin-bottom: 15px;
-    margin-left: -5px;
-    margin-right: -5px;
-    justify-content: center;
-    align-items: center;   
 }
 
 #user_tags_list, #dynamic_tags_section {

@@ -35,11 +35,9 @@ export const handleSaveBlock = () => {
             return;
         }
 
-        let tagsInput = document.getElementById("tags_input_overlay").value
-            .split(",")
-            .map(tag => tag.trim())
-            .filter(tag => tag.length > 0);
-
+        let tagsInputElement = document.getElementById("tags_input_overlay");
+        let tagsInput = tagsInputElement ? tagsInputElement.value.split(",").map(tag => tag.trim()).filter(tag => tag.length > 0) : [];
+        
         const selectedPredefinedTags = Array.from(document.querySelectorAll(".add-block-overlay .tag-button.selected"))
             .map(tag => tag.dataset.tag);
 
@@ -48,8 +46,9 @@ export const handleSaveBlock = () => {
         const allTags = [...new Set([...tagsInput, ...selectedPredefinedTags])];
         
         // ✅ Save the new block
-        const success = appManager.saveBlock(titleInput, textInput, allTags);
-
+        const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+        const success = appManager.saveBlock(activeTab, titleInput, textInput, allTags);
+        
         if (success) {
             console.log("✅ Block saved successfully with tags:", allTags);
 
@@ -205,9 +204,9 @@ export const overlayHandler = (() => {
         });
     };
 
-    const initializeOverlayTagHandlers = () => {
-        const predefinedTagsContainer = document.getElementById("predefined_tags_edit");
-    
+    const initializeOverlayTagHandlers = (containerId = "predefined_tags_edit") => {
+        const predefinedTagsContainer = document.getElementById(containerId);
+        
         if (predefinedTagsContainer) {
             predefinedTagsContainer.innerHTML = ""; // Clear previous content
     
@@ -216,7 +215,7 @@ export const overlayHandler = (() => {
                     const categoryDiv = document.createElement("div");
                     categoryDiv.classList.add("tag-category");
     
-                    // ✅ Create tag buttons dynamically
+                    // Create tag buttons dynamically
                     categoryDiv.innerHTML = data.tags.map(tag =>
                         `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`
                     ).join("");
@@ -225,16 +224,15 @@ export const overlayHandler = (() => {
                 }
             });
     
-            // ✅ Add click event listeners to predefined tags
+            // Add click event listeners to predefined tags
             predefinedTagsContainer.addEventListener("click", (event) => {
                 const target = event.target;
-    
                 if (target.classList.contains("tag-button")) {
-                    target.classList.toggle("selected"); // ✅ Toggle selection state
+                    target.classList.toggle("selected"); // Toggle selection state
                 }
             });
         }
-    };    
+    };
     
     const autoResizeTextarea = (textarea) => {
         textarea.style.height = "auto"; // Reset height

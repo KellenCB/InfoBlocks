@@ -8,17 +8,44 @@ export const appManager = (() => {
     let title = localStorage.getItem("pageTitle") || "Information Blocks";
     
     const resultsSection = document.getElementById("results_section");
+   
+    // ========================
+    // TABS
+    // ========================
+
+    const getActiveTab = () => {
+        return document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+    };
+   
     // ========================
     // BLOCKS
     // ========================
 
     // Render blocks in the results section
-    const renderBlocks = (blocks) => {
-        // ✅ Render only the HTML structure; do NOT set results_title text
+    const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
+        console.log("🔍 Checking tab value:", tab, typeof tab);
+    
+        if (typeof tab !== "string") {
+            console.error("❌ Error: 'tab' should be a string but got:", tab);
+            tab = "tab1"; // Fallback to default tab
+        }
+    
+        const resultsSection = document.getElementById(`results_section_${tab.replace("tab", "")}`);
+        if (!resultsSection) {
+            console.error(`❌ Results section not found for ${tab}`);
+            return;
+        }
+    
+        resultsSection.innerHTML = ""; // ✅ Clear old blocks
+    
+        // ✅ Get blocks, either from the provided filteredBlocks or fetch all
+        const blocks = filteredBlocks || getBlocks(tab);
+        console.log(`📦 Blocks to render for ${tab}:`, blocks);
+    
         resultsSection.innerHTML = `
             <div id="results_header" class="results-header">
-                <h2 id="results_title" class="section-header" contenteditable="true"></h2>
-                <div id="sort_controls" class="sort-controls">
+                <h2 id="results_title_${tab.replace("tab", "")}" class="section-header" contenteditable="true"></h2>
+                    <div id="sort_controls" class="sort-controls">
                     <span>Sort by:</span>
                     <button id="sort_newest" class="sort-button">
                         <i class="fas fa-sort-numeric-down"></i> Newest
@@ -33,28 +60,25 @@ export const appManager = (() => {
             </div>
         `;
     
-        // ✅ Restore the active sort button
-        const activeSort = document.querySelector(".sort-button.selected")?.id || "sort_newest";
-        document.getElementById(activeSort)?.classList.add("selected");
+        if (blocks.length === 0) {
+            console.warn(`⚠️ No blocks found for ${tab}`);
+        }
     
-        // ✅ Render the blocks
         blocks.forEach(block => {
             resultsSection.insertAdjacentHTML("beforeend", blockTemplate(block));
         });
     
-        console.log("✅ UI updated: Blocks fully re-rendered.");
-        
-        // ✅ Attach sorting event listeners
+        console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
+    
         document.getElementById("sort_newest").addEventListener("click", () => sortBlocks("newest"));
         document.getElementById("sort_oldest").addEventListener("click", () => sortBlocks("oldest"));
         document.getElementById("sort_alpha").addEventListener("click", () => sortBlocks("alpha"));
     
-        appManager.updateTags(); // ✅ Ensure tags update
-    
-        // ✅ After rendering, initialize the title handling in page-title.js
+        appManager.updateTags();
         initializeTitles();
     };
-
+    
+            
     // ✅ Sorting function
     const sortBlocks = (mode) => {
         currentSortMode = mode; // ✅ Update global sorting mode
@@ -66,7 +90,7 @@ export const appManager = (() => {
         document.getElementById(`sort_${mode}`).classList.add("selected");
     
         // ✅ Get and sort blocks
-        let sortedBlocks = getBlocks(); // This retrieves all blocks and applies sorting
+        let sortedBlocks = getBlocks(getActiveTab());
     
         // ✅ Apply currently selected tag filters
         const selectedTags = tagHandler.getSelectedTags();
@@ -93,10 +117,10 @@ export const appManager = (() => {
 
     let currentSortMode = "newest"; // ✅ Default sorting mode
 
-    const getBlocks = () => {
-        const storedBlocks = localStorage.getItem("userBlocks");
+    const getBlocks = (tab = getActiveTab()) => {
+        const storedBlocks = localStorage.getItem(`userBlocks_${tab}`);
         const parsedBlocks = storedBlocks ? JSON.parse(storedBlocks) : [];
-    
+
         // ✅ Apply sorting based on the currently selected mode
         if (currentSortMode === "newest") {
             parsedBlocks.sort((a, b) => b.timestamp - a.timestamp);
@@ -105,10 +129,10 @@ export const appManager = (() => {
         } else if (currentSortMode === "alpha") {
             parsedBlocks.sort((a, b) => a.title.localeCompare(b.title));
         }
-    
+
         return parsedBlocks;
     };
-                    
+
     // ========================
     // TAGS
     // ========================
@@ -143,44 +167,67 @@ export const appManager = (() => {
     
     // Update tags (predefined & user-generated)
     const updateTags = () => {
-        const usedTags = getTags(); // ✅ Get all tags actually used in blocks
-        const selectedTags = tagHandler.getSelectedTags(); // ✅ Get currently selected tags
+        const activeTab = getActiveTab(); // e.g., "tab1" or "tab2"
+        const tabSuffix = activeTab.replace("tab", ""); // "1" or "2"
+        const usedTags = getTags(activeTab); // all tags used in blocks for the active tab
+        const selectedTags = tagHandler.getSelectedTags();
     
-        const predefinedTags = Object.values(categoryTags).flatMap(cat => cat.tags);
-        const userTags = usedTags.filter(tag => !predefinedTags.includes(tag)); // ✅ Extract user-defined tags
+        // All predefined tags across categories
+        const allPredefined = Object.values(categoryTags).flatMap(cat => cat.tags);
+        // User-defined tags are those not in any predefined category
+        const usedUserTags = usedTags.filter(tag => !allPredefined.includes(tag));
     
-        // ✅ Ensure predefined category tags only include used ones
+        // Update each category container separately
         Object.keys(categoryTags).forEach(category => {
-            const categoryTagList = categoryTags[category]?.tags || [];
-            const validTags = categoryTagList.filter(tag => usedTags.includes(tag)); // ✅ Only show used predefined tags
-            renderTags(validTags, `${category}_tags_list`);
+            const containerId = `${category}_tags_list_${tabSuffix}`;
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.warn(`Container ${containerId} not found.`);
+                return;
+            }
+            // For this category, include only the tags that are both predefined and used
+            const usedPredefined = categoryTags[category].tags.filter(tag => usedTags.includes(tag));
+            container.innerHTML = usedPredefined.map(tag => {
+                const isSelected = selectedTags.includes(tag) ? "selected" : "";
+                return `<button class="tag-button ${categoryTags[category].className} ${isSelected}" data-tag="${tag}">${tag}</button>`;
+            }).join("");
         });
     
-        // ✅ Render user-defined tags separately
-        if (userTags.length > 0) {
-            renderTags(userTags, "user_tags_list");
-        } else {
-            document.getElementById("user_tags_list").innerHTML = "<p>No user-defined tags</p>"; // ✅ Handle empty state
+        // Update user-defined tags container
+        const userContainer = document.getElementById(`user_tags_list_${tabSuffix}`);
+        if (userContainer) {
+            if (usedUserTags.length > 0) {
+                userContainer.innerHTML = usedUserTags.map(tag => {
+                    const isSelected = selectedTags.includes(tag) ? "selected" : "";
+                    return `<button class="tag-button tag-user ${isSelected}" data-tag="${tag}">${tag}</button>`;
+                }).join("");
+            } else {
+                userContainer.innerHTML = "<p>No user-defined tags</p>";
+            }
         }
     
-        // ✅ Ensure selected tags remain visually selected
-        setTimeout(() => {
-            document.querySelectorAll(".tag-button").forEach(tagElement => {
+        // (Optional) If you need to update any global selected tag highlighting,
+        // use a selector scoped to the active tab instead of a duplicate ID.
+        const activeTabElement = document.getElementById(activeTab);
+        if (activeTabElement) {
+            activeTabElement.querySelectorAll(".tag-section .tag-button").forEach(tagElement => {
                 if (selectedTags.includes(tagElement.dataset.tag)) {
-                    tagElement.classList.add("selected"); // ✅ Keep selected tags highlighted
+                    tagElement.classList.add("selected");
                 } else {
                     tagElement.classList.remove("selected");
                 }
             });
-        }, 50);
+        }
     
-        console.log("✅ Updated tag filtering: Displaying only used predefined and user-defined tags.");
-    };    
+        console.log(`✅ Tags updated for ${activeTab}`);
+    };
         
-    const getTags = () => {
+    const getTags = (tab = getActiveTab()) => {
         const predefinedTags = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
         const usedTags = new Set();
-
+    
+        let userBlocks = getBlocks(tab); // ✅ Get blocks for the correct tab
+    
         userBlocks.forEach(block => {
             block.tags.forEach(tag => {
                 if (predefinedTags.has(tag)) {
@@ -190,10 +237,10 @@ export const appManager = (() => {
                 }
             });
         });
-
+    
         return Array.from(usedTags);
     };
-
+    
     // Get filtered tags based on category
     const getFilteredTags = (category) => {
         const blocks = getBlocks();
@@ -224,34 +271,34 @@ export const appManager = (() => {
     // DATA MANAGEMENT FUNCTIONS
     // ========================
 
-    const saveBlock = (blockTitle, text, tags, blockId = null, timestamp = null) => {
-        console.log("📥 Before Saving - Incoming Block Data:", { blockTitle, text, tags, blockId, timestamp });
+    const saveBlock = (tab, blockTitle, text, tags, blockId = null, timestamp = null) => {
+        console.log(`📥 Attempting to save block in ${tab}:`, { blockTitle, text, tags, blockId, timestamp });
     
         if (!blockTitle || !text) {
             console.error("❌ Block title and text are required");
             return false;
         }
     
-        const normalizeTag = (tag) => {
-            const predefinedTagsSet = new Set(Object.values(categoryTags).flatMap(data => data.tags));
-            return predefinedTagsSet.has(tag) ? tag : tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
-        };
+        let userBlocks = getBlocks(tab);
     
-        const allTags = [...new Set(tags.map(normalizeTag))];
+        console.log(`📦 Blocks retrieved for ${tab}:`, userBlocks);
     
-        if (blockId) {
+        let isEdit = Boolean(blockId);
+        if (isEdit) {
             const blockIndex = userBlocks.findIndex(block => block.id === blockId);
+    
             if (blockIndex !== -1) {
                 userBlocks[blockIndex] = {
                     ...userBlocks[blockIndex],
                     title: blockTitle,
                     text,
-                    tags: allTags,
-                    timestamp: userBlocks[blockIndex].timestamp || Date.now() // ✅ Ensure timestamp is preserved
+                    tags,
+                    timestamp: userBlocks[blockIndex].timestamp || Date.now()
                 };
                 console.log("🛠 Updated Block Data:", userBlocks[blockIndex]);
             } else {
-                console.error(`❌ Block with ID "${blockId}" not found.`);
+                console.error(`❌ Block with ID "${blockId}" not found in tab ${tab}.`);
+                console.log("📦 Current Blocks:", userBlocks);
                 return false;
             }
         } else {
@@ -259,31 +306,32 @@ export const appManager = (() => {
                 id: crypto.randomUUID(),
                 title: blockTitle,
                 text,
-                tags: allTags,
-                timestamp: timestamp || Date.now() // ✅ Use provided timestamp, else generate new one
+                tags,
+                timestamp: timestamp || Date.now()
             };
             userBlocks.unshift(newBlock);
             console.log("✅ New Block Saved:", newBlock);
         }
     
-        localStorage.setItem("userBlocks", JSON.stringify(userBlocks));
-        renderBlocks(userBlocks);
+        localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(userBlocks));
+        renderBlocks();
         updateTags();
     
         return true;
     };
-        
+                    
     const removeBlock = (blockId) => {
-        if (!blockId) {
-            console.error("Error: Block ID is undefined.");
-            return;
-        }
-
+        if (!blockId) return;
+    
+        const activeTab = getActiveTab();
+        let userBlocks = getBlocks(activeTab);
+    
         const updatedBlocks = userBlocks.filter(block => block.id !== blockId);
-        userBlocks = updatedBlocks;
-        localStorage.setItem("userBlocks", JSON.stringify(updatedBlocks));
-        renderBlocks(updatedBlocks);
+        localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(updatedBlocks));
+    
+        renderBlocks(activeTab);
     };
+        
 
     // ========================
     // HELPER FUNCTIONS
@@ -325,6 +373,9 @@ export const appManager = (() => {
     });
 
     return {
+        // TABS
+        getActiveTab,
+
         // BLOCKS
         renderBlocks,
         loadBlocks,
