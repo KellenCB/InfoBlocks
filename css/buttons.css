@@ -28,14 +28,14 @@
 
 .duplicate-action-icon{
     pointer-events: none; /* Ensure the icon itself doesn’t block button clicks */
-    font-size: 14px; /* Adjust font size of the icon */
+    font-size: 14px;
     opacity: 0.75;
     margin-top: -10px;
 }
 
 .edit-action-icon{
     pointer-events: none; /* Ensure the icon itself doesn’t block button clicks */
-    font-size: 14px; /* Adjust font size of the icon */
+    font-size: 14px;
     opacity: 0.75;
     margin-top: -2px;
     margin-left: 1px;
@@ -43,7 +43,7 @@
 
 .remove-action-icon{
     pointer-events: none; /* Ensure the icon itself doesn’t block button clicks */
-    font-size: 20px; /* Adjust font size of the icon */
+    font-size: 20px;
     opacity: 0.75;
     align-items: center;
     justify-content: center;

@@ -27,6 +27,8 @@ const attachEventListeners = () => {
     document.getElementById("clear_filters_button")?.addEventListener("click", clearFilters);
 };
 
+
+
 // 📌 Tab functionality
 document.addEventListener("DOMContentLoaded", () => {
     const tabButtons = document.querySelectorAll(".tab-button");
@@ -47,31 +49,31 @@ document.addEventListener("DOMContentLoaded", () => {
         button.addEventListener("click", (event) => {
             const targetTab = event.currentTarget.dataset.tab; // ✅ Ensures `targetTab` is properly defined
             const targetContent = document.getElementById(targetTab);
-
+    
             if (!targetTab) {
                 console.error("❌ Error: targetTab is undefined.");
                 return;
             }
-
+    
             if (!targetContent) {
                 console.error(`❌ Error: Tab content with ID "${targetTab}" not found.`);
                 return;
             }
-
+    
             // ✅ Hide all tab contents before switching
             tabButtons.forEach(btn => btn.classList.remove("active"));
             tabContents.forEach(content => {
                 content.classList.remove("active");
                 content.style.display = "none";
             });
-
+    
             // ✅ Show the new active tab
             button.classList.add("active");
             targetContent.classList.add("active");
             targetContent.style.display = "flex";
-
+    
             console.log(`✅ Switched to Tab: ${targetTab}`);
-
+    
             // ✅ Ensure blocks refresh when switching tabs
             if (typeof appManager !== "undefined" && appManager.renderBlocks) {
                 console.log("📦 Refreshing UI: Calling renderBlocks() for", targetTab);
@@ -80,7 +82,16 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 console.warn("⚠️ appManager.renderBlocks() is not defined or not callable.");
             }
-
+    
+            // Lazy load the dice roller module only when Tab 5 is activated
+            if (targetTab === "tab5") {
+                import('./diceRoller.js')
+                    .then(module => {
+                        module.initDiceRoller();
+                    })
+                    .catch(err => console.error("Failed to load diceRoller module:", err));
+            }
+    
             // ✅ Ensure the UI updates properly
             setTimeout(() => {
                 console.log(`📌 Checking if content is visible for ${targetTab}`);
@@ -92,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }, 100);
         });
     });
-
+    
     // Handle tab reordering
     document.querySelector(".tabs-nav").addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -270,7 +281,7 @@ const initializeDynamicTags = () => {
     console.log("Initializing dynamic tags and overlays");
 
     // ✅ Iterate through each tab
-    [1, 2].forEach(tabNumber => {
+    [1, 2, 3, 4, 5].forEach(tabNumber => {
         const tagsSection = document.getElementById(`dynamic_tags_section_${tabNumber}`);
         if (!tagsSection) {
             console.warn(`⚠️ Warning: dynamic_tags_section_${tabNumber} container not found. Skipping.`);

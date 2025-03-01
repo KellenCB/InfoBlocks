@@ -50,7 +50,7 @@ html {
     justify-content: flex-start;
     gap: 10px;
     width: 100%;
-    flex-shrink: 0; /* ✅ Ensures it doesn’t make the container taller */
+    flex-shrink: 0;
 }
 
 /* Layout for sections */
@@ -99,7 +99,7 @@ html {
     padding: 0px 20px 20px 20px;
     flex: 1 1 66%;
     position: relative;
-    max-height: calc(100vh - 220px); /* 220px = header and tabs heights */
+    max-height: calc(100vh - 220px); /* Adjust for correct height */
     overflow-y: auto;
 }
 
