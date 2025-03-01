@@ -121,22 +121,18 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".search-container input").forEach(input => {
         input.addEventListener("input", () => {
             const tabNumber = input.id.split("_").pop();
+            const activeTab = `tab${tabNumber}`;
             const query = input.value.trim().toLowerCase();
-
-            let filteredBlocks = appManager.getBlocks(`tab${tabNumber}`).filter(block =>
+    
+            let filteredBlocks = appManager.getBlocks(activeTab).filter(block =>
                 block.title.toLowerCase().includes(query) || block.text.toLowerCase().includes(query)
             );
-
-            document.getElementById(`results_section_${tabNumber}`).innerHTML = "";
-            filteredBlocks.forEach(block => {
-                const blockElement = document.createElement("div");
-                blockElement.classList.add("block");
-                blockElement.innerHTML = `<h4>${block.title}</h4><p>${block.text}</p>`;
-                document.getElementById(`results_section_${tabNumber}`).appendChild(blockElement);
-            });
+    
+            // Call renderBlocks so the header is re-added
+            appManager.renderBlocks(activeTab, filteredBlocks);
         });
     });
-
+    
     // Initial render
     appManager.renderBlocks(targetTab);
 });
@@ -214,24 +210,60 @@ const handleSearch = () => {
     });
 };
 
-// Clear search input and refresh UI
-const clearSearch = () => {
-    document.getElementById("search_input").value = "";
-    appManager.renderBlocks(appManager.getBlocks());
+// Clear search input and refresh UI for the specific tab
+const clearSearch = (event) => {
+    
+    // Extract tab number from the button's id (e.g. "clear_search_button_1" -> "1")
+    const tabNumber = event.currentTarget.id.split("_").pop();
+    
+    // Target the correct search input using the tab number
+    const searchInput = document.getElementById(`search_input_${tabNumber}`);
+    if (searchInput) {
+        searchInput.value = "";
+    }
+    
+    // Re-render blocks for the specific tab
+    const activeTab = `tab${tabNumber}`;
+    appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
 };
 
-document.getElementById("clear_search_button")?.addEventListener("click", clearSearch);
+// Attach clear search event listeners to all clear search buttons
+document.querySelectorAll(".clear-search").forEach(button => {
+    button.addEventListener("click", clearSearch);
+});
 
-// 📌 Clear filters and reset results
-const clearFilters = () => {
+// Clear filters and reset results for the specific tab
+const clearFilters = (event) => {
     console.log("Clear Filters button clicked");
-    document.querySelectorAll(".tag-button.selected").forEach(tag => tag.classList.remove("selected"));
-    document.getElementById("search_input").value = "";
+    
+    // Extract the tab number from the button's id
+    const tabNumber = event.currentTarget.id.split("_").pop();
+    
+    // Remove 'selected' class from all tag buttons within the specific tab
+    document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`).forEach(tag => tag.classList.remove("selected"));
+    
+    // Clear the search input for the current tab
+    const searchInput = document.getElementById(`search_input_${tabNumber}`);
+    if (searchInput) {
+        searchInput.value = "";
+    }
+    
+    // Clear selected tags in the tagHandler
     tagHandler.clearSelectedTags();
-    appManager.renderBlocks(appManager.getBlocks());
+    
+    // Re-render blocks for the specific tab
+    const activeTab = `tab${tabNumber}`;
+    appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
+    
     const updatedTags = tagHandler.getSelectedTags(); 
     console.log("🔵 Currently selected tags:", updatedTags);
 };
+
+// Attach clear filters event listeners to all clear filters buttons
+document.querySelectorAll(".clear_filters_button").forEach(button => {
+    button.addEventListener("click", clearFilters);
+});
+
 
 // 📌 Initialize dynamic tags and overlays
 const initializeDynamicTags = () => {
