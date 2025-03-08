@@ -1,5 +1,5 @@
-import { tagHandler } from './tagHandler.js'; // ✅ Import tagHandler
-import { categoryTags } from './tagConfig.js'; // Ensure categoryTags is imported
+import { tagHandler } from './tagHandler.js';
+import { categoryTags } from './tagConfig.js';
 
 export const blockTemplate = (block) => {
     const selectedTags = tagHandler.getSelectedTags(); // ✅ Fetch latest selected tags
@@ -28,6 +28,18 @@ export const blockTemplate = (block) => {
         return `<span class="tag-button tag-user ${isSelected}" data-tag="${tag}">${tag}</span>`;
     }).join("");
 
+    // Process the block text.
+    // If block.highlighted is true (set by the search handler), only replace newlines.
+    // Otherwise, also apply the asterisk formatting.
+    let processedText;
+    if (block.highlighted) {
+        processedText = block.text.replace(/\n/g, '<br>');
+    } else {
+        processedText = block.text
+            .replace(/\n/g, '<br>')
+            .replace(/\*(.*?)\*/g, '<span style="font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase;">$1</span>');
+    }
+
     return `
         <div class="block" data-id="${block.id}">
             <div class="block-actions">
@@ -40,7 +52,7 @@ export const blockTemplate = (block) => {
                 ${predefinedTagsHTML}
                 ${userTagsHTML}
             </div>
-            <p>${block.text.replace(/\n/g, '<br>').replace(/\*(.*?)\*/g, '<span style="font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase;">$1</span>')}</p>
+            <p>${processedText}</p>
         </div>
     `;
 };

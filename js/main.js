@@ -19,15 +19,7 @@ const attachEventListeners = () => {
 
     // Tag selection for filtering
     document.getElementById("dynamic_tags_section")?.addEventListener("click", handleTagFilter);
-
-    // Search functionality
-    document.getElementById("search_input")?.addEventListener("input", handleSearch);
-
-    // Clear filters
-    document.getElementById("clear_filters_button")?.addEventListener("click", clearFilters);
 };
-
-
 
 // 📌 Tab functionality
 document.addEventListener("DOMContentLoaded", () => {
@@ -128,21 +120,71 @@ document.addEventListener("DOMContentLoaded", () => {
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
-    // Search functionality per tab
-    document.querySelectorAll(".search-container input").forEach(input => {
-        input.addEventListener("input", () => {
-            const tabNumber = input.id.split("_").pop();
-            const activeTab = `tab${tabNumber}`;
-            const query = input.value.trim().toLowerCase();
-    
-            let filteredBlocks = appManager.getBlocks(activeTab).filter(block =>
-                block.title.toLowerCase().includes(query) || block.text.toLowerCase().includes(query)
-            );
-    
-            // Call renderBlocks so the header is re-added
-            appManager.renderBlocks(activeTab, filteredBlocks);
-        });
+// Refactored function to attach search and clear event listeners for a given tab number
+function setupTabSearchAndFilters(tabNumber) {
+    const searchInput = document.getElementById(`search_input_${tabNumber}`);
+    const clearSearchButton = document.getElementById(`clear_search_button_${tabNumber}`);
+    const clearFiltersButton = document.getElementById(`clear_filters_button_${tabNumber}`);
+  
+    if (!searchInput) {
+      console.warn(`Search input for tab ${tabNumber} not found.`);
+      return;
+    }
+  
+    // Attach event listener for the search input to filter blocks and apply highlighting as the user types
+    searchInput.addEventListener("input", () => {
+      const query = searchInput.value.trim().toLowerCase();
+      const activeTab = `tab${tabNumber}`;
+  
+      // Filter blocks based on the query
+      const filteredBlocks = appManager.getBlocks(activeTab).filter(block =>
+        block.title.toLowerCase().includes(query) || block.text.toLowerCase().includes(query)
+      );
+  
+      // Helper function to wrap matching text with <span class="highlight">
+      const highlightMatch = (text, query) => {
+        if (!query) return text;
+        const regex = new RegExp(`(${query})`, "gi");
+        return text.replace(regex, `<span class="highlight">$1</span>`);
+      };
+  
+      // Map the filtered blocks to new objects with highlighted title and text,
+      // and set a flag so blockTemplate knows not to reapply other formatting.
+      const highlightedBlocks = filteredBlocks.map(block => ({
+        ...block,
+        title: highlightMatch(block.title, query),
+        text: highlightMatch(block.text, query),
+        highlighted: query.length > 0
+      }));
+  
+      appManager.renderBlocks(activeTab, highlightedBlocks);
     });
+  
+    // Attach event listener for the clear search button to reset the search field and re-render blocks without highlighting
+    if (clearSearchButton) {
+      clearSearchButton.addEventListener("click", () => {
+        searchInput.value = "";
+        const activeTab = `tab${tabNumber}`;
+        appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
+      });
+    }
+  
+    // Attach event listener for the clear filters button to remove tag selections, clear the search field, and re-render blocks
+    if (clearFiltersButton) {
+      clearFiltersButton.addEventListener("click", () => {
+        document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`).forEach(tag =>
+          tag.classList.remove("selected")
+        );
+        searchInput.value = "";
+        tagHandler.clearSelectedTags();
+        const activeTab = `tab${tabNumber}`;
+        appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
+      });
+    }
+  }
+  
+  // Loop through each tab (assuming tabs 1 through 5) to attach the search and clear listeners
+  [1, 2, 3, 4, 5].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));    
     
     // Initial render
     appManager.renderBlocks(targetTab);
@@ -179,22 +221,22 @@ const handleSearch = () => {
         const query = searchInput.value.trim().toLowerCase();
         console.log("🔍 Searching for:", query);
 
-        // ✅ Get currently selected tags
+        // Get currently selected tags
         const selectedTags = tagHandler.getSelectedTags();
         console.log("🟠 Currently Selected Tags:", selectedTags);
 
-        // ✅ First, filter blocks based on selected tags
+        // First, filter blocks based on selected tags
         let filteredBlocks = selectedTags.length
             ? appManager.getBlocks().filter(block =>
-                selectedTags.every(t =>
-                    block.tags.map(bt => bt.trim().toLowerCase()).includes(t.toLowerCase())
-                )
-            )
-            : appManager.getBlocks(); // ✅ If no tags selected, show all blocks
+                  selectedTags.every(t =>
+                      block.tags.map(bt => bt.trim().toLowerCase()).includes(t.toLowerCase())
+                  )
+              )
+            : appManager.getBlocks(); // If no tags selected, show all blocks
 
         console.log("🟢 Blocks After Tag Filtering (Before Search):", filteredBlocks);
 
-        // ✅ Now apply the search query **only within filteredBlocks**
+        // Now apply the search query only within filteredBlocks
         const searchResults = filteredBlocks.filter(block =>
             block.title.toLowerCase().includes(query) ||
             block.text.toLowerCase().includes(query)
@@ -202,46 +244,26 @@ const handleSearch = () => {
 
         console.log("✅ Final Search Results (Matching Search & Tags):", searchResults);
 
-        // ✅ Highlight matching text
+        // Highlight matching text
         const highlightMatch = (text, query) => {
             if (!query) return text; // If no search text, return original text
             const regex = new RegExp(`(${query})`, "gi"); // Case-insensitive match
-            return text.replace(regex, `<span class="highlight">$1</span>`); // Wrap match in <span>
+            return text.replace(regex, `<span class="highlight">$1</span>`);
         };
 
-        // ✅ Modify block rendering to include highlighted text
+        // Modify block rendering to include highlighted text
         const highlightedBlocks = searchResults.map(block => ({
             ...block,
             title: highlightMatch(block.title, query),
-            text: highlightMatch(block.text, query)
+            text: highlightMatch(block.text, query),
+            highlighted: true
         }));
-
-        // ✅ Re-render the UI with highlighted search results
-        appManager.renderBlocks(highlightedBlocks);
+        
+        // IMPORTANT: Pass the active tab id as the first parameter,
+        // and the highlighted blocks array as the second parameter.
+        appManager.renderBlocks(appManager.getActiveTab(), highlightedBlocks);
     });
 };
-
-// Clear search input and refresh UI for the specific tab
-const clearSearch = (event) => {
-    
-    // Extract tab number from the button's id (e.g. "clear_search_button_1" -> "1")
-    const tabNumber = event.currentTarget.id.split("_").pop();
-    
-    // Target the correct search input using the tab number
-    const searchInput = document.getElementById(`search_input_${tabNumber}`);
-    if (searchInput) {
-        searchInput.value = "";
-    }
-    
-    // Re-render blocks for the specific tab
-    const activeTab = `tab${tabNumber}`;
-    appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
-};
-
-// Attach clear search event listeners to all clear search buttons
-document.querySelectorAll(".clear-search").forEach(button => {
-    button.addEventListener("click", clearSearch);
-});
 
 // Clear filters and reset results for the specific tab
 const clearFilters = (event) => {
