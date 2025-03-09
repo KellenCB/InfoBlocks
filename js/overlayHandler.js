@@ -204,36 +204,76 @@ export const overlayHandler = (() => {
         });
     };
 
-    const initializeOverlayTagHandlers = (containerId = "predefined_tags_edit") => {
-        const predefinedTagsContainer = document.getElementById(containerId);
-        
-        if (predefinedTagsContainer) {
-            predefinedTagsContainer.innerHTML = ""; // Clear previous content
+    const initializeOverlayTagHandlers = (containerId = "predefined_tags_edit", blockTags = []) => {
+        const tagsContainer = document.getElementById(containerId);
+        if (!tagsContainer) return;
     
-            Object.entries(categoryTags).forEach(([category, data]) => {
-                if (Array.isArray(data.tags)) {
+        tagsContainer.innerHTML = "";
+        const activeTab = appManager.getActiveTab();
+    
+        // Get predefined and user-defined tags
+        const predefinedTagList = Object.values(categoryTags).flatMap(cat => cat.tags);
+        const userDefinedTags = [
+            ...new Set(appManager.getBlocks(activeTab).flatMap(block => block.tags))
+        ].filter(tag => !predefinedTagList.includes(tag));
+    
+        if (containerId === "dynamic_overlay_tags") {
+            if (activeTab === "tab3") {
+                tagsContainer.innerHTML = userDefinedTags.map(tag =>
+                    `<button class="tag-button tag-user" data-tag="${tag}">${tag}</button>`
+                ).join("");
+            } else {
+                Object.entries(categoryTags).forEach(([category, data]) => {
+                    if (!data.tabs.includes(activeTab)) return;
+    
                     const categoryDiv = document.createElement("div");
                     categoryDiv.classList.add("tag-category");
     
-                    // Create tag buttons dynamically
                     categoryDiv.innerHTML = data.tags.map(tag =>
                         `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`
                     ).join("");
     
-                    predefinedTagsContainer.appendChild(categoryDiv);
-                }
-            });
+                    tagsContainer.appendChild(categoryDiv);
+                });
+            }
+        } else if (containerId === "predefined_tags_edit") {
+            // Populate user-defined tags first (Tab 3)
+            if (activeTab === "tab3") {
+                if (userDefinedTags.length > 0) {
+                    const userDiv = document.createElement("div");
+                    userDiv.classList.add("tag-category", "user-tags-edit");
     
-            // Add click event listeners to predefined tags
-            predefinedTagsContainer.addEventListener("click", (event) => {
-                const target = event.target;
-                if (target.classList.contains("tag-button")) {
-                    target.classList.toggle("selected"); // Toggle selection state
+                    userDiv.innerHTML = userDefinedTags.map(tag =>
+                        `<button class="tag-button tag-user${blockTags.includes(tag) ? " selected" : ""}" data-tag="${tag}">${tag}</button>`
+                    ).join("");
+    
+                    tagsContainer.appendChild(userDiv);
                 }
+            }
+    
+            // Populate predefined tags (All Tabs)
+            Object.entries(categoryTags).forEach(([category, data]) => {
+                if (!data.tabs.includes(activeTab)) return;
+    
+                const categoryDiv = document.createElement("div");
+                categoryDiv.classList.add("tag-category");
+    
+                categoryDiv.innerHTML = data.tags.map(tag =>
+                    `<button class="tag-button ${data.className}${blockTags.includes(tag) ? " selected" : ""}" data-tag="${tag}">${tag}</button>`
+                ).join("");
+    
+                tagsContainer.appendChild(categoryDiv);
             });
         }
-    };
     
+        tagsContainer.addEventListener("click", (event) => {
+            const target = event.target;
+            if (target.classList.contains("tag-button")) {
+                target.classList.toggle("selected");
+            }
+        });
+    };
+                                    
     const autoResizeTextarea = (textarea) => {
         textarea.style.height = "auto"; // Reset height
         textarea.style.height = textarea.scrollHeight + "px"; // Expand based on content

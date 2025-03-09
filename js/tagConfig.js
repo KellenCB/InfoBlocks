@@ -1,38 +1,50 @@
 export const categoryTags = {
     Charges: {
-        tags: ["0", "1", "2", "3", "1pC", "1pD", "1pLR", "1pSR",],
-        className: "tag-Charges"
+        tags: ["0", "1", "2", "3", "1pC", "1pD", "1pLR", "1pSR"],
+        className: "tag-Charges",
+        tabs: ["tab1"]
     },
     part_type: { 
         tags: ["Helm", "Torso", "Left arm", "Right arm", "Legs", "Boots", "Other"], 
-        className: "tag-partType"
+        className: "tag-partType",
+        tabs: ["tab1"]
     },
-    action_type: { 
-        tags: ["Action", "Reaction", "Bonus action", "Free action"], 
-        className: "tag-actionType"
-    },
-    ability_type: { 
-        tags: ["Buff", "Debuff", "Heal", "Movement", "Ranged", "Melee", "Spell", "Utility", "AC",], 
-        className: "tag-abilityType"
-    },
-    damage_type: { 
-        tags: ["Arcane", "Acid", "Bludgeoning", "Cold", "Fire", "Force", "Frost", "Lightning", "Necrotic", "Piercing", "Poison", "Psychic", "Radiant", "Slashing", "Thunder"], 
-        className: "tag-damageType"
-    },
-    condition_type: { 
-        tags: ["Blinded", "Charmed", "Deafened", "Frightened", "Grappled", "Incapacitated", "Invisible", "Paralyzed", "Petrified", "Poisoned", "Prone", "Restrained", "Stunned", "Unconscious", "Push", "Pull", "Banish",], 
-        className: "tag-conditionType"
+
+ 
+    spell_level: { 
+        tags: ["Cantrip", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"], 
+        className: "tag-spellLevel",
+        tabs: ["tab2"]
     },
     spell_type: { 
         tags: ["Abjuration", "Conjuration", "Divination", "Enchantment", "Evocation", "Illusion", "Necromancy", "Transmutation", "Concerntration", "Ritual"], 
-        className: "tag-spellType"
+        className: "tag-spellType",
+        tabs: ["tab2"]
     },
-    spell_level: { 
-        tags: ["Cantrip", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"], 
-        className: "tag-spellLevel"
+    
+    action_type: { 
+        tags: ["Action", "Reaction", "Bonus action", "Free action"], 
+        className: "tag-actionType",
+        tabs: ["tab1", "tab2"]
+    },
+    ability_type: { 
+        tags: ["Buff", "Debuff", "Heal", "Movement", "Ranged", "Melee", "Spell", "Utility", "AC"],
+        className: "tag-abilityType",
+        tabs: ["tab1", "tab2"]
+    },
+    damage_type: { 
+        tags: ["Arcane", "Acid", "Bludgeoning", "Cold", "Fire", "Force", "Frost", "Lightning", "Necrotic", "Piercing", "Poison", "Psychic", "Radiant", "Slashing", "Thunder"], 
+        className: "tag-damageType",
+        tabs: ["tab1", "tab2"]
+    },
+    condition_type: { 
+        tags: ["Blinded", "Charmed", "Deafened", "Frightened", "Grappled", "Incapacitated", "Invisible", "Paralyzed", "Petrified", "Poisoned", "Prone", "Restrained", "Stunned", "Unconscious", "Push", "Pull", "Banish"],
+        className: "tag-conditionType",
+        tabs: ["tab1", "tab2"]
     },
     modifier_type: { 
         tags: ["STR", "DEX", "CON", "INT", "WIS", "CHA", "Check", "Save"], 
-        className: "tag-modifierType"
+        className: "tag-modifierType",
+        tabs: ["tab1", "tab2"]
     }
 };

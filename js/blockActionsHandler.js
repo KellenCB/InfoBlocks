@@ -121,20 +121,32 @@ export const blockActionsHandler = (() => {
             const userDefinedTags = block.tags.filter(tag => !predefinedTags.has(tag));
             const attachedPredefinedTags = block.tags.filter(tag => predefinedTags.has(tag));
         
-            document.getElementById("tags_input_edit_overlay").value = userDefinedTags.length > 0 ? userDefinedTags.join(", ") : "";
-        
+            const activeTab = appManager.getActiveTab(); // (you already have this)
+
+            if (activeTab === "tab3") {
+                document.getElementById("tags_input_edit_overlay").value = "";
+            } else {
+                document.getElementById("tags_input_edit_overlay").value = userDefinedTags.join(", ");
+            }
+                    
             // *** NEW: Initialize the overlay’s predefined tags for editing ***
-            overlayHandler.initializeOverlayTagHandlers();
+            overlayHandler.initializeOverlayTagHandlers("predefined_tags_edit", block.tags);
         
             // Set a small delay to avoid premature deselection
             setTimeout(() => {
-                document.querySelectorAll(".edit-block-overlay .tag-button").forEach(button => {
-                    button.classList.remove("selected");
-                    if (attachedPredefinedTags.includes(button.dataset.tag)) {
-                        button.classList.add("selected");
+                const activeTab = appManager.getActiveTab();
+                const predefinedTags = Object.values(categoryTags).flatMap(cat => cat.tags);
+                
+                document.querySelectorAll(".edit-block-overlay .tag-button").forEach(tagBtn => {
+                    const tag = tagBtn.dataset.tag;
+                    
+                    if (block.tags.includes(tag)) {
+                        tagBtn.classList.add("selected");
+                    } else {
+                        tagBtn.classList.remove("selected");
                     }
                 });
-            }, 100); // Prevents premature clearing
+            }, 100);
         
             console.log("🟢 Edit Block Overlay Opened Successfully");
             document.querySelector(".edit-block-overlay").classList.add("show");
