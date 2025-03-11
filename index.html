@@ -24,52 +24,89 @@
             <h1 id="page_title" contenteditable="true"></h1>
         </header>
     
-        <div class="circle-section">
+        <div class="action-button-section">
+            <button id="upload_button" class="green-border-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 4v16M8 8l4-4 4 4" stroke-width="2.5" />
+                </svg>
+            </button>
+    
+            <button id="download_button" class="green-border-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 4v16M8 16l4 4 4-4" stroke-width="2.5"/>
+                </svg>
+            </button>
+    
+            <button id="add_block_button" class="green-button add-block-float">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 4V20" stroke="white" stroke-width="2"/>
+                    <path d="M4 12H20" stroke="white" stroke-width="2"/>
+                </svg>
+            </button>
+    
+            <button id="edit_tab_button" class="orange-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M4 15.5V19h3.5l9.94-9.94-3.5-3.5L4 15.5zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.5 3.5 1.83-1.83z" />
+                </svg>
+            </button>
+    
+            <button id="bin_button" class="red-button bin-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M4 4L20 20" stroke="white" stroke-width="3"/>
+                    <path d="M4 20L20 4" stroke="white" stroke-width="3"/>
+                </svg>
+            </button>    
         </div>
     </div>
 
     <div class="container">
         <div class="tabs-nav fade-in">
-            <button class="tab-button active" data-tab="tab1" draggable="true">Tab 1</button>
-            <button class="tab-button" data-tab="tab2" draggable="true">Tab 2</button>
-            <button class="tab-button" data-tab="tab3" draggable="true">Tab 3</button>
-            <button class="tab-button" data-tab="tab4" draggable="true">Tab 4</button>
-            <button class="tab-button" data-tab="tab6" draggable="true">Tab 6</button>
-            <button class="tab-button" data-tab="tab5" draggable="true">Dice Roller</button>
+            <button class="tab-button active" data-tab="tab1" draggable="true">Tab 1</button> <!-- Magic Items -->
+            <button class="tab-button" data-tab="tab2" draggable="true">Tab 2</button> <!-- Spells -->
+            <button class="tab-button" data-tab="tab3" draggable="true">Tab 3</button> <!-- Notes -->
+            <button class="tab-button" data-tab="tab4" draggable="true">Tab 4</button> <!-- Character Sheet -->
+            <button class="tab-button" data-tab="tab5" draggable="true">Dice Roller</button> <!-- Dice -->
+            <button class="tab-button" data-tab="tab6" draggable="true">Tab 6</button> <!-- Inventory -->
+            <button class="tab-button" data-tab="tab7" draggable="true">Tab 7</button> <!-- Session Notes -->
+            <button class="tab-button" data-tab="tab8" draggable="true">Tab 8</button> <!-- Feats & Abilites -->
         </div>
     </div>
 
     <div class="tabs-content fade-in">
         <!-- Tab 1: Magic Items -->
         <div class="tab-content" id="tab1">
-            <div class="filter-section">
-                <h2 class="section-header">Search & Filter</h2>
-                <div class="search-container">
-                    <input id="search_input_1" class="search_input" type="text" placeholder="Search by text" />
-                    <button id="clear_search_button_1" class="clear-search">✖</button>
-                </div>
-
-                <div id="all_tags_container" class="tag-section">
-                    <div id="dynamic_tags_section_1"></div>
-                </div>
-                
-                <button id="clear_filters_button_1" class="clear_filters_button">Clear Filters</button>
+            <div class="circle-section">
             </div>
+            <div class="filter-and-results">
+                <div class="filter-section">
+                    <h2 class="section-header">Search & Filter</h2>
+                    <div class="search-container">
+                        <input id="search_input_1" class="search_input" type="text" placeholder="Search by text" />
+                        <button id="clear_search_button_1" class="clear-search">✖</button>
+                    </div>
 
-            <div id="results_section_1" class="results-section">
-                <div id="results_header" class="results-header">
-                    <h2 id="results_title_1" class="section-header" contenteditable="true"></h2>
-                    <div id="sort_controls" class="sort-controls">
-                        <span>Sort by:</span>
-                        <button id="sort_newest" class="sort-button">
-                            <i class="fas fa-sort-numeric-down"></i> Newest
-                        </button>
-                        <button id="sort_oldest" class="sort-button">
-                            <i class="fas fa-sort-numeric-up"></i> Oldest
-                        </button>
-                        <button id="sort_alpha" class="sort-button">
-                            <i class="fas fa-sort-alpha-down"></i> A-Z
-                        </button>
+                    <div id="all_tags_container" class="tag-section">
+                        <div id="dynamic_tags_section_1"></div>
+                    </div>
+                    
+                    <button id="clear_filters_button_1" class="clear_filters_button">Clear Filters</button>
+                </div>
+
+                <div id="results_section_1" class="results-section">
+                    <div id="results_header" class="results-header">
+                        <h2 id="results_title_1" class="section-header" contenteditable="true"></h2>
+                        <div id="sort_controls" class="sort-controls">
+                            <span>Sort by:</span>
+                            <button id="sort_newest" class="sort-button">
+                                <i class="fas fa-sort-numeric-down"></i> Newest
+                            </button>
+                            <button id="sort_oldest" class="sort-button">
+                                <i class="fas fa-sort-numeric-up"></i> Oldest
+                            </button>
+                            <button id="sort_alpha" class="sort-button">
+                                <i class="fas fa-sort-alpha-down"></i> A-Z
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -151,14 +188,26 @@
             <p>Coming soon.</p>
         </div>
 
+        <!-- Tab 5: Dice Roller -->
+        <div class="tab-content" id="tab5">
+
         <!-- Tab 6: Empty Placeholder -->
         <div class="tab-content" id="tab6">
             <h2>Inventory</h2>
             <p>Coming soon.</p>
         </div>
 
-        <!-- Tab 5: Dice Roller -->
-        <div class="tab-content" id="tab5">
+        <!-- Tab 7: Empty Placeholder -->
+        <div class="tab-content" id="tab7">
+            <h2>Session Notes</h2>
+            <p>Coming soon.</p>
+        </div>
+
+        <!-- Tab 8: Empty Placeholder -->
+        <div class="tab-content" id="tab8">
+            <h2>Feats & Abilites</h2>
+            <p>Coming soon.</p>
+        </div>        
             <div class="dice-roller-container">
             <!-- Left Panel: Dice Selection & Selected Dice -->
             <div class="dice-left-panel">
@@ -220,39 +269,6 @@
         </div>
     </div>
 </div>
-                                                 
-    <!-- Action Buttons -->
-    <div class="function-buttons">
-        <button id="add_block_button" class="add-block-float">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <!-- Plus Sign -->
-                <path d="M12 4V20" stroke="white" stroke-width="2"/>
-                <path d="M4 12H20" stroke="white" stroke-width="2"/>
-            </svg>
-            
-        </button>
-    
-        <button id="upload_button" class="function-button up-arrow">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M12 4v16M8 8l4-4 4 4" stroke-width="2.5" />
-            </svg>
-        </button>
-
-        <button id="download_button" class="function-button down-arrow">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M12 4v16M8 16l4 4 4-4" stroke-width="2.5"/>
-            </svg>
-        </button>
-    
-        <button class="bin-button">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">                
-                <!-- X Sign -->
-                <path d="M4 4L20 20" stroke="white" stroke-width="3"/>
-                <path d="M4 20L20 4" stroke="white" stroke-width="3"/>
-            </svg>
-            
-       </button>
-    </div>
         
     <!-- Overlay for Adding Block -->
     <div class="add-block-overlay">
@@ -267,9 +283,9 @@
             <button id="save_block_button" class="button green-button">Save Block</button>
             <button id="clear_block_button" class="button orange-button">Clear</button>
             <button id="cancel_add_block" class="button red-button red-button">Cancel</button>
-        </div>
     </div>
-    
+</div>
+                                                     
     <!-- Overlay for Editing Block -->
     <div class="edit-block-overlay">
         <div class="edit-block-form">
@@ -295,8 +311,8 @@
         <div class="cleardata-form">
             <h2>Clear All Data</h2>
             <p>Are you sure you want to clear all data?<br> <br> This action cannot be undone.<br> </p>
-            <button id="confirm_clear_button" class="button">Yes</button>
-            <button id="cancel_clear_button" class="button">No</button>
+            <button id="confirm_clear_button" class="button green-button">Yes</button>
+            <button id="cancel_clear_button" class="button red-button">No</button>
         </div>
     </div>
 

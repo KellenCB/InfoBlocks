@@ -69,7 +69,35 @@ html {
     box-sizing: border-box;
 }
 
+.filter-and-results{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 20px;
+    height: calc(100vh - 300px);  /* Adjust for correct height */
+    overflow: hidden;
+}
+
+#tab1 {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
 .circle-section {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #2a2a2a;
+    padding: 15px 20px;
+    border-radius: 25px;
+    gap: 10px;
+    box-sizing: border-box;
+    min-height: 60px;
+    width: 100%;
+}
+
+.action-button-section{
     display: flex;
     height: auto;
     align-items: center;
@@ -77,7 +105,7 @@ html {
     background-color: #2a2a2a;
     padding: 15px 20px;
     border-radius: 25px;
-    gap: 7.5px;
+    gap: 10px;
     box-sizing: border-box;
     min-height: 60px;
 }

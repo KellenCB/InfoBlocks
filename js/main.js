@@ -205,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   
   // Loop through each tab (assuming tabs 1 through 5) to attach the search and clear listeners
-  [1, 2, 3, 4, 5, 6].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
+  [1, 2, 3, 4, 5, 6, 7, 8].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
     
     // Initial render
     appManager.renderBlocks(targetTab);
@@ -324,7 +324,7 @@ const initializeDynamicTags = () => {
     console.log("Initializing dynamic tags and overlays");
 
     // Iterate through each tab
-    [1, 2, 3, 4, 5, 6].forEach(tabNumber => {
+    [1, 2, 3, 4, 5, 6, 7, 8].forEach(tabNumber => {
         const tagsSection = document.getElementById(`dynamic_tags_section_${tabNumber}`);
         if (!tagsSection) {
             console.warn(`⚠️ Warning: dynamic_tags_section_${tabNumber} container not found. Skipping.`);

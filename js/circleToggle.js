@@ -13,53 +13,51 @@ document.addEventListener('DOMContentLoaded', () => {
         circle.classList.add('circle');
         if (state) circle.classList.add('unfilled'); // New circles start unfilled
 
-        // Attach click event **inside the function** to ensure proper behavior
+        // Attach click event to toggle state
         circle.addEventListener('click', () => {
             circle.classList.toggle('unfilled');
             circleStates[index] = circle.classList.contains('unfilled');
             localStorage.setItem('circleStates', JSON.stringify(circleStates));
         });
 
+        // Instead of inserting before firstChild, we always append
         if (prepend) {
-            circles.unshift(circle); // Add to the beginning of array
-            circleContainer.insertBefore(circle, circleContainer.firstChild); // Insert at start
+            circles.unshift(circle);
+            circleContainer.insertBefore(circle, circleContainer.firstChild);
         } else {
-            circles.push(circle); // Add to end of array
+            circles.push(circle);
             circleContainer.appendChild(circle);
         }
     };
 
-    // Function to remove the **first (leftmost) circle**
+    // Function to remove the leftmost circle (ignoring the buttons)
     const removeCircle = () => {
-        if (circles.length > 0) { // ✅ Now allows removing all circles
-            const circleToRemove = circles.shift(); // Get the leftmost circle
+        if (circles.length > 0) {
+            // Remove the last element from the circles array
+            const circleToRemove = circles.pop();
             if (circleToRemove) {
-                circleContainer.removeChild(circleToRemove); // Remove from DOM
-
-                // Shift stored circle states correctly
-                let newCircleStates = {};
-                Object.keys(circleStates).forEach((key, i) => {
-                    if (i > 0) newCircleStates[i - 1] = circleStates[key]; // Shift indices left
-                });
-
-                circleStates = newCircleStates;
+                circleContainer.removeChild(circleToRemove);
+    
+                // Remove the last entry from circleStates
+                delete circleStates[totalCircles - 1];
+    
                 totalCircles--;
                 localStorage.setItem('totalCircles', totalCircles);
                 localStorage.setItem('circleStates', JSON.stringify(circleStates));
-
-                console.log(`✅ Removed leftmost circle. Total now: ${totalCircles}`);
+    
+                console.log(`✅ Removed rightmost circle. Total now: ${totalCircles}`);
             }
         }
     };
-
-    // Function to add a new circle (always unfilled & at the start)
+    
+    // Function to add a new circle.
     const addCircle = () => {
-        createCircle(circles.length, true, true); // Add unfilled circle at the start
+        createCircle(circles.length, true, false);
         totalCircles++;
         localStorage.setItem('totalCircles', totalCircles);
     };
 
-    // Create Add/Remove Buttons styled like circles
+    // Create Add/Remove Buttons
     const addButton = document.createElement('div');
     addButton.classList.add("circle", "circle-button");
     addButton.innerHTML = "+"; // Add Icon
@@ -70,14 +68,13 @@ document.addEventListener('DOMContentLoaded', () => {
     removeButton.innerHTML = "−"; // Remove Icon
     removeButton.addEventListener('click', removeCircle);
 
-    // Initialize circles from saved data
-    for (let i = 0; i < totalCircles; i++) {
-        createCircle(i, circleStates[i] ?? true, true); // Load saved state, default unfilled
-    }
+    circleContainer.insertBefore(addButton, circleContainer.firstChild);
+    circleContainer.insertBefore(removeButton, addButton.nextSibling);
 
-    // Ensure buttons are always at the right
-    circleContainer.appendChild(addButton);
-    circleContainer.appendChild(removeButton);
+    // Initialize circles from saved data, appending them so they appear after the buttons.
+    for (let i = 0; i < totalCircles; i++) {
+        createCircle(i, circleStates[i] ?? true, false);
+    }
 
     console.log("✅ Circle controls updated.");
 });
