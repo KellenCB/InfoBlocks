@@ -28,18 +28,13 @@ html {
 }
 
 /* Tabs styling */
-.tabs-content {
+.tab-content {
     position: relative;
     width: 100%;
-}
-.tab-content {
-    width: 100%;
     gap: 20px;
-}
-
-.tab-content.active {
-    flex-direction: row;
-    width: 100%;
+    height: calc(100vh - 230px);  /* Adjust for correct height */
+    display: flex;
+    flex-direction: column;
 }
 
 .tabs-nav {
@@ -63,38 +58,10 @@ html {
     align-items: center;
     justify-content: flex-start;
     background-color: #2a2a2a;
-    padding: 15px 20px;
+    padding: 20px 20px;
     border-radius: 25px;
     gap: 7.5px;
     box-sizing: border-box;
-}
-
-.filter-and-results{
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    gap: 20px;
-    height: calc(100vh - 300px);  /* Adjust for correct height */
-    overflow: hidden;
-}
-
-#tab1 {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.circle-section {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    background-color: #2a2a2a;
-    padding: 15px 20px;
-    border-radius: 25px;
-    gap: 10px;
-    box-sizing: border-box;
-    min-height: 60px;
-    width: 100%;
 }
 
 .action-button-section{
@@ -110,10 +77,40 @@ html {
     min-height: 60px;
 }
 
-.filter-section, .results-section {
+.spell-slot-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
     background-color: #2a2a2a;
+    padding: 20px;
     border-radius: 25px;
-    overflow-y: auto;
+    gap: 15px;
+    box-sizing: border-box;
+    min-height: 60px;
+    width: 100%;
+    flex: 0 0 auto; /* Prevent shrinking so height matches content */
+}
+
+.spell-slot-group {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #444;
+    padding: 15px 20px;
+    border-radius: 25px;
+    gap: 10px;
+    box-sizing: border-box;
+    min-height: 60px;
+    width: auto;
+}
+
+.filter-and-results{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 20px;
+    overflow: hidden;
 }
 
 .filter-section {
@@ -123,13 +120,17 @@ html {
     flex-direction: wrap;
     align-items: flex-start;
     flex-wrap: wrap;
+    background-color: #2a2a2a;
+    border-radius: 25px;
+    overflow-y: auto;
 }
 
 .results-section {
     padding: 0px 20px 20px 20px;
     flex: 1 1 66%;
     position: relative;
-    max-height: calc(100vh - 220px); /* Adjust for correct height */
+    background-color: #2a2a2a;
+    border-radius: 25px;
     overflow-y: auto;
 }
 
@@ -148,8 +149,8 @@ html {
         rgba(42, 42, 42, 0.75) 75%, 
         rgba(42, 42, 42, 0) 100%
     );
-    padding: 20px 0px 0px 0px; /* ✅ Adds spacing to prevent text from overlapping */
-    padding-bottom: 20px;;
+    padding: 20px 0px 0px 0px;
+    padding-bottom: 20px;
 }
 
 .block {

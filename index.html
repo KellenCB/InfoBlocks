@@ -75,8 +75,9 @@
     <div class="tabs-content fade-in">
         <!-- Tab 1: Magic Items -->
         <div class="tab-content" id="tab1">
-            <div class="circle-section">
-            </div>
+           
+            <div class="circle-section"></div>
+           
             <div class="filter-and-results">
                 <div class="filter-section">
                     <h2 class="section-header">Search & Filter</h2>
@@ -114,34 +115,50 @@
 
         <!-- Tab 2: Spell list -->
         <div class="tab-content" id="tab2">
-            <div class="filter-section">
-                <h2 class="section-header">Search & Filter</h2>
-                <div class="search-container">
-                    <input id="search_input_2" class="search_input" type="text" placeholder="Search by text" />
-                    <button id="clear_search_button_2" class="clear-search">✖</button>
-                </div>
 
-                <div id="all_tags_container" class="tag-section">
-                    <div id="dynamic_tags_section_2"></div>
-                </div>
-                
-                <button id="clear_filters_button_2" class="clear_filters_button">Clear Filters</button>
+            <div class="spell-slot-section">
+                <div class="spell-slot-group" data-group="1"></div>
+                <div class="spell-slot-group" data-group="2"></div>
+                <div class="spell-slot-group" data-group="3"></div>
+                <div class="spell-slot-group" data-group="4"></div>
+                <div class="spell-slot-group" data-group="5"></div>
+                <div class="spell-slot-group" data-group="6"></div>
+                <div class="spell-slot-group" data-group="7"></div>
+                <div class="spell-slot-group" data-group="8"></div>
+                <div class="spell-slot-group" data-group="9"></div>            
             </div>
 
-            <div id="results_section_2" class="results-section">
-                <div id="results_header" class="results-header">
-                    <h2 id="results_title_2" class="section-header" contenteditable="true"></h2>
-                    <div id="sort_controls" class="sort-controls">
-                        <span>Sort by:</span>
-                        <button id="sort_newest" class="sort-button">
-                            <i class="fas fa-sort-numeric-down"></i> Newest
-                        </button>
-                        <button id="sort_oldest" class="sort-button">
-                            <i class="fas fa-sort-numeric-up"></i> Oldest
-                        </button>
-                        <button id="sort_alpha" class="sort-button">
-                            <i class="fas fa-sort-alpha-down"></i> A-Z
-                        </button>
+            <div class="filter-and-results">
+
+                <div class="filter-section">
+                    <h2 class="section-header">Search & Filter</h2>
+                    <div class="search-container">
+                        <input id="search_input_2" class="search_input" type="text" placeholder="Search by text" />
+                        <button id="clear_search_button_2" class="clear-search">✖</button>
+                    </div>
+
+                    <div id="all_tags_container" class="tag-section">
+                        <div id="dynamic_tags_section_2"></div>
+                    </div>
+                    
+                    <button id="clear_filters_button_2" class="clear_filters_button">Clear Filters</button>
+                </div>
+
+                <div id="results_section_2" class="results-section">
+                    <div id="results_header" class="results-header">
+                        <h2 id="results_title_2" class="section-header" contenteditable="true"></h2>
+                        <div id="sort_controls" class="sort-controls">
+                            <span>Sort by:</span>
+                            <button id="sort_newest" class="sort-button">
+                                <i class="fas fa-sort-numeric-down"></i> Newest
+                            </button>
+                            <button id="sort_oldest" class="sort-button">
+                                <i class="fas fa-sort-numeric-up"></i> Oldest
+                            </button>
+                            <button id="sort_alpha" class="sort-button">
+                                <i class="fas fa-sort-alpha-down"></i> A-Z
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
