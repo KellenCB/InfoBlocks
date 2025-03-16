@@ -22,7 +22,10 @@ export const blockTemplate = (block) => {
         .join("");
 
     const predefinedTagList = Object.values(categoryTags).flatMap(data => data.tags);
-    const userTags = block.tags.filter(tag => !predefinedTagList.includes(tag));
+    const userTags = block.tags
+    .filter(tag => !predefinedTagList.includes(tag))
+    .map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()); // ✅ Fix applied
+
     const userTagsHTML = userTags.map(tag => {
         const isSelected = selectedTags.includes(tag) ? "selected" : "";
         return `<span class="tag-button tag-user ${isSelected}" data-tag="${tag}">${tag}</span>`;

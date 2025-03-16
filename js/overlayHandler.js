@@ -215,8 +215,9 @@ export const overlayHandler = (() => {
         const predefinedTagList = Object.values(categoryTags).flatMap(cat => cat.tags);
         const userDefinedTags = [
             ...new Set(appManager.getBlocks(activeTab).flatMap(block => block.tags))
-        ].filter(tag => !predefinedTagList.includes(tag));
-    
+        ].filter(tag => !predefinedTagList.includes(tag))
+         .map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase());
+            
         if (containerId === "dynamic_overlay_tags") {
             if (activeTab === "tab3") {
                 tagsContainer.innerHTML = userDefinedTags.map(tag =>

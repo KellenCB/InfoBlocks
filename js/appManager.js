@@ -312,13 +312,18 @@ export const appManager = (() => {
                 return false;
             }
         } else {
+            const predefinedTagsSet = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
+            const formattedTags = tags.map(tag => 
+                predefinedTagsSet.has(tag) ? tag : tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
+            );        
+
             const newBlock = {
                 id: crypto.randomUUID(),
                 title: blockTitle,
-                text,
-                tags,
+                text: text,
+                tags: formattedTags,
                 timestamp: timestamp || Date.now()
-            };
+                    };
             userBlocks.unshift(newBlock);
             console.log("✅ New Block Saved:", newBlock);
         }

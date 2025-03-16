@@ -59,7 +59,7 @@
         </div>
     </div>
 
-    <div class="container">
+    <div class="container fade-in">
         <div class="tabs-nav fade-in">
             <button class="tab-button active" data-tab="tab1" draggable="true">Tab 1</button> <!-- Magic Items -->
             <button class="tab-button" data-tab="tab2" draggable="true">Tab 2</button> <!-- Spells -->
@@ -72,13 +72,13 @@
         </div>
     </div>
 
-    <div class="tabs-content fade-in">
+    <div class="tabs-content">
         <!-- Tab 1: Magic Items -->
         <div class="tab-content" id="tab1">
            
-            <div class="circle-section"></div>
+            <div class="circle-section fade-in"></div>
            
-            <div class="filter-and-results">
+            <div class="filter-and-results fade-in">
                 <div class="filter-section">
                     <h2 class="section-header">Search & Filter</h2>
                     <div class="search-container">
@@ -116,7 +116,7 @@
         <!-- Tab 2: Spell list -->
         <div class="tab-content" id="tab2">
 
-            <div class="spell-slot-section">
+            <div class="spell-slot-section fade-in">
                 <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">1st Lvl</span></div>
                 <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">2nd Lvl</span></div>
                 <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">3rd Lvl</span></div>
@@ -128,7 +128,7 @@
                 <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>            
             </div>
 
-            <div class="filter-and-results">
+            <div class="filter-and-results fade-in">
 
                 <div class="filter-section">
                     <h2 class="section-header">Search & Filter</h2>
@@ -165,66 +165,50 @@
         </div>
     
         <!-- Tab 3: Notes -->
-        <div class="tab-content" id="tab3">
-            <div class="filter-section">
-                <h2 class="section-header">Search & Filter</h2>
-                <div class="search-container">
-                    <input id="search_input_3" class="search_input" type="text" placeholder="Search by text" />
-                    <button id="clear_search_button_3" class="clear-search">✖</button>
+        <div class="tab-content fade-in" id="tab3">
+            <div class="filter-and-results">
+                <div class="filter-section">
+                    <h2 class="section-header">Search & Filter</h2>
+                    <div class="search-container">
+                        <input id="search_input_3" class="search_input" type="text" placeholder="Search by text" />
+                        <button id="clear_search_button_3" class="clear-search">✖</button>
+                    </div>
+
+                    <div id="all_tags_container" class="tag-section">
+                        <div id="dynamic_tags_section_3"></div>
+                    </div>
+                    
+                    <button id="clear_filters_button_3" class="clear_filters_button">Clear Filters</button>
                 </div>
 
-                <div id="all_tags_container" class="tag-section">
-                    <div id="dynamic_tags_section_3"></div>
-                </div>
-                
-                <button id="clear_filters_button_3" class="clear_filters_button">Clear Filters</button>
-            </div>
-
-            <div id="results_section_3" class="results-section">
-                <div id="results_header" class="results-header">
-                    <h2 id="results_title_3" class="section-header" contenteditable="true"></h2>
-                    <div id="sort_controls" class="sort-controls">
-                        <span>Sort by:</span>
-                        <button id="sort_newest" class="sort-button">
-                            <i class="fas fa-sort-numeric-down"></i> Newest
-                        </button>
-                        <button id="sort_oldest" class="sort-button">
-                            <i class="fas fa-sort-numeric-up"></i> Oldest
-                        </button>
-                        <button id="sort_alpha" class="sort-button">
-                            <i class="fas fa-sort-alpha-down"></i> A-Z
-                        </button>
+                <div id="results_section_3" class="results-section">
+                    <div id="results_header" class="results-header">
+                        <h2 id="results_title_3" class="section-header" contenteditable="true"></h2>
+                        <div id="sort_controls" class="sort-controls">
+                            <span>Sort by:</span>
+                            <button id="sort_newest" class="sort-button">
+                                <i class="fas fa-sort-numeric-down"></i> Newest
+                            </button>
+                            <button id="sort_oldest" class="sort-button">
+                                <i class="fas fa-sort-numeric-up"></i> Oldest
+                            </button>
+                            <button id="sort_alpha" class="sort-button">
+                                <i class="fas fa-sort-alpha-down"></i> A-Z
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
         <!-- Tab 4: Empty Placeholder -->
-        <div class="tab-content" id="tab4">
+        <div class="tab-content fade-in" id="tab4">
             <h2>Character sheet</h2>
             <p>Coming soon.</p>
         </div>
 
         <!-- Tab 5: Dice Roller -->
-        <div class="tab-content" id="tab5">
-
-        <!-- Tab 6: Empty Placeholder -->
-        <div class="tab-content" id="tab6">
-            <h2>Inventory</h2>
-            <p>Coming soon.</p>
-        </div>
-
-        <!-- Tab 7: Empty Placeholder -->
-        <div class="tab-content" id="tab7">
-            <h2>Session Notes</h2>
-            <p>Coming soon.</p>
-        </div>
-
-        <!-- Tab 8: Empty Placeholder -->
-        <div class="tab-content" id="tab8">
-            <h2>Feats & Abilites</h2>
-            <p>Coming soon.</p>
-        </div>        
+        <div class="tab-content fade-in" id="tab5">
             <div class="dice-roller-container">
             <!-- Left Panel: Dice Selection & Selected Dice -->
             <div class="dice-left-panel">
@@ -284,7 +268,25 @@
                 </div>
             </div>
         </div>
-    </div>
+        </div>
+
+        <!-- Tab 6: Empty Placeholder -->
+        <div class="tab-content fade-in" id="tab6">
+            <h2>Inventory</h2>
+            <p>Coming soon.</p>
+        </div>
+
+        <!-- Tab 7: Empty Placeholder -->
+        <div class="tab-content fade-in" id="tab7">
+            <h2>Session Notes</h2>
+            <p>Coming soon.</p>
+        </div>
+
+        <!-- Tab 8: Empty Placeholder -->
+        <div class="tab-content fade-in" id="tab8">
+            <h2>Feats & Abilites</h2>
+            <p>Coming soon.</p>
+        </div>        
 </div>
         
     <!-- Overlay for Adding Block -->

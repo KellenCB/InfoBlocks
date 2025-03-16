@@ -34,7 +34,7 @@ html {
     padding-left: 20px;
     padding-right: 20px;
     gap: 20px;
-    height: calc(100vh - 230px);  /* Adjust for correct height */
+    height: calc(100vh - 240px);  /* Adjust for correct height */
     display: flex;
     flex-direction: column;
 }
@@ -64,6 +64,17 @@ html {
     border-radius: 25px;
     gap: 7.5px;
     box-sizing: border-box;
+}
+
+#page_title {
+    min-height: 1.5em;
+    padding: 0.25em;
+}
+
+#page_title:empty:before {
+    content: "Enter Custom Title Here...";
+    color: #aaa;       /* Lighter color for placeholder */
+    pointer-events: none;  /* Ensures clicks go to the contenteditable element */
 }
 
 .action-button-section{
@@ -155,7 +166,7 @@ html {
 
 .fade-in {
     opacity: 0;
-    transition: opacity 0.5s ease;
+    transition: opacity 1s ease;
   }
   
   .fade-in.visible {

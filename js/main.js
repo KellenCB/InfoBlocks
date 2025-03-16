@@ -262,7 +262,7 @@ const handleSearch = () => {
             block.title.toLowerCase().includes(query) ||
             block.text.toLowerCase().includes(query)
         );
-
+                        
         console.log("✅ Final Search Results (Matching Search & Tags):", searchResults);
 
         // Highlight matching text
@@ -372,6 +372,7 @@ const keyboardShortcutsHandler = (() => {
             const addBlockOverlay = document.querySelector(".add-block-overlay");
             const clearDataOverlay = document.querySelector(".cleardata-overlay");
             const editBlockOverlay = document.querySelector(".edit-block-overlay");
+            const spellSlotEditOverlay = document.querySelector(".spell-slot-edit-overlay"); // New Overlay
 
             const saveBlockButton = document.getElementById("save_block_button");
             const cancelAddBlockButton = document.getElementById("cancel_add_block");
@@ -379,6 +380,8 @@ const keyboardShortcutsHandler = (() => {
             const cancelClearButton = document.getElementById("cancel_clear_button");
             const saveEditButton = document.getElementById("save_edit_button");
             const cancelEditButton = document.getElementById("cancel_edit_block");
+            const saveSpellSlotButton = document.getElementById("save_spell_slot_changes"); // New Save Button
+            const cancelSpellSlotButton = document.getElementById("close_spell_slot_edit"); // New Cancel Button
 
             if (addBlockOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && saveBlockButton) {
@@ -403,6 +406,15 @@ const keyboardShortcutsHandler = (() => {
                     cancelEditButton.click();
                 }
             }
+
+            // 🔹 New: Spell Slot Edit Overlay Keyboard Shortcuts
+            if (spellSlotEditOverlay?.classList.contains("show")) {
+                if (event.key === "Enter" && saveSpellSlotButton) {
+                    saveSpellSlotButton.click();
+                } else if (event.key === "Escape" && cancelSpellSlotButton) {
+                    cancelSpellSlotButton.click();
+                }
+            }
         });
 
         console.log("Keyboard shortcuts attached.");
@@ -411,18 +423,7 @@ const keyboardShortcutsHandler = (() => {
     return { handleKeyboardShortcuts };
 })();
 
-// KEYBOARD SHORTCUTS //
-function fadeInElementsSequentially() {
-    const elements = document.querySelectorAll('.fade-in');
-    elements.forEach((el, index) => {
-      setTimeout(() => {
-        el.classList.add('visible');
-      }, index * 200);
-    });
-  }
-  
-
-  window.onload = async () => {
+window.onload = async () => {
     console.log("🔄 Window Loaded - Initializing App");
 
     // Attach core event listeners and handlers
@@ -451,18 +452,16 @@ function fadeInElementsSequentially() {
 
     console.log("✅ All event listeners successfully attached.");
 
-    // Sequential fade-in function (defined once)
+    // Sequential fade-in function
     const fadeInElementsSequentially = () => {
-        // Select all elements with the "fade-in" class
         const elements = document.querySelectorAll('.fade-in');
         console.log("Found fade-in elements:", elements.length);
         elements.forEach((el, index) => {
             setTimeout(() => {
                 el.classList.add('visible');
-            }, index * 200); // Delay increases by 200ms per element; adjust as needed
+            }, index * 300);
         });
     };
 
-    // Start the sequential fade-in after initialization is complete
     fadeInElementsSequentially();
 };

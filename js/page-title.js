@@ -16,7 +16,7 @@ const initializeTitles = () => {
     const defaultResultsTitle = "Custom Results Title...";
 
     // Set initial page title from localStorage or default
-    pageTitle.textContent = localStorage.getItem("pageTitle") || defaultPageTitle;
+    pageTitle.textContent = localStorage.getItem("pageTitle") || "";
 
     // For each results title element, set its text from localStorage (or use default)
     // and update the corresponding tab button's text accordingly.
@@ -41,9 +41,7 @@ const initializeTitles = () => {
     // Generic function to handle editing & saving titles
     const saveTitle = (element, storageKey, defaultText) => {
         element.addEventListener("focus", () => {
-            if (element.textContent === defaultText) {
-                element.textContent = "";
-            }
+        if (element.textContent === defaultText) { element.textContent = ""; }
         });
 
         element.addEventListener("blur", () => {
@@ -51,15 +49,20 @@ const initializeTitles = () => {
             if (newTitle) {
                 localStorage.setItem(storageKey, newTitle);
             } else {
-                element.textContent = defaultText;
+                // For pageTitle, leave it empty so the CSS placeholder shows;
+                // for results titles, use the default text.
+                if (storageKey === "pageTitle") {
+                    element.textContent = "";
+                } else {
+                    element.textContent = defaultText;
+                }
                 localStorage.removeItem(storageKey);
             }
-            // If this is a results title, update the corresponding tab button
+            // If this is a results title, update the corresponding tab button.
             if (storageKey.startsWith("Results_")) {
                 const tab = storageKey.replace("Results_", "");
                 const tabButton = document.querySelector(`.tab-button[data-tab="${tab}"]`);
                 if (tabButton) {
-                    // If the title is still the default text, set the tab to "Tab X"
                     if ((newTitle || defaultText) === defaultResultsTitle) {
                         const tabNum = tab.replace("tab", "");
                         tabButton.textContent = `Tab ${tabNum}`;
@@ -69,7 +72,7 @@ const initializeTitles = () => {
                 }
             }
         });
-
+        
         element.addEventListener("keydown", (event) => {
             if (event.key === "Enter") {
                 event.preventDefault();
