@@ -30,7 +30,9 @@ html {
 /* Tabs styling */
 .tab-content {
     position: relative;
-    width: 100%;
+    width: 100vw;
+    padding-left: 20px;
+    padding-right: 20px;
     gap: 20px;
     height: calc(100vh - 230px);  /* Adjust for correct height */
     display: flex;
@@ -77,32 +79,17 @@ html {
     min-height: 60px;
 }
 
-.spell-slot-section {
+.circle-section {
     display: flex;
-    flex-wrap: wrap;
+    height: auto;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: left;
     background-color: #2a2a2a;
-    padding: 20px;
-    border-radius: 25px;
-    gap: 15px;
-    box-sizing: border-box;
-    min-height: 60px;
-    width: 100%;
-    flex: 0 0 auto; /* Prevent shrinking so height matches content */
-}
-
-.spell-slot-group {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    background-color: #444;
     padding: 15px 20px;
     border-radius: 25px;
-    gap: 10px;
+    gap: 7.5px;
     box-sizing: border-box;
     min-height: 60px;
-    width: auto;
 }
 
 .filter-and-results{

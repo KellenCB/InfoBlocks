@@ -117,15 +117,15 @@
         <div class="tab-content" id="tab2">
 
             <div class="spell-slot-section">
-                <div class="spell-slot-group" data-group="1"></div>
-                <div class="spell-slot-group" data-group="2"></div>
-                <div class="spell-slot-group" data-group="3"></div>
-                <div class="spell-slot-group" data-group="4"></div>
-                <div class="spell-slot-group" data-group="5"></div>
-                <div class="spell-slot-group" data-group="6"></div>
-                <div class="spell-slot-group" data-group="7"></div>
-                <div class="spell-slot-group" data-group="8"></div>
-                <div class="spell-slot-group" data-group="9"></div>            
+                <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">1st Lvl</span></div>
+                <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">2nd Lvl</span></div>
+                <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">3rd Lvl</span></div>
+                <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">4th Lvl</span></div>
+                <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">5th Lvl</span></div>
+                <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">6th Lvl</span></div>
+                <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">7th Lvl</span></div>
+                <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">8th Lvl</span></div>
+                <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>            
             </div>
 
             <div class="filter-and-results">
@@ -301,7 +301,7 @@
             <button id="clear_block_button" class="button orange-button">Clear</button>
             <button id="cancel_add_block" class="button red-button red-button">Cancel</button>
     </div>
-</div>
+    </div>
                                                      
     <!-- Overlay for Editing Block -->
     <div class="edit-block-overlay">
@@ -332,6 +332,30 @@
             <button id="cancel_clear_button" class="button red-button">No</button>
         </div>
     </div>
+
+    <!-- Overlay for Spell Slot Editing -->
+    <div class="spell-slot-edit-overlay">
+    <div class="spell-slot-edit-container">
+      <h2>Edit Spell Slots</h2>
+      <!-- Replicated spell-slot-section for editing -->
+      <div class="spell-slot-section edit-mode">
+        <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">1st Lvl</span></div>
+        <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">2nd Lvl</span></div>
+        <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">3rd Lvl</span></div>
+        <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">4th Lvl</span></div>
+        <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">5th Lvl</span></div>
+        <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">6th Lvl</span></div>
+        <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">7th Lvl</span></div>
+        <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">8th Lvl</span></div>
+        <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>
+    </div>
+    <div class="spell-slot-buttons">
+        <button id="save_spell_slot_changes" class="button green-button">Save Changes</button>
+        <button id="close_spell_slot_edit" class="button red-button">Cancel</button>
+    </div>
+</div>
+</div>
+
 
     <script type="module" src="js/tagConfig.js"></script>
     <script type="module" src="js/appManager.js"></script>
