@@ -263,7 +263,6 @@ for (let i = 0; i < totalCircles; i++) {
 
 updateGroupVisibility(groupContainer); // ✅ Ensure hidden groups stay hidden
 
-console.log(`✅ Spell slot group ${groupId} initialized with ${totalCircles} circles.`);
   });
 }
 

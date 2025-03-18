@@ -21,6 +21,22 @@ const attachEventListeners = () => {
     document.getElementById("dynamic_tags_section")?.addEventListener("click", handleTagFilter);
 };
 
+// Sequential fade-in function
+const fadeInElementsSequentially = (container = document) => {
+    // Select all elements with the class 'fade-in' within the provided container
+    const allFadeInElements = container.querySelectorAll('.fade-in');
+    // Filter to only include elements that are visible (offsetParent is not null)
+    const visibleElements = Array.from(allFadeInElements).filter(el => el.offsetParent !== null);
+    console.log("Found visible fade-in elements:", visibleElements.length);
+    visibleElements.forEach((el, index) => {
+        setTimeout(() => {
+            el.classList.add('visible');
+        }, index * 300); // adjust the delay as needed
+    });
+};
+
+fadeInElementsSequentially();
+
 // 📌 Tab functionality
 document.addEventListener("DOMContentLoaded", () => {
     const tabButtons = document.querySelectorAll(".tab-button");
@@ -55,39 +71,33 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // The rest of your tab click event listener remains the same:
     tabButtons.forEach(button => {
         button.addEventListener("click", (event) => {
             const targetTab = event.currentTarget.dataset.tab;
             const targetContent = document.getElementById(targetTab);
-
+    
             if (!targetTab) {
                 console.error("❌ Error: targetTab is undefined.");
                 return;
             }
-
-            if (!targetContent) {
-                console.error(`❌ Error: Tab content with ID "${targetTab}" not found.`);
-                return;
-            }
-
+    
             // Hide all tab contents and remove active class from buttons
             tabButtons.forEach(btn => btn.classList.remove("active"));
             tabContents.forEach(content => {
                 content.classList.remove("active");
                 content.style.display = "none";
             });
-
+    
             // Show the new active tab
             event.currentTarget.classList.add("active");
             targetContent.classList.add("active");
             targetContent.style.display = "flex";
-
+    
             console.log(`✅ Switched to Tab: ${targetTab}`);
-
+    
             // Save the active tab so it persists on refresh
             localStorage.setItem("activeTab", targetTab);
-
+    
             // Refresh blocks and update tags as needed
             if (typeof appManager !== "undefined" && appManager.renderBlocks) {
                 console.log("📦 Refreshing UI: Calling renderBlocks() for", targetTab);
@@ -96,16 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 console.warn("⚠️ appManager.renderBlocks() is not defined or not callable.");
             }
-
-            // Lazy load the dice roller module only when Tab 5 is activated
-            if (targetTab === "tab5") {
-                import('./diceRoller.js')
-                    .then(module => {
-                        module.initDiceRoller();
-                    })
-                    .catch(err => console.error("Failed to load diceRoller module:", err));
-            }
-
+        
             // Ensure the UI updates properly
             setTimeout(() => {
                 const computedStyle = window.getComputedStyle(targetContent);
@@ -115,8 +116,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }, 100);
         });
-    });
-    
+    });    
+        
     // Handle tab reordering
     document.querySelector(".tabs-nav").addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -141,17 +142,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
-    // Refactored function to attach search and clear event listeners for a given tab number
+    // Function to attach search and clear event listeners for a specific tab
     function setupTabSearchAndFilters(tabNumber) {
         const searchInput = document.getElementById(`search_input_${tabNumber}`);
         const clearSearchButton = document.getElementById(`clear_search_button_${tabNumber}`);
         const clearFiltersButton = document.getElementById(`clear_filters_button_${tabNumber}`);
     
         if (!searchInput) {
-        console.warn(`Search input for tab ${tabNumber} not found.`);
-        return;
-        }
-    
+            return;
+            }
+
         // Attach event listener for the search input to filter blocks and apply highlighting as the user types
         searchInput.addEventListener("input", () => {
         const query = searchInput.value.trim().toLowerCase();
@@ -208,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
   [1, 2, 3, 4, 5, 6, 7, 8].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
     
     // Initial render
-    appManager.renderBlocks(targetTab);
+    appManager.renderBlocks(activeTabId);
 });
 
 // 📌 Handle tag filtering
@@ -326,37 +326,28 @@ const initializeDynamicTags = () => {
     // Iterate through each tab
     [1, 2, 3, 4, 5, 6, 7, 8].forEach(tabNumber => {
         const tagsSection = document.getElementById(`dynamic_tags_section_${tabNumber}`);
-        if (!tagsSection) {
-            console.warn(`⚠️ Warning: dynamic_tags_section_${tabNumber} container not found. Skipping.`);
-            return;
-        }
-
-        // Clear previous content before appending new tags
-        tagsSection.innerHTML = "";
-
-        // For the current tab, determine the active tab ID (e.g., "tab1")
-        const activeTab = `tab${tabNumber}`;
-
-        // Append tag categories dynamically only if they apply to this tab.
+        if (!tagsSection) return; // ✅ Shorter and clearer
+    
+        tagsSection.innerHTML = ""; // ✅ Clear previous content
+    
         Object.keys(categoryTags).forEach(category => {
-            if (!categoryTags[category].tabs.includes(activeTab)) {
-                // Skip categories not meant for this tab.
-                return;
-            }
+            if (!categoryTags[category].tabs.includes(`tab${tabNumber}`)) return; // ✅ Use directly
+    
             const tagContainer = document.createElement("div");
             tagContainer.classList.add("tag-section");
             tagContainer.id = `${category}_tags_list_${tabNumber}`;
-
-            // Generate tag buttons for this category
-            tagContainer.innerHTML = categoryTags[category].tags.map(tag =>
-                `<button class="tag-button ${categoryTags[category].className}" data-tag="${tag}">${tag}</button>`
-            ).join("");
-
-            // Append tag container to the correct dynamic_tags_section
+    
+            // ✅ More efficient way to append buttons
+            categoryTags[category].tags.forEach(tag => {
+                const button = document.createElement("button");
+                button.classList.add("tag-button", categoryTags[category].className);
+                button.dataset.tag = tag;
+                button.textContent = tag;
+                tagContainer.appendChild(button);
+            });
+    
             tagsSection.appendChild(tagContainer);
         });
-
-        console.log(`✅ Populated dynamic_tags_section_${tabNumber} with applicable predefined tags.`);
     });
 };
 
@@ -426,42 +417,21 @@ const keyboardShortcutsHandler = (() => {
 window.onload = async () => {
     console.log("🔄 Window Loaded - Initializing App");
 
-    // Attach core event listeners and handlers
     attachEventListeners();
     blockActionsHandler.attachBlockActions();
-    console.log("✅ Block Actions Handler Attached!");
 
-    // Attach button listeners for editing and saving blocks
     const saveEditButton = document.getElementById("save_edit_button");
     if (saveEditButton) {
         saveEditButton.addEventListener("click", saveEditHandler);
-        console.log("✅ Save Edit Button Listener Attached on Load!");
     }
 
     const saveBlockButton = document.getElementById("save_block_button");
     if (saveBlockButton) {
         saveBlockButton.addEventListener("click", handleSaveBlock);
-        console.log("✅ Save Block Button Listener Attached on Load!");
     }
 
-    // Initialize dynamic tags and load stored blocks
     initializeDynamicTags();
     await appManager.loadBlocks();
     appManager.renderBlocks(appManager.getActiveTab());
     appManager.updateTags();
-
-    console.log("✅ All event listeners successfully attached.");
-
-    // Sequential fade-in function
-    const fadeInElementsSequentially = () => {
-        const elements = document.querySelectorAll('.fade-in');
-        console.log("Found fade-in elements:", elements.length);
-        elements.forEach((el, index) => {
-            setTimeout(() => {
-                el.classList.add('visible');
-            }, index * 300);
-        });
-    };
-
-    fadeInElementsSequentially();
 };

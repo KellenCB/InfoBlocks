@@ -32,7 +32,6 @@ export const appManager = (() => {
     
         const resultsSection = document.getElementById(`results_section_${tab.replace("tab", "")}`);
         if (!resultsSection) {
-            console.error(`❌ Results section not found for ${tab}`);
             return;
         }
     
@@ -106,14 +105,18 @@ export const appManager = (() => {
             
     // Load blocks from localStorage (if they exist)
     const loadBlocks = () => {
-        const savedBlocks = JSON.parse(localStorage.getItem("userBlocks"));
-        if (Array.isArray(savedBlocks)) {
-            userBlocks = savedBlocks; // Update userBlocks
-            console.log("Blocks loaded from localStorage:", userBlocks);
-        } else {
-            console.warn("No valid blocks found in localStorage");
+        const savedBlocks = localStorage.getItem("userBlocks");
+        if (savedBlocks) {
+            const parsedBlocks = JSON.parse(savedBlocks);
+            if (Array.isArray(parsedBlocks)) {
+                userBlocks = parsedBlocks;
+                console.log("Blocks loaded from localStorage:", userBlocks);
+                return;
+            }
         }
+        console.log("No valid 'userBlocks' found in localStorage");
     };
+    
 
     let currentSortMode = "newest"; // ✅ Default sorting mode
 
@@ -213,11 +216,9 @@ export const appManager = (() => {
         const unifiedContainer = document.getElementById(`dynamic_tags_section_${tabSuffix}`);
         if (unifiedContainer) {
             unifiedContainer.innerHTML = html;
-        } else {
-            console.warn(`Unified container dynamic_tags_section_${tabSuffix} not found.`);
         }
     
-        // (Optional) Update selected tag highlighting for all tag buttons in the active tab
+        // Update selected tag highlighting for all tag buttons in the active tab
         const activeTabElement = document.getElementById(activeTab);
         if (activeTabElement) {
             activeTabElement.querySelectorAll(".tag-button").forEach(tagElement => {
