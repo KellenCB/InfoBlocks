@@ -323,8 +323,10 @@ export const appManager = (() => {
                 title: blockTitle,
                 text: text,
                 tags: formattedTags,
-                timestamp: timestamp || Date.now()
-                    };
+                timestamp: timestamp || Date.now(),
+                viewState: "expanded" // default state; later you can change this based on user actions or tab settings
+                };
+                
             userBlocks.unshift(newBlock);
             console.log("✅ New Block Saved:", newBlock);
         }

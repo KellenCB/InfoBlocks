@@ -414,6 +414,32 @@ const keyboardShortcutsHandler = (() => {
     return { handleKeyboardShortcuts };
 })();
 
+// Function to update the viewState of all blocks in the active tab and re-render them
+const updateBlocksViewState = (newState) => {
+    const activeTab = appManager.getActiveTab();
+    let blocks = appManager.getBlocks(activeTab);
+    // Update viewState for each block
+    blocks.forEach(block => {
+        block.viewState = newState;
+    });
+    // Save the updated blocks to localStorage for the active tab
+    localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
+    // Re-render the blocks for the active tab
+    appManager.renderBlocks(activeTab);
+};
+
+// Attach the new event listeners to the view state buttons
+document.getElementById("view_expanded_button")?.addEventListener("click", () => {
+    updateBlocksViewState("expanded");
+});
+document.getElementById("view_condensed_button")?.addEventListener("click", () => {
+    updateBlocksViewState("condensed");
+});
+document.getElementById("view_minimized_button")?.addEventListener("click", () => {
+    updateBlocksViewState("minimized");
+});
+
+
 window.onload = async () => {
     console.log("🔄 Window Loaded - Initializing App");
 

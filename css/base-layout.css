@@ -160,6 +160,20 @@ html {
     margin-bottom: 20px;
 }
 
+.block.expanded {
+}
+.block.condensed { 
+}
+.block.minimized { 
+    display: inline-block;
+    width: auto;
+    vertical-align: top; 
+    padding: 10px 20px 8px 20px;
+    border-radius: 25px;
+    margin-right: 10px;
+    margin-bottom: 16px;
+}
+
 .block:last-child {
     margin-bottom: 0;
 }
