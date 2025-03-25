@@ -3,7 +3,9 @@ const initializeTitles = () => {
     const resultsTitles = {
         tab1: document.getElementById("results_title_1"),
         tab2: document.getElementById("results_title_2"),
-        tab3: document.getElementById("results_title_3")
+        tab3: document.getElementById("results_title_3"),
+        tab6: document.getElementById("results_title_6"),
+        tab7: document.getElementById("results_title_7")
 
     };
 

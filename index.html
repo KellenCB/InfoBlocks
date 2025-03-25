@@ -13,7 +13,8 @@
     <link rel="stylesheet" href="./css/scrollbar.css">
     <link rel="stylesheet" href="./css/tags.css">
     <link rel="stylesheet" href="./css/sortControlls.css">
-    <link rel="stylesheet" href="css/diceRoller.css" />
+    <link rel="stylesheet" href="css/diceRoller.css">
+    <link rel="stylesheet" href="css/CharacterSheet.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
@@ -69,7 +70,7 @@
             <button class="tab-button active" data-tab="tab1" draggable="true">Tab 1</button> <!-- Magic Items -->
             <button class="tab-button" data-tab="tab2" draggable="true">Tab 2</button> <!-- Spells -->
             <button class="tab-button" data-tab="tab3" draggable="true">Tab 3</button> <!-- Notes -->
-            <button class="tab-button" data-tab="tab4" draggable="true">Tab 4</button> <!-- Character Sheet -->
+            <button class="tab-button" data-tab="tab4" draggable="true">Character Sheet</button> <!-- Character Sheet -->
             <button class="tab-button" data-tab="tab5" draggable="true">Dice Roller</button> <!-- Dice -->
             <button class="tab-button" data-tab="tab6" draggable="true">Tab 6</button> <!-- Inventory -->
             <button class="tab-button" data-tab="tab7" draggable="true">Tab 7</button> <!-- Session Notes -->
@@ -206,12 +207,303 @@
             </div>
         </div>
         
-        <!-- Tab 4: Empty Placeholder -->
-        <div class="tab-content" id="tab4">
-            <h2>Character sheet</h2>
-            <p>Coming soon.</p>
-        </div>
+        <!-- Tab 4: Character Sheet -->
+        <div class="tab-content no-gap" id="tab4">
 
+            <div class="character-sheet-column">
+                <!-- Row 1 -->
+                <div class="character-sheet-row">
+                    <div class="descriptor-title">
+                        <h2>Character Sheet</h2> 
+                    </div>
+
+                    <div class="descriptor-grid">
+                        <div class="descriptor-box">
+                            <span class="descriptor-label">Level</span>
+                            <span class="descriptor-value editable" contenteditable="true">10</span>
+                        </div>
+                        <div class="descriptor-box">
+                            <span class="descriptor-label">Class</span>
+                            <span class="descriptor-value" contenteditable="true">Fighter</span>
+                        </div>
+                        <div class="descriptor-box">
+                            <span class="descriptor-label">Alignment</span>
+                            <span class="descriptor-value" contenteditable="true">Neutral</span>
+                        </div>
+                        <div class="descriptor-box">
+                            <span class="descriptor-label">Background</span>
+                            <span class="descriptor-value" contenteditable="true">Soldier</span>
+                        </div>
+                        <div class="descriptor-box">
+                            <span class="descriptor-label">Species</span>
+                            <span class="descriptor-value" contenteditable="true">Human</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2 -->
+                <div class="stats-container-row">
+                    <div class="hp-stat-box">
+                        <span class="stat-label">HP</span>
+                        <span class="large-value editable" contenteditable="true">45 / 60</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Temp HP</span>
+                        <span class="large-value editable" contenteditable="true">+5</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Hit Die</span>
+                        <span class="stat-value editable" contenteditable="true">1d10</span>
+                        <span class="stat-value editable" contenteditable="true">6 / 8</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">AC</span>
+                        <span class="large-value editable" contenteditable="true">18</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Initiative</span>
+                        <span class="large-value editable" contenteditable="true">+2</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Prof</span>
+                        <span class="large-value editable" contenteditable="true">+4</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Speed</span>
+                        <span class="large-value editable" contenteditable="true">30</span>
+                    </div>
+                </div>
+            
+                <!-- Row 3 -->
+                <div class="stats-container-row">
+                    <div class="main-stats-container-row">
+                        <div class="main-stat-box">
+                            <span class="stat-label">STR</span>
+                            <span class="stat-value editable" contenteditable="true">+3</span>
+                            <span class="stat-subvalue editable" contenteditable="true">15</span>
+                        </div>
+                        <div class="main-stat-box">
+                            <span class="stat-label">DEX</span>
+                            <span class="stat-value editable" contenteditable="true">+2</span>
+                            <span class="stat-subvalue editable" contenteditable="true">14</span>
+                        </div>
+                        <div class="main-stat-box">
+                            <span class="stat-label">CON</span>
+                            <span class="stat-value editable" contenteditable="true">+3</span>
+                            <span class="stat-subvalue editable" contenteditable="true">16</span>
+                        </div>
+                        <div class="main-stat-box">
+                            <span class="stat-label">INT</span>
+                            <span class="stat-value editable" contenteditable="true">+0</span>
+                            <span class="stat-subvalue editable" contenteditable="true">10</span>
+                        </div>
+                        <div class="main-stat-box">
+                            <span class="stat-label">WIS</span>
+                            <span class="stat-value editable" contenteditable="true">+3</span>
+                            <span class="stat-subvalue editable" contenteditable="true">16</span>
+                        </div>
+                        <div class="main-stat-box">
+                            <span class="stat-label">CHA</span>
+                            <span class="stat-value editable" contenteditable="true">+0</span>
+                            <span class="stat-subvalue editable" contenteditable="true">10</span>
+                        </div>
+                    </div>
+                    <div class="stats-container-row">
+                        <div class="stat-box">
+                            <span class="stat-label">Spell Save</span>
+                            <span class="stat-value editable" contenteditable="true">30</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">Spell attack</span>
+                            <span class="stat-value editable" contenteditable="true">30</span>
+                        </div>
+                        <div class="death-saves-box">
+                            <span class="stat-label">Death Saves</span>
+                            <div class="death-saves-row">
+                                <span class="circle toggle-circle"></span>
+                                <span class="circle toggle-circle"></span>
+                                <span class="circle toggle-circle"></span>
+                            </div>
+                            <div class="death-saves-row">
+                                <span class="circle toggle-circle"></span>
+                                <span class="circle toggle-circle"></span>
+                                <span class="circle toggle-circle"></span>
+                            </div>
+                        </div>    
+                    </div>
+                </div>
+            </div>
+
+            <div class="character-sheet-row">
+                <!-- Saving Throws & Skills -->
+                <div class="saving-throws-and-skills-column">
+                    <div class="saving-throws">
+                    <h3>Saving Throws</h3>
+                        <div class="save-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="save-label">Strength</span>
+                            <span class="editable" contenteditable="true">+5</span>
+                        </div>
+                        <div class="save-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="save-label">Dexterity</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="save-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="save-label">Constitution</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="save-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="save-label">Inteligence</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="save-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="save-label">Wisdom</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="save-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="save-label">Charisma</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="skills">
+                    <h3>Skills</h3>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Acrobatics (dex)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Animal Handling (wis)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Arcana (str)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Athletics (str)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Deception (cha)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">History (int)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Insight (wis)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Intimidation (cha)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Investigation (int)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Medicine (wis)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Nature (int)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Perception (wis)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Performance (cha)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Persuasion (cha)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Religion (int)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Slight of Hand (dex)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Stealth (dex)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle"></span>
+                            <span class="skill-label">Survival (wis)</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                    </div>
+                </div>
+        
+                <div class="character-sheet-column">
+                    <!-- Attacks -->
+                    <div class="attacks_grid">
+                        <h3>Attacks</h3>
+                        <div class="attack-row">
+                            <span class="attack-label">DEX</span>
+                            <span class="attack-name">Melle attack</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                        <div class="attack-row">
+                            <span class="attack-label">DEX</span>
+                            <span class="attack-name">Shortbow</span>
+                            <span class="editable" contenteditable="true">0</span>
+                        </div>
+                    </div>
+                
+                    <!-- Feats & Abilities (Results Section) -->
+                    <div id="results_section_4" class="results-section">
+                        <div id="results_header" class="results-header">
+                            <h2class="section-header">Feats & Abilities</h2>
+                            <div id="sort_controls" class="sort-controls">
+                                <span>Sort by:</span>
+                                <button id="sort_newest" class="sort-button">
+                                    <i class="fas fa-sort-numeric-down"></i> Newest
+                                </button>
+                                <button id="sort_oldest" class="sort-button">
+                                    <i class="fas fa-sort-numeric-up"></i> Oldest
+                                </button>
+                                <button id="sort_alpha" class="sort-button">
+                                    <i class="fas fa-sort-alpha-down"></i> A-Z
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+                    
         <!-- Tab 5: Dice Roller -->
         <div class="tab-content" id="tab5">
             <div class="dice-roller-container">
@@ -277,8 +569,39 @@
 
         <!-- Tab 6: Empty Placeholder -->
         <div class="tab-content" id="tab6">
-            <h2>Inventory</h2>
-            <p>Coming soon.</p>
+            <div class="filter-and-results">
+                <div class="filter-section">
+                    <h2 class="section-header">Search & Filter</h2>
+                    <div class="search-container">
+                        <input id="search_input_6" class="search_input" type="text" placeholder="Search by text" />
+                        <button id="clear_search_button_6" class="clear-search">✖</button>
+                    </div>
+
+                    <div id="all_tags_container" class="tag-section">
+                        <div id="dynamic_tags_section_6"></div>
+                    </div>
+                    
+                    <button id="clear_filters_button_6" class="clear_filters_button">Clear Filters</button>
+                </div>
+
+                <div id="results_section_6" class="results-section">
+                    <div id="results_header" class="results-header">
+                        <h2 id="results_title_6" class="section-header" contenteditable="true"></h2>
+                        <div id="sort_controls" class="sort-controls">
+                            <span>Sort by:</span>
+                            <button id="sort_newest" class="sort-button">
+                                <i class="fas fa-sort-numeric-down"></i> Newest
+                            </button>
+                            <button id="sort_oldest" class="sort-button">
+                                <i class="fas fa-sort-numeric-up"></i> Oldest
+                            </button>
+                            <button id="sort_alpha" class="sort-button">
+                                <i class="fas fa-sort-alpha-down"></i> A-Z
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Tab 7: Empty Placeholder -->

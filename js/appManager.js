@@ -24,85 +24,141 @@ export const appManager = (() => {
     // Render blocks in the results section
     const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
         console.log("🔍 Checking tab value:", tab, typeof tab);
-    
+      
         if (typeof tab !== "string") {
-            console.error("❌ Error: 'tab' should be a string but got:", tab);
-            tab = "tab1"; // Fallback to default tab
+          console.error("❌ Error: 'tab' should be a string but got:", tab);
+          tab = "tab1"; // Fallback to default tab
         }
-    
-        const resultsSection = document.getElementById(`results_section_${tab.replace("tab", "")}`);
-        if (!resultsSection) {
-            return;
+      
+        const sectionId = `results_section_${tab.replace("tab", "")}`;
+        const resultsSection = document.getElementById(sectionId);
+        if (!resultsSection) return;
+      
+        // Clear old content and render header
+        resultsSection.innerHTML = `
+          <div id="results_header" class="results-header">
+            <h2 id="results_title_${tab.replace("tab", "")}" class="section-header" contenteditable="true"></h2>
+            <div id="sort_controls" class="sort-controls">
+              <span>Sort by:</span>
+              <button id="sort_newest" class="sort-button">
+                <i class="fas fa-sort-numeric-down"></i> Newest
+              </button>
+              <button id="sort_oldest" class="sort-button">
+                <i class="fas fa-sort-numeric-up"></i> Oldest
+              </button>
+              <button id="sort_alpha" class="sort-button">
+                <i class="fas fa-sort-alpha-down"></i> A-Z
+              </button>
+            </div>
+          </div>
+        `;
+      
+        // If we're in tab6, insert the three permanent editable elements at the top.
+        if (tab === "tab6") {
+            const permanentItems = [
+              { id: "perm1", defaultValue: "00" },
+              { id: "perm2", defaultValue: "00" },
+              { id: "perm3", defaultValue: "00" }
+            ];
+            const colorClasses = {
+              perm1: "gold-bg",
+              perm2: "silver-bg",
+              perm3: "copper-bg"
+            };
+          
+            let permanentHTML = "";
+            permanentItems.forEach(({ id, defaultValue }) => {
+              const savedValue = localStorage.getItem(`permanentItem_${id}`) || defaultValue;
+              permanentHTML += `
+                <div class="block minimized permanent-block ${colorClasses[id]}" data-id="${id}">
+                  <h4 class="permanent-title" contenteditable="true">${savedValue}</h4>
+                </div>
+              `;
+            });
+            // Insert a container wrapping the permanent items.
+            resultsSection.insertAdjacentHTML("beforeend", `
+              <div class="permanent-items-container">
+                ${permanentHTML}
+              </div>
+            `);
         }
-    
-        resultsSection.innerHTML = ""; // ✅ Clear old blocks
-    
-        // ✅ Get blocks, either from the provided filteredBlocks or fetch all
+                
+        // Render user blocks
         const blocks = filteredBlocks || getBlocks(tab);
         console.log(`📦 Blocks to render for ${tab}:`, blocks);
-    
-        resultsSection.innerHTML = `
-            <div id="results_header" class="results-header">
-                <h2 id="results_title_${tab.replace("tab", "")}" class="section-header" contenteditable="true"></h2>
-                    <div id="sort_controls" class="sort-controls">
-                    <span>Sort by:</span>
-                    <button id="sort_newest" class="sort-button">
-                        <i class="fas fa-sort-numeric-down"></i> Newest
-                    </button>
-                    <button id="sort_oldest" class="sort-button">
-                        <i class="fas fa-sort-numeric-up"></i> Oldest
-                    </button>
-                    <button id="sort_alpha" class="sort-button">
-                        <i class="fas fa-sort-alpha-down"></i> A-Z
-                    </button>
-                </div>
-            </div>
-        `;
-    
         if (blocks.length === 0) {
-            console.warn(`⚠️ No blocks found for ${tab}`);
+          console.warn(`⚠️ No blocks found for ${tab}`);
         }
-    
         blocks.forEach(block => {
-            resultsSection.insertAdjacentHTML("beforeend", blockTemplate(block));
+          resultsSection.insertAdjacentHTML("beforeend", blockTemplate(block));
         });
-    
         console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
-    
+      
+        // Reattach sorting event listeners.
         document.getElementById("sort_newest").addEventListener("click", () => sortBlocks("newest"));
         document.getElementById("sort_oldest").addEventListener("click", () => sortBlocks("oldest"));
         document.getElementById("sort_alpha").addEventListener("click", () => sortBlocks("alpha"));
-    
+      
+        // Attach event listeners to the permanent titles (only for tab6)
+        if (tab === "tab6") {
+          resultsSection.querySelectorAll(".permanent-title").forEach(titleEl => {
+            titleEl.addEventListener("blur", () => {
+              const blockId = titleEl.parentElement.getAttribute("data-id");
+              localStorage.setItem(`permanentItem_${blockId}`, titleEl.textContent.trim());
+            });
+          });
+        }
+      
+        // Attach click-to-expand behavior for non-permanent blocks.
+        document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`).forEach(blockEl => {
+          blockEl.addEventListener("click", function (e) {
+            if (e.target.closest(".action-button")) return; // ignore clicks on action buttons
+            if (!blockEl.classList.contains("minimized") && !blockEl.classList.contains("condensed")) return;
+            const blockId = blockEl.getAttribute("data-id");
+            const blocksArr = getBlocks(tab);
+            const targetBlock = blocksArr.find(b => b.id === blockId);
+            if (targetBlock && (targetBlock.viewState === "minimized" || targetBlock.viewState === "condensed")) {
+              targetBlock.viewState = "expanded";
+              localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
+              appManager.renderBlocks(tab);
+            }
+          });
+        });
+      
+        // Attach click event to the minimize buttons (present in expanded blocks)
+        document.querySelectorAll(`#${sectionId} .minimize_button`).forEach(button => {
+          button.addEventListener("click", function (e) {
+            e.stopPropagation(); // prevent triggering the block container click
+            const blockId = button.getAttribute("data-id");
+            const blocksArr = getBlocks(tab);
+            const targetBlock = blocksArr.find(b => b.id === blockId);
+            if (targetBlock && targetBlock.viewState === "expanded") {
+              targetBlock.viewState = "minimized";
+              localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
+              appManager.renderBlocks(tab);
+            }
+          });
+        });
+      
         appManager.updateTags();
         initializeTitles();
-    };
-    
-            
-    // ✅ Sorting function
-    const sortBlocks = (mode) => {
-        currentSortMode = mode; // ✅ Update global sorting mode
-    
-        // ✅ Remove "selected" class from all buttons
+      };
+      
+      const sortBlocks = (mode) => {
+        currentSortMode = mode;
         document.querySelectorAll(".sort-button").forEach(btn => btn.classList.remove("selected"));
-    
-        // ✅ Highlight the newly selected sort button
         document.getElementById(`sort_${mode}`).classList.add("selected");
-    
-        // ✅ Get and sort blocks
+      
         let sortedBlocks = getBlocks(getActiveTab());
-    
-        // ✅ Apply currently selected tag filters
         const selectedTags = tagHandler.getSelectedTags();
         if (selectedTags.length > 0) {
-            sortedBlocks = sortedBlocks.filter(block =>
-                selectedTags.every(tag => block.tags.includes(tag))
-            );
+          sortedBlocks = sortedBlocks.filter(block =>
+            selectedTags.every(tag => block.tags.includes(tag))
+          );
         }
-    
-        // ✅ Re-render blocks with sorting + filtering applied
         renderBlocks(sortedBlocks);
-    };
-            
+      };
+                        
     // Load blocks from localStorage (if they exist)
     const loadBlocks = () => {
         const savedBlocks = localStorage.getItem("userBlocks");

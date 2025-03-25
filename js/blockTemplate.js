@@ -48,6 +48,7 @@ export const blockTemplate = (block) => {
     if (viewState === 'expanded') {
         content = `
             <div class="block-actions">
+                <button class="action-button minimize_button blue-button" data-id="${block.id}" title="Minimize">M</button>
                 <button class="action-button duplicate_button green-button" data-id="${block.id}" title="Copy">❐</button>
                 <button class="action-button edit_button orange-button" data-id="${block.id}" title="Edit">✎</button>
                 <button class="action-button remove_button red-button" data-id="${block.id}" title="Remove">×</button>
@@ -59,7 +60,7 @@ export const blockTemplate = (block) => {
             </div>
             <p>${processedText}</p>
         `;
-    } else if (viewState === 'condensed') {
+        } else if (viewState === 'condensed') {
         // Condensed: show title and tags only (no text)
         content = `
             <h4>${block.title}</h4>
