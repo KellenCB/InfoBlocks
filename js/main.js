@@ -414,31 +414,55 @@ const keyboardShortcutsHandler = (() => {
     return { handleKeyboardShortcuts };
 })();
 
-// Function to update the viewState of all blocks in the active tab and re-render them
+// Function to update the viewState of all blocks in the active tab, re-render them,
+// and save the active view state to localStorage.
 const updateBlocksViewState = (newState) => {
     const activeTab = appManager.getActiveTab();
     let blocks = appManager.getBlocks(activeTab);
-    // Update viewState for each block
     blocks.forEach(block => {
         block.viewState = newState;
     });
-    // Save the updated blocks to localStorage for the active tab
     localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
-    // Re-render the blocks for the active tab
     appManager.renderBlocks(activeTab);
+    // Save active view state globally
+    localStorage.setItem("activeViewState", newState);
 };
 
-// Attach the new event listeners to the view state buttons
+// Helper function to clear active classes from the toggle buttons (condensed and minimized)
+const clearToggleClasses = () => {
+    document.getElementById("view_condensed_button")?.classList.remove("active");
+    document.getElementById("view_minimized_button")?.classList.remove("active");
+};
+
+// Attach event listeners to the view state buttons
 document.getElementById("view_expanded_button")?.addEventListener("click", () => {
     updateBlocksViewState("expanded");
-});
-document.getElementById("view_condensed_button")?.addEventListener("click", () => {
-    updateBlocksViewState("condensed");
-});
-document.getElementById("view_minimized_button")?.addEventListener("click", () => {
-    updateBlocksViewState("minimized");
+    // Expand does not change the active toggle state of condensed/minimized buttons.
 });
 
+document.getElementById("view_condensed_button")?.addEventListener("click", () => {
+    updateBlocksViewState("condensed");
+    clearToggleClasses();
+    document.getElementById("view_condensed_button")?.classList.add("active");
+});
+
+document.getElementById("view_minimized_button")?.addEventListener("click", () => {
+    updateBlocksViewState("minimized");
+    clearToggleClasses();
+    document.getElementById("view_minimized_button")?.classList.add("active");
+});
+
+// On page load, check localStorage for the active view state.
+// If nothing is found, default to "condensed".
+const savedViewState = localStorage.getItem("activeViewState") || "condensed";
+updateBlocksViewState(savedViewState);
+
+// Update the toggle button classes based on the saved state.
+if (savedViewState === "condensed") {
+    document.getElementById("view_condensed_button")?.classList.add("active");
+} else if (savedViewState === "minimized") {
+    document.getElementById("view_minimized_button")?.classList.add("active");
+}
 
 window.onload = async () => {
     console.log("🔄 Window Loaded - Initializing App");

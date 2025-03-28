@@ -109,22 +109,31 @@ export const appManager = (() => {
           });
         }
       
-        // Attach click-to-expand behavior for non-permanent blocks.
+        // Attach click-to-toggle view behavior for non-permanent blocks.
         document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`).forEach(blockEl => {
           blockEl.addEventListener("click", function (e) {
-            if (e.target.closest(".action-button")) return; // ignore clicks on action buttons
-            if (!blockEl.classList.contains("minimized") && !blockEl.classList.contains("condensed")) return;
+            // Ignore clicks on action buttons
+            if (e.target.closest(".action-button")) return;
+        
             const blockId = blockEl.getAttribute("data-id");
-            const blocksArr = getBlocks(tab);
+            const blocksArr = appManager.getBlocks(tab);
             const targetBlock = blocksArr.find(b => b.id === blockId);
-            if (targetBlock && (targetBlock.viewState === "minimized" || targetBlock.viewState === "condensed")) {
+            if (!targetBlock) return;
+        
+            if (targetBlock.viewState === "expanded") {
+              // Retrieve the active view state from localStorage (defaulting to "condensed")
+              const activeState = localStorage.getItem("activeViewState") || "condensed";
+              targetBlock.viewState = activeState;
+            } else {
+              // Otherwise, set it to expanded
               targetBlock.viewState = "expanded";
-              localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
-              appManager.renderBlocks(tab);
             }
+        
+            localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
+            appManager.renderBlocks(tab);
           });
-        });
-      
+        });        
+              
         // Attach click event to the minimize buttons (present in expanded blocks)
         document.querySelectorAll(`#${sectionId} .minimize_button`).forEach(button => {
           button.addEventListener("click", function (e) {

@@ -604,10 +604,41 @@
             </div>
         </div>
 
-        <!-- Tab 7: Empty Placeholder -->
+        <!-- Tab 7: Session Notes -->
         <div class="tab-content" id="tab7">
-            <h2>Session Notes</h2>
-            <p>Coming soon.</p>
+            <div class="filter-and-results">
+                <div class="filter-section">
+                    <h2 class="section-header">Search & Filter</h2>
+                    <div class="search-container">
+                        <input id="search_input_7" class="search_input" type="text" placeholder="Search by text" />
+                        <button id="clear_search_button_7" class="clear-search">✖</button>
+                    </div>
+
+                    <div id="all_tags_container" class="tag-section">
+                        <div id="dynamic_tags_section_7"></div>
+                    </div>
+                    
+                    <button id="clear_filters_button_7" class="clear_filters_button">Clear Filters</button>
+                </div>
+
+                <div id="results_section_7" class="results-section">
+                    <div id="results_header" class="results-header">
+                        <h2 id="results_title_7" class="section-header" contenteditable="true"></h2>
+                        <div id="sort_controls" class="sort-controls">
+                            <span>Sort by:</span>
+                            <button id="sort_newest" class="sort-button">
+                                <i class="fas fa-sort-numeric-down"></i> Newest
+                            </button>
+                            <button id="sort_oldest" class="sort-button">
+                                <i class="fas fa-sort-numeric-up"></i> Oldest
+                            </button>
+                            <button id="sort_alpha" class="sort-button">
+                                <i class="fas fa-sort-alpha-down"></i> A-Z
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Tab 8: Crank -->

@@ -107,6 +107,16 @@
     color: white;
 }
 
+.state-button {
+    background-color: #ffF;
+    opacity: 0.5;
+}
+
+.state-button.active {
+    background-color: #ffF;
+    opacity: 1;
+  }
+
 /* Colored Button Styling */
 
     .green-button {

@@ -48,7 +48,6 @@ export const blockTemplate = (block) => {
     if (viewState === 'expanded') {
         content = `
             <div class="block-actions">
-                <button class="action-button minimize_button blue-button" data-id="${block.id}" title="Minimize">M</button>
                 <button class="action-button duplicate_button green-button" data-id="${block.id}" title="Copy">❐</button>
                 <button class="action-button edit_button orange-button" data-id="${block.id}" title="Edit">✎</button>
                 <button class="action-button remove_button red-button" data-id="${block.id}" title="Remove">×</button>
@@ -61,16 +60,17 @@ export const blockTemplate = (block) => {
             <p>${processedText}</p>
         `;
         } else if (viewState === 'condensed') {
-        // Condensed: show title and tags only (no text)
+        // Condensed View:
         content = `
-            <h4>${block.title}</h4>
-            <div class="tag-sections">
-                ${predefinedTagsHTML}
-                ${userTagsHTML}
+            <div class="block-actions">
+                <button class="action-button duplicate_button green-button" data-id="${block.id}" title="Copy">❐</button>
+                <button class="action-button edit_button orange-button" data-id="${block.id}" title="Edit">✎</button>
+                <button class="action-button remove_button red-button" data-id="${block.id}" title="Remove">×</button>
             </div>
+            <h4>${block.title}</h4>
         `;
     } else if (viewState === 'minimized') {
-        // Minimized: show only the title
+        // Minimized View:
         content = `<h4>${block.title}</h4>`;
     }
 
