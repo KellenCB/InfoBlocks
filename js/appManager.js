@@ -23,37 +23,42 @@ export const appManager = (() => {
 
     // Render blocks in the results section
     const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
-        console.log("🔍 Checking tab value:", tab, typeof tab);
+      console.log("🔍 Checking tab value:", tab, typeof tab);
       
-        if (typeof tab !== "string") {
-          console.error("❌ Error: 'tab' should be a string but got:", tab);
-          tab = "tab1"; // Fallback to default tab
-        }
+      if (typeof tab !== "string") {
+        console.error("❌ Error: 'tab' should be a string but got:", tab);
+        tab = "tab1";
+      }
       
-        const sectionId = `results_section_${tab.replace("tab", "")}`;
-        const resultsSection = document.getElementById(sectionId);
-        if (!resultsSection) return;
+      const tabSuffix = tab.replace("tab", ""); // e.g., "1" or "2"
+      const sectionId = `results_section_${tabSuffix}`;
+      const resultsSection = document.getElementById(sectionId);
+      if (!resultsSection) return;
+      const selectedNew = currentSortMode === "newest" ? "selected" : "";
+      const selectedOld = currentSortMode === "oldest" ? "selected" : "";
+      const selectedAlpha = currentSortMode === "alpha" ? "selected" : "";
       
-        // Clear old content and render header
-        resultsSection.innerHTML = `
-          <div id="results_header" class="results-header">
-            <h2 id="results_title_${tab.replace("tab", "")}" class="section-header" contenteditable="true"></h2>
-            <div id="sort_controls" class="sort-controls">
-              <span>Sort by:</span>
-              <button id="sort_newest" class="sort-button">
-                <i class="fas fa-sort-numeric-down"></i> Newest
-              </button>
-              <button id="sort_oldest" class="sort-button">
-                <i class="fas fa-sort-numeric-up"></i> Oldest
-              </button>
-              <button id="sort_alpha" class="sort-button">
-                <i class="fas fa-sort-alpha-down"></i> A-Z
-              </button>
-            </div>
+      // Clear old content and render header with unique IDs for sort buttons.
+      resultsSection.innerHTML = `
+        <div id="results_header_${tabSuffix}" class="results-header">
+          <h2 id="results_title_${tabSuffix}" class="section-header" contenteditable="true"></h2>
+          <div id="sort_controls_${tabSuffix}" class="sort-controls">
+            <span>Sort by:</span>
+            <button id="sort_newest_${tabSuffix}" class="sort-button ${selectedNew}">
+              <i class="fas fa-sort-numeric-down"></i> Newest
+            </button>
+            <button id="sort_oldest_${tabSuffix}" class="sort-button ${selectedOld}">
+              <i class="fas fa-sort-numeric-up"></i> Oldest
+            </button>
+            <button id="sort_alpha_${tabSuffix}" class="sort-button ${selectedAlpha}">
+              <i class="fas fa-sort-alpha-down"></i> A-Z
+            </button>
           </div>
-        `;
-      
-        // If we're in tab6, insert the three permanent editable elements at the top.
+        </div>
+      `;
+    
+    
+        // In tab6, insert the three permanent editable elements at the top.
         if (tab === "tab6") {
             const permanentItems = [
               { id: "perm1", defaultValue: "00" },
@@ -94,10 +99,10 @@ export const appManager = (() => {
         });
         console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
       
-        // Reattach sorting event listeners.
-        document.getElementById("sort_newest").addEventListener("click", () => sortBlocks("newest"));
-        document.getElementById("sort_oldest").addEventListener("click", () => sortBlocks("oldest"));
-        document.getElementById("sort_alpha").addEventListener("click", () => sortBlocks("alpha"));
+        // Reattach sort event listeners for this tab
+        document.getElementById(`sort_newest_${tabSuffix}`).addEventListener("click", () => sortBlocks("newest"));
+        document.getElementById(`sort_oldest_${tabSuffix}`).addEventListener("click", () => sortBlocks("oldest"));
+        document.getElementById(`sort_alpha_${tabSuffix}`).addEventListener("click", () => sortBlocks("alpha"));
       
         // Attach event listeners to the permanent titles (only for tab6)
         if (tab === "tab6") {
@@ -112,14 +117,14 @@ export const appManager = (() => {
         // Attach click-to-toggle view behavior for non-permanent blocks.
         document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`).forEach(blockEl => {
           blockEl.addEventListener("click", function (e) {
-            // Ignore clicks on action buttons
-            if (e.target.closest(".action-button")) return;
-        
+            // Ignore clicks on action buttons and tag buttons
+            if (e.target.closest(".action-button") || e.target.closest(".tag-button")) return;
+
             const blockId = blockEl.getAttribute("data-id");
             const blocksArr = appManager.getBlocks(tab);
             const targetBlock = blocksArr.find(b => b.id === blockId);
             if (!targetBlock) return;
-        
+
             if (targetBlock.viewState === "expanded") {
               // Retrieve the active view state from localStorage (defaulting to "condensed")
               const activeState = localStorage.getItem("activeViewState") || "condensed";
@@ -128,11 +133,11 @@ export const appManager = (() => {
               // Otherwise, set it to expanded
               targetBlock.viewState = "expanded";
             }
-        
+
             localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
             appManager.renderBlocks(tab);
           });
-        });        
+        });
               
         // Attach click event to the minimize buttons (present in expanded blocks)
         document.querySelectorAll(`#${sectionId} .minimize_button`).forEach(button => {
@@ -155,19 +160,32 @@ export const appManager = (() => {
       
       const sortBlocks = (mode) => {
         currentSortMode = mode;
-        document.querySelectorAll(".sort-button").forEach(btn => btn.classList.remove("selected"));
-        document.getElementById(`sort_${mode}`).classList.add("selected");
-      
-        let sortedBlocks = getBlocks(getActiveTab());
+        const activeTab = getActiveTab();
+        const tabSuffix = activeTab.replace("tab", "");
+        
+        // Remove "selected" class from all sort buttons in the current tab's sort controls.
+        document.querySelectorAll(`#sort_controls_${tabSuffix} .sort-button`)
+          .forEach(btn => btn.classList.remove("selected"));
+        
+        // Add the selected style to the button for the chosen sort mode.
+        const sortBtn = document.getElementById(`sort_${mode}_${tabSuffix}`);
+        if (sortBtn) {
+          sortBtn.classList.add("selected");
+        }
+        
+        // Get the blocks, filter by any tags if necessary, and sort them.
+        let sortedBlocks = getBlocks(activeTab);
         const selectedTags = tagHandler.getSelectedTags();
         if (selectedTags.length > 0) {
           sortedBlocks = sortedBlocks.filter(block =>
             selectedTags.every(tag => block.tags.includes(tag))
           );
         }
-        renderBlocks(sortedBlocks);
+        
+        // Re-render the blocks in the active tab.
+        renderBlocks(activeTab, sortedBlocks);
       };
-                        
+                                    
     // Load blocks from localStorage (if they exist)
     const loadBlocks = () => {
         const savedBlocks = localStorage.getItem("userBlocks");

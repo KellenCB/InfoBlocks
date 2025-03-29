@@ -101,42 +101,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
     tabButtons.forEach(button => {
         button.addEventListener("click", (event) => {
-            const targetTab = event.currentTarget.dataset.tab;
-            const targetContent = document.getElementById(targetTab);
-            if (!targetTab) {
-                console.error("❌ Error: targetTab is undefined.");
-                return;
-            }
-            // Hide all tabs and remove active classes
-            tabButtons.forEach(btn => btn.classList.remove("active"));
-            tabContents.forEach(content => {
-                content.classList.remove("active");
-                content.style.display = "none";
+          const targetTab = event.currentTarget.dataset.tab;
+          const targetContent = document.getElementById(targetTab);
+          if (!targetTab) {
+            console.error("❌ Error: targetTab is undefined.");
+            return;
+          }
+          // Hide all tabs, remove active classes, etc.
+          tabButtons.forEach(btn => btn.classList.remove("active"));
+          tabContents.forEach(content => {
+            content.classList.remove("active");
+            content.style.display = "none";
+          });
+          // Show the new active tab
+          event.currentTarget.classList.add("active");
+          targetContent.classList.add("active");
+          targetContent.style.display = "flex";
+          localStorage.setItem("activeTab", targetTab);
+      
+          // Render blocks as before...
+          if (targetTab !== "tab5") {
+            appManager.renderBlocks(targetTab);
+            appManager.updateTags();
+          } else {
+            import('./diceRoller.js').then(module => {
+              module.initDiceRoller();
             });
-            // Show the new active tab
-            event.currentTarget.classList.add("active");
-            targetContent.classList.add("active");
-            targetContent.style.display = "flex";
-            localStorage.setItem("activeTab", targetTab);
-            // Only re-render if this tab is not the dice roller tab.
-            if (targetTab !== "tab5") {
-                appManager.renderBlocks(targetTab);
-                appManager.updateTags();
-            } else {
-                // For dice roller tab, initialize the dice roller.
-                import('./diceRoller.js').then(module => {
-                    module.initDiceRoller();
-                });
+          }
+      
+          // Update view toggle buttons based on the newly active tab's state.
+          updateViewToggleButtons();
+          
+          setTimeout(() => {
+            const computedStyle = window.getComputedStyle(targetContent);
+            if (computedStyle.display === "none") {
+              targetContent.style.display = "flex";
             }
-            setTimeout(() => {
-                const computedStyle = window.getComputedStyle(targetContent);
-                if (computedStyle.display === "none") {
-                    targetContent.style.display = "flex";
-                }
-            }, 100);
+          }, 100);
         });
     });
-
+      
     // Handle tab reordering
     document.querySelector(".tabs-nav").addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -408,12 +412,35 @@ const updateBlocksViewState = (newState) => {
     const activeTab = appManager.getActiveTab();
     let blocks = appManager.getBlocks(activeTab);
     blocks.forEach(block => {
-        block.viewState = newState;
+      block.viewState = newState;
     });
     localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
     appManager.renderBlocks(activeTab);
-    localStorage.setItem("activeViewState", newState);
+    localStorage.setItem(`activeViewState_${activeTab}`, newState);
 };
+
+const updateViewToggleButtons = () => {
+    // Remove the active class from all buttons
+    const expandedBtn = document.getElementById("view_expanded_button");
+    const condensedBtn = document.getElementById("view_condensed_button");
+    const minimizedBtn = document.getElementById("view_minimized_button");
+    
+    [expandedBtn, condensedBtn, minimizedBtn].forEach(btn => {
+      btn.classList.remove("active");
+    });
+  
+    const activeTab = appManager.getActiveTab();
+    // Use the per‑tab key; default to "condensed" if nothing is stored.
+    let savedViewState = localStorage.getItem(`activeViewState_${activeTab}`) || "condensed";
+  
+    if (savedViewState === "expanded") {
+      expandedBtn.classList.add("active");
+    } else if (savedViewState === "condensed") {
+      condensedBtn.classList.add("active");
+    } else if (savedViewState === "minimized") {
+      minimizedBtn.classList.add("active");
+    }
+};  
 
 const clearToggleClasses = () => {
     document.getElementById("view_condensed_button")?.classList.remove("active");
