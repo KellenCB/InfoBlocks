@@ -37,27 +37,37 @@ export const tagHandler = (() => {
         document.addEventListener("click", (event) => {
             const target = event.target;
             if (!target.classList.contains("tag-button")) return;
-            
-            const tag = target.dataset.tag.trim();
-            let updatedTags = [...tagHandler.getSelectedTags()]; 
     
-            // Toggle tag selection
-            updatedTags.includes(tag) 
-                ? updatedTags = updatedTags.filter(t => t !== tag) 
+            const tag = target.dataset.tag.trim();
+            let updatedTags = [...tagHandler.getSelectedTags()];
+    
+            updatedTags.includes(tag)
+                ? updatedTags = updatedTags.filter(t => t !== tag)
                 : updatedTags.push(tag);
     
             tagHandler.setSelectedTags(updatedTags);
     
-            // ✅ Get the current search query
-            const searchQuery = document.getElementById("search_input").value.trim().toLowerCase();
+            const activeTab = document.querySelector(".tab-button.active")?.dataset.tab;
+            const searchInput = document.getElementById(`search_input_${activeTab.replace("tab", "")}`);
     
-            // ✅ Get and filter blocks using both search and tags
-            let filteredBlocks = appManager.getBlocks();
+            if (!searchInput) {
+                console.error(`❌ Error: search_input_${activeTab} not found!`);
+                return;
+            }
+    
+            const searchQuery = searchInput.value.trim().toLowerCase();
+            
+            // ✅ Get blocks for the active tab
+            let filteredBlocks = appManager.getBlocks(activeTab);
+    
+            // ✅ Apply tag filtering
             if (updatedTags.length > 0) {
                 filteredBlocks = filteredBlocks.filter(block =>
-                    updatedTags.every(t => block.tags.includes(t)) // Ensure all selected tags are present
+                    updatedTags.every(t => block.tags.includes(t))
                 );
             }
+    
+            // ✅ Apply search filtering
             if (searchQuery.length > 0) {
                 filteredBlocks = filteredBlocks.filter(block =>
                     block.title.toLowerCase().includes(searchQuery) ||
@@ -65,13 +75,14 @@ export const tagHandler = (() => {
                 );
             }
     
-            // ✅ Apply filtering
-            appManager.renderBlocks(filteredBlocks);
+            // ✅ Fix: Pass filteredBlocks to renderBlocks
+            appManager.renderBlocks(activeTab, filteredBlocks);
+    
             console.log("🔵 Currently selected tags:", updatedTags);
             console.log("🔍 Active search query:", searchQuery);
         });
     };
-            
+                    
     const handleOverlayTagClick = () => {
         document.addEventListener("click", (event) => {
             const target = event.target;

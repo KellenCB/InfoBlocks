@@ -1,0 +1,246 @@
+/* diceRoller.css */
+
+/* The main container for the Dice Roller in Tab 5 */
+.dice-roller-container {
+  display: flex;              /* Side by side layout */
+  flex-direction: row;        
+  align-items: flex-start;    
+  justify-content: space-between;
+  gap: 20px;                  /* Space between panels */
+  width: 100%;
+  padding: 20px;
+  background-color: #2a2a2a;
+  border-radius: 20px;
+}
+
+/* Left panel: Dice selection & controls */
+.dice-left-panel {
+  flex: 1;                    /* Fill remaining space */
+  display: flex;
+  flex-direction: column;
+  gap: 15px;                  /* Space between elements */
+  color: #ddd;
+}
+
+/* Right panel: Roll results */
+.dice-right-panel {
+  width: 300px;               /* Fixed width for results area */
+  flex-shrink: 0;
+}
+
+/* Heading for the dice roller */
+.dice-left-panel h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #fff;
+}
+
+/* The container for dice selection buttons */
+.dice-selection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Each dice button shape */
+.dice-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.3s;
+  opacity: 0.5;
+}
+
+.dice-button:hover {
+  opacity: 0.8;
+}
+
+.dice-button:active {
+  transform: scale(0.95);
+}
+
+/* Wrapper that holds the SVG and label overlay */
+.dice-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.dice-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Center label over the shape (except D4 is nudged lower) */
+.dice-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* D4 label for triangle shape across all instances */
+.dice-button[data-dice="4"] .dice-label,
+.selected-die-wrapper[data-dice="4"] .dice-label,
+.roll-die-wrapper[data-dice="4"] .roll-number {
+  top: 60%;
+}
+
+
+#roll-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  background-color: #4CAF50;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s, transform 0.2s;
+}
+#roll-button:hover {
+  background-color: #388e3c;
+}
+
+/* Container for selected dice & Roll! button */
+.selected-dice-wrapper {
+  width: 100%;
+  height: calc(100vh - 490px); /* Adjust for correct height */
+  position: relative;
+  background-color: #2a2a2a;
+  padding: 20px;
+  border: #5e5e5e solid 1px;
+  border-radius: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  margin-top: 20px;
+  box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Clear All button positioned at the top-right */
+.selected-dice-wrapper #clear-selected-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+  background-color: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s, transform 0.2s, opacity 0.3s;
+}
+.selected-dice-wrapper #clear-selected-button:hover {
+  opacity: 0.6;
+}
+
+/* Container for selected dice items */
+.selected-dice-container {
+  margin-top: 70px; /* Space below the buttons */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* Each selected die item */
+.selected-die {
+  margin: 5px;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+.selected-die:hover {
+  transform: scale(1.05);
+}
+
+/* Ensure the wrapper for each selected die is sized correctly */
+.selected-die-wrapper {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+.selected-die-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.selected-die .dice-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* Roll results panel styles */
+.roll-result {
+  background-color: #333;
+  border: 1px solid #555;
+  border-radius: 8px;
+  padding: 16px;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.4;
+  min-height: 200px;
+  align-items: center;
+}
+.roll-result h3 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  text-align: center;
+}
+.rolls-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin: 25px 0 35px 0;
+}
+.total {
+  font-weight: bold;
+  font-size: 18px;
+  text-align: center;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #555;
+}
+
+/* The wrapper that holds the die image and the roll number in roll results */
+.roll-die-wrapper {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto;
+}
+.roll-die-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.roll-number {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-weight: bold;
+  font-size: 16px;
+  pointer-events: none;
+}

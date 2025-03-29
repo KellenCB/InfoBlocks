@@ -1,42 +1,55 @@
 /* base-layout.css */
-
 body {
     background-color: #1e1e1e;
     color: #ddd;
     display: flex; 
     flex-direction: column;
     align-items: center; 
-    overflow: hidden;
     height: 100%;
     padding: 20px;
-    }    
+}    
 
 /* General Styles */
 html {
     height: 100%;
-    margin: 0;
     display: flex;
     flex-direction: column;
 }
 
 .container {
-    width: 100%; 
+    width: 100%;
     display: flex;
     gap: 20px;
-    height: auto;
-    box-sizing: border-box;
-    overflow: hidden;
-}
-
-.container:first-of-type {
-    overflow: visible; 
     padding-bottom: 20px;
-}
+;}
 
 .container:last-of-type {
-    flex-grow: 1; 
+    padding-bottom: 0px;
+}
+
+/* Tabs styling */
+.tab-content {
+    position: relative;
+    width: 100vw;
+    padding-left: 20px;
+    padding-right: 20px;
+    gap: 20px;
+    height: calc(100vh - 240px);  /* Adjust for correct height */
+    display: flex;
+    flex-direction: column;
+}
+
+.tabs-nav {
+    display: flex;
+    border-radius: 20px;
+    background-color: #2a2a2a;
+    padding: 20px;
+    justify-content: flex-start;
+    gap: 10px;
+    width: 100%;
     flex-shrink: 0;
-    overflow: auto;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 /* Layout for sections */
@@ -47,29 +60,55 @@ html {
     align-items: center;
     justify-content: flex-start;
     background-color: #2a2a2a;
-    padding: 15px 20px;
-    border-radius: 25px;
+    padding: 20px 20px;
+    border-radius: 20px;
     gap: 7.5px;
     box-sizing: border-box;
 }
 
-.circle-section {
+#page_title {
+    min-height: 1.5em;
+    padding: 0.25em;
+}
+
+#page_title:empty:before {
+    content: "Enter Custom Title Here...";
+    color: #aaa;       /* Lighter color for placeholder */
+    pointer-events: none;  /* Ensures clicks go to the contenteditable element */
+}
+
+.action-button-section{
     display: flex;
     height: auto;
     align-items: center;
     justify-content: center;
     background-color: #2a2a2a;
     padding: 15px 20px;
-    border-radius: 25px;
+    border-radius: 20px;
+    gap: 10px;
+    box-sizing: border-box;
+    min-height: 60px;
+}
+
+.circle-section {
+    display: flex;
+    height: auto;
+    align-items: center;
+    justify-content: left;
+    background-color: #2a2a2a;
+    padding: 15px 20px;
+    border-radius: 20px;
     gap: 7.5px;
     box-sizing: border-box;
     min-height: 60px;
 }
 
-.filter-section, .results-section {
-    background-color: #2a2a2a;
-    border-radius: 25px;
-    overflow-y: auto;
+.filter-and-results{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 20px;
+    overflow: hidden;
 }
 
 .filter-section {
@@ -79,12 +118,18 @@ html {
     flex-direction: wrap;
     align-items: flex-start;
     flex-wrap: wrap;
+    background-color: #2a2a2a;
+    border-radius: 20px;
+    overflow-y: auto;
 }
 
 .results-section {
     padding: 0px 20px 20px 20px;
     flex: 1 1 66%;
     position: relative;
+    background-color: #2a2a2a;
+    border-radius: 20px;
+    overflow-y: auto;
 }
 
 .results-header {
@@ -94,26 +139,81 @@ html {
     position: sticky;
     top: 0;
     width: 100%;
-    height: 70px;    z-index: 10;
+    height: 70px;
+    z-index: 10;
     background: linear-gradient(to bottom, 
         rgba(42, 42, 42, 1) 0%, 
         rgba(42, 42, 42, 1) 50%, 
         rgba(42, 42, 42, 0.75) 75%, 
         rgba(42, 42, 42, 0) 100%
     );
-    padding: 20px 0px 0px 0px; /* ✅ Adds spacing to prevent text from overlapping */
-    padding-bottom: 20px;;
+    padding: 20px 0px 0px 0px;
+    padding-bottom: 20px;
 }
 
 .block {
     position: relative;
     background-color: #444; 
     border: 1px solid #555;
-    border-radius: 7px; 
-    padding: 15px; 
+    border-radius: 10px; 
+    padding: 10px 15px;
     margin-bottom: 20px;
+}
+
+.block.expanded {
+}
+.block.condensed { 
+}
+.block.minimized { 
+    display: inline-block;
+    width: auto;
+    vertical-align: top; 
+    padding: 10px 15px;
+    border-radius: 10px; 
+    margin-right: 10px;
+    margin-bottom: 16px;
 }
 
 .block:last-child {
     margin-bottom: 0;
 }
+
+.fade-in {
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+  
+  .fade-in.visible {
+    opacity: 1;
+  }
+
+
+/* Inventory Coin Counters */
+
+.permanent-items-container {
+    display: block;
+}
+
+.permanent-block {
+    display: inline-block;
+    width: auto;
+    vertical-align: top; 
+    padding: 8px 15px 8px 15px;
+    border-radius: 7px; 
+    margin-right: 10px;
+    margin-bottom: 16px;
+}
+
+.permanent-title {
+    display: inline-block;
+    margin-bottom: 4px;
+    width: auto;
+    white-space: nowrap;
+    
+}
+
+.gold-bg { background-color: rgba(255, 215, 0, 0.5);}
+
+.silver-bg { background-color: rgba(192, 192, 192, 0.5);}
+
+.copper-bg { background-color: rgba(226, 135, 67, 0.5);}

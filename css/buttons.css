@@ -17,6 +17,26 @@
     opacity: 0.8;
 }
 
+.action-button-section button {
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    border: 0px;
+}
+
+.action-button-section button svg {
+    width: 20px;
+    height: 20px;
+    stroke: white;
+    fill: none;
+    stroke-width: 2px;
+}
+
 .block-actions {
     display: flex; /* Align items in a row */
     gap: 7.5px;
@@ -28,14 +48,14 @@
 
 .duplicate-action-icon{
     pointer-events: none; /* Ensure the icon itself doesn’t block button clicks */
-    font-size: 14px; /* Adjust font size of the icon */
+    font-size: 14px;
     opacity: 0.75;
     margin-top: -10px;
 }
 
 .edit-action-icon{
     pointer-events: none; /* Ensure the icon itself doesn’t block button clicks */
-    font-size: 14px; /* Adjust font size of the icon */
+    font-size: 14px;
     opacity: 0.75;
     margin-top: -2px;
     margin-left: 1px;
@@ -43,7 +63,7 @@
 
 .remove-action-icon{
     pointer-events: none; /* Ensure the icon itself doesn’t block button clicks */
-    font-size: 20px; /* Adjust font size of the icon */
+    font-size: 20px;
     opacity: 0.75;
     align-items: center;
     justify-content: center;
@@ -70,17 +90,15 @@
     margin-bottom: 10px;
 }
 
-#clear_filters_button {
+.clear_filters_button {
     background-color: #06ade4;
     color: white;
-    margin-top: 10px;
+    margin-top: 20px;
     height: 3rem;
     width: 95%;
-    border-radius: 1.5rem;    
-}
-
-#clear_filters_button:hover {
-    background-color: #007bb5;
+    border-radius: 1.5rem;
+    padding: 8px 12px;
+    border: none;
 }
 
 #save_block_button {
@@ -89,112 +107,68 @@
     color: white;
 }
 
-#save_block_button:hover {
-    background-color: #45a049;
+.state-button {
+    background-color: #ffF;
+    opacity: 0.5;
 }
 
-#confirm_clear_button {
-    background-color: #4CAF50;
+.state-button.active {
+    background-color: #ffF;
+    opacity: 1;
+  }
+
+/* Colored Button Styling */
+
+    .green-button {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .blue-button {
+        background-color: #2d81ff;
+        color: white;
+    }
+
+    .green-border-button {
+    background-color: transparent;
+    border: 2px solid #4CAF50 !important;
     color: white;
-}
+    }
 
-#confirm_clear_button:hover {
-    background-color: #388e3c;
-}
+    .orange-button {
+        background-color: #f4a261;
+        color: white;
+    }
 
-#cancel_clear_button {
-    background-color: #ff6b6b;
-    color: white;
-}
+    .red-button {
+        background-color: #ff6b6b;
+        color: white;
+    }
 
-#cancel_clear_button:hover {
-    background-color: #d45656;
-}
+/* Tab buttons */
+    .tab-button {
+        background: #333;
+        color: #ddd;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-weight: bold;
+        border-radius: 20px;
+        transition: background 0.3s, color 0.3s;
+    }
 
-/* function Buttons */
-.function-buttons {
-    position: fixed;
-    bottom: 40px;
-    left: 40px;
-    display: flex;
-    gap: 15px;
-}
+    .tab-button:hover {
+        background: #444;
+    }
 
-.function-button, .add-block-float, .bin-button {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    font-size: 32px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    transition: transform 0.3s, background-color 0.3s;
-}
+    .tab-button.active {
+        background: #4CAF50;
+        color: white;
+    }
 
-.bin-button {
-    background-color: #ff6b6b;
-}
-
-.function-button:hover, .add-block-float:hover, .bin-button:hover {
-    transform: scale(1.1);
-}
-
-/* SVGs */
-.function-button svg, .bin-button svg {
-    width: 24px;
-    height: 24px;
-    stroke: white;
-    fill: none;
-    stroke-width: 2px;
-}
-
-.add-block-float svg {
-    width: 32px;
-    height: 32px;
-    stroke: white;
-    fill: none;
-    stroke-width: 2px;
-}
-
-/* Green, Orange, Red Button Styling */
-
-.green-button {
-    background-color: #4CAF50;
-    color: white;
-}
-
-.green-button:hover {
-    background-color: #388e3c;
-}
-
-.orange-button {
-    background-color: #f4a261;
-    color: white;
-}
-
-.orange-button:hover {
-    background-color: #e68a3a;
-}
-
-.red-button {
-    background-color: #ff6b6b;
-    color: white;
-}
-
-.red-button:hover {
-    background-color: #d45656;
-}
-
-.search-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
+    .tab-button.dragging {
+        opacity: 0.5;
+    }
 
 /*CIRCLES*/
 

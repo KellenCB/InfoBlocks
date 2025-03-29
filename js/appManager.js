@@ -8,95 +8,205 @@ export const appManager = (() => {
     let title = localStorage.getItem("pageTitle") || "Information Blocks";
     
     const resultsSection = document.getElementById("results_section");
+   
+    // ========================
+    // TABS
+    // ========================
+
+    const getActiveTab = () => {
+        return document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+    };
+   
     // ========================
     // BLOCKS
     // ========================
 
     // Render blocks in the results section
-    const renderBlocks = (blocks) => {
-        // ✅ Render only the HTML structure; do NOT set results_title text
-        resultsSection.innerHTML = `
-            <div id="results_header" class="results-header">
-                <h2 id="results_title" class="section-header" contenteditable="true"></h2>
-                <div id="sort_controls" class="sort-controls">
-                    <span>Sort by:</span>
-                    <button id="sort_newest" class="sort-button">
-                        <i class="fas fa-sort-numeric-down"></i> Newest
-                    </button>
-                    <button id="sort_oldest" class="sort-button">
-                        <i class="fas fa-sort-numeric-up"></i> Oldest
-                    </button>
-                    <button id="sort_alpha" class="sort-button">
-                        <i class="fas fa-sort-alpha-down"></i> A-Z
-                    </button>
+    const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
+      console.log("🔍 Checking tab value:", tab, typeof tab);
+      
+      if (typeof tab !== "string") {
+        console.error("❌ Error: 'tab' should be a string but got:", tab);
+        tab = "tab1";
+      }
+      
+      const tabSuffix = tab.replace("tab", ""); // e.g., "1" or "2"
+      const sectionId = `results_section_${tabSuffix}`;
+      const resultsSection = document.getElementById(sectionId);
+      if (!resultsSection) return;
+      const selectedNew = currentSortMode === "newest" ? "selected" : "";
+      const selectedOld = currentSortMode === "oldest" ? "selected" : "";
+      const selectedAlpha = currentSortMode === "alpha" ? "selected" : "";
+      
+      // Clear old content and render header with unique IDs for sort buttons.
+      resultsSection.innerHTML = `
+        <div id="results_header_${tabSuffix}" class="results-header">
+          <h2 id="results_title_${tabSuffix}" class="section-header" contenteditable="true"></h2>
+          <div id="sort_controls_${tabSuffix}" class="sort-controls">
+            <span>Sort by:</span>
+            <button id="sort_newest_${tabSuffix}" class="sort-button ${selectedNew}">
+              <i class="fas fa-sort-numeric-down"></i> Newest
+            </button>
+            <button id="sort_oldest_${tabSuffix}" class="sort-button ${selectedOld}">
+              <i class="fas fa-sort-numeric-up"></i> Oldest
+            </button>
+            <button id="sort_alpha_${tabSuffix}" class="sort-button ${selectedAlpha}">
+              <i class="fas fa-sort-alpha-down"></i> A-Z
+            </button>
+          </div>
+        </div>
+      `;
+    
+    
+        // In tab6, insert the three permanent editable elements at the top.
+        if (tab === "tab6") {
+            const permanentItems = [
+              { id: "perm1", defaultValue: "00" },
+              { id: "perm2", defaultValue: "00" },
+              { id: "perm3", defaultValue: "00" }
+            ];
+            const colorClasses = {
+              perm1: "gold-bg",
+              perm2: "silver-bg",
+              perm3: "copper-bg"
+            };
+          
+            let permanentHTML = "";
+            permanentItems.forEach(({ id, defaultValue }) => {
+              const savedValue = localStorage.getItem(`permanentItem_${id}`) || defaultValue;
+              permanentHTML += `
+                <div class="block minimized permanent-block ${colorClasses[id]}" data-id="${id}">
+                  <h4 class="permanent-title" contenteditable="true">${savedValue}</h4>
                 </div>
-            </div>
-        `;
-    
-        // ✅ Restore the active sort button
-        const activeSort = document.querySelector(".sort-button.selected")?.id || "sort_newest";
-        document.getElementById(activeSort)?.classList.add("selected");
-    
-        // ✅ Render the blocks
+              `;
+            });
+            // Insert a container wrapping the permanent items.
+            resultsSection.insertAdjacentHTML("beforeend", `
+              <div class="permanent-items-container">
+                ${permanentHTML}
+              </div>
+            `);
+        }
+                
+        // Render user blocks
+        const blocks = filteredBlocks || getBlocks(tab);
+        console.log(`📦 Blocks to render for ${tab}:`, blocks);
+        if (blocks.length === 0) {
+          console.warn(`⚠️ No blocks found for ${tab}`);
+        }
         blocks.forEach(block => {
-            resultsSection.insertAdjacentHTML("beforeend", blockTemplate(block));
+          resultsSection.insertAdjacentHTML("beforeend", blockTemplate(block));
         });
-    
-        console.log("✅ UI updated: Blocks fully re-rendered.");
-        
-        // ✅ Attach sorting event listeners
-        document.getElementById("sort_newest").addEventListener("click", () => sortBlocks("newest"));
-        document.getElementById("sort_oldest").addEventListener("click", () => sortBlocks("oldest"));
-        document.getElementById("sort_alpha").addEventListener("click", () => sortBlocks("alpha"));
-    
-        appManager.updateTags(); // ✅ Ensure tags update
-    
-        // ✅ After rendering, initialize the title handling in page-title.js
-        initializeTitles();
-    };
+        console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
+      
+        // Reattach sort event listeners for this tab
+        document.getElementById(`sort_newest_${tabSuffix}`).addEventListener("click", () => sortBlocks("newest"));
+        document.getElementById(`sort_oldest_${tabSuffix}`).addEventListener("click", () => sortBlocks("oldest"));
+        document.getElementById(`sort_alpha_${tabSuffix}`).addEventListener("click", () => sortBlocks("alpha"));
+      
+        // Attach event listeners to the permanent titles (only for tab6)
+        if (tab === "tab6") {
+          resultsSection.querySelectorAll(".permanent-title").forEach(titleEl => {
+            titleEl.addEventListener("blur", () => {
+              const blockId = titleEl.parentElement.getAttribute("data-id");
+              localStorage.setItem(`permanentItem_${blockId}`, titleEl.textContent.trim());
+            });
+          });
+        }
+      
+        // Attach click-to-toggle view behavior for non-permanent blocks.
+        document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`).forEach(blockEl => {
+          blockEl.addEventListener("click", function (e) {
+            // Ignore clicks on action buttons and tag buttons
+            if (e.target.closest(".action-button") || e.target.closest(".tag-button")) return;
 
-    // ✅ Sorting function
-    const sortBlocks = (mode) => {
-        currentSortMode = mode; // ✅ Update global sorting mode
-    
-        // ✅ Remove "selected" class from all buttons
-        document.querySelectorAll(".sort-button").forEach(btn => btn.classList.remove("selected"));
-    
-        // ✅ Highlight the newly selected sort button
-        document.getElementById(`sort_${mode}`).classList.add("selected");
-    
-        // ✅ Get and sort blocks
-        let sortedBlocks = getBlocks(); // This retrieves all blocks and applies sorting
-    
-        // ✅ Apply currently selected tag filters
+            const blockId = blockEl.getAttribute("data-id");
+            const blocksArr = appManager.getBlocks(tab);
+            const targetBlock = blocksArr.find(b => b.id === blockId);
+            if (!targetBlock) return;
+
+            if (targetBlock.viewState === "expanded") {
+              // Retrieve the active view state from localStorage (defaulting to "condensed")
+              const activeState = localStorage.getItem("activeViewState") || "condensed";
+              targetBlock.viewState = activeState;
+            } else {
+              // Otherwise, set it to expanded
+              targetBlock.viewState = "expanded";
+            }
+
+            localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
+            appManager.renderBlocks(tab);
+          });
+        });
+              
+        // Attach click event to the minimize buttons (present in expanded blocks)
+        document.querySelectorAll(`#${sectionId} .minimize_button`).forEach(button => {
+          button.addEventListener("click", function (e) {
+            e.stopPropagation(); // prevent triggering the block container click
+            const blockId = button.getAttribute("data-id");
+            const blocksArr = getBlocks(tab);
+            const targetBlock = blocksArr.find(b => b.id === blockId);
+            if (targetBlock && targetBlock.viewState === "expanded") {
+              targetBlock.viewState = "minimized";
+              localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
+              appManager.renderBlocks(tab);
+            }
+          });
+        });
+      
+        appManager.updateTags();
+        initializeTitles();
+      };
+      
+      const sortBlocks = (mode) => {
+        currentSortMode = mode;
+        const activeTab = getActiveTab();
+        const tabSuffix = activeTab.replace("tab", "");
+        
+        // Remove "selected" class from all sort buttons in the current tab's sort controls.
+        document.querySelectorAll(`#sort_controls_${tabSuffix} .sort-button`)
+          .forEach(btn => btn.classList.remove("selected"));
+        
+        // Add the selected style to the button for the chosen sort mode.
+        const sortBtn = document.getElementById(`sort_${mode}_${tabSuffix}`);
+        if (sortBtn) {
+          sortBtn.classList.add("selected");
+        }
+        
+        // Get the blocks, filter by any tags if necessary, and sort them.
+        let sortedBlocks = getBlocks(activeTab);
         const selectedTags = tagHandler.getSelectedTags();
         if (selectedTags.length > 0) {
-            sortedBlocks = sortedBlocks.filter(block =>
-                selectedTags.every(tag => block.tags.includes(tag))
-            );
+          sortedBlocks = sortedBlocks.filter(block =>
+            selectedTags.every(tag => block.tags.includes(tag))
+          );
         }
-    
-        // ✅ Re-render blocks with sorting + filtering applied
-        renderBlocks(sortedBlocks);
-    };
-            
+        
+        // Re-render the blocks in the active tab.
+        renderBlocks(activeTab, sortedBlocks);
+      };
+                                    
     // Load blocks from localStorage (if they exist)
     const loadBlocks = () => {
-        const savedBlocks = JSON.parse(localStorage.getItem("userBlocks"));
-        if (Array.isArray(savedBlocks)) {
-            userBlocks = savedBlocks; // Update userBlocks
-            console.log("Blocks loaded from localStorage:", userBlocks);
-        } else {
-            console.warn("No valid blocks found in localStorage");
+        const savedBlocks = localStorage.getItem("userBlocks");
+        if (savedBlocks) {
+            const parsedBlocks = JSON.parse(savedBlocks);
+            if (Array.isArray(parsedBlocks)) {
+                userBlocks = parsedBlocks;
+                console.log("Blocks loaded from localStorage:", userBlocks);
+                return;
+            }
         }
+        console.log("No valid 'userBlocks' found in localStorage");
     };
+    
 
     let currentSortMode = "newest"; // ✅ Default sorting mode
 
-    const getBlocks = () => {
-        const storedBlocks = localStorage.getItem("userBlocks");
+    const getBlocks = (tab = getActiveTab()) => {
+        const storedBlocks = localStorage.getItem(`userBlocks_${tab}`);
         const parsedBlocks = storedBlocks ? JSON.parse(storedBlocks) : [];
-    
+
         // ✅ Apply sorting based on the currently selected mode
         if (currentSortMode === "newest") {
             parsedBlocks.sort((a, b) => b.timestamp - a.timestamp);
@@ -105,10 +215,10 @@ export const appManager = (() => {
         } else if (currentSortMode === "alpha") {
             parsedBlocks.sort((a, b) => a.title.localeCompare(b.title));
         }
-    
+
         return parsedBlocks;
     };
-                    
+
     // ========================
     // TAGS
     // ========================
@@ -143,44 +253,75 @@ export const appManager = (() => {
     
     // Update tags (predefined & user-generated)
     const updateTags = () => {
-        const usedTags = getTags(); // ✅ Get all tags actually used in blocks
-        const selectedTags = tagHandler.getSelectedTags(); // ✅ Get currently selected tags
+        const activeTab = getActiveTab(); // e.g., "tab1" or "tab2"
+        const tabSuffix = activeTab.replace("tab", ""); // "1" or "2"
+        const usedTags = getTags(activeTab); // all tags used in blocks for the active tab
+        const selectedTags = tagHandler.getSelectedTags();
     
-        const predefinedTags = Object.values(categoryTags).flatMap(cat => cat.tags);
-        const userTags = usedTags.filter(tag => !predefinedTags.includes(tag)); // ✅ Extract user-defined tags
+        // All predefined tags across categories from tagConfig.js
+        const allPredefined = Object.values(categoryTags).flatMap(cat => cat.tags);
+        // User-defined tags are those not included in the predefined list
+        const usedUserTags = usedTags.filter(tag => !allPredefined.includes(tag));
     
-        // ✅ Ensure predefined category tags only include used ones
-        Object.keys(categoryTags).forEach(category => {
-            const categoryTagList = categoryTags[category]?.tags || [];
-            const validTags = categoryTagList.filter(tag => usedTags.includes(tag)); // ✅ Only show used predefined tags
-            renderTags(validTags, `${category}_tags_list`);
-        });
+        let html = "";
     
-        // ✅ Render user-defined tags separately
-        if (userTags.length > 0) {
-            renderTags(userTags, "user_tags_list");
+        // Render user-defined tags first in a unified container
+        if (usedUserTags.length > 0) {
+            html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}">`;
+            html += usedUserTags.map(tag => {
+                const isSelected = selectedTags.includes(tag) ? "selected" : "";
+                return `<button class="tag-button tag-user ${isSelected}" data-tag="${tag}">${tag}</button>`;
+            }).join("");
+            html += `</div>`;
         } else {
-            document.getElementById("user_tags_list").innerHTML = "<p>No user-defined tags</p>"; // ✅ Handle empty state
+            html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}"><p>No user-defined tags</p></div>`;
         }
     
-        // ✅ Ensure selected tags remain visually selected
-        setTimeout(() => {
-            document.querySelectorAll(".tag-button").forEach(tagElement => {
+        // Then render predefined tags by category
+        Object.keys(categoryTags).forEach(category => {
+            // Only render this category if it applies to the active tab.
+            if (!categoryTags[category].tabs.includes(activeTab)) {
+                return;
+            }
+            // Get predefined tags for this category that are used
+            const usedPredefined = categoryTags[category].tags.filter(tag => usedTags.includes(tag));
+            if (usedPredefined.length > 0) {
+                html += `<div class="tag-category" id="${category}_tags_list_${tabSuffix}">`;
+                html += usedPredefined.map(tag => {
+                    const isSelected = selectedTags.includes(tag) ? "selected" : "";
+                    return `<button class="tag-button ${categoryTags[category].className} ${isSelected}" data-tag="${tag}">${tag}</button>`;
+                }).join("");
+                html += `</div>`;
+            }
+        });
+    
+        // Update the unified container for tags in the active tab
+        const unifiedContainer = document.getElementById(`dynamic_tags_section_${tabSuffix}`);
+        if (unifiedContainer) {
+            unifiedContainer.innerHTML = html;
+        }
+    
+        // Update selected tag highlighting for all tag buttons in the active tab
+        const activeTabElement = document.getElementById(activeTab);
+        if (activeTabElement) {
+            activeTabElement.querySelectorAll(".tag-button").forEach(tagElement => {
                 if (selectedTags.includes(tagElement.dataset.tag)) {
-                    tagElement.classList.add("selected"); // ✅ Keep selected tags highlighted
+                    tagElement.classList.add("selected");
                 } else {
                     tagElement.classList.remove("selected");
                 }
             });
-        }, 50);
+        }
     
-        console.log("✅ Updated tag filtering: Displaying only used predefined and user-defined tags.");
-    };    
-        
-    const getTags = () => {
+        console.log(`✅ Tags updated for ${activeTab}`);
+    };
+                
+    const getTags = (tab = getActiveTab()) => {
         const predefinedTags = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
         const usedTags = new Set();
-
+    
+        let userBlocks = getBlocks(tab); // ✅ Get blocks for the correct tab
+    
         userBlocks.forEach(block => {
             block.tags.forEach(tag => {
                 if (predefinedTags.has(tag)) {
@@ -190,10 +331,10 @@ export const appManager = (() => {
                 }
             });
         });
-
+    
         return Array.from(usedTags);
     };
-
+    
     // Get filtered tags based on category
     const getFilteredTags = (category) => {
         const blocks = getBlocks();
@@ -224,66 +365,74 @@ export const appManager = (() => {
     // DATA MANAGEMENT FUNCTIONS
     // ========================
 
-    const saveBlock = (blockTitle, text, tags, blockId = null, timestamp = null) => {
-        console.log("📥 Before Saving - Incoming Block Data:", { blockTitle, text, tags, blockId, timestamp });
+    const saveBlock = (tab, blockTitle, text, tags, blockId = null, timestamp = null) => {
+        console.log(`📥 Attempting to save block in ${tab}:`, { blockTitle, text, tags, blockId, timestamp });
     
         if (!blockTitle || !text) {
             console.error("❌ Block title and text are required");
             return false;
         }
     
-        const normalizeTag = (tag) => {
-            const predefinedTagsSet = new Set(Object.values(categoryTags).flatMap(data => data.tags));
-            return predefinedTagsSet.has(tag) ? tag : tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
-        };
+        let userBlocks = getBlocks(tab);
     
-        const allTags = [...new Set(tags.map(normalizeTag))];
+        console.log(`📦 Blocks retrieved for ${tab}:`, userBlocks);
     
-        if (blockId) {
+        let isEdit = Boolean(blockId);
+        if (isEdit) {
             const blockIndex = userBlocks.findIndex(block => block.id === blockId);
+    
             if (blockIndex !== -1) {
                 userBlocks[blockIndex] = {
                     ...userBlocks[blockIndex],
                     title: blockTitle,
                     text,
-                    tags: allTags,
-                    timestamp: userBlocks[blockIndex].timestamp || Date.now() // ✅ Ensure timestamp is preserved
+                    tags,
+                    timestamp: userBlocks[blockIndex].timestamp || Date.now()
                 };
                 console.log("🛠 Updated Block Data:", userBlocks[blockIndex]);
             } else {
-                console.error(`❌ Block with ID "${blockId}" not found.`);
+                console.error(`❌ Block with ID "${blockId}" not found in tab ${tab}.`);
+                console.log("📦 Current Blocks:", userBlocks);
                 return false;
             }
         } else {
+            const predefinedTagsSet = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
+            const formattedTags = tags.map(tag => 
+                predefinedTagsSet.has(tag) ? tag : tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
+            );        
+
             const newBlock = {
                 id: crypto.randomUUID(),
                 title: blockTitle,
-                text,
-                tags: allTags,
-                timestamp: timestamp || Date.now() // ✅ Use provided timestamp, else generate new one
-            };
+                text: text,
+                tags: formattedTags,
+                timestamp: timestamp || Date.now(),
+                viewState: "expanded" // default state; later you can change this based on user actions or tab settings
+                };
+                
             userBlocks.unshift(newBlock);
             console.log("✅ New Block Saved:", newBlock);
         }
     
-        localStorage.setItem("userBlocks", JSON.stringify(userBlocks));
-        renderBlocks(userBlocks);
+        localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(userBlocks));
+        renderBlocks();
         updateTags();
     
         return true;
     };
-        
+                    
     const removeBlock = (blockId) => {
-        if (!blockId) {
-            console.error("Error: Block ID is undefined.");
-            return;
-        }
-
+        if (!blockId) return;
+    
+        const activeTab = getActiveTab();
+        let userBlocks = getBlocks(activeTab);
+    
         const updatedBlocks = userBlocks.filter(block => block.id !== blockId);
-        userBlocks = updatedBlocks;
-        localStorage.setItem("userBlocks", JSON.stringify(updatedBlocks));
-        renderBlocks(updatedBlocks);
+        localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(updatedBlocks));
+    
+        renderBlocks(activeTab);
     };
+        
 
     // ========================
     // HELPER FUNCTIONS
@@ -325,6 +474,9 @@ export const appManager = (() => {
     });
 
     return {
+        // TABS
+        getActiveTab,
+
         // BLOCKS
         renderBlocks,
         loadBlocks,

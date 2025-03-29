@@ -1,26 +1,49 @@
 const initializeTitles = () => {
     const pageTitle = document.getElementById("page_title");
-    const resultsTitle = document.getElementById("results_title");
+    const resultsTitles = {
+        tab1: document.getElementById("results_title_1"),
+        tab2: document.getElementById("results_title_2"),
+        tab3: document.getElementById("results_title_3"),
+        tab6: document.getElementById("results_title_6"),
+        tab7: document.getElementById("results_title_7")
 
-    if (!pageTitle || !resultsTitle) {
-        console.error("❌ Page title or results title element not found.");
+    };
+
+    if (!pageTitle) {
+        console.error("❌ Page title element not found.");
         return;
     }
 
     const defaultPageTitle = "Enter Custom Title Here...";
     const defaultResultsTitle = "Custom Results Title...";
 
-    // ✅ Set initial titles from localStorage or defaults
-    pageTitle.textContent = localStorage.getItem("pageTitle") || defaultPageTitle;
-    resultsTitle.textContent = localStorage.getItem("Results") || defaultResultsTitle;
+    // Set initial page title from localStorage or default
+    pageTitle.textContent = localStorage.getItem("pageTitle") || "";
 
-    // ✅ Generic function to handle editing & saving
+    // For each results title element, set its text from localStorage (or use default)
+    // and update the corresponding tab button's text accordingly.
+    Object.keys(resultsTitles).forEach(tab => {
+        if (resultsTitles[tab]) {
+            // Get the stored title or use the default.
+            const savedTitle = localStorage.getItem(`Results_${tab}`) || defaultResultsTitle;
+            resultsTitles[tab].textContent = savedTitle;
+            const tabButton = document.querySelector(`.tab-button[data-tab="${tab}"]`);
+            if (tabButton) {
+                // If the results title is still the default, then set the tab button to "Tab X"
+                if (savedTitle === defaultResultsTitle) {
+                    const tabNum = tab.replace("tab", "");
+                    tabButton.textContent = `Tab ${tabNum}`;
+                } else {
+                    tabButton.textContent = savedTitle;
+                }
+            }
+        }
+    });
+
+    // Generic function to handle editing & saving titles
     const saveTitle = (element, storageKey, defaultText) => {
         element.addEventListener("focus", () => {
-            // ✅ Clear only if it's the default title
-            if (element.textContent === defaultText) {
-                element.textContent = "";
-            }
+        if (element.textContent === defaultText) { element.textContent = ""; }
         });
 
         element.addEventListener("blur", () => {
@@ -28,25 +51,49 @@ const initializeTitles = () => {
             if (newTitle) {
                 localStorage.setItem(storageKey, newTitle);
             } else {
-                element.textContent = defaultText; // Reset if empty
+                // For pageTitle, leave it empty so the CSS placeholder shows;
+                // for results titles, use the default text.
+                if (storageKey === "pageTitle") {
+                    element.textContent = "";
+                } else {
+                    element.textContent = defaultText;
+                }
                 localStorage.removeItem(storageKey);
             }
+            // If this is a results title, update the corresponding tab button.
+            if (storageKey.startsWith("Results_")) {
+                const tab = storageKey.replace("Results_", "");
+                const tabButton = document.querySelector(`.tab-button[data-tab="${tab}"]`);
+                if (tabButton) {
+                    if ((newTitle || defaultText) === defaultResultsTitle) {
+                        const tabNum = tab.replace("tab", "");
+                        tabButton.textContent = `Tab ${tabNum}`;
+                    } else {
+                        tabButton.textContent = newTitle || defaultText;
+                    }
+                }
+            }
         });
-
+        
         element.addEventListener("keydown", (event) => {
             if (event.key === "Enter") {
                 event.preventDefault();
-                element.blur(); // Save on Enter key
+                element.blur();
             }
         });
     };
 
-    // ✅ Apply to both titles
+    // Apply editing behavior to the main page title
     saveTitle(pageTitle, "pageTitle", defaultPageTitle);
-    saveTitle(resultsTitle, "Results", defaultResultsTitle);
+
+    // Apply editing behavior to each results title (for Tab 1 and Tab 2)
+    Object.keys(resultsTitles).forEach(tab => {
+        if (resultsTitles[tab]) {
+            saveTitle(resultsTitles[tab], `Results_${tab}`, defaultResultsTitle);
+        }
+    });
 
     console.log("✅ Page and results titles initialized.");
 };
 
-// ✅ Ensure the function runs on page load
 document.addEventListener("DOMContentLoaded", initializeTitles);
