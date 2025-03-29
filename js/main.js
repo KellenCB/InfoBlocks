@@ -23,23 +23,51 @@ const attachEventListeners = () => {
 
 // Sequential fade-in function
 const fadeInElementsSequentially = (container = document) => {
-    // Select all elements with the class 'fade-in' within the provided container
     const allFadeInElements = container.querySelectorAll('.fade-in');
-    // Filter to only include elements that are visible (offsetParent is not null)
     const visibleElements = Array.from(allFadeInElements).filter(el => el.offsetParent !== null);
     console.log("Found visible fade-in elements:", visibleElements.length);
     visibleElements.forEach((el, index) => {
         setTimeout(() => {
             el.classList.add('visible');
-        }, index * 300); // adjust the delay as needed
+        }, index * 300);
     });
 };
 
 fadeInElementsSequentially();
 
-// 📌 Tab functionality
+// Function to save the current tab order to localStorage
+function saveTabOrder() {
+    const tabButtons = document.querySelectorAll(".tabs-nav .tab-button");
+    const order = Array.from(tabButtons).map(button => button.dataset.tab);
+    localStorage.setItem("tabOrder", JSON.stringify(order));
+    console.log("Tab order saved:", order);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+    // Restore tab order on page load if it exists
+    const savedOrder = JSON.parse(localStorage.getItem("tabOrder"));
+    const tabNav = document.querySelector(".tabs-nav");
+    if (savedOrder && tabNav) {
+        savedOrder.forEach(tabId => {
+            const button = tabNav.querySelector(`.tab-button[data-tab="${tabId}"]`);
+            if (button) {
+                tabNav.appendChild(button);
+            }
+        });
+        console.log("Tab order restored:", savedOrder);
+    }
+
     const tabButtons = document.querySelectorAll(".tab-button");
+    tabButtons.forEach(button => {
+        button.addEventListener("dragstart", () => {
+            button.classList.add("dragging");
+        });
+        button.addEventListener("dragend", () => {
+            button.classList.remove("dragging");
+            // Save the new order when dragging ends
+            saveTabOrder();
+        });
+    });
     const tabContents = document.querySelectorAll(".tab-content");
 
     // Get stored active tab (if any) or default to the first tab's id.
@@ -79,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error("❌ Error: targetTab is undefined.");
                 return;
             }
-            // Hide all tabs, remove active classes, etc.
+            // Hide all tabs and remove active classes
             tabButtons.forEach(btn => btn.classList.remove("active"));
             tabContents.forEach(content => {
                 content.classList.remove("active");
@@ -108,27 +136,25 @@ document.addEventListener("DOMContentLoaded", () => {
             }, 100);
         });
     });
-            
+
     // Handle tab reordering
     document.querySelector(".tabs-nav").addEventListener("dragover", (e) => {
         e.preventDefault();
         const draggingTab = document.querySelector(".dragging");
         const afterElement = getDragAfterElement(e.clientX);
-
+        const tabNav = document.querySelector(".tabs-nav");
         if (afterElement == null) {
-            document.querySelector(".tabs-nav").appendChild(draggingTab);
+            tabNav.appendChild(draggingTab);
         } else {
-            document.querySelector(".tabs-nav").insertBefore(draggingTab, afterElement);
+            tabNav.insertBefore(draggingTab, afterElement);
         }
     });
 
     function getDragAfterElement(x) {
         const draggableElements = [...document.querySelectorAll(".tab-button:not(.dragging)")];
-
         return draggableElements.reduce((closest, child) => {
             const box = child.getBoundingClientRect();
             const offset = x - box.left - box.width / 2;
-
             return offset < 0 && offset > closest.offset ? { offset, element: child } : closest;
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
@@ -138,74 +164,65 @@ document.addEventListener("DOMContentLoaded", () => {
         const searchInput = document.getElementById(`search_input_${tabNumber}`);
         const clearSearchButton = document.getElementById(`clear_search_button_${tabNumber}`);
         const clearFiltersButton = document.getElementById(`clear_filters_button_${tabNumber}`);
-    
+
         if (!searchInput) {
             return;
-            }
-
-        // Attach event listener for the search input to filter blocks and apply highlighting as the user types
-        searchInput.addEventListener("input", () => {
-        const query = searchInput.value.trim().toLowerCase();
-        const activeTab = `tab${tabNumber}`;
-    
-        // Filter blocks based on the query
-        const filteredBlocks = appManager.getBlocks(activeTab).filter(block =>
-            block.title.toLowerCase().includes(query) || block.text.toLowerCase().includes(query)
-        );
-    
-        // Helper function to wrap matching text with <span class="highlight">
-        const highlightMatch = (text, query) => {
-            if (!query) return text;
-            const regex = new RegExp(`(${query})`, "gi");
-            return text.replace(regex, `<span class="highlight">$1</span>`);
-        };
-    
-        // Map the filtered blocks to new objects with highlighted title and text,
-        // and set a flag so blockTemplate knows not to reapply other formatting.
-        const highlightedBlocks = filteredBlocks.map(block => ({
-            ...block,
-            title: highlightMatch(block.title, query),
-            text: highlightMatch(block.text, query),
-            highlighted: query.length > 0
-        }));
-    
-        appManager.renderBlocks(activeTab, highlightedBlocks);
-        });
-    
-        // Attach event listener for the clear search button to reset the search field and re-render blocks without highlighting
-        if (clearSearchButton) {
-        clearSearchButton.addEventListener("click", () => {
-            searchInput.value = "";
-            const activeTab = `tab${tabNumber}`;
-            appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
-        });
         }
-    
-        // Attach event listener for the clear filters button to remove tag selections, clear the search field, and re-render blocks
-        if (clearFiltersButton) {
-        clearFiltersButton.addEventListener("click", () => {
-            document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`).forEach(tag =>
-            tag.classList.remove("selected")
-            );
-            searchInput.value = "";
-            tagHandler.clearSelectedTags();
+
+        searchInput.addEventListener("input", () => {
+            const query = searchInput.value.trim().toLowerCase();
             const activeTab = `tab${tabNumber}`;
-            appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
+
+            const filteredBlocks = appManager.getBlocks(activeTab).filter(block =>
+                block.title.toLowerCase().includes(query) || block.text.toLowerCase().includes(query)
+            );
+
+            const highlightMatch = (text, query) => {
+                if (!query) return text;
+                const regex = new RegExp(`(${query})`, "gi");
+                return text.replace(regex, `<span class="highlight">$1</span>`);
+            };
+
+            const highlightedBlocks = filteredBlocks.map(block => ({
+                ...block,
+                title: highlightMatch(block.title, query),
+                text: highlightMatch(block.text, query),
+                highlighted: query.length > 0
+            }));
+
+            appManager.renderBlocks(activeTab, highlightedBlocks);
         });
+
+        if (clearSearchButton) {
+            clearSearchButton.addEventListener("click", () => {
+                searchInput.value = "";
+                const activeTab = `tab${tabNumber}`;
+                appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
+            });
+        }
+
+        if (clearFiltersButton) {
+            clearFiltersButton.addEventListener("click", () => {
+                document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`).forEach(tag =>
+                    tag.classList.remove("selected")
+                );
+                searchInput.value = "";
+                tagHandler.clearSelectedTags();
+                const activeTab = `tab${tabNumber}`;
+                appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
+            });
         }
     }
-  
-  // Loop through each tab (assuming tabs 1 through 5) to attach the search and clear listeners
-  [1, 2, 3, 4, 5, 6, 7, 8].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
-    
-// Initial render: if the active tab is dice roller (tab5), initialize it instead of re-rendering it.
-if (activeTabId === "tab5") {
-    import('./diceRoller.js').then(module => {
-        module.initDiceRoller();
-    });
-} else {
-    appManager.renderBlocks(activeTabId);
-}
+
+    [1, 2, 3, 4, 5, 6, 7, 8].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
+
+    if (activeTabId === "tab5") {
+        import('./diceRoller.js').then(module => {
+            module.initDiceRoller();
+        });
+    } else {
+        appManager.renderBlocks(activeTabId);
+    }
 });
 
 // 📌 Handle tag filtering
@@ -222,7 +239,7 @@ const handleTagFilter = (event) => {
 
     const filteredBlocks = selectedTags.length
         ? appManager.getBlocks().filter(block => selectedTags.every(t => block.tags.includes(t)))
-        : appManager.getBlocks(); // Show all if no filters are active
+        : appManager.getBlocks();
 
     appManager.renderBlocks();
 };
@@ -239,22 +256,19 @@ const handleSearch = () => {
         const query = searchInput.value.trim().toLowerCase();
         console.log("🔍 Searching for:", query);
 
-        // Get currently selected tags
         const selectedTags = tagHandler.getSelectedTags();
         console.log("🟠 Currently Selected Tags:", selectedTags);
 
-        // First, filter blocks based on selected tags
         let filteredBlocks = selectedTags.length
             ? appManager.getBlocks().filter(block =>
                   selectedTags.every(t =>
                       block.tags.map(bt => bt.trim().toLowerCase()).includes(t.toLowerCase())
                   )
               )
-            : appManager.getBlocks(); // If no tags selected, show all blocks
+            : appManager.getBlocks();
 
         console.log("🟢 Blocks After Tag Filtering (Before Search):", filteredBlocks);
 
-        // Now apply the search query only within filteredBlocks
         const searchResults = filteredBlocks.filter(block =>
             block.title.toLowerCase().includes(query) ||
             block.text.toLowerCase().includes(query)
@@ -262,14 +276,12 @@ const handleSearch = () => {
                         
         console.log("✅ Final Search Results (Matching Search & Tags):", searchResults);
 
-        // Highlight matching text
         const highlightMatch = (text, query) => {
-            if (!query) return text; // If no search text, return original text
-            const regex = new RegExp(`(${query})`, "gi"); // Case-insensitive match
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, "gi");
             return text.replace(regex, `<span class="highlight">$1</span>`);
         };
 
-        // Modify block rendering to include highlighted text
         const highlightedBlocks = searchResults.map(block => ({
             ...block,
             title: highlightMatch(block.title, query),
@@ -277,8 +289,6 @@ const handleSearch = () => {
             highlighted: true
         }));
         
-        // IMPORTANT: Pass the active tab id as the first parameter,
-        // and the highlighted blocks array as the second parameter.
         appManager.renderBlocks(appManager.getActiveTab(), highlightedBlocks);
     });
 };
@@ -286,55 +296,40 @@ const handleSearch = () => {
 // Clear filters and reset results for the specific tab
 const clearFilters = (event) => {
     console.log("Clear Filters button clicked");
-    
-    // Extract the tab number from the button's id
     const tabNumber = event.currentTarget.id.split("_").pop();
-    
-    // Remove 'selected' class from all tag buttons within the specific tab
     document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`).forEach(tag => tag.classList.remove("selected"));
-    
-    // Clear the search input for the current tab
     const searchInput = document.getElementById(`search_input_${tabNumber}`);
     if (searchInput) {
         searchInput.value = "";
     }
-    
-    // Clear selected tags in the tagHandler
     tagHandler.clearSelectedTags();
-    
-    // Re-render blocks for the specific tab
     const activeTab = `tab${tabNumber}`;
     appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
-    
     const updatedTags = tagHandler.getSelectedTags(); 
     console.log("🔵 Currently selected tags:", updatedTags);
 };
 
-// Attach clear filters event listeners to all clear filters buttons
 document.querySelectorAll(".clear_filters_button").forEach(button => {
     button.addEventListener("click", clearFilters);
 });
-
 
 // 📌 Initialize dynamic tags and overlays
 const initializeDynamicTags = () => {
     console.log("Initializing dynamic tags and overlays");
 
-    // Iterate through each tab
     [1, 2, 3, 4, 5, 6, 7, 8].forEach(tabNumber => {
         const tagsSection = document.getElementById(`dynamic_tags_section_${tabNumber}`);
-        if (!tagsSection) return; // ✅ Shorter and clearer
+        if (!tagsSection) return;
     
-        tagsSection.innerHTML = ""; // ✅ Clear previous content
+        tagsSection.innerHTML = "";
     
         Object.keys(categoryTags).forEach(category => {
-            if (!categoryTags[category].tabs.includes(`tab${tabNumber}`)) return; // ✅ Use directly
+            if (!categoryTags[category].tabs.includes(`tab${tabNumber}`)) return;
     
             const tagContainer = document.createElement("div");
             tagContainer.classList.add("tag-section");
             tagContainer.id = `${category}_tags_list_${tabNumber}`;
     
-            // ✅ More efficient way to append buttons
             categoryTags[category].tags.forEach(tag => {
                 const button = document.createElement("button");
                 button.classList.add("tag-button", categoryTags[category].className);
@@ -352,7 +347,6 @@ const initializeDynamicTags = () => {
 const keyboardShortcutsHandler = (() => {
     const handleKeyboardShortcuts = () => {
         document.addEventListener("keydown", (event) => {
-            // Ignore shortcuts if a modifier key is pressed
             if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
                 return;
             }
@@ -360,7 +354,7 @@ const keyboardShortcutsHandler = (() => {
             const addBlockOverlay = document.querySelector(".add-block-overlay");
             const clearDataOverlay = document.querySelector(".cleardata-overlay");
             const editBlockOverlay = document.querySelector(".edit-block-overlay");
-            const spellSlotEditOverlay = document.querySelector(".spell-slot-edit-overlay"); // New Overlay
+            const spellSlotEditOverlay = document.querySelector(".spell-slot-edit-overlay");
 
             const saveBlockButton = document.getElementById("save_block_button");
             const cancelAddBlockButton = document.getElementById("cancel_add_block");
@@ -368,8 +362,8 @@ const keyboardShortcutsHandler = (() => {
             const cancelClearButton = document.getElementById("cancel_clear_button");
             const saveEditButton = document.getElementById("save_edit_button");
             const cancelEditButton = document.getElementById("cancel_edit_block");
-            const saveSpellSlotButton = document.getElementById("save_spell_slot_changes"); // New Save Button
-            const cancelSpellSlotButton = document.getElementById("close_spell_slot_edit"); // New Cancel Button
+            const saveSpellSlotButton = document.getElementById("save_spell_slot_changes");
+            const cancelSpellSlotButton = document.getElementById("close_spell_slot_edit");
 
             if (addBlockOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && saveBlockButton) {
@@ -395,7 +389,6 @@ const keyboardShortcutsHandler = (() => {
                 }
             }
 
-            // 🔹 New: Spell Slot Edit Overlay Keyboard Shortcuts
             if (spellSlotEditOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && saveSpellSlotButton) {
                     saveSpellSlotButton.click();
@@ -411,7 +404,6 @@ const keyboardShortcutsHandler = (() => {
     return { handleKeyboardShortcuts };
 })();
 
-// Update the viewState of all blocks in the active tab, re-render them, and save the active view state to localStorage.
 const updateBlocksViewState = (newState) => {
     const activeTab = appManager.getActiveTab();
     let blocks = appManager.getBlocks(activeTab);
@@ -420,20 +412,16 @@ const updateBlocksViewState = (newState) => {
     });
     localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
     appManager.renderBlocks(activeTab);
-    // Save active view state globally
     localStorage.setItem("activeViewState", newState);
 };
 
-// Helper function to clear active classes from the toggle buttons (condensed and minimized)
 const clearToggleClasses = () => {
     document.getElementById("view_condensed_button")?.classList.remove("active");
     document.getElementById("view_minimized_button")?.classList.remove("active");
 };
 
-// Attach event listeners to the view state buttons
 document.getElementById("view_expanded_button")?.addEventListener("click", () => {
     updateBlocksViewState("expanded");
-    // Expand does not change the active toggle state of condensed/minimized buttons.
 });
 
 document.getElementById("view_condensed_button")?.addEventListener("click", () => {
@@ -448,26 +436,19 @@ document.getElementById("view_minimized_button")?.addEventListener("click", () =
     document.getElementById("view_minimized_button")?.classList.add("active");
 });
 
-// On page load, check localStorage for the active view state, default to "condensed"
 const savedViewState = localStorage.getItem("activeViewState") || "condensed";
 updateBlocksViewState(savedViewState);
 
-// Update the toggle button classes based on the saved state.
 if (savedViewState === "condensed") {
     document.getElementById("view_condensed_button")?.classList.add("active");
 } else if (savedViewState === "minimized") {
     document.getElementById("view_minimized_button")?.classList.add("active");
 }
 
-// Add event listener for circles in Tab 4 & 8.
 document.addEventListener('click', (event) => {
-    // Check if the click occurred on or inside a toggle circle in Tab 4 or Tab 8
     const toggleCircle = event.target.closest('.toggle-circle');
     if (toggleCircle && (toggleCircle.closest('#tab4') || toggleCircle.closest('#tab8'))) {
-      // Toggle the "unfilled" class
       toggleCircle.classList.toggle('unfilled');
-      
-      // Use the data-storage-key if provided; otherwise, log a warning
       const key = toggleCircle.getAttribute('data-storage-key');
       if (key) {
         localStorage.setItem(key, toggleCircle.classList.contains('unfilled'));
@@ -476,14 +457,11 @@ document.addEventListener('click', (event) => {
         console.warn('Toggle circle missing data-storage-key:', toggleCircle);
       }
     }
-  });
+});
 
-
-
-  window.onload = async () => {
+window.onload = async () => {
     console.log("🔄 Window Loaded - Initializing App");
 
-    // Attach core event listeners
     attachEventListeners();
     blockActionsHandler.attachBlockActions();
 
@@ -510,20 +488,16 @@ document.addEventListener('click', (event) => {
         container.querySelectorAll('.editable').forEach(el => {
             const key = el.getAttribute('data-storage-key');
             if (key) {
-                // Determine default: if inside a descriptor-grid, default is "XX", otherwise "00"
                 const defaultValue = el.closest('.descriptor-grid') ? "XX" : "00";
                 let savedValue = localStorage.getItem(key);
                 if (savedValue !== null && savedValue !== "") {
                     el.textContent = savedValue;
-                    // If the saved value equals the default, set opacity to 0.5; otherwise, full opacity.
                     el.style.opacity = (savedValue === defaultValue) ? "0.5" : "1";
                 } else {
-                    // No saved value (or it's empty): use default value with 50% opacity.
                     el.textContent = defaultValue;
                     el.style.opacity = "0.5";
                     localStorage.setItem(key, defaultValue);
                 }
-                // When editing is finished (on blur), update the value and opacity accordingly.
                 el.addEventListener('blur', () => {
                     let newValue = el.textContent.trim();
                     if (newValue === "") {
@@ -555,18 +529,11 @@ document.addEventListener('click', (event) => {
             } else {
                 circle.classList.remove('unfilled');
             }
-            circle.addEventListener('click', () => {
-                circle.classList.toggle('unfilled');
-                const currentState = circle.classList.contains('unfilled');
-                localStorage.setItem(key, currentState);
-            });
         });
     }
-        
-    // Call these initialization functions once for each relevant tab.
-    initializeEditableFields("tab4");
-    initializeEditableFields("tab8");
-    initializeToggleCircles("tab4");
-    initializeToggleCircles("tab8");
-    };
-
+                    
+    ["tab1", "tab2", "tab3", "tab4", "tab5", "tab6", "tab7", "tab8"].forEach(tabId => {
+        initializeEditableFields(tabId);
+        initializeToggleCircles(tabId);
+    });
+};
