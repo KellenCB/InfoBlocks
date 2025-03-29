@@ -220,9 +220,10 @@ margin-bottom: 20px;
   .toggle-circle {
     width: 16px;
     height: 16px;
-    border: 2px solid #fff;
+    border: 1px solid #fff;
     border-radius: 50%;
     cursor: pointer;
+    background-color: #fff;
   }
   
   .toggle-circle.filled {

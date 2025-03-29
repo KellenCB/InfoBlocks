@@ -75,49 +75,40 @@ document.addEventListener("DOMContentLoaded", () => {
         button.addEventListener("click", (event) => {
             const targetTab = event.currentTarget.dataset.tab;
             const targetContent = document.getElementById(targetTab);
-    
             if (!targetTab) {
                 console.error("❌ Error: targetTab is undefined.");
                 return;
             }
-    
-            // Hide all tab contents and remove active class from buttons
+            // Hide all tabs, remove active classes, etc.
             tabButtons.forEach(btn => btn.classList.remove("active"));
             tabContents.forEach(content => {
                 content.classList.remove("active");
                 content.style.display = "none";
             });
-    
             // Show the new active tab
             event.currentTarget.classList.add("active");
             targetContent.classList.add("active");
             targetContent.style.display = "flex";
-    
-            console.log(`✅ Switched to Tab: ${targetTab}`);
-    
-            // Save the active tab so it persists on refresh
             localStorage.setItem("activeTab", targetTab);
-    
-            // Refresh blocks and update tags as needed
-            if (typeof appManager !== "undefined" && appManager.renderBlocks) {
-                console.log("📦 Refreshing UI: Calling renderBlocks() for", targetTab);
+            // Only re-render if this tab is not the dice roller tab.
+            if (targetTab !== "tab5") {
                 appManager.renderBlocks(targetTab);
                 appManager.updateTags();
             } else {
-                console.warn("⚠️ appManager.renderBlocks() is not defined or not callable.");
+                // For dice roller tab, initialize the dice roller.
+                import('./diceRoller.js').then(module => {
+                    module.initDiceRoller();
+                });
             }
-        
-            // Ensure the UI updates properly
             setTimeout(() => {
                 const computedStyle = window.getComputedStyle(targetContent);
                 if (computedStyle.display === "none") {
-                    console.warn(`⚠️ Tab ${targetTab} content is still hidden. Fixing visibility.`);
                     targetContent.style.display = "flex";
                 }
             }, 100);
         });
-    });    
-        
+    });
+            
     // Handle tab reordering
     document.querySelector(".tabs-nav").addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -207,8 +198,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // Loop through each tab (assuming tabs 1 through 5) to attach the search and clear listeners
   [1, 2, 3, 4, 5, 6, 7, 8].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
     
-    // Initial render
+// Initial render: if the active tab is dice roller (tab5), initialize it instead of re-rendering it.
+if (activeTabId === "tab5") {
+    import('./diceRoller.js').then(module => {
+        module.initDiceRoller();
+    });
+} else {
     appManager.renderBlocks(activeTabId);
+}
 });
 
 // 📌 Handle tag filtering
@@ -414,8 +411,7 @@ const keyboardShortcutsHandler = (() => {
     return { handleKeyboardShortcuts };
 })();
 
-// Function to update the viewState of all blocks in the active tab, re-render them,
-// and save the active view state to localStorage.
+// Update the viewState of all blocks in the active tab, re-render them, and save the active view state to localStorage.
 const updateBlocksViewState = (newState) => {
     const activeTab = appManager.getActiveTab();
     let blocks = appManager.getBlocks(activeTab);
@@ -452,8 +448,7 @@ document.getElementById("view_minimized_button")?.addEventListener("click", () =
     document.getElementById("view_minimized_button")?.classList.add("active");
 });
 
-// On page load, check localStorage for the active view state.
-// If nothing is found, default to "condensed".
+// On page load, check localStorage for the active view state, default to "condensed"
 const savedViewState = localStorage.getItem("activeViewState") || "condensed";
 updateBlocksViewState(savedViewState);
 
@@ -464,9 +459,31 @@ if (savedViewState === "condensed") {
     document.getElementById("view_minimized_button")?.classList.add("active");
 }
 
-window.onload = async () => {
+// Add event listener for circles in Tab 4 & 8.
+document.addEventListener('click', (event) => {
+    // Check if the click occurred on or inside a toggle circle in Tab 4 or Tab 8
+    const toggleCircle = event.target.closest('.toggle-circle');
+    if (toggleCircle && (toggleCircle.closest('#tab4') || toggleCircle.closest('#tab8'))) {
+      // Toggle the "unfilled" class
+      toggleCircle.classList.toggle('unfilled');
+      
+      // Use the data-storage-key if provided; otherwise, log a warning
+      const key = toggleCircle.getAttribute('data-storage-key');
+      if (key) {
+        localStorage.setItem(key, toggleCircle.classList.contains('unfilled'));
+        console.log(`Updated ${key} to ${toggleCircle.classList.contains('unfilled')}`);
+      } else {
+        console.warn('Toggle circle missing data-storage-key:', toggleCircle);
+      }
+    }
+  });
+
+
+
+  window.onload = async () => {
     console.log("🔄 Window Loaded - Initializing App");
 
+    // Attach core event listeners
     attachEventListeners();
     blockActionsHandler.attachBlockActions();
 
@@ -484,4 +501,72 @@ window.onload = async () => {
     await appManager.loadBlocks();
     appManager.renderBlocks(appManager.getActiveTab());
     appManager.updateTags();
-};
+
+    function initializeEditableFields(tabId) {
+        const container = document.getElementById(tabId);
+        if (!container) {
+            return;
+        }
+        container.querySelectorAll('.editable').forEach(el => {
+            const key = el.getAttribute('data-storage-key');
+            if (key) {
+                // Determine default: if inside a descriptor-grid, default is "XX", otherwise "00"
+                const defaultValue = el.closest('.descriptor-grid') ? "XX" : "00";
+                let savedValue = localStorage.getItem(key);
+                if (savedValue !== null && savedValue !== "") {
+                    el.textContent = savedValue;
+                    // If the saved value equals the default, set opacity to 0.5; otherwise, full opacity.
+                    el.style.opacity = (savedValue === defaultValue) ? "0.5" : "1";
+                } else {
+                    // No saved value (or it's empty): use default value with 50% opacity.
+                    el.textContent = defaultValue;
+                    el.style.opacity = "0.5";
+                    localStorage.setItem(key, defaultValue);
+                }
+                // When editing is finished (on blur), update the value and opacity accordingly.
+                el.addEventListener('blur', () => {
+                    let newValue = el.textContent.trim();
+                    if (newValue === "") {
+                        newValue = defaultValue;
+                        el.textContent = newValue;
+                        el.style.opacity = "0.5";
+                    } else {
+                        el.style.opacity = (newValue === defaultValue) ? "0.5" : "1";
+                    }
+                    localStorage.setItem(key, newValue);
+                });
+            }
+        });
+    }
+                
+    function initializeToggleCircles(tabId) {
+        const container = document.getElementById(tabId);
+        if (!container) {
+            return;
+        }
+        container.querySelectorAll('.toggle-circle').forEach((circle, index) => {
+            const key = circle.getAttribute('data-storage-key') || `${tabId}_toggle_${index}`;
+            let savedState = localStorage.getItem(key);
+            if (savedState === null) {
+                circle.classList.add('unfilled');
+                localStorage.setItem(key, 'true');
+            } else if (savedState === 'true') {
+                circle.classList.add('unfilled');
+            } else {
+                circle.classList.remove('unfilled');
+            }
+            circle.addEventListener('click', () => {
+                circle.classList.toggle('unfilled');
+                const currentState = circle.classList.contains('unfilled');
+                localStorage.setItem(key, currentState);
+            });
+        });
+    }
+        
+    // Call these initialization functions once for each relevant tab.
+    initializeEditableFields("tab4");
+    initializeEditableFields("tab8");
+    initializeToggleCircles("tab4");
+    initializeToggleCircles("tab8");
+    };
+
