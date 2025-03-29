@@ -119,26 +119,26 @@ export const appManager = (() => {
           blockEl.addEventListener("click", function (e) {
             // Ignore clicks on action buttons and tag buttons
             if (e.target.closest(".action-button") || e.target.closest(".tag-button")) return;
-
+        
             const blockId = blockEl.getAttribute("data-id");
             const blocksArr = appManager.getBlocks(tab);
             const targetBlock = blocksArr.find(b => b.id === blockId);
             if (!targetBlock) return;
-
+        
             if (targetBlock.viewState === "expanded") {
-              // Retrieve the active view state from localStorage (defaulting to "condensed")
-              const activeState = localStorage.getItem("activeViewState") || "condensed";
+              // Retrieve the active view state for the current tab from localStorage (defaulting to "condensed")
+              const activeState = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
               targetBlock.viewState = activeState;
             } else {
               // Otherwise, set it to expanded
               targetBlock.viewState = "expanded";
             }
-
+        
             localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
             appManager.renderBlocks(tab);
           });
         });
-              
+                      
         // Attach click event to the minimize buttons (present in expanded blocks)
         document.querySelectorAll(`#${sectionId} .minimize_button`).forEach(button => {
           button.addEventListener("click", function (e) {

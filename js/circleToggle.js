@@ -353,8 +353,9 @@ if (tab4ToggleCircles) {
             circle.classList.remove('unfilled');
         }
 
-        // Save the state on click
-        circle.addEventListener('click', () => {
+        // Save the state on click and log the event
+        circle.addEventListener('click', (e) => {
+            console.log(`circleToggle.js (Tab 4): Click event fired for circle with key "${key}".`);
             circle.classList.toggle('unfilled');
             const state = circle.classList.contains('unfilled');
             localStorage.setItem(key, state);
