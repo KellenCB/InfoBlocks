@@ -472,20 +472,6 @@ if (savedViewState === "condensed") {
     document.getElementById("view_minimized_button")?.classList.add("active");
 }
 
-document.addEventListener('click', (event) => {
-    const toggleCircle = event.target.closest('.toggle-circle');
-    if (toggleCircle && (toggleCircle.closest('#tab4') || toggleCircle.closest('#tab8'))) {
-      toggleCircle.classList.toggle('unfilled');
-      const key = toggleCircle.getAttribute('data-storage-key');
-      if (key) {
-        localStorage.setItem(key, toggleCircle.classList.contains('unfilled'));
-        console.log(`Updated ${key} to ${toggleCircle.classList.contains('unfilled')}`);
-      } else {
-        console.warn('Toggle circle missing data-storage-key:', toggleCircle);
-      }
-    }
-});
-
 window.onload = async () => {
     console.log("🔄 Window Loaded - Initializing App");
 
