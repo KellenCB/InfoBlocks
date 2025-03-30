@@ -258,20 +258,28 @@ html {
     width: auto;
 }
 
+
 .spell-slot-group.hidden {
     display: none !important;
 }
 
-.spell-slot-section.edit-mode .spell-slot-group {
+
+.spell-slot-section.edit-mode {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
     width: 100%;
-    display: block;
 }
 
 .spell-slot-section.edit-mode .spell-slot-group {
-    width: 100%;
+    width: fit-content;
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    background-color: #333;
+    padding: 15px;
+    border-radius: 10px;
 }
 
 .spell-slot-edit-overlay {
@@ -295,8 +303,7 @@ html {
     background-color: #2a2a2a;
     padding: 25px;
     border-radius: 20px;
-    width: 90%;
-    max-width: 800px;
+    width: 55%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -315,4 +322,5 @@ html {
     font-size: 16px;
     color: white;
     letter-spacing: 1px;
+    margin-right: 3px;
 }

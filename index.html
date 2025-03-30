@@ -647,138 +647,139 @@
             </div>
         </div>
 
-    <!-- Tab 8: Character Sheet -->
-    <div class="tab-content no-gap" id="tab8">
-        <div class="character-sheet-column">
-            <!-- Row 1 -->
-            <div class="descriptor-grid">
-                <div class="descriptor-box">
-                    <span class="descriptor-label">Level</span>
-                    <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_level">10</span>
+        <!-- Tab 8: Character Sheet -->
+        <div class="tab-content no-gap" id="tab8">
+            <div class="character-sheet-column">
+                <!-- Row 1 -->
+                <div class="descriptor-grid">
+                    <div class="descriptor-box">
+                        <span class="descriptor-label">Level</span>
+                        <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_level">10</span>
+                    </div>
+                    <div class="descriptor-box">
+                        <span class="descriptor-label">Class</span>
+                        <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_class">Fighter</span>
+                    </div>
+                    <div class="descriptor-box">
+                        <span class="descriptor-label">Alignment</span>
+                        <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_alignment">Neutral</span>
+                    </div>
+                    <div class="descriptor-box">
+                        <span class="descriptor-label">Background</span>
+                        <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_background">Soldier</span>
+                    </div>
+                    <div class="descriptor-box">
+                        <span class="descriptor-label">Species</span>
+                        <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_species">Human</span>
+                    </div>
                 </div>
-                <div class="descriptor-box">
-                    <span class="descriptor-label">Class</span>
-                    <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_class">Fighter</span>
-                </div>
-                <div class="descriptor-box">
-                    <span class="descriptor-label">Alignment</span>
-                    <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_alignment">Neutral</span>
-                </div>
-                <div class="descriptor-box">
-                    <span class="descriptor-label">Background</span>
-                    <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_background">Soldier</span>
-                </div>
-                <div class="descriptor-box">
-                    <span class="descriptor-label">Species</span>
-                    <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_species">Human</span>
-                </div>
-            </div>
 
-            <!-- Row 2 -->
-            <div class="stats-container-row">
-                <div class="hp-container-row">
-                    <div class="hp-stat-box">
-                        <span class="stat-label">HP</span>
-                        <div class="current-hp-stat-box" style="display: flex; gap: 10px;">
-                            <span class="large-value editable" contenteditable="true" data-storage-key="tab8_hp">00</span>
-                            <span class="large-value" style="font-weight:100;">/</span>
-                            <span class="large-value editable" contenteditable="true" data-storage-key="tab8_maxhp">00</span>
+                <!-- Row 2 -->
+                <div class="stats-container-row">
+                    <div class="hp-container-row">
+                        <div class="hp-stat-box">
+                            <span class="stat-label">HP</span>
+                            <div class="current-hp-stat-box" style="display: flex; gap: 10px;">
+                                <span class="large-value editable" contenteditable="true" data-storage-key="tab8_hp">00</span>
+                                <span class="large-value" style="font-weight:100;">/</span>
+                                <span class="large-value editable" contenteditable="true" data-storage-key="tab8_maxhp">00</span>
+                            </div>
+                        </div>
+                        
+                        <div class="vertical-break"></div>
+
+                        <div class="hp-stat-box">
+                            <span class="stat-label">Temp HP</span>
+                            <span class="large-value editable" contenteditable="true" data-storage-key="tab8_temp_hp">00</span>
+                        </div>
+
+                        <div class="vertical-break"></div>
+
+                        <div class="hp-stat-box">
+                            <span class="stat-label">Hit Die</span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die">00</span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die_ratio">00</span>
                         </div>
                     </div>
-                    
-                    <div class="vertical-break"></div>
 
-                    <div class="hp-stat-box">
-                        <span class="stat-label">Temp HP</span>
-                        <span class="large-value editable" contenteditable="true" data-storage-key="tab8_temp_hp">00</span>
+                    <div class="stat-box">
+                        <span class="stat-label">AC</span>
+                        <span class="large-value editable" contenteditable="true" data-storage-key="tab8_ac">00</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Initiative</span>
+                        <span class="large-value editable" contenteditable="true" data-storage-key="tab8_initiative">00</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Prof</span>
+                        <span class="large-value editable" contenteditable="true" data-storage-key="tab8_prof">00</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Speed</span>
+                        <span class="large-value editable" contenteditable="true" data-storage-key="tab8_speed">00</span>
+                    </div>
+                </div>
+
+                <!-- Row 3 -->
+                <div class="stats-container-row">
+                    <div class="main-stats-container-row">
+                        <div class="main-stat-box">
+                            <span class="stat-label">STR</span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_str_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_str_score">00</span>
+                        </div>
+                        <div class="main-stat-box">
+                            <span class="stat-label">DEX</span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_dex_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_dex_score">00</span>
+                        </div>
+                        <div class="main-stat-box">
+                            <span class="stat-label">CON</span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_con_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_con_score">00</span>
+                        </div>
+                        <div class="main-stat-box">
+                            <span class="stat-label">INT</span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_int_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_int_score">00</span>
+                        </div>
+                        <div class="main-stat-box">
+                            <span class="stat-label">WIS</span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_wis_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_wis_score">00</span>
+                        </div>
+                        <div class="main-stat-box">
+                            <span class="stat-label">CHA</span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_cha_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_cha_score">00</span>
+                        </div>
                     </div>
 
-                    <div class="vertical-break"></div>
-
-                    <div class="hp-stat-box">
-                        <span class="stat-label">Hit Die</span>
-                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die">00</span>
-                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die_ratio">00</span>
+                    <div class="stat-box">
+                        <span class="stat-label">Spell Save</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_save">00</span>
                     </div>
-                </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Spell Attack</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_attack">00</span>
+                    </div>
 
-                <div class="stat-box">
-                    <span class="stat-label">AC</span>
-                    <span class="large-value editable" contenteditable="true" data-storage-key="tab8_ac">00</span>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-label">Initiative</span>
-                    <span class="large-value editable" contenteditable="true" data-storage-key="tab8_initiative">00</span>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-label">Prof</span>
-                    <span class="large-value editable" contenteditable="true" data-storage-key="tab8_prof">00</span>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-label">Speed</span>
-                    <span class="large-value editable" contenteditable="true" data-storage-key="tab8_speed">00</span>
+                    <div class="death-saves-box">
+                        <span class="stat-label">Death Saves</span>
+                        <div class="death-saves-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_1"></span>
+                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_2"></span>
+                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_3"></span>
+                        </div>
+                        <div class="death-saves-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_4"></span>
+                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_5"></span>
+                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_6"></span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Row 3 -->
-            <div class="stats-container-row">
-                <div class="main-stats-container-row">
-                    <div class="main-stat-box">
-                        <span class="stat-label">STR</span>
-                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_str_bonus">00</span>
-                        <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_str_score">00</span>
-                    </div>
-                    <div class="main-stat-box">
-                        <span class="stat-label">DEX</span>
-                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_dex_bonus">00</span>
-                        <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_dex_score">00</span>
-                    </div>
-                    <div class="main-stat-box">
-                        <span class="stat-label">CON</span>
-                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_con_bonus">00</span>
-                        <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_con_score">00</span>
-                    </div>
-                    <div class="main-stat-box">
-                        <span class="stat-label">INT</span>
-                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_int_bonus">00</span>
-                        <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_int_score">00</span>
-                    </div>
-                    <div class="main-stat-box">
-                        <span class="stat-label">WIS</span>
-                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_wis_bonus">00</span>
-                        <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_wis_score">00</span>
-                    </div>
-                    <div class="main-stat-box">
-                        <span class="stat-label">CHA</span>
-                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_cha_bonus">00</span>
-                        <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_cha_score">00</span>
-                    </div>
-                </div>
-
-                <div class="stat-box">
-                    <span class="stat-label">Spell Save</span>
-                    <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_save">00</span>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-label">Spell Attack</span>
-                    <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_attack">00</span>
-                </div>
-
-                <div class="death-saves-box">
-                    <span class="stat-label">Death Saves</span>
-                    <div class="death-saves-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_deathSave_1"></span>
-                        <span class="circle toggle-circle" data-storage-key="tab8_deathSave_2"></span>
-                        <span class="circle toggle-circle" data-storage-key="tab8_deathSave_3"></span>
-                    </div>
-                    <div class="death-saves-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_deathSave_4"></span>
-                        <span class="circle toggle-circle" data-storage-key="tab8_deathSave_5"></span>
-                        <span class="circle toggle-circle" data-storage-key="tab8_deathSave_6"></span>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div class="character-sheet-row">
             <!-- Saving Throws & Skills -->
@@ -948,7 +949,14 @@
                     </div>
                 </div>
             </div>
-                
+        </div>
+
+        </div>
+    </div>
+    
+
+  
+
     <!-- Overlay for Adding Block -->
     <div class="add-block-overlay">
         <div class="add-block-form">
@@ -1028,6 +1036,7 @@
     <script src="js/circleToggle.js"></script>
     <script src="js/upload_download.js"></script>
     <script src="js/page-title.js"></script>
+    <script type="module" src="js/editButtonHandler.js"></script>
     <script type="module" src="js/diceRoller.js"></script>
 
 </body>
