@@ -124,18 +124,38 @@ export const appManager = (() => {
             const blocksArr = appManager.getBlocks(tab);
             const targetBlock = blocksArr.find(b => b.id === blockId);
             if (!targetBlock) return;
-        
+            
+            // Toggle view state
             if (targetBlock.viewState === "expanded") {
-              // Retrieve the active view state for the current tab from localStorage (defaulting to "condensed")
               const activeState = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
               targetBlock.viewState = activeState;
             } else {
-              // Otherwise, set it to expanded
               targetBlock.viewState = "expanded";
             }
-        
+            
             localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
-            appManager.renderBlocks(tab);
+            
+            // Retrieve the current search query
+            let filteredBlocks = blocksArr;
+            const searchInput = document.getElementById(`search_input_${tab.replace("tab", "")}`);
+            if (searchInput && searchInput.value.trim() !== "") {
+              const query = searchInput.value.trim().toLowerCase();
+              filteredBlocks = filteredBlocks.filter(block =>
+                block.title.toLowerCase().includes(query) ||
+                block.text.toLowerCase().includes(query)
+              );
+            }
+            
+            // Apply tag filters if any are selected
+            const selectedTags = tagHandler.getSelectedTags();
+            if (selectedTags.length > 0) {
+              filteredBlocks = filteredBlocks.filter(block =>
+                selectedTags.every(tag => block.tags.includes(tag))
+              );
+            }
+            
+            // Re-render blocks using the filtered list
+            appManager.renderBlocks(tab, filteredBlocks);
           });
         });
                       
@@ -253,69 +273,70 @@ export const appManager = (() => {
     
     // Update tags (predefined & user-generated)
     const updateTags = () => {
-        const activeTab = getActiveTab(); // e.g., "tab1" or "tab2"
-        const tabSuffix = activeTab.replace("tab", ""); // "1" or "2"
-        const usedTags = getTags(activeTab); // all tags used in blocks for the active tab
-        const selectedTags = tagHandler.getSelectedTags();
+      // Get the active tab (e.g., "tab1") and its numeric suffix
+      const activeTab = getActiveTab();
+      const tabSuffix = activeTab.replace("tab", "");
     
-        // All predefined tags across categories from tagConfig.js
-        const allPredefined = Object.values(categoryTags).flatMap(cat => cat.tags);
-        // User-defined tags are those not included in the predefined list
-        const usedUserTags = usedTags.filter(tag => !allPredefined.includes(tag));
+      // Get all tags used in blocks for this tab
+      const usedTags = getTags(activeTab);
     
-        let html = "";
+      // Fetch the selected tags for this active tab (the per‑tab filter)
+      const selectedTags = tagHandler.getSelectedTags(activeTab);
     
-        // Render user-defined tags first in a unified container
-        if (usedUserTags.length > 0) {
-            html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}">`;
-            html += usedUserTags.map(tag => {
-                const isSelected = selectedTags.includes(tag) ? "selected" : "";
-                return `<button class="tag-button tag-user ${isSelected}" data-tag="${tag}">${tag}</button>`;
-            }).join("");
-            html += `</div>`;
-        } else {
-            html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}"><p>No user-defined tags</p></div>`;
+      // Get all predefined tags from tagConfig.js
+      const allPredefined = Object.values(categoryTags).flatMap(cat => cat.tags);
+      // Determine user-defined tags (those not in the predefined list)
+      const usedUserTags = usedTags.filter(tag => !allPredefined.includes(tag));
+    
+      let html = "";
+    
+      // Render user-defined tags first
+      if (usedUserTags.length > 0) {
+        html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}">`;
+        html += usedUserTags.map(tag => {
+          const isSelected = selectedTags.includes(tag) ? "selected" : "";
+          return `<button class="tag-button tag-user ${isSelected}" data-tag="${tag}">${tag}</button>`;
+        }).join("");
+        html += `</div>`;
+      } else {
+        html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}"><p>No user-defined tags</p></div>`;
+      }
+    
+      // Then render predefined tags grouped by category that apply to the active tab
+      Object.keys(categoryTags).forEach(category => {
+        if (!categoryTags[category].tabs.includes(activeTab)) return;
+        const usedPredefined = categoryTags[category].tags.filter(tag => usedTags.includes(tag));
+        if (usedPredefined.length > 0) {
+          html += `<div class="tag-category" id="${category}_tags_list_${tabSuffix}">`;
+          html += usedPredefined.map(tag => {
+            const isSelected = selectedTags.includes(tag) ? "selected" : "";
+            return `<button class="tag-button ${categoryTags[category].className} ${isSelected}" data-tag="${tag}">${tag}</button>`;
+          }).join("");
+          html += `</div>`;
         }
+      });
     
-        // Then render predefined tags by category
-        Object.keys(categoryTags).forEach(category => {
-            // Only render this category if it applies to the active tab.
-            if (!categoryTags[category].tabs.includes(activeTab)) {
-                return;
-            }
-            // Get predefined tags for this category that are used
-            const usedPredefined = categoryTags[category].tags.filter(tag => usedTags.includes(tag));
-            if (usedPredefined.length > 0) {
-                html += `<div class="tag-category" id="${category}_tags_list_${tabSuffix}">`;
-                html += usedPredefined.map(tag => {
-                    const isSelected = selectedTags.includes(tag) ? "selected" : "";
-                    return `<button class="tag-button ${categoryTags[category].className} ${isSelected}" data-tag="${tag}">${tag}</button>`;
-                }).join("");
-                html += `</div>`;
-            }
+      // Update the unified container for tags in the active tab
+      const unifiedContainer = document.getElementById(`dynamic_tags_section_${tabSuffix}`);
+      if (unifiedContainer) {
+        unifiedContainer.innerHTML = html;
+      }
+    
+      // Reapply the "selected" class on all tag buttons in the active tab
+      const activeTabElement = document.getElementById(activeTab);
+      if (activeTabElement) {
+        activeTabElement.querySelectorAll(".tag-button").forEach(tagElement => {
+          if (selectedTags.includes(tagElement.dataset.tag)) {
+            tagElement.classList.add("selected");
+          } else {
+            tagElement.classList.remove("selected");
+          }
         });
+      }
     
-        // Update the unified container for tags in the active tab
-        const unifiedContainer = document.getElementById(`dynamic_tags_section_${tabSuffix}`);
-        if (unifiedContainer) {
-            unifiedContainer.innerHTML = html;
-        }
-    
-        // Update selected tag highlighting for all tag buttons in the active tab
-        const activeTabElement = document.getElementById(activeTab);
-        if (activeTabElement) {
-            activeTabElement.querySelectorAll(".tag-button").forEach(tagElement => {
-                if (selectedTags.includes(tagElement.dataset.tag)) {
-                    tagElement.classList.add("selected");
-                } else {
-                    tagElement.classList.remove("selected");
-                }
-            });
-        }
-    
-        console.log(`✅ Tags updated for ${activeTab}`);
+      console.log(`✅ Tags updated for ${activeTab}`);
     };
-                
+                        
     const getTags = (tab = getActiveTab()) => {
         const predefinedTags = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
         const usedTags = new Set();

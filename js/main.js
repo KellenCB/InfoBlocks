@@ -101,46 +101,69 @@ document.addEventListener("DOMContentLoaded", () => {
 
     tabButtons.forEach(button => {
         button.addEventListener("click", (event) => {
-          const targetTab = event.currentTarget.dataset.tab;
-          const targetContent = document.getElementById(targetTab);
-          if (!targetTab) {
-            console.error("❌ Error: targetTab is undefined.");
-            return;
-          }
-          // Hide all tabs, remove active classes, etc.
-          tabButtons.forEach(btn => btn.classList.remove("active"));
-          tabContents.forEach(content => {
-            content.classList.remove("active");
-            content.style.display = "none";
-          });
-          // Show the new active tab
-          event.currentTarget.classList.add("active");
-          targetContent.classList.add("active");
-          targetContent.style.display = "flex";
-          localStorage.setItem("activeTab", targetTab);
-      
-          // Render blocks as before...
-          if (targetTab !== "tab5") {
-            appManager.renderBlocks(targetTab);
-            appManager.updateTags();
-          } else {
-            import('./diceRoller.js').then(module => {
-              module.initDiceRoller();
-            });
-          }
-      
-          // Update view toggle buttons based on the newly active tab's state.
-          updateViewToggleButtons();
-          
-          setTimeout(() => {
-            const computedStyle = window.getComputedStyle(targetContent);
-            if (computedStyle.display === "none") {
-              targetContent.style.display = "flex";
+            const targetTab = event.currentTarget.dataset.tab;
+            const targetContent = document.getElementById(targetTab);
+            if (!targetTab) {
+                console.error("❌ Error: targetTab is undefined.");
+                return;
             }
-          }, 100);
+            // Hide all tabs, remove active classes, etc.
+            tabButtons.forEach(btn => btn.classList.remove("active"));
+            tabContents.forEach(content => {
+                content.classList.remove("active");
+                content.style.display = "none";
+            });
+            // Show the new active tab
+            event.currentTarget.classList.add("active");
+            targetContent.classList.add("active");
+            targetContent.style.display = "flex";
+            localStorage.setItem("activeTab", targetTab);
+        
+            // Render blocks as before...
+            if (targetTab !== "tab5") {
+                // Retrieve blocks for the target tab
+                let blocks = appManager.getBlocks(targetTab);
+              
+                // Apply search filtering for this tab if present
+                const tabNumber = targetTab.replace("tab", "");
+                const searchInput = document.getElementById(`search_input_${tabNumber}`);
+                if (searchInput && searchInput.value.trim() !== "") {
+                  const query = searchInput.value.trim().toLowerCase();
+                  blocks = blocks.filter(block =>
+                    block.title.toLowerCase().includes(query) ||
+                    block.text.toLowerCase().includes(query)
+                  );
+                }
+              
+                // Apply tag filters using per-tab settings
+                const selectedTags = tagHandler.getSelectedTags(targetTab);
+                if (selectedTags.length > 0) {
+                  blocks = blocks.filter(block =>
+                    selectedTags.every(tag => block.tags.includes(tag))
+                  );
+                }
+              
+                // Render using the filtered list
+                appManager.renderBlocks(targetTab, blocks);
+                appManager.updateTags();
+              } else {
+                import('./diceRoller.js').then(module => {
+                  module.initDiceRoller();
+                });
+              }
+              
+              // Update view toggle buttons if needed
+              updateViewToggleButtons();
+              
+              setTimeout(() => {
+                const computedStyle = window.getComputedStyle(targetContent);
+                if (computedStyle.display === "none") {
+                  targetContent.style.display = "flex";
+                }
+            }, 100);
         });
     });
-      
+                
     // Handle tab reordering
     document.querySelector(".tabs-nav").addEventListener("dragover", (e) => {
         e.preventDefault();
