@@ -37,7 +37,7 @@ fadeInElementsSequentially();
 
 // Function to save the current tab order to localStorage
 function saveTabOrder() {
-    const tabButtons = document.querySelectorAll(".tabs-nav .tab-button");
+    const tabButtons = document.querySelectorAll(".tab-nav .tab-button");
     const order = Array.from(tabButtons).map(button => button.dataset.tab);
     localStorage.setItem("tabOrder", JSON.stringify(order));
     console.log("Tab order saved:", order);
@@ -46,7 +46,7 @@ function saveTabOrder() {
 document.addEventListener("DOMContentLoaded", () => {
     // Restore tab order on page load if it exists
     const savedOrder = JSON.parse(localStorage.getItem("tabOrder"));
-    const tabNav = document.querySelector(".tabs-nav");
+    const tabNav = document.querySelector(".tab-nav");
     if (savedOrder && tabNav) {
         savedOrder.forEach(tabId => {
             const button = tabNav.querySelector(`.tab-button[data-tab="${tabId}"]`);
@@ -165,11 +165,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
                 
     // Handle tab reordering
-    document.querySelector(".tabs-nav").addEventListener("dragover", (e) => {
+    document.querySelector(".tab-nav").addEventListener("dragover", (e) => {
         e.preventDefault();
         const draggingTab = document.querySelector(".dragging");
         const afterElement = getDragAfterElement(e.clientX);
-        const tabNav = document.querySelector(".tabs-nav");
+        const tabNav = document.querySelector(".tab-nav");
         if (afterElement == null) {
             tabNav.appendChild(draggingTab);
         } else {
@@ -250,6 +250,37 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         appManager.renderBlocks(activeTabId);
     }
+});
+
+// Make echaracter sheet editable fields more use friendly 
+document.querySelectorAll("#tab4 .editable, #tab8 .editable").forEach(field => {
+    field.addEventListener("focus", function () {
+        // Highlight all text
+        const range = document.createRange();
+        range.selectNodeContents(this);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        // Ensure full opacity while editing
+        this.style.opacity = "1";
+        // Store the initial value
+        this.dataset.initialValue = this.textContent;
+    });
+
+    field.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            this.blur();
+            window.getSelection().removeAllRanges();
+        } else if (e.key === "Escape") {
+            e.preventDefault();
+            if (this.dataset.initialValue !== undefined) {
+            this.textContent = this.dataset.initialValue;
+            }
+            this.blur();
+            window.getSelection().removeAllRanges();
+        }
+    });
 });
 
 // 📌 Handle tag filtering
@@ -439,10 +470,13 @@ const updateBlocksViewState = (newState) => {
     });
     localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
     appManager.renderBlocks(activeTab);
-    localStorage.setItem(`activeViewState_${activeTab}`, newState);
-};
-
-const updateViewToggleButtons = () => {
+    // Only update active view state if it’s not "expanded"
+    if(newState !== "expanded"){
+      localStorage.setItem(`activeViewState_${activeTab}`, newState);
+    }
+  };
+  
+  const updateViewToggleButtons = () => {
     // Remove the active class from all buttons
     const expandedBtn = document.getElementById("view_expanded_button");
     const condensedBtn = document.getElementById("view_condensed_button");
@@ -463,8 +497,8 @@ const updateViewToggleButtons = () => {
     } else if (savedViewState === "minimized") {
       minimizedBtn.classList.add("active");
     }
-};  
-
+};
+  
 const clearToggleClasses = () => {
     document.getElementById("view_condensed_button")?.classList.remove("active");
     document.getElementById("view_minimized_button")?.classList.remove("active");

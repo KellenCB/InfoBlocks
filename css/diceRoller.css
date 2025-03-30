@@ -117,7 +117,7 @@
 /* Container for selected dice & Roll! button */
 .selected-dice-wrapper {
   width: 100%;
-  height: calc(100vh - 490px); /* Adjust for correct height */
+  height: calc(100vh - 700px); /* Adjust for correct height */
   position: relative;
   background-color: #2a2a2a;
   padding: 20px;

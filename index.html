@@ -66,7 +66,7 @@
     </div>
 
     <div class="container fade-in">
-        <div class="tabs-nav fade-in">
+        <div class="tab-nav fade-in">
             <button class="tab-button active" data-tab="tab1" draggable="true">Tab 1</button> <!-- Magic Items -->
             <button class="tab-button" data-tab="tab2" draggable="true">Tab 2</button> <!-- Spells -->
             <button class="tab-button" data-tab="tab3" draggable="true">Tab 3</button> <!-- Notes -->
@@ -211,50 +211,59 @@
         <div class="tab-content no-gap" id="tab4">
             <div class="character-sheet-column">
                 <!-- Row 1 -->
-                <div class="character-sheet-row">
-                    <div class="descriptor-title">
-                        <h2>Character Sheet</h2> 
+                <div class="descriptor-grid">
+                    <div class="descriptor-box">
+                        <span class="descriptor-label">Level</span>
+                        <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_level">10</span>
                     </div>
-        
-                    <div class="descriptor-grid">
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Level</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_level">10</span>
-                        </div>
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Class</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_class">Fighter</span>
-                        </div>
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Alignment</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_alignment">Neutral</span>
-                        </div>
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Background</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_background">Soldier</span>
-                        </div>
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Species</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_species">Human</span>
-                        </div>
+                    <div class="descriptor-box">
+                        <span class="descriptor-label">Class</span>
+                        <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_class">Fighter</span>
+                    </div>
+                    <div class="descriptor-box">
+                        <span class="descriptor-label">Alignment</span>
+                        <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_alignment">Neutral</span>
+                    </div>
+                    <div class="descriptor-box">
+                        <span class="descriptor-label">Background</span>
+                        <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_background">Soldier</span>
+                    </div>
+                    <div class="descriptor-box">
+                        <span class="descriptor-label">Species</span>
+                        <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_species">Human</span>
                     </div>
                 </div>
         
                 <!-- Row 2 -->
                 <div class="stats-container-row">
-                    <div class="hp-stat-box">
-                        <span class="stat-label">HP</span>
-                        <span class="large-value editable" contenteditable="true" data-storage-key="tab4_hp">45 / 60</span>
+                    <div class="hp-container-row">
+                        <div class="hp-stat-box">
+                            <span class="stat-label">HP</span>
+                            <div class="current-hp-stat-box" style="display: flex; gap: 10px;">
+                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_hp">86</span>
+                        
+                                <span class="large-value" style="font-weight:100;">/</span>
+                         
+                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_maxhp">00</span>
+                            </div>
+                        </div>
+                        
+                        <div class="vertical-break"></div>
+
+                        <div class="hp-stat-box">
+                            <span class="stat-label">Temp HP</span>
+                            <span class="large-value editable" contenteditable="true" data-storage-key="tab4_temp_hp">+5</span>
+                        </div>
+
+                        <div class="vertical-break"></div>
+
+                        <div class="hp-stat-box">
+                            <span class="stat-label">Hit Die</span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_hit_die">1d10</span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_hit_die_ratio">6 / 8</span>
+                        </div>
                     </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Temp HP</span>
-                        <span class="large-value editable" contenteditable="true" data-storage-key="tab4_temp_hp">+5</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Hit Die</span>
-                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_hit_die">1d10</span>
-                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_hit_die_ratio">6 / 8</span>
-                    </div>
+
                     <div class="stat-box">
                         <span class="stat-label">AC</span>
                         <span class="large-value editable" contenteditable="true" data-storage-key="tab4_ac">18</span>
@@ -307,7 +316,6 @@
                             <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_cha_score">10</span>
                         </div>
                     </div>
-                    <div class="stats-container-row">
                         <div class="stat-box">
                             <span class="stat-label">Spell Save</span>
                             <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_spell_save">30</span>
@@ -329,7 +337,6 @@
                                 <span class="circle toggle-circle" data-storage-key="tab4_deathSave_6"></span>
                             </div>
                         </div>    
-                    </div>
                 </div>
             </div>
         
@@ -341,126 +348,126 @@
                         <div class="save-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_save_str_toggle"></span>
                             <span class="save-label">Strength</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_save_str">+5</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_save_str">+5</span>
                         </div>
                         <div class="save-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_save_dex_toggle"></span>
                             <span class="save-label">Dexterity</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_save_dex">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_save_dex">0</span>
                         </div>
                         <div class="save-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_save_con_toggle"></span>
                             <span class="save-label">Constitution</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_save_con">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_save_con">0</span>
                         </div>
                         <div class="save-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_save_int_toggle"></span>
                             <span class="save-label">Inteligence</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_save_int">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_save_int">0</span>
                         </div>
                         <div class="save-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_save_wis_toggle"></span>
                             <span class="save-label">Wisdom</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_save_wis">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_save_wis">0</span>
                         </div>
                         <div class="save-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_save_cha_toggle"></span>
                             <span class="save-label">Charisma</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_save_cha">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_save_cha">0</span>
                         </div>
                     </div>
-                    
+                    <div class="horizontal-break"></div>
                     <div class="skills">
                         <h3>Skills</h3>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_acrobatics_toggle"></span>
                             <span class="skill-label">Acrobatics (dex)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_acrobatics">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_acrobatics">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_animal_handling_toggle"></span>
                             <span class="skill-label">Animal Handling (wis)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_animal_handling">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_animal_handling">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_arcana_toggle"></span>
-                            <span class="skill-label">Arcana (str)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_arcana">0</span>
+                            <span class="skill-label">Arcana (int)</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_arcana">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_athletics_toggle"></span>
                             <span class="skill-label">Athletics (str)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_athletics">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_athletics">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_deception_toggle"></span>
                             <span class="skill-label">Deception (cha)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_deception">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_deception">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_history_toggle"></span>
                             <span class="skill-label">History (int)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_history">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_history">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_insight_toggle"></span>
                             <span class="skill-label">Insight (wis)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_insight">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_insight">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_intimidation_toggle"></span>
                             <span class="skill-label">Intimidation (cha)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_intimidation">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_intimidation">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_investigation_toggle"></span>
                             <span class="skill-label">Investigation (int)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_investigation">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_investigation">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_medicine_toggle"></span>
                             <span class="skill-label">Medicine (wis)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_medicine">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_medicine">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_nature_toggle"></span>
                             <span class="skill-label">Nature (int)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_nature">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_nature">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_perception_toggle"></span>
                             <span class="skill-label">Perception (wis)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_perception">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_perception">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_performance_toggle"></span>
                             <span class="skill-label">Performance (cha)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_performance">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_performance">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_persuasion_toggle"></span>
                             <span class="skill-label">Persuasion (cha)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_persuasion">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_persuasion">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_religion_toggle"></span>
                             <span class="skill-label">Religion (int)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_religion">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_religion">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_sleight_of_hand_toggle"></span>
                             <span class="skill-label">Slight of Hand (dex)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_sleight_of_hand">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_sleight_of_hand">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_stealth_toggle"></span>
                             <span class="skill-label">Stealth (dex)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_stealth">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_stealth">0</span>
                         </div>
                         <div class="skill-row">
                             <span class="circle toggle-circle" data-storage-key="tab4_skill_survival_toggle"></span>
                             <span class="skill-label">Survival (wis)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_skill_survival">0</span>
+                            <span class="skill-plus editable" contenteditable="true" data-storage-key="tab4_skill_survival">0</span>
                         </div>
                     </div>
                 </div>
@@ -640,303 +647,308 @@
             </div>
         </div>
 
-        <!-- Tab 8: Crank -->
-        <div class="tab-content no-gap" id="tab8">
-
-            <div class="character-sheet-column">
-                <!-- Row 1 -->
-                <div class="character-sheet-row">
-                    <div class="descriptor-title">
-                        <h2>Character Sheet</h2> 
-                    </div>
-        
-                    <div class="descriptor-grid">
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Level</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_level">10</span>
-                        </div>
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Class</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_class">Fighter</span>
-                        </div>
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Alignment</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_alignment">Neutral</span>
-                        </div>
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Background</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_background">Soldier</span>
-                        </div>
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Species</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_species">Human</span>
-                        </div>
-                    </div>
+    <!-- Tab 8: Character Sheet -->
+    <div class="tab-content no-gap" id="tab8">
+        <div class="character-sheet-column">
+            <!-- Row 1 -->
+            <div class="descriptor-grid">
+                <div class="descriptor-box">
+                    <span class="descriptor-label">Level</span>
+                    <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_level">10</span>
                 </div>
-        
-                <!-- Row 2 -->
-                <div class="stats-container-row">
-                    <div class="hp-stat-box">
-                        <span class="stat-label">HP</span>
-                        <span class="large-value editable" contenteditable="true" data-storage-key="tab8_hp">45 / 60</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Temp HP</span>
-                        <span class="large-value editable" contenteditable="true" data-storage-key="tab8_temp_hp">+5</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Hit Die</span>
-                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die">1d10</span>
-                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die_ratio">6 / 8</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">AC</span>
-                        <span class="large-value editable" contenteditable="true" data-storage-key="tab8_ac">18</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Initiative</span>
-                        <span class="large-value editable" contenteditable="true" data-storage-key="tab8_initiative">+2</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Prof</span>
-                        <span class="large-value editable" contenteditable="true" data-storage-key="tab8_prof">+4</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Speed</span>
-                        <span class="large-value editable" contenteditable="true" data-storage-key="tab8_speed">30</span>
-                    </div>
+                <div class="descriptor-box">
+                    <span class="descriptor-label">Class</span>
+                    <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_class">Fighter</span>
                 </div>
-            
-                <!-- Row 3 -->
-                <div class="stats-container-row">
-                    <div class="main-stats-container-row">
-                        <div class="main-stat-box">
-                            <span class="stat-label">STR</span>
-                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_str_bonus">+3</span>
-                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_str_score">15</span>
-                        </div>
-                        <div class="main-stat-box">
-                            <span class="stat-label">DEX</span>
-                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_dex_bonus">+2</span>
-                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_dex_score">14</span>
-                        </div>
-                        <div class="main-stat-box">
-                            <span class="stat-label">CON</span>
-                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_con_bonus">+3</span>
-                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_con_score">16</span>
-                        </div>
-                        <div class="main-stat-box">
-                            <span class="stat-label">INT</span>
-                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_int_bonus">+0</span>
-                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_int_score">10</span>
-                        </div>
-                        <div class="main-stat-box">
-                            <span class="stat-label">WIS</span>
-                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_wis_bonus">+3</span>
-                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_wis_score">16</span>
-                        </div>
-                        <div class="main-stat-box">
-                            <span class="stat-label">CHA</span>
-                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_cha_bonus">+0</span>
-                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_cha_score">10</span>
-                        </div>
-                    </div>
-                    <div class="stats-container-row">
-                        <div class="stat-box">
-                            <span class="stat-label">Spell Save</span>
-                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_save">30</span>
-                        </div>
-                        <div class="stat-box">
-                            <span class="stat-label">Spell attack</span>
-                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_attack">30</span>
-                        </div>
-                        <div class="death-saves-box">
-                            <span class="stat-label">Death Saves</span>
-                            <div class="death-saves-row">
-                                <span class="circle toggle-circle" data-storage-key="tab8_deathSave_1"></span>
-                                <span class="circle toggle-circle" data-storage-key="tab8_deathSave_2"></span>
-                                <span class="circle toggle-circle" data-storage-key="tab8_deathSave_3"></span>
-                            </div>
-                            <div class="death-saves-row">
-                                <span class="circle toggle-circle" data-storage-key="tab8_deathSave_4"></span>
-                                <span class="circle toggle-circle" data-storage-key="tab8_deathSave_5"></span>
-                                <span class="circle toggle-circle" data-storage-key="tab8_deathSave_6"></span>
-                            </div>
-                        </div>    
-                    </div>
+                <div class="descriptor-box">
+                    <span class="descriptor-label">Alignment</span>
+                    <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_alignment">Neutral</span>
+                </div>
+                <div class="descriptor-box">
+                    <span class="descriptor-label">Background</span>
+                    <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_background">Soldier</span>
+                </div>
+                <div class="descriptor-box">
+                    <span class="descriptor-label">Species</span>
+                    <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_species">Human</span>
                 </div>
             </div>
-        
-            <div class="character-sheet-row">
-                <!-- Saving Throws & Skills -->
-                <div class="saving-throws-and-skills-column">
-                    <div class="saving-throws">
-                        <h3>Saving Throws</h3>
-                        <div class="save-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_save_str_toggle"></span>
-                            <span class="save-label">Strength</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_save_str">+5</span>
-                        </div>
-                        <div class="save-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_save_dex_toggle"></span>
-                            <span class="save-label">Dexterity</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_save_dex">0</span>
-                        </div>
-                        <div class="save-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_save_con_toggle"></span>
-                            <span class="save-label">Constitution</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_save_con">0</span>
-                        </div>
-                        <div class="save-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_save_int_toggle"></span>
-                            <span class="save-label">Inteligence</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_save_int">0</span>
-                        </div>
-                        <div class="save-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_save_wis_toggle"></span>
-                            <span class="save-label">Wisdom</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_save_wis">0</span>
-                        </div>
-                        <div class="save-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_save_cha_toggle"></span>
-                            <span class="save-label">Charisma</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_save_cha">0</span>
+
+            <!-- Row 2 -->
+            <div class="stats-container-row">
+                <div class="hp-container-row">
+                    <div class="hp-stat-box">
+                        <span class="stat-label">HP</span>
+                        <div class="current-hp-stat-box" style="display: flex; gap: 10px;">
+                            <span class="large-value editable" contenteditable="true" data-storage-key="tab8_hp">00</span>
+                            <span class="large-value" style="font-weight:100;">/</span>
+                            <span class="large-value editable" contenteditable="true" data-storage-key="tab8_maxhp">00</span>
                         </div>
                     </div>
                     
-                    <div class="skills">
-                        <h3>Skills</h3>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_acrobatics_toggle"></span>
-                            <span class="skill-label">Acrobatics (dex)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_acrobatics">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_animal_handling_toggle"></span>
-                            <span class="skill-label">Animal Handling (wis)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_animal_handling">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_arcana_toggle"></span>
-                            <span class="skill-label">Arcana (str)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_arcana">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_athletics_toggle"></span>
-                            <span class="skill-label">Athletics (str)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_athletics">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_deception_toggle"></span>
-                            <span class="skill-label">Deception (cha)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_deception">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_history_toggle"></span>
-                            <span class="skill-label">History (int)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_history">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_insight_toggle"></span>
-                            <span class="skill-label">Insight (wis)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_insight">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_intimidation_toggle"></span>
-                            <span class="skill-label">Intimidation (cha)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_intimidation">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_investigation_toggle"></span>
-                            <span class="skill-label">Investigation (int)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_investigation">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_medicine_toggle"></span>
-                            <span class="skill-label">Medicine (wis)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_medicine">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_nature_toggle"></span>
-                            <span class="skill-label">Nature (int)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_nature">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_perception_toggle"></span>
-                            <span class="skill-label">Perception (wis)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_perception">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_performance_toggle"></span>
-                            <span class="skill-label">Performance (cha)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_performance">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_persuasion_toggle"></span>
-                            <span class="skill-label">Persuasion (cha)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_persuasion">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_religion_toggle"></span>
-                            <span class="skill-label">Religion (int)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_religion">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_sleight_of_hand_toggle"></span>
-                            <span class="skill-label">Slight of Hand (dex)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_sleight_of_hand">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_stealth_toggle"></span>
-                            <span class="skill-label">Stealth (dex)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_stealth">0</span>
-                        </div>
-                        <div class="skill-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_skill_survival_toggle"></span>
-                            <span class="skill-label">Survival (wis)</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_skill_survival">0</span>
-                        </div>
+                    <div class="vertical-break"></div>
+
+                    <div class="hp-stat-box">
+                        <span class="stat-label">Temp HP</span>
+                        <span class="large-value editable" contenteditable="true" data-storage-key="tab8_temp_hp">00</span>
+                    </div>
+
+                    <div class="vertical-break"></div>
+
+                    <div class="hp-stat-box">
+                        <span class="stat-label">Hit Die</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die">00</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die_ratio">00</span>
                     </div>
                 </div>
-        
-                <div class="character-sheet-column">
-                    <!-- Attacks -->
-                    <div class="attacks_grid">
-                        <h3>Attacks</h3>
-                        <div class="attack-row">
-                            <span class="attack-label">DEX</span>
-                            <span class="attack-name">Melle attack</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_attack1">0</span>
-                        </div>
-                        <div class="attack-row">
-                            <span class="attack-label">DEX</span>
-                            <span class="attack-name">Shortbow</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab8_attack2">0</span>
-                        </div>
+
+                <div class="stat-box">
+                    <span class="stat-label">AC</span>
+                    <span class="large-value editable" contenteditable="true" data-storage-key="tab8_ac">00</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Initiative</span>
+                    <span class="large-value editable" contenteditable="true" data-storage-key="tab8_initiative">00</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Prof</span>
+                    <span class="large-value editable" contenteditable="true" data-storage-key="tab8_prof">00</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Speed</span>
+                    <span class="large-value editable" contenteditable="true" data-storage-key="tab8_speed">00</span>
+                </div>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="stats-container-row">
+                <div class="main-stats-container-row">
+                    <div class="main-stat-box">
+                        <span class="stat-label">STR</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_str_bonus">00</span>
+                        <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_str_score">00</span>
                     </div>
-                    
-                    <!-- Feats & Abilities (Results Section) -->
-                    <div id="results_section_8" class="results-section">
-                        <div id="results_header" class="results-header">
-                            <h2 class="section-header">Feats & Abilities</h2>
-                            <div id="sort_controls" class="sort-controls">
-                                <span>Sort by:</span>
-                                <button id="sort_newest" class="sort-button">
-                                    <i class="fas fa-sort-numeric-down"></i> Newest
-                                </button>
-                                <button id="sort_oldest" class="sort-button">
-                                    <i class="fas fa-sort-numeric-up"></i> Oldest
-                                </button>
-                                <button id="sort_alpha" class="sort-button">
-                                    <i class="fas fa-sort-alpha-down"></i> A-Z
-                                </button>
-                            </div>
-                        </div>
+                    <div class="main-stat-box">
+                        <span class="stat-label">DEX</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_dex_bonus">00</span>
+                        <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_dex_score">00</span>
+                    </div>
+                    <div class="main-stat-box">
+                        <span class="stat-label">CON</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_con_bonus">00</span>
+                        <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_con_score">00</span>
+                    </div>
+                    <div class="main-stat-box">
+                        <span class="stat-label">INT</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_int_bonus">00</span>
+                        <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_int_score">00</span>
+                    </div>
+                    <div class="main-stat-box">
+                        <span class="stat-label">WIS</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_wis_bonus">00</span>
+                        <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_wis_score">00</span>
+                    </div>
+                    <div class="main-stat-box">
+                        <span class="stat-label">CHA</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_cha_bonus">00</span>
+                        <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_cha_score">00</span>
+                    </div>
+                </div>
+
+                <div class="stat-box">
+                    <span class="stat-label">Spell Save</span>
+                    <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_save">00</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Spell Attack</span>
+                    <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_attack">00</span>
+                </div>
+
+                <div class="death-saves-box">
+                    <span class="stat-label">Death Saves</span>
+                    <div class="death-saves-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_deathSave_1"></span>
+                        <span class="circle toggle-circle" data-storage-key="tab8_deathSave_2"></span>
+                        <span class="circle toggle-circle" data-storage-key="tab8_deathSave_3"></span>
+                    </div>
+                    <div class="death-saves-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_deathSave_4"></span>
+                        <span class="circle toggle-circle" data-storage-key="tab8_deathSave_5"></span>
+                        <span class="circle toggle-circle" data-storage-key="tab8_deathSave_6"></span>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div class="character-sheet-row">
+            <!-- Saving Throws & Skills -->
+            <div class="saving-throws-and-skills-column">
+                <div class="saving-throws">
+                    <h3>Saving Throws</h3>
+                    <div class="save-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_save_str_toggle"></span>
+                        <span class="save-label">Strength</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_save_str">+5</span>
+                    </div>
+                    <div class="save-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_save_dex_toggle"></span>
+                        <span class="save-label">Dexterity</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_save_dex">0</span>
+                    </div>
+                    <div class="save-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_save_con_toggle"></span>
+                        <span class="save-label">Constitution</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_save_con">0</span>
+                    </div>
+                    <div class="save-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_save_int_toggle"></span>
+                        <span class="save-label">Intelligence</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_save_int">0</span>
+                    </div>
+                    <div class="save-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_save_wis_toggle"></span>
+                        <span class="save-label">Wisdom</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_save_wis">0</span>
+                    </div>
+                    <div class="save-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_save_cha_toggle"></span>
+                        <span class="save-label">Charisma</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_save_cha">0</span>
+                    </div>
+                </div>
         
+                <div class="horizontal-break"></div>
+        
+                <div class="skills">
+                    <h3>Skills</h3>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_acrobatics_toggle"></span>
+                        <span class="skill-label">Acrobatics (dex)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_acrobatics">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_animal_handling_toggle"></span>
+                        <span class="skill-label">Animal Handling (wis)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_animal_handling">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_arcana_toggle"></span>
+                        <span class="skill-label">Arcana (int)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_arcana">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_athletics_toggle"></span>
+                        <span class="skill-label">Athletics (str)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_athletics">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_deception_toggle"></span>
+                        <span class="skill-label">Deception (cha)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_deception">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_history_toggle"></span>
+                        <span class="skill-label">History (int)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_history">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_insight_toggle"></span>
+                        <span class="skill-label">Insight (wis)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_insight">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_intimidation_toggle"></span>
+                        <span class="skill-label">Intimidation (cha)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_intimidation">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_investigation_toggle"></span>
+                        <span class="skill-label">Investigation (int)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_investigation">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_medicine_toggle"></span>
+                        <span class="skill-label">Medicine (wis)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_medicine">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_nature_toggle"></span>
+                        <span class="skill-label">Nature (int)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_nature">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_perception_toggle"></span>
+                        <span class="skill-label">Perception (wis)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_perception">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_performance_toggle"></span>
+                        <span class="skill-label">Performance (cha)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_performance">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_persuasion_toggle"></span>
+                        <span class="skill-label">Persuasion (cha)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_persuasion">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_religion_toggle"></span>
+                        <span class="skill-label">Religion (int)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_religion">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_sleight_of_hand_toggle"></span>
+                        <span class="skill-label">Sleight of Hand (dex)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_sleight_of_hand">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_stealth_toggle"></span>
+                        <span class="skill-label">Stealth (dex)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_stealth">0</span>
+                    </div>
+                    <div class="skill-row">
+                        <span class="circle toggle-circle" data-storage-key="tab8_skill_survival_toggle"></span>
+                        <span class="skill-label">Survival (wis)</span>
+                        <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_skill_survival">0</span>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Attacks -->
+            <div class="character-sheet-column">
+                <div class="attacks_grid">
+                    <h3>Attacks</h3>
+                    <div class="attack-row">
+                        <span class="attack-label">DEX</span>
+                        <span class="attack-name">Melee Attack</span>
+                        <span class="editable" contenteditable="true" data-storage-key="tab8_attack1">0</span>
+                    </div>
+                    <div class="attack-row">
+                        <span class="attack-label">DEX</span>
+                        <span class="attack-name">Shortbow</span>
+                        <span class="editable" contenteditable="true" data-storage-key="tab8_attack2">0</span>
+                    </div>
+                </div>
+                
+            <!-- Feats & Abilities (Results Section) -->
+            <div id="results_section_8" class="results-section">
+                <div id="results_header_8" class="results-header">
+                    <h2 id="results_title_8" class="section-header" contenteditable="true">Feats & Abilities</h2>
+                    <div id="sort_controls_8" class="sort-controls">
+                        <span>Sort by:</span>
+                        <button id="sort_newest_8" class="sort-button">
+                            <i class="fas fa-sort-numeric-down"></i> Newest
+                        </button>
+                        <button id="sort_oldest_8" class="sort-button">
+                            <i class="fas fa-sort-numeric-up"></i> Oldest
+                        </button>
+                        <button id="sort_alpha_8" class="sort-button">
+                            <i class="fas fa-sort-alpha-down"></i> A-Z
+                        </button>
+                    </div>
+                </div>
+            </div>
+                
     <!-- Overlay for Adding Block -->
     <div class="add-block-overlay">
         <div class="add-block-form">
@@ -985,25 +997,25 @@
 
     <!-- Overlay for Spell Slot Editing -->
     <div class="spell-slot-edit-overlay">
-    <div class="spell-slot-edit-container">
-      <h2>Edit Spell Slots</h2>
-      <!-- Replicated spell-slot-section for editing -->
-      <div class="spell-slot-section edit-mode">
-        <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">1st Lvl</span></div>
-        <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">2nd Lvl</span></div>
-        <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">3rd Lvl</span></div>
-        <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">4th Lvl</span></div>
-        <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">5th Lvl</span></div>
-        <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">6th Lvl</span></div>
-        <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">7th Lvl</span></div>
-        <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">8th Lvl</span></div>
-        <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>
+        <div class="spell-slot-edit-container">
+        <h2>Edit Spell Slots</h2>
+        <!-- Replicated spell-slot-section for editing -->
+        <div class="spell-slot-section edit-mode">
+            <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">1st Lvl</span></div>
+            <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">2nd Lvl</span></div>
+            <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">3rd Lvl</span></div>
+            <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">4th Lvl</span></div>
+            <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">5th Lvl</span></div>
+            <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">6th Lvl</span></div>
+            <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">7th Lvl</span></div>
+            <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">8th Lvl</span></div>
+            <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>
+        </div>
+        <div class="spell-slot-buttons">
+            <button id="save_spell_slot_changes" class="button green-button">Save Changes</button>
+            <button id="close_spell_slot_edit" class="button red-button">Cancel</button>
+        </div>
     </div>
-    <div class="spell-slot-buttons">
-        <button id="save_spell_slot_changes" class="button green-button">Save Changes</button>
-        <button id="close_spell_slot_edit" class="button red-button">Cancel</button>
-    </div>
-</div>
 </div>
 
 
