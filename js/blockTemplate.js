@@ -79,9 +79,17 @@ export const blockTemplate = (block) => {
                 ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
             </div>
         `;
-        } else if (viewState === 'minimized') {
-        // Minimized View:
-        content = `<h4>${block.title}</h4>`;
+    } else if (viewState === 'minimized') {
+        const usesHTML = block.uses
+            ? block.uses.map((state, idx) => `<span class="circle ${state ? 'unfilled' : ''}" onclick="toggleBlockUse('${block.id}', ${idx}, event, this)"></span>`).join("")
+            : "";
+    
+        content = `
+            <div class="block-header">
+                <h4>${block.title}</h4>
+                ${usesHTML ? `<div class="block-uses">${usesHTML}</div>` : ""}
+            </div>
+        `;
     }
 
     // Add the viewState as a class to the container for targeted styling

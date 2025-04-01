@@ -55,10 +55,9 @@ export const saveEditHandler = () => {
 
     // ✅ Preserve search input and selected tags
     const selectedTags = tagHandler.getSelectedTags();
-    const searchQuery = document.getElementById("search_input")?.value.trim().toLowerCase();
-
+    const searchQuery = document.getElementById("search_input_${tabSuffix}")?.value.trim().toLowerCase();
     let filteredBlocks = appManager.getBlocks(activeTab);
-
+        
     // ✅ Apply search filter
     if (searchQuery) {
         filteredBlocks = filteredBlocks.filter(block =>
@@ -77,7 +76,29 @@ export const saveEditHandler = () => {
 
     // ✅ Render only filtered blocks
     setTimeout(() => {
-        appManager.renderBlocks();
+        // ✅ Apply search filter if there's a query
+        if (searchQuery) {
+            filteredBlocks = filteredBlocks.filter(block =>
+                block.title.toLowerCase().includes(searchQuery) ||
+                block.text.toLowerCase().includes(searchQuery) ||
+                block.tags.some(tag => tag.toLowerCase().includes(searchQuery))
+            );
+        }
+
+        // ✅ Apply tag filter if tags are selected
+        if (selectedTags.length > 0) {
+            filteredBlocks = filteredBlocks.filter(block =>
+                selectedTags.every(tag =>
+                    block.tags.some(blockTag =>
+                        blockTag.charAt(0).toUpperCase() + blockTag.slice(1).toLowerCase() ===
+                        tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
+                    )
+                )
+            );
+        }
+
+        // ✅ Re-render with filtered results
+        appManager.renderBlocks(activeTab, filteredBlocks);
         appManager.updateTags();
     }, 50);
 };
@@ -92,7 +113,7 @@ export const blockActionsHandler = (() => {
         if (!blockId) return;
 
         const selectedTags = tagHandler.getSelectedTags(); // ✅ Get selected tags
-        const searchQuery = document.getElementById("search_input")?.value.trim().toLowerCase(); // ✅ Get current search input
+        const searchQuery = document.getElementById("search_input_${tabSuffix}")?.value.trim().toLowerCase(); // ✅ Get current search input
 
         const block = appManager.getBlocks().find(b => b.id === blockId);
         if (!block) {
@@ -103,11 +124,13 @@ export const blockActionsHandler = (() => {
         if (target.classList.contains("duplicate_button")) {
             console.log("📄 Duplicating block:", blockId);
         
-            const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1"; // ✅ Ensure activeTab is defined
+            const activeTab = appManager.getActiveTab();
             const blockTags = Array.isArray(block.tags) ? [...block.tags] : [];
         
             appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags);
-                        
+        
+            reapplySearchAndFilters();
+                                
         } else if (target.classList.contains("edit_button")) {
             console.log("📝 Editing block:", blockId);
             isEditing = true;
@@ -163,9 +186,20 @@ export const blockActionsHandler = (() => {
         } else if (target.classList.contains("remove_button")) {
             console.log("🗑 Removing block:", blockId);
             appManager.removeBlock(blockId);
+        
+            reapplySearchAndFilters();
         }
+    };
 
-        // ✅ Apply search filter if there's a query
+    function reapplySearchAndFilters() {
+        const activeTab = appManager.getActiveTab();
+        const selectedTags = tagHandler.getSelectedTags();
+        const tabNumber = activeTab.replace("tab", "");
+        const searchInput = document.getElementById(`search_input_${tabNumber}`);
+        const searchQuery = searchInput ? searchInput.value.trim().toLowerCase() : "";
+        
+        let filteredBlocks = appManager.getBlocks(activeTab);
+    
         if (searchQuery) {
             filteredBlocks = filteredBlocks.filter(block =>
                 block.title.toLowerCase().includes(searchQuery) ||
@@ -173,18 +207,22 @@ export const blockActionsHandler = (() => {
                 block.tags.some(tag => tag.toLowerCase().includes(searchQuery))
             );
         }
-
-        // ✅ Apply tag filter if tags are selected
+    
+        const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
+    
         if (selectedTags.length > 0) {
             filteredBlocks = filteredBlocks.filter(block =>
-                selectedTags.every(tag => block.tags.includes(tag))
+                selectedTags.every(selectedTag =>
+                    block.tags.some(blockTag =>
+                        normalizeTag(blockTag) === normalizeTag(selectedTag)
+                    )
+                )
             );
         }
-
-        // ✅ Render only filtered blocks
-        appManager.renderBlocks();
+    
+        appManager.renderBlocks(activeTab, filteredBlocks);
         appManager.updateTags();
-    };
+    }
 
     const attachBlockActions = () => {
         document.querySelectorAll(".results-section").forEach(resultsSection => {

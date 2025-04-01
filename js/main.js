@@ -304,7 +304,7 @@ const handleTagFilter = (event) => {
 
 // 📌 Handle search functionality
 const handleSearch = () => {
-    const searchInput = document.getElementById("search_input");
+    const searchInput = document.getElementById("search_input_${tabSuffix}");
     if (!searchInput) {
         console.error("❌ Search input box not found!");
         return;

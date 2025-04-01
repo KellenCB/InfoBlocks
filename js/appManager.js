@@ -3,6 +3,8 @@ import { categoryTags } from './tagConfig.js';
 import { blockTemplate } from './blockTemplate.js';
 import { tagHandler } from './tagHandler.js';
 
+const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
+
 export const appManager = (() => {
     let userBlocks = JSON.parse(localStorage.getItem("userBlocks")) || [];
     let title = localStorage.getItem("pageTitle") || "Information Blocks";
@@ -150,9 +152,11 @@ export const appManager = (() => {
             const selectedTags = tagHandler.getSelectedTags();
             if (selectedTags.length > 0) {
               filteredBlocks = filteredBlocks.filter(block =>
-                selectedTags.every(tag => block.tags.includes(tag))
+                selectedTags.every(selectedTag =>
+                  block.tags.some(blockTag => normalizeTag(blockTag) === normalizeTag(selectedTag))
+                )
               );
-            }
+          }
             
             // Re-render blocks using the filtered list
             appManager.renderBlocks(tab, filteredBlocks);
@@ -422,11 +426,8 @@ export const appManager = (() => {
       }
       
       localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(userBlocks));
-      renderBlocks();
-      updateTags();
-      
       return true;
-  };
+      };
                       
     const removeBlock = (blockId) => {
         if (!blockId) return;
@@ -435,9 +436,7 @@ export const appManager = (() => {
         let userBlocks = getBlocks(activeTab);
     
         const updatedBlocks = userBlocks.filter(block => block.id !== blockId);
-        localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(updatedBlocks));
-    
-        renderBlocks(activeTab);
+        localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(updatedBlocks));;
     };
         
 
@@ -450,7 +449,7 @@ export const appManager = (() => {
         console.log("Clearing all selected filters...");
 
         document.querySelectorAll(".tag-button.selected").forEach(tag => tag.classList.remove("selected"));
-        document.getElementById("search_input").value = "";
+        document.getElementById("search_input_${tabSuffix}")?.value.trim().toLowerCase();
         renderBlocks(getBlocks());
 
         console.log("✅ Filters cleared.");
