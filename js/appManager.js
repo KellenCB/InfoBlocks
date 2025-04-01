@@ -118,7 +118,7 @@ export const appManager = (() => {
         document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`).forEach(blockEl => {
           blockEl.addEventListener("click", function (e) {
             // Ignore clicks on action buttons and tag buttons
-            if (e.target.closest(".action-button") || e.target.closest(".tag-button")) return;
+            if (e.target.closest(".action-button") || e.target.closest(".tag-button") || e.target.closest(".circle")) return;
         
             const blockId = blockEl.getAttribute("data-id");
             const blocksArr = appManager.getBlocks(tab);
@@ -156,21 +156,6 @@ export const appManager = (() => {
             
             // Re-render blocks using the filtered list
             appManager.renderBlocks(tab, filteredBlocks);
-          });
-        });
-                      
-        // Attach click event to the minimize buttons (present in expanded blocks)
-        document.querySelectorAll(`#${sectionId} .minimize_button`).forEach(button => {
-          button.addEventListener("click", function (e) {
-            e.stopPropagation(); // prevent triggering the block container click
-            const blockId = button.getAttribute("data-id");
-            const blocksArr = getBlocks(tab);
-            const targetBlock = blocksArr.find(b => b.id === blockId);
-            if (targetBlock && targetBlock.viewState === "expanded") {
-              targetBlock.viewState = "minimized";
-              localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
-              appManager.renderBlocks(tab);
-            }
           });
         });
       
@@ -386,62 +371,63 @@ export const appManager = (() => {
     // DATA MANAGEMENT FUNCTIONS
     // ========================
 
-    const saveBlock = (tab, blockTitle, text, tags, blockId = null, timestamp = null) => {
-        console.log(`📥 Attempting to save block in ${tab}:`, { blockTitle, text, tags, blockId, timestamp });
-    
-        if (!blockTitle || !text) {
-            console.error("❌ Block title and text are required");
-            return false;
-        }
-    
-        let userBlocks = getBlocks(tab);
-    
-        console.log(`📦 Blocks retrieved for ${tab}:`, userBlocks);
-    
-        let isEdit = Boolean(blockId);
-        if (isEdit) {
-            const blockIndex = userBlocks.findIndex(block => block.id === blockId);
-    
-            if (blockIndex !== -1) {
-                userBlocks[blockIndex] = {
-                    ...userBlocks[blockIndex],
-                    title: blockTitle,
-                    text,
-                    tags,
-                    timestamp: userBlocks[blockIndex].timestamp || Date.now()
-                };
-                console.log("🛠 Updated Block Data:", userBlocks[blockIndex]);
-            } else {
-                console.error(`❌ Block with ID "${blockId}" not found in tab ${tab}.`);
-                console.log("📦 Current Blocks:", userBlocks);
-                return false;
-            }
-        } else {
-            const predefinedTagsSet = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
-            const formattedTags = tags.map(tag => 
-                predefinedTagsSet.has(tag) ? tag : tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
-            );        
-
-            const newBlock = {
-                id: crypto.randomUUID(),
-                title: blockTitle,
-                text: text,
-                tags: formattedTags,
-                timestamp: timestamp || Date.now(),
-                viewState: "expanded" // default state; later you can change this based on user actions or tab settings
-                };
-                
-            userBlocks.unshift(newBlock);
-            console.log("✅ New Block Saved:", newBlock);
-        }
-    
-        localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(userBlocks));
-        renderBlocks();
-        updateTags();
-    
-        return true;
-    };
-                    
+    const saveBlock = (tab, blockTitle, text, tags, uses, blockId = null, timestamp = null) => {
+      console.log(`📥 Attempting to save block in ${tab}:`, { blockTitle, text, tags, uses, blockId, timestamp });
+      
+      if (!blockTitle || !text) {
+          console.error("❌ Block title and text are required");
+          return false;
+      }
+      
+      let userBlocks = getBlocks(tab);
+      console.log(`📦 Blocks retrieved for ${tab}:`, userBlocks);
+      
+      let isEdit = Boolean(blockId);
+      if (isEdit) {
+          const blockIndex = userBlocks.findIndex(block => block.id === blockId);
+      
+          if (blockIndex !== -1) {
+              userBlocks[blockIndex] = {
+                  ...userBlocks[blockIndex],
+                  title: blockTitle,
+                  text,
+                  tags,
+                  uses, // update the uses property here
+                  timestamp: userBlocks[blockIndex].timestamp || Date.now()
+              };
+              console.log("🛠 Updated Block Data:", userBlocks[blockIndex]);
+          } else {
+              console.error(`❌ Block with ID "${blockId}" not found in tab ${tab}.`);
+              console.log("📦 Current Blocks:", userBlocks);
+              return false;
+          }
+      } else {
+          const predefinedTagsSet = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
+          const formattedTags = tags.map(tag => 
+              predefinedTagsSet.has(tag) ? tag : tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
+          );
+      
+          const newBlock = {
+              id: crypto.randomUUID(),
+              title: blockTitle,
+              text: text,
+              tags: formattedTags,
+              uses, // include the uses state here
+              timestamp: timestamp || Date.now(),
+              viewState: "expanded"
+          };
+                  
+          userBlocks.unshift(newBlock);
+          console.log("✅ New Block Saved:", newBlock);
+      }
+      
+      localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(userBlocks));
+      renderBlocks();
+      updateTags();
+      
+      return true;
+  };
+                      
     const removeBlock = (blockId) => {
         if (!blockId) return;
     

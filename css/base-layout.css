@@ -163,6 +163,20 @@ html {
     margin-bottom: 15px;
 }
 
+.block-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.block-uses {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 7.5px;
+    width: fit-content;
+}
+
 .block.expanded {
 }
 
@@ -258,11 +272,9 @@ html {
     width: auto;
 }
 
-
 .spell-slot-group.hidden {
     display: none !important;
 }
-
 
 .spell-slot-section.edit-mode {
     display: flex;
@@ -270,6 +282,7 @@ html {
     align-items: flex-start;
     justify-content: flex-start;
     width: 100%;
+    margin-top: 10px;
 }
 
 .spell-slot-section.edit-mode .spell-slot-group {
@@ -293,13 +306,13 @@ html {
     align-items: center;
     justify-content: center;
     z-index: 1000;
-  }
+}
   
-  .spell-slot-edit-overlay.show {
+.spell-slot-edit-overlay.show {
     display: flex;
-  }
+}
   
-  .spell-slot-edit-container {
+.spell-slot-edit-container {
     background-color: #2a2a2a;
     padding: 25px;
     border-radius: 20px;
@@ -309,18 +322,51 @@ html {
     align-items: center;
     justify-content: center;
     text-align: center;
-  }
+}
   
-  .spell-slot-edit-container h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    color: #fff;
-  }
-
-  .spell-slot-title {
+.spell-slot-title {
     font-weight: bold;
     font-size: 16px;
     color: white;
     letter-spacing: 1px;
     margin-right: 3px;
+}
+
+/* ==================================================================*/
+/* ======================= Spell slot styling =======================*/
+/* ==================================================================*/
+
+.uses-field {
+    background-color: #2a2a2a;
+    border-radius: 30px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.uses-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: left;
+    width: 100%;
+    gap: 7.5px;
+}
+  
+.uses-circles-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 7.5px;
+    width: fit-content;
+}
+  
+/* Container for the add/remove controls */
+.uses-controls-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 7.5px;
+    width: fit-content;
 }

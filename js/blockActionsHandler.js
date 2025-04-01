@@ -5,6 +5,7 @@ import { categoryTags } from './tagConfig.js';
 import { tagHandler } from './tagHandler.js';
 import { appManager } from './appManager.js';
 import { overlayHandler } from './overlayHandler.js';
+import { initUsesField } from './overlayHandler.js';
 
 export const saveEditHandler = () => {
     console.log("✅ Save Edit Button Clicked!");
@@ -45,8 +46,9 @@ export const saveEditHandler = () => {
     }
 
     // ✅ Save the edited block while keeping its original timestamp
-    appManager.saveBlock(activeTab, titleInput, textInput, allTags, currentEditingBlockId, blocks[blockIndex].timestamp);
-    console.log(`✅ Block updated successfully in ${activeTab} with tags:`, allTags);
+    const usesState = JSON.parse(localStorage.getItem("uses_field_edit_overlay_state") || "[]");
+    appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, currentEditingBlockId, blocks[blockIndex].timestamp);
+        console.log(`✅ Block updated successfully in ${activeTab} with tags:`, allTags);
 
     // ✅ Close the edit overlay
     document.querySelector(".edit-block-overlay").classList.remove("show");
@@ -117,6 +119,14 @@ export const blockActionsHandler = (() => {
             document.getElementById("title_input_edit_overlay").value = block.title;
             document.getElementById("block_text_edit_overlay").value = block.text;
         
+            const usesFieldContainerEdit = document.getElementById("uses_field_edit_overlay");
+            if (usesFieldContainerEdit) {
+                // Store the current block's uses state (or an empty array if none exists)
+                localStorage.setItem("uses_field_edit_overlay_state", JSON.stringify(block.uses || []));
+                // Initialize the edit overlay uses field using the same initUsesField function
+                initUsesField(usesFieldContainerEdit, "uses_field_edit_overlay_state");
+            }            
+
             const predefinedTags = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
             const userDefinedTags = block.tags.filter(tag => !predefinedTags.has(tag));
             const attachedPredefinedTags = block.tags.filter(tag => predefinedTags.has(tag));

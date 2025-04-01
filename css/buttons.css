@@ -204,3 +204,8 @@
         background-color: rgb(1, 117, 163);
     }
 
+    .block-uses .circle {
+        height: 18px;
+        width: 18px;
+    }
+    

@@ -1,6 +1,7 @@
 import { appManager } from './appManager.js';
 import { tagHandler } from './tagHandler.js';
 import { overlayHandler } from './overlayHandler.js';
+import { initUsesField } from './overlayHandler.js';
 
 export let selectedFilterTagsBeforeAdd = [];
 
@@ -36,6 +37,16 @@ export const actionButtonHandlers = (() => {
         if (titleInput) titleInput.value = "";
         if (textInput) textInput.value = "";
         if (tagInputField) tagInputField.value = "";
+
+        // Clear saved uses state
+        localStorage.removeItem("uses_field_overlay_state");
+
+        // Reset the DOM container and re-init the empty field
+        const usesFieldContainer = document.getElementById("uses_field_overlay");
+        if (usesFieldContainer) {
+            usesFieldContainer.innerHTML = "<h4>Uses</h4>"; // wipe DOM too
+            initUsesField(usesFieldContainer, "uses_field_overlay_state");
+        }
 
         // Clear stored overlay tags if defined
         if (window.selectedOverlayTags && typeof selectedOverlayTags === "object") {

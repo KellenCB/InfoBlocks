@@ -1,8 +1,87 @@
 import { appManager } from './appManager.js';
 import { tagHandler } from './tagHandler.js';
 import { categoryTags } from './tagConfig.js';
-import { selectedFilterTagsBeforeAdd } from './actionButtonHandlers.js';
 
+function initUsesField(overlayElement, storageKeyPrefix, defaultSlots = 5) {
+    let usesState = JSON.parse(localStorage.getItem(storageKeyPrefix)) || [];
+  
+    // Clear any existing content and add a header
+    overlayElement.innerHTML = "";
+  
+  // Create a new row container that will hold both controls and circles
+  const usesRow = document.createElement("div");
+  usesRow.classList.add("uses-row");
+
+  // Create the container for the add/remove controls
+  const controlsContainer = document.createElement("div");
+  controlsContainer.classList.add("uses-controls-container");
+
+  // Add button (+)
+  const addButton = document.createElement("div");
+  addButton.classList.add("circle", "circle-button");
+  addButton.innerHTML = "+";
+  addButton.addEventListener("click", () => {
+    usesState.push(false);
+    localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
+    renderCircles();
+  });
+  controlsContainer.appendChild(addButton);
+
+  // Remove button (−)
+  const removeButton = document.createElement("div");
+  removeButton.classList.add("circle", "circle-button");
+  removeButton.innerHTML = "−";
+  removeButton.addEventListener("click", () => {
+    if (usesState.length > 0) {
+      usesState.pop();
+      localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
+      renderCircles();
+    }
+  });
+  controlsContainer.appendChild(removeButton);
+
+  // Create the container for the circles
+  const circlesContainer = document.createElement("div");
+  circlesContainer.classList.add("uses-circles-container");
+
+  // Function to render the circles based on the current state
+  function renderCircles() {
+    circlesContainer.innerHTML = "";
+    usesState.forEach((state, index) => {
+      const circle = document.createElement("div");
+      circle.classList.add("circle");
+      if (state) {
+        circle.classList.add("unfilled");
+      }
+      circle.addEventListener("click", () => {
+        circle.classList.toggle("unfilled");
+        usesState[index] = circle.classList.contains("unfilled");
+        localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
+      });
+      circlesContainer.appendChild(circle);
+    });
+  }
+  
+  // Initial render of circles
+  renderCircles();
+
+  // Append controls and circles to the row container
+  usesRow.appendChild(controlsContainer);
+  usesRow.appendChild(circlesContainer);
+
+  // Append the row container to the overlay element
+  overlayElement.appendChild(usesRow);
+}
+
+const addBlockOverlay = document.querySelector(".add-block-overlay");
+if (addBlockOverlay) {
+    const usesFieldContainer = document.getElementById("uses_field_overlay");
+    if (usesFieldContainer) {
+        localStorage.setItem("uses_field_overlay_state", JSON.stringify([]));
+        initUsesField(usesFieldContainer, "uses_field_overlay_state");
+    }
+}
+  
 export const handleSaveBlock = () => {
     const saveBlockButton = document.getElementById("save_block_button");
     if (!saveBlockButton) return;
@@ -45,15 +124,16 @@ export const handleSaveBlock = () => {
         tagsInput = tagsInput.map(tag => predefinedTags.has(tag) ? tag : tag); // Ensure predefined tags stay
         const allTags = [...new Set([...tagsInput, ...selectedPredefinedTags])];
         
-        // ✅ Save the new block
         const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
-        const success = appManager.saveBlock(activeTab, titleInput, textInput, allTags);
-        
+        const usesState = JSON.parse(localStorage.getItem("uses_field_overlay_state") || "[]");
+        const success = appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState);
+                
         if (success) {
             console.log("✅ Block saved successfully with tags:", allTags);
 
             // ✅ Refresh UI after editing a block
-            appManager.renderBlocks(appManager.getBlocks());
+            const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+            appManager.renderBlocks(activeTab);
 
             // ✅ Reapply currently selected filters using the correct variable
             console.log("🔍 Reapplying selected filters after edit using:", tagHandler.getSelectedTags());
@@ -288,8 +368,8 @@ export const overlayHandler = (() => {
             });
         });
     };
-    
-    // ✅ Modify overlay listeners to **resize before showing**
+
+    // Modify overlay listeners to **resize before showing**
     const addOverlayListeners = () => {
         const addBlockOverlay = document.querySelector(".add-block-overlay");
         const editBlockOverlay = document.querySelector(".edit-block-overlay");
@@ -329,3 +409,5 @@ export const overlayHandler = (() => {
         initializeOverlayTagHandlers,
         initializeEventHandlers};
 })();
+
+export { initUsesField };
