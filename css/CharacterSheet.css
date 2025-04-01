@@ -92,6 +92,15 @@ overflow-y: auto;
     gap: 5px;
   }
 
+  .main-hp-stat-box{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1.5;
+    text-align: center;
+    gap: 5px;
+  }
+
   .current-hp-stat-box {
     display: inline-flex;
     flex-direction: row;

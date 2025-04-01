@@ -252,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// Make echaracter sheet editable fields more use friendly 
+// 📌 Make character sheet editable fields more user friendly 
 document.querySelectorAll("#tab4 .editable, #tab8 .editable").forEach(field => {
     field.addEventListener("focus", function () {
         // Highlight all text
@@ -275,7 +275,7 @@ document.querySelectorAll("#tab4 .editable, #tab8 .editable").forEach(field => {
         } else if (e.key === "Escape") {
             e.preventDefault();
             if (this.dataset.initialValue !== undefined) {
-            this.textContent = this.dataset.initialValue;
+                this.textContent = this.dataset.initialValue;
             }
             this.blur();
             window.getSelection().removeAllRanges();
@@ -462,6 +462,9 @@ const keyboardShortcutsHandler = (() => {
     return { handleKeyboardShortcuts };
 })();
 
+
+// VIEWSTATES //
+
 const updateBlocksViewState = (newState) => {
     const activeTab = appManager.getActiveTab();
     let blocks = appManager.getBlocks(activeTab);
@@ -476,7 +479,7 @@ const updateBlocksViewState = (newState) => {
     }
   };
   
-  const updateViewToggleButtons = () => {
+const updateViewToggleButtons = () => {
     // Remove the active class from all buttons
     const expandedBtn = document.getElementById("view_expanded_button");
     const condensedBtn = document.getElementById("view_condensed_button");
