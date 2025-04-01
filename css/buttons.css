@@ -110,6 +110,7 @@
 .state-button {
     background-color: #ffF;
     opacity: 0.5;
+    color: #333;
 }
 
 .state-button.active {
@@ -150,10 +151,10 @@
         background: #333;
         color: #ddd;
         border: none;
-        padding: 10px 20px;
+        padding: 10px;
         cursor: pointer;
         font-weight: bold;
-        border-radius: 20px;
+        border-radius: 10px;
         transition: background 0.3s, color 0.3s;
     }
 
@@ -183,7 +184,7 @@
     }
 
     .circle.unfilled {
-        opacity: 50%;
+        opacity: 30%;
     }
 
     .circle-button {

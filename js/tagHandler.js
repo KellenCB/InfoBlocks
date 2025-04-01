@@ -3,21 +3,24 @@ import { categoryTags } from './tagConfig.js';
 
 export const tagHandler = (() => {
 
-    let selectedTags = []; // ✅ Single source of truth
+    let selectedTagsByTab = {};
 
-    const getSelectedTags = () => [...selectedTags]; // Read-only getter
-   
-    const setSelectedTags = (newTags) => {
+    const getSelectedTags = (activeTab = "tab1") => {
+        return selectedTagsByTab[activeTab] ? [...selectedTagsByTab[activeTab]] : [];
+    };
+       
+    // Sets the selected tags for the given tab
+    const setSelectedTags = (activeTab, newTags) => {
         if (!Array.isArray(newTags)) return;
-        
-        selectedTags.length = 0;
-        selectedTags.push(...newTags);
+        selectedTagsByTab[activeTab] = [...newTags];
     };
                     
+    // Reapply the "selected" class on tag buttons based on the active tab’s selection
     const applyFiltersAfterSave = () => {
-        console.log("🔍 Reapplying selected tags:", selectedTags);
+        const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+        const selectedTags = getSelectedTags(activeTab);
         document.querySelectorAll(".tag-button").forEach(tagElement => {
-            tagElement.classList.toggle("selected", selectedTags.includes(tagElement.dataset.tag));
+        tagElement.classList.toggle("selected", selectedTags.includes(tagElement.dataset.tag));
         });
     };
     
@@ -36,52 +39,64 @@ export const tagHandler = (() => {
     const handleTagClick = () => {
         document.addEventListener("click", (event) => {
             const target = event.target;
-            if (!target.classList.contains("tag-button")) return;
-    
-            const tag = target.dataset.tag.trim();
-            let updatedTags = [...tagHandler.getSelectedTags()];
-    
-            updatedTags.includes(tag)
-                ? updatedTags = updatedTags.filter(t => t !== tag)
-                : updatedTags.push(tag);
-    
-            tagHandler.setSelectedTags(updatedTags);
-    
-            const activeTab = document.querySelector(".tab-button.active")?.dataset.tab;
-            const searchInput = document.getElementById(`search_input_${activeTab.replace("tab", "")}`);
-    
-            if (!searchInput) {
-                console.error(`❌ Error: search_input_${activeTab} not found!`);
+            // Ignore clicks if the element is not a tag button or is within an overlay
+            if (
+                !target.classList.contains("tag-button") ||
+                target.closest(".add-block-overlay") ||
+                target.closest(".edit-block-overlay")
+            ) {
                 return;
             }
-    
+        
+            // Get the active tab (default to "tab1") and its numeric suffix
+            const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+            const tabNumber = activeTab.replace("tab", "");
+        
+            // Retrieve and update the selected tags for this active tab
+            let updatedTags = [...tagHandler.getSelectedTags(activeTab)];
+            const tag = target.dataset.tag.trim();
+            if (updatedTags.includes(tag)) {
+                updatedTags = updatedTags.filter(t => t !== tag);
+            } else {
+                updatedTags.push(tag);
+            }
+            tagHandler.setSelectedTags(activeTab, updatedTags);
+        
+            // Get the search input specific to this tab and its current query
+            const searchInput = document.getElementById(`search_input_${tabNumber}`);
+            if (!searchInput) {
+                console.error(`❌ Error: search_input_${tabNumber} not found!`);
+                return;
+            }
             const searchQuery = searchInput.value.trim().toLowerCase();
-            
-            // ✅ Get blocks for the active tab
+        
+            // Retrieve all blocks for the active tab
             let filteredBlocks = appManager.getBlocks(activeTab);
-    
-            // ✅ Apply tag filtering
+        
+            // Apply tag filtering using the updated tags for this tab
             if (updatedTags.length > 0) {
                 filteredBlocks = filteredBlocks.filter(block =>
-                    updatedTags.every(t => block.tags.includes(t))
+                updatedTags.every(t => block.tags.includes(t))
                 );
             }
-    
-            // ✅ Apply search filtering
+        
+            // Apply search filtering if a query is present
             if (searchQuery.length > 0) {
                 filteredBlocks = filteredBlocks.filter(block =>
-                    block.title.toLowerCase().includes(searchQuery) ||
-                    block.text.toLowerCase().includes(searchQuery)
+                block.title.toLowerCase().includes(searchQuery) ||
+                block.text.toLowerCase().includes(searchQuery)
                 );
             }
-    
-            // ✅ Fix: Pass filteredBlocks to renderBlocks
+        
+            // Re-render blocks for the active tab using the filtered list,
+            // then update the tag UI so that the selected tags remain highlighted.
             appManager.renderBlocks(activeTab, filteredBlocks);
-    
-            console.log("🔵 Currently selected tags:", updatedTags);
+            appManager.updateTags();
+        
+            console.log(`Active tab ${activeTab} selected tags:`, updatedTags);
             console.log("🔍 Active search query:", searchQuery);
         });
-    };
+    };      
                     
     const handleOverlayTagClick = () => {
         document.addEventListener("click", (event) => {

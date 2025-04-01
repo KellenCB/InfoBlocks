@@ -93,9 +93,8 @@ export const overlayHandler = (() => {
         const cancelEditButton = document.getElementById("cancel_edit_block");
 
         console.log("Save Block Button:", saveBlockButton);
-        console.log("Clear Block Button:", clearBlockButton);
         console.log("Cancel Add Block Button:", cancelAddBlockButton);
-        console.log({ addBlockOverlay, clearDataOverlay, editBlockOverlay, saveBlockButton, cancelAddBlockButton, confirmClearButton, cancelClearButton, saveEditButton, cancelEditButton });
+                console.log({ addBlockOverlay, clearDataOverlay, editBlockOverlay, saveBlockButton, cancelAddBlockButton, confirmClearButton, cancelClearButton, saveEditButton, cancelEditButton });
     
         keyboardShortcutsHandler.handleKeyboardShortcuts({
             addBlockOverlay,
