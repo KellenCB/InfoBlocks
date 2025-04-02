@@ -149,7 +149,7 @@ export const appManager = (() => {
             }
             
             // Apply tag filters if any are selected
-            const selectedTags = tagHandler.getSelectedTags();
+            const selectedTags = tagHandler.getSelectedTags(tab);
             if (selectedTags.length > 0) {
               filteredBlocks = filteredBlocks.filter(block =>
                 selectedTags.every(selectedTag =>
@@ -243,8 +243,9 @@ export const appManager = (() => {
         const predefinedTagsSet = new Set(Object.values(categoryTags).flatMap(data => data.tags));
         const userGeneratedTags = tags
             .filter(tag => !predefinedTagsSet.has(tag))
-            .map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase());
-    
+            .map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase())
+            .sort((a, b) => a.localeCompare(b));
+               
         const predefinedTags = tags.filter(tag => predefinedTagsSet.has(tag));
         const selectedTags = tagHandler.getSelectedTags(); // ✅ Fetch from tagHandler
     
@@ -275,8 +276,10 @@ export const appManager = (() => {
       // Get all predefined tags from tagConfig.js
       const allPredefined = Object.values(categoryTags).flatMap(cat => cat.tags);
       // Determine user-defined tags (those not in the predefined list)
-      const usedUserTags = usedTags.filter(tag => !allPredefined.includes(tag));
-    
+      const usedUserTags = usedTags
+        .filter(tag => !allPredefined.includes(tag))
+        .sort((a, b) => a.localeCompare(b));
+        
       let html = "";
     
       // Render user-defined tags first
@@ -446,15 +449,32 @@ export const appManager = (() => {
 
     // Clear all filters
     const clearFilters = () => {
-        console.log("Clearing all selected filters...");
-
-        document.querySelectorAll(".tag-button.selected").forEach(tag => tag.classList.remove("selected"));
-        document.getElementById("search_input_${tabSuffix}")?.value.trim().toLowerCase();
-        renderBlocks(getBlocks());
-
-        console.log("✅ Filters cleared.");
-    };
-
+      console.log("Clearing all selected filters...");
+      
+      // Determine active tab and its number
+      const activeTab = appManager.getActiveTab();
+      const tabNumber = activeTab.replace("tab", "");
+      
+      // Clear the search input for the current tab
+      const searchInput = document.getElementById(`search_input_${tabNumber}`);
+      if (searchInput) {
+          searchInput.value = "";
+      }
+      
+      // Unselect all tag buttons only in the current tab
+      document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`).forEach(tag => {
+          tag.classList.remove("selected");
+      });
+      
+      // Clear the selected tags state for this tab in tagHandler
+      tagHandler.clearSelectedTags(activeTab);
+      
+      // Re-render blocks for the current tab without filters
+      appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
+      
+      console.log("✅ Filters cleared.");
+  };
+  
     // Clear all data (blocks and title)
     const clearData = () => {
         console.log("Clearing all data...");

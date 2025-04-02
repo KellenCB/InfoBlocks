@@ -234,7 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     tag.classList.remove("selected")
                 );
                 searchInput.value = "";
-                tagHandler.clearSelectedTags();
+                tagHandler.clearSelectedTags(`tab${tabNumber}`);
                 const activeTab = `tab${tabNumber}`;
                 appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
             });
@@ -288,18 +288,29 @@ const handleTagFilter = (event) => {
     const target = event.target;
     if (!target.classList.contains("tag-button")) return;
 
-    const tag = target.dataset.tag;
-    console.log("Filtering by tag:", tag);
+    // Toggle the selected class for this tag button
     target.classList.toggle("selected");
 
-    const selectedTags = [...document.querySelectorAll(".tag-button.selected")].map(t => t.dataset.tag);
+    // Determine the active tab and its corresponding dynamic tags container
+    const activeTab = appManager.getActiveTab(); // e.g., "tab3"
+    const tabNumber = activeTab.replace("tab", "");
+    const container = document.getElementById(`dynamic_tags_section_${tabNumber}`);
+    
+    // Query only within that container
+    const selectedTags = container 
+        ? [...container.querySelectorAll(".tag-button.selected")].map(t => t.dataset.tag)
+        : [];
+
     console.log("Selected Tags:", selectedTags);
 
+    // Get blocks for the active tab and filter them
     const filteredBlocks = selectedTags.length
-        ? appManager.getBlocks().filter(block => selectedTags.every(t => block.tags.includes(t)))
-        : appManager.getBlocks();
+        ? appManager.getBlocks(activeTab).filter(block =>
+              selectedTags.every(t => block.tags.includes(t))
+          )
+        : appManager.getBlocks(activeTab);
 
-    appManager.renderBlocks();
+    appManager.renderBlocks(activeTab, filteredBlocks);
 };
 
 // 📌 Handle search functionality
@@ -355,15 +366,17 @@ const handleSearch = () => {
 const clearFilters = (event) => {
     console.log("Clear Filters button clicked");
     const tabNumber = event.currentTarget.id.split("_").pop();
-    document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`).forEach(tag => tag.classList.remove("selected"));
+    document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`).forEach(tag =>
+        tag.classList.remove("selected")
+    );
     const searchInput = document.getElementById(`search_input_${tabNumber}`);
     if (searchInput) {
         searchInput.value = "";
     }
-    tagHandler.clearSelectedTags();
+    tagHandler.clearSelectedTags(`tab${tabNumber}`);
     const activeTab = `tab${tabNumber}`;
     appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
-    const updatedTags = tagHandler.getSelectedTags(); 
+    const updatedTags = tagHandler.getSelectedTags(`tab${tabNumber}`); 
     console.log("🔵 Currently selected tags:", updatedTags);
 };
 
@@ -468,16 +481,41 @@ const keyboardShortcutsHandler = (() => {
 const updateBlocksViewState = (newState) => {
     const activeTab = appManager.getActiveTab();
     let blocks = appManager.getBlocks(activeTab);
+    
+    // Update the viewState for each block
     blocks.forEach(block => {
       block.viewState = newState;
     });
     localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
-    appManager.renderBlocks(activeTab);
-    // Only update active view state if it’s not "expanded"
+    
+    // Retrieve current search input value for this tab
+    const tabNumber = activeTab.replace("tab", "");
+    const searchInput = document.getElementById(`search_input_${tabNumber}`);
+    let filteredBlocks = blocks;
+    if (searchInput && searchInput.value.trim() !== "") {
+        const query = searchInput.value.trim().toLowerCase();
+        filteredBlocks = filteredBlocks.filter(block =>
+            block.title.toLowerCase().includes(query) ||
+            block.text.toLowerCase().includes(query)
+        );
+    }
+    
+    // Retrieve the selected tags for the active tab
+    const selectedTags = tagHandler.getSelectedTags(activeTab);
+    if (selectedTags.length > 0) {
+        filteredBlocks = filteredBlocks.filter(block =>
+            selectedTags.every(tag => block.tags.includes(tag))
+        );
+    }
+    
+    // Render blocks using the filtered list
+    appManager.renderBlocks(activeTab, filteredBlocks);
+    
+    // Only update active view state in localStorage if it's not "expanded"
     if(newState !== "expanded"){
       localStorage.setItem(`activeViewState_${activeTab}`, newState);
     }
-  };
+};
   
 const updateViewToggleButtons = () => {
     // Remove the active class from all buttons

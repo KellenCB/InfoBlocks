@@ -10,19 +10,59 @@ import { initUsesField } from './overlayHandler.js';
 export const saveEditHandler = () => {
     console.log("✅ Save Edit Button Clicked!");
 
+    // Retrieve and trim the title and text
     const titleInput = document.getElementById("title_input_edit_overlay").value.trim();
     const textInput = document.getElementById("block_text_edit_overlay").value.trim();
-    const tagsInput = document.getElementById("tags_input_edit_overlay").value
+
+    // Extract typed tags from the input field, trimming and normalizing to lowercase
+    let tagsInput = document.getElementById("tags_input_edit_overlay").value
         .split(",")
         .map(tag => tag.trim())
-        .filter(tag => tag.length > 0);
+        .filter(tag => tag.length > 0)
+        .map(tag => tag.toLowerCase());
 
-    const selectedPredefinedTags = Array.from(document.querySelectorAll(".edit-block-overlay .tag-button.selected"))
-        .map(tag => tag.dataset.tag);
+    // Extract the selected tag buttons from the overlay and normalize them
+    const selectedPredefinedTags = Array.from(
+        document.querySelectorAll(".edit-block-overlay .tag-button.selected")
+    ).map(tag => tag.dataset.tag.trim().toLowerCase());
 
-    const predefinedTags = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
-    const allTags = [...new Set([...tagsInput, ...selectedPredefinedTags])];
+    // Get the currently active tab
+    const activeTab = appManager.getActiveTab();
 
+    // Retrieve the blocks for the active tab and locate the block being edited
+    let blocks = appManager.getBlocks(activeTab);
+    const blockIndex = blocks.findIndex(block => block.id === currentEditingBlockId);
+    if (blockIndex === -1) {
+        console.error(`❌ Block with ID ${currentEditingBlockId} not found in active tab ${activeTab}.`);
+        return;
+    }
+
+    // Normalize the existing tags already attached to this block
+    const currentBlockTags = blocks[blockIndex].tags.map(tag => tag.trim().toLowerCase());
+
+    // For Tab 3: filter out any typed tags that already exist in the dynamic overlay
+    const exceptionTabs = ["tab3", "tab6", "tab7"];
+    if (exceptionTabs.includes(activeTab)) {
+            const dynamicTagsContainer = document.getElementById("dynamic_overlay_tags");
+        let existingUserDefinedTags = [];
+        if (dynamicTagsContainer) {
+            existingUserDefinedTags = Array.from(
+                dynamicTagsContainer.querySelectorAll(".tag-button.tag-user")
+            ).map(el => el.dataset.tag.trim().toLowerCase());
+        }
+        tagsInput = tagsInput.filter(tag => !existingUserDefinedTags.includes(tag));
+    }
+
+    // Remove any typed tags that are already attached to the block
+    tagsInput = tagsInput.filter(tag => !currentBlockTags.includes(tag));
+
+    // Combine: include any remaining typed tags, selected tag buttons, and the block’s current tags
+    const combinedTagsLowercase = [...new Set([...tagsInput, ...selectedPredefinedTags])];
+
+    // Re-capitalize each tag (first letter uppercase, rest lowercase) for display purposes
+    const allTags = combinedTagsLowercase.map(tag => tag.charAt(0).toUpperCase() + tag.slice(1));
+
+    // Check for required fields
     if (!titleInput || !textInput) {
         alert("All fields (Title and Text) are required.");
         return;
@@ -33,32 +73,19 @@ export const saveEditHandler = () => {
         return;
     }
 
-    // ✅ Get the currently active tab
-    const activeTab = appManager.getActiveTab();
-    let blocks = appManager.getBlocks(activeTab);
-
-    // ✅ Find the block in the active tab
-    const blockIndex = blocks.findIndex(block => block.id === currentEditingBlockId);
-
-    if (blockIndex === -1) {
-        console.error(`❌ Block with ID ${currentEditingBlockId} not found in active tab ${activeTab}.`);
-        return;
-    }
-
-    // ✅ Save the edited block while keeping its original timestamp
+    // Save the edited block while keeping its original timestamp
     const usesState = JSON.parse(localStorage.getItem("uses_field_edit_overlay_state") || "[]");
     appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, currentEditingBlockId, blocks[blockIndex].timestamp);
-        console.log(`✅ Block updated successfully in ${activeTab} with tags:`, allTags);
+    console.log(`✅ Block updated successfully in ${activeTab} with tags:`, allTags);
 
-    // ✅ Close the edit overlay
+    // Close the edit overlay
     document.querySelector(".edit-block-overlay").classList.remove("show");
 
-    // ✅ Preserve search input and selected tags
+    // Preserve search input and selected tags and reapply filters
     const selectedTags = tagHandler.getSelectedTags();
     const searchQuery = document.getElementById("search_input_${tabSuffix}")?.value.trim().toLowerCase();
     let filteredBlocks = appManager.getBlocks(activeTab);
-        
-    // ✅ Apply search filter
+    
     if (searchQuery) {
         filteredBlocks = filteredBlocks.filter(block =>
             block.title.toLowerCase().includes(searchQuery) ||
@@ -66,17 +93,14 @@ export const saveEditHandler = () => {
             block.tags.some(tag => tag.toLowerCase().includes(searchQuery))
         );
     }
-
-    // ✅ Apply tag filters
+    
     if (selectedTags.length > 0) {
         filteredBlocks = filteredBlocks.filter(block =>
             selectedTags.every(tag => block.tags.includes(tag))
         );
     }
-
-    // ✅ Render only filtered blocks
+    
     setTimeout(() => {
-        // ✅ Apply search filter if there's a query
         if (searchQuery) {
             filteredBlocks = filteredBlocks.filter(block =>
                 block.title.toLowerCase().includes(searchQuery) ||
@@ -84,8 +108,7 @@ export const saveEditHandler = () => {
                 block.tags.some(tag => tag.toLowerCase().includes(searchQuery))
             );
         }
-
-        // ✅ Apply tag filter if tags are selected
+    
         if (selectedTags.length > 0) {
             filteredBlocks = filteredBlocks.filter(block =>
                 selectedTags.every(tag =>
@@ -96,8 +119,7 @@ export const saveEditHandler = () => {
                 )
             );
         }
-
-        // ✅ Re-render with filtered results
+    
         appManager.renderBlocks(activeTab, filteredBlocks);
         appManager.updateTags();
     }, 50);
@@ -156,12 +178,13 @@ export const blockActionsHandler = (() => {
         
             const activeTab = appManager.getActiveTab(); // (you already have this)
 
-            if (activeTab === "tab3") {
+            const exceptionTabs = ["tab3", "tab6", "tab7"];
+            if (exceptionTabs.includes(activeTab)) {
                 document.getElementById("tags_input_edit_overlay").value = "";
             } else {
                 document.getElementById("tags_input_edit_overlay").value = userDefinedTags.join(", ");
             }
-                    
+                                
             // *** NEW: Initialize the overlay’s predefined tags for editing ***
             overlayHandler.initializeOverlayTagHandlers("predefined_tags_edit", block.tags);
         

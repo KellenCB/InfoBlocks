@@ -86,68 +86,85 @@ export const handleSaveBlock = () => {
     const saveBlockButton = document.getElementById("save_block_button");
     if (!saveBlockButton) return;
 
-    // ✅ Remove any existing event listener to prevent multiple triggers
-    saveBlockButton.replaceWith(saveBlockButton.cloneNode(true)); 
+    // Remove any duplicate event listeners
+    saveBlockButton.replaceWith(saveBlockButton.cloneNode(true));
     const newSaveBlockButton = document.getElementById("save_block_button");
 
     newSaveBlockButton.addEventListener("click", () => {
         console.log("✅ Save Block Button Clicked!");
 
-        // ✅ Ensure inputs are properly retrieved
+        // Retrieve and trim title and text inputs
         const titleElement = document.getElementById("title_input_overlay");
         const textElement = document.getElementById("block_text_overlay");
-        
         if (!titleElement || !textElement) {
             console.error("❌ Input elements not found!");
             return;
         }
-
-        // ✅ Get values and ensure trimming is properly handled
         const titleInput = titleElement.value.trim();
         const textInput = textElement.value.trim();
-
-        console.log("🔹 Title:", titleInput);
-        console.log("🔹 Text:", textInput);
 
         if (titleInput === "" || textInput === "") {
             alert("All fields (Title and Text) are required.");
             return;
         }
 
-        let tagsInputElement = document.getElementById("tags_input_overlay");
-        let tagsInput = tagsInputElement ? tagsInputElement.value.split(",").map(tag => tag.trim()).filter(tag => tag.length > 0) : [];
-        
-        const selectedPredefinedTags = Array.from(document.querySelectorAll(".add-block-overlay .tag-button.selected"))
-            .map(tag => tag.dataset.tag);
+        // --- Tag Processing Starts Here ---
 
-        const predefinedTags = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
-        tagsInput = tagsInput.map(tag => predefinedTags.has(tag) ? tag : tag); // Ensure predefined tags stay
-        const allTags = [...new Set([...tagsInput, ...selectedPredefinedTags])];
-        
+        // 1. Extract typed tags from the input field, trim and normalize to lowercase.
+        let tagsInput = document.getElementById("tags_input_overlay").value
+            .split(",")
+            .map(tag => tag.trim())
+            .filter(tag => tag.length > 0)
+            .map(tag => tag.toLowerCase());
+
+        // 2. Extract selected tags from the overlay's buttons and normalize them.
+        const selectedPredefinedTags = Array.from(
+            document.querySelectorAll(".add-block-overlay .tag-button.selected")
+        ).map(tag => tag.dataset.tag.trim().toLowerCase());
+
+        // 3. Get the active tab.
         const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+
+        // 4. For Tab 3: filter out any typed tags that already exist in the dynamic overlay.
+        const exceptionTabs = ["tab3", "tab6", "tab7"];
+        if (exceptionTabs.includes(activeTab)) {
+            const dynamicTagsContainer = document.getElementById("dynamic_overlay_tags");
+            let existingUserDefinedTags = [];
+            if (dynamicTagsContainer) {
+                existingUserDefinedTags = Array.from(
+                    dynamicTagsContainer.querySelectorAll(".tag-button.tag-user")
+                ).map(el => el.dataset.tag.trim().toLowerCase());
+            }
+            tagsInput = tagsInput.filter(tag => !existingUserDefinedTags.includes(tag));
+        }
+        
+        // 5. Combine typed and selected tags using a Set to remove duplicates.
+        const combinedTagsLowercase = [...new Set([...tagsInput, ...selectedPredefinedTags])];
+
+        // 6. Re-capitalize tags for display (first letter uppercase, rest lowercase).
+        const allTags = combinedTagsLowercase.map(tag => tag.charAt(0).toUpperCase() + tag.slice(1));
+
+        // --- Tag Processing Ends Here ---
+
+        // Retrieve the current uses state from localStorage.
         const usesState = JSON.parse(localStorage.getItem("uses_field_overlay_state") || "[]");
-        const success = appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState);
-                
+
+        // Save the new block using appManager.saveBlock (assumes this function handles adding a new block)
+        const activeTabFromDOM = activeTab; // Use activeTab determined earlier.
+        const success = appManager.saveBlock(activeTabFromDOM, titleInput, textInput, allTags, usesState);
+
         if (success) {
             console.log("✅ Block saved successfully with tags:", allTags);
+            appManager.renderBlocks(activeTabFromDOM);
 
-            // ✅ Refresh UI after editing a block
-            const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
-            appManager.renderBlocks(activeTab);
-
-            // ✅ Reapply currently selected filters using the correct variable
-            console.log("🔍 Reapplying selected filters after edit using:", tagHandler.getSelectedTags());
-            tagHandler.applyFiltersAfterSave(tagHandler.getSelectedTags());
-            
-            // ✅ Clear inputs & close overlay
+            // Clear inputs & close overlay.
             titleElement.value = "";
             textElement.value = "";
             document.getElementById("tags_input_overlay").value = "";
-
+            // Remove selection from any tag buttons in the overlay.
             document.querySelectorAll(".add-block-overlay .tag-button.selected").forEach(tag => {
                 tag.classList.remove("selected");
             });
-
             document.querySelector(".add-block-overlay").classList.remove("show");
         } else {
             console.error("❌ Failed to save the block.");
@@ -289,16 +306,24 @@ export const overlayHandler = (() => {
     
         tagsContainer.innerHTML = "";
         const activeTab = appManager.getActiveTab();
+        const exceptionTabs = ["tab3", "tab6", "tab7"];
     
         // Get predefined and user-defined tags
         const predefinedTagList = Object.values(categoryTags).flatMap(cat => cat.tags);
         const userDefinedTags = [
-            ...new Set(appManager.getBlocks(activeTab).flatMap(block => block.tags))
-        ].filter(tag => !predefinedTagList.includes(tag))
-         .map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase());
-            
+            ...new Set(
+                appManager.getBlocks(activeTab)
+                    .flatMap(block => block.tags)
+                    .map(tag => tag.toLowerCase())
+            )
+        ].filter(tag =>
+            !predefinedTagList.map(t => t.toLowerCase()).includes(tag)
+        )
+        .map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase())
+        .sort((a, b) => a.localeCompare(b));
+                    
         if (containerId === "dynamic_overlay_tags") {
-            if (activeTab === "tab3") {
+            if (exceptionTabs.includes(activeTab)) {
                 tagsContainer.innerHTML = userDefinedTags.map(tag =>
                     `<button class="tag-button tag-user" data-tag="${tag}">${tag}</button>`
                 ).join("");
@@ -317,8 +342,14 @@ export const overlayHandler = (() => {
                 });
             }
         } else if (containerId === "predefined_tags_edit") {
-            // Populate user-defined tags first (Tab 3)
-            if (activeTab === "tab3") {
+            // For non-exception tabs, filter out any user-defined tags from blockTags.
+            const predefinedTagSet = new Set(predefinedTagList);
+            if (!exceptionTabs.includes(activeTab)) {
+                blockTags = blockTags.filter(tag => predefinedTagSet.has(tag));
+            }
+    
+            // Populate user-defined tags only for exception tabs.
+            if (exceptionTabs.includes(activeTab)) {
                 if (userDefinedTags.length > 0) {
                     const userDiv = document.createElement("div");
                     userDiv.classList.add("tag-category", "user-tags-edit");
@@ -331,7 +362,7 @@ export const overlayHandler = (() => {
                 }
             }
     
-            // Populate predefined tags (All Tabs)
+            // Populate predefined tags (applies to all tabs).
             Object.entries(categoryTags).forEach(([category, data]) => {
                 if (!data.tabs.includes(activeTab)) return;
     
@@ -353,7 +384,7 @@ export const overlayHandler = (() => {
             }
         });
     };
-                                    
+                                            
     const autoResizeTextarea = (textarea) => {
         textarea.style.height = "auto"; // Reset height
         textarea.style.height = textarea.scrollHeight + "px"; // Expand based on content
