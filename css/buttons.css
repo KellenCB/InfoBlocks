@@ -131,9 +131,9 @@
     }
 
     .green-border-button {
-    background-color: transparent;
-    border: 2px solid #4CAF50 !important;
-    color: white;
+        background-color: transparent;
+        border: 2px solid #4CAF50 !important;
+        color: white;
     }
 
     .orange-button {
@@ -147,8 +147,9 @@
     }
 
 /* Tab buttons */
+
     .tab-button {
-        background: #333;
+        background: transparent;
         color: #ddd;
         border: none;
         padding: 10px;
@@ -173,10 +174,12 @@
 
 /*CIRCLES*/
 
+    :root { --circle-color: #e4e0e0; }
+
     .circle {
         width: 30px;
         height: 30px;
-        background-color: rgb(2, 179, 248);
+        background-color: var(--circle-color);
         border-radius: 50%;
         transition: background-color 0.3s, border-color 0.3s;
         margin: 0;
@@ -184,7 +187,8 @@
     }
 
     .circle.unfilled {
-        opacity: 30%;
+        border: 1px solid var(--circle-color);
+        background-color: transparent;
     }
 
     .circle-button {
@@ -195,13 +199,9 @@
         font-weight: bold;
         cursor: pointer;
         user-select: none;
-        background-color: #333;
-        border: 1px solid rgb(2, 179, 248);
+        background-color: transparent;
+        border: 1px solid var(--circle-color);
         transition: background-color 0.3s ease;
-    }
-
-    .circle-button:hover {
-        background-color: rgb(1, 117, 163);
     }
 
     .block-uses .circle {

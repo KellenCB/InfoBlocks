@@ -56,7 +56,7 @@ if (circleContainer) {
   };
 
   const addCircle = () => {
-    createCircle(circles.length, true, false);
+    createCircle(circles.length, false, false);
     totalCircles++;
     localStorage.setItem('totalCircles', totalCircles);
   };
@@ -124,7 +124,7 @@ if (tab4ToggleCircles) {
 }
 
 // ==============================
-// Tab 8: Additional Toggle Circles
+// Tab 8: Character Sheet Toggle Circles
 // ==============================
 const tab8ToggleCircles = document.querySelectorAll('#tab8 .toggle-circle');
 if (tab8ToggleCircles) {
