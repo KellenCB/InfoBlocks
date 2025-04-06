@@ -7,12 +7,11 @@ export const categoryTags = {
     part_type: { 
         tags: ["Helm", "Torso", "Left arm", "Right arm", "Legs", "Boots", "Other"], 
         className: "tag-partType",
-        tabs: ["tab1"]
+        tabs: ["tab1",]
     },
 
- 
     spell_level: { 
-        tags: ["Cantrip", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"], 
+        tags: ["Infusion", "Cantrip", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"], 
         className: "tag-spellLevel",
         tabs: ["tab2"]
     },
@@ -46,5 +45,26 @@ export const categoryTags = {
         tags: ["STR", "DEX", "CON", "INT", "WIS", "CHA", "Check", "Save"], 
         className: "tag-modifierType",
         tabs: ["tab1", "tab2"]
-    }
+    },
+
+    item_type: {
+        tags: ["Weapon", "Armor", "Shield", "Potion", "Scroll", "Ring", "Rod", "Wand", "Staff"], 
+        className: "tag-itemType",
+        tabs: ["tab6"]
+    },
+    magicItem_type: {
+        tags: ["Common", "Uncommon", "Rare", "Very Rare", "Legendary", "Artifact", "Cursed", "Sentient"], 
+        className: "tag-magicItemType",
+        tabs: ["tab6"]
+    },
+    magicItem_bonus: {
+        tags: ["+1", "+2", "+3", "attunement"], 
+        className: "tag-magicItemBonus",
+        tabs: ["tab6"]
+    },
+    equipped_check: {
+        tags: ["Equipped", "Attuned"], 
+        className: "tag-equippedCheck",
+        tabs: ["tab6", "tab7", "tab3"] 
+    },
 };

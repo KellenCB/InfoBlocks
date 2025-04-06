@@ -18,7 +18,7 @@
     flex-wrap: wrap;
     flex-direction: column;
     justify-content: flex-start; 
-    align-items: center;
+    align-items: flex-start;
     text-align: left;
     max-width: 100%;
     padding: 15px 0px 15px 0px;
@@ -43,33 +43,37 @@
 }
 
 :root {
-  --user-color: #e4e0e0;
-  --part-color: #CDF564;
-  --action-color: #07f371;
-  --ability-color: #bf5eff;
-  --damage-color: #F037A5;
-  --condition-color: #ffa927;
-  --spell-color: #2b7bf1;
-  --spellLevel-color: #49c1e6;
-  --modifier-color: #FF4632;
-  --charges-color: #43ffef; 
+    --user-color: #e4e0e0;
+    --part-color: #CDF564;
+    --action-color: #07f371;
+    --ability-color: #bf5eff;
+    --damage-color: #F037A5;
+    --condition-color: #ffa927;
+    --spell-color: #2b7bf1;
+    --spellLevel-color: #49c1e6;
+    --modifier-color: #FF4632;
+    --charges-color: #43ffef; 
+    --itemType-color: #ff7f00;
+    --magicItemType-color: #07f371;
+    --magicItemBonus-color: #F037A5;
+    --equippedCheck-color: #FF4632;
 }
 
 .tag-button {
-  padding: 14px;
-  height: 35px;
-  margin: 6px;
-  color: var(--user-color);
-  background-color: transparent; /* outlined by default */
-  border: 1px solid var(--user-color);
-  border-radius: 30px;
-  cursor: pointer;
-  font-size: 16px;
-  letter-spacing: 0.3px;
-  transition: background-color 0.3s, transform 0.2s, color 0.3s;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
+    padding: 14px;
+    height: 35px;
+    margin: 6px;
+    color: var(--user-color);
+    background-color: transparent; /* outlined by default */
+    border: 1px solid var(--user-color);
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    letter-spacing: 0.3px;
+    transition: background-color 0.3s, transform 0.2s, color 0.3s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
 }
 
 .tag-button:hover { transform: scale(1.05); }
@@ -83,6 +87,11 @@
 .tag-spellLevel { border-color: var(--spellLevel-color); color: var(--spellLevel-color);}
 .tag-modifierType { border-color: var(--modifier-color); color: var(--modifier-color);}
 .tag-Charges { border-color: var(--charges-color); color: var(--charges-color);}
+.tag-button.tag-itemType { border-color: var(--itemType-color); color: var(--itemType-color);}
+.tag-button.tag-magicItemType { border-color: var(--magicItemType-color); color: var(--magicItemType-color);}
+.tag-button.tag-magicItemBonus { border-color: var(--magicItemBonus-color); color: var(--magicItemBonus-color);}
+.tag-button.tag-equippedCheck { border-color: var(--equippedCheck-color); color: var(--equippedCheck-color);}
+
 
 .tag-button.selected { background-color: var(--user-color); color: #333; font-weight: bolder;}
 
@@ -95,3 +104,7 @@
 .tag-button.selected.tag-spellLevel { background-color: var(--spellLevel-color);}
 .tag-button.selected.tag-modifierType { background-color: var(--modifier-color);}
 .tag-button.selected.tag-Charges { background-color: var(--charges-color);}
+.tag-button.selected.tag-itemType { background-color: var(--itemType-color);}
+.tag-button.selected.tag-magicItemType { background-color: var(--magicItemType-color)}
+.tag-button.selected.tag-magicItemBonus { background-color: var(--magicItemBonus-color)}
+.tag-button.selected.tag-equippedCheck { background-color: var(--equippedCheck-color)}

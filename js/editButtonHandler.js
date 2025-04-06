@@ -47,27 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
     
-            const addCircle = () => {
-                createCircle(circles.length, true, false);
-                totalCircles++;
-                localStorage.setItem(totalKey, totalCircles);
-            };
-    
-            const removeCircle = () => {
-                const existingCircles = groupContainer.querySelectorAll('.circle:not(.circle-button)');
-                if (existingCircles.length > 0) {
-                const circleToRemove = existingCircles[existingCircles.length - 1];
-                if (circleToRemove) {
-                    groupContainer.removeChild(circleToRemove);
-                    delete circleStates[totalCircles - 1];
-                    totalCircles--;
-                    localStorage.setItem(totalKey, totalCircles);
-                    localStorage.setItem(stateKey, JSON.stringify(circleStates));
-                }
-                }
-                updateGroupVisibility(groupContainer);
-            };
-    
             // Initialize circles for the current group
             for (let i = 0; i < totalCircles; i++) {
                 createCircle(i, circleStates[i] ?? true, false);
@@ -181,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 addButton.innerHTML = "+";
                 addButton.addEventListener('click', () => {
                     const newCircle = document.createElement('div');
-                    newCircle.classList.add('circle', 'unfilled');
+                    newCircle.classList.add('circle');
                     newCircle.addEventListener('click', () => {
                     newCircle.classList.toggle('unfilled');
                     });

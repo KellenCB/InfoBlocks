@@ -324,23 +324,35 @@ export const overlayHandler = (() => {
                     
         if (containerId === "dynamic_overlay_tags") {
             if (exceptionTabs.includes(activeTab)) {
-                tagsContainer.innerHTML = userDefinedTags.map(tag =>
-                    `<button class="tag-button tag-user" data-tag="${tag}">${tag}</button>`
-                ).join("");
+                let html = "";
+                // Add user-defined tags, if any:
+                if (userDefinedTags.length > 0) {
+                    html += userDefinedTags.map(tag =>
+                        `<button class="tag-button tag-user" data-tag="${tag}">${tag}</button>`
+                    ).join("");
+                }
+                // Then add predefined tags for the active tab:
+                Object.entries(categoryTags).forEach(([category, data]) => {
+                    if (!data.tabs.includes(activeTab)) return;
+                    html += data.tags.map(tag =>
+                        `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`
+                    ).join("");
+                });
+                tagsContainer.innerHTML = html;
             } else {
                 Object.entries(categoryTags).forEach(([category, data]) => {
                     if (!data.tabs.includes(activeTab)) return;
-    
+        
                     const categoryDiv = document.createElement("div");
                     categoryDiv.classList.add("tag-category");
-    
+        
                     categoryDiv.innerHTML = data.tags.map(tag =>
                         `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`
                     ).join("");
-    
+        
                     tagsContainer.appendChild(categoryDiv);
                 });
-            }
+            }        
         } else if (containerId === "predefined_tags_edit") {
             // For non-exception tabs, filter out any user-defined tags from blockTags.
             const predefinedTagSet = new Set(predefinedTagList);
