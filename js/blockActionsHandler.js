@@ -73,19 +73,22 @@ export const saveEditHandler = () => {
         return;
     }
 
-    // Save the edited block while keeping its original timestamp
+    // Save the edited block
     const usesState = JSON.parse(localStorage.getItem("uses_field_edit_overlay_state") || "[]");
     appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, currentEditingBlockId, blocks[blockIndex].timestamp);
     console.log(`✅ Block updated successfully in ${activeTab} with tags:`, allTags);
 
-    // Close the edit overlay
     document.querySelector(".edit-block-overlay").classList.remove("show");
 
-    // Preserve search input and selected tags and reapply filters
-    const selectedTags = tagHandler.getSelectedTags();
-    const searchQuery = document.getElementById("search_input_${tabSuffix}")?.value.trim().toLowerCase();
+    const tabSuffix = activeTab.replace("tab", "");
+
+    const selectedTags = tagHandler.getSelectedTags(activeTab);
+
+    const searchInput = document.getElementById(`search_input_${tabSuffix}`);
+    const searchQuery = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
     let filteredBlocks = appManager.getBlocks(activeTab);
-    
+
     if (searchQuery) {
         filteredBlocks = filteredBlocks.filter(block =>
             block.title.toLowerCase().includes(searchQuery) ||
@@ -93,36 +96,21 @@ export const saveEditHandler = () => {
             block.tags.some(tag => tag.toLowerCase().includes(searchQuery))
         );
     }
-    
+
     if (selectedTags.length > 0) {
         filteredBlocks = filteredBlocks.filter(block =>
-            selectedTags.every(tag => block.tags.includes(tag))
+            selectedTags.every(tag =>
+                block.tags.some(blockTag =>
+                    blockTag.charAt(0).toUpperCase() + blockTag.slice(1).toLowerCase() ===
+                    tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
+                )
+            )
         );
     }
-    
-    setTimeout(() => {
-        if (searchQuery) {
-            filteredBlocks = filteredBlocks.filter(block =>
-                block.title.toLowerCase().includes(searchQuery) ||
-                block.text.toLowerCase().includes(searchQuery) ||
-                block.tags.some(tag => tag.toLowerCase().includes(searchQuery))
-            );
-        }
-    
-        if (selectedTags.length > 0) {
-            filteredBlocks = filteredBlocks.filter(block =>
-                selectedTags.every(tag =>
-                    block.tags.some(blockTag =>
-                        blockTag.charAt(0).toUpperCase() + blockTag.slice(1).toLowerCase() ===
-                        tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
-                    )
-                )
-            );
-        }
-    
-        appManager.renderBlocks(activeTab, filteredBlocks);
-        appManager.updateTags();
-    }, 50);
+
+    appManager.renderBlocks(activeTab, filteredBlocks);
+    appManager.updateTags();
+
 };
 
 export let selectedFilterTags = []; // ✅ Stores the search & filter tags before editing
