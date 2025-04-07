@@ -83,12 +83,12 @@ if (addBlockOverlay) {
 }
   
 export const handleSaveBlock = () => {
-    const saveBlockButton = document.getElementById("save_block_button");
+    const saveBlockButton = document.getElementById("save-block-button");
     if (!saveBlockButton) return;
 
     // Remove any duplicate event listeners
     saveBlockButton.replaceWith(saveBlockButton.cloneNode(true));
-    const newSaveBlockButton = document.getElementById("save_block_button");
+    const newSaveBlockButton = document.getElementById("save-block-button");
 
     newSaveBlockButton.addEventListener("click", () => {
         console.log("✅ Save Block Button Clicked!");
@@ -182,11 +182,11 @@ export const overlayHandler = (() => {
         const addBlockOverlay = document.querySelector(".add-block-overlay");
         const clearDataOverlay = document.querySelector(".cleardata-overlay");
         const editBlockOverlay = document.querySelector(".edit-block-overlay");
-        const saveBlockButton = document.getElementById("save_block_button");
+        const saveBlockButton = document.getElementById("save-block-button");
         const cancelAddBlockButton = document.getElementById("cancel_add_block");
         const confirmClearButton = document.getElementById("confirm_clear_button");
         const cancelClearButton = document.getElementById("cancel_clear_button");
-        const saveEditButton = document.getElementById("save_edit_button");
+        const saveEditButton = document.getElementById("save-edit-button");
         const cancelEditButton = document.getElementById("cancel_edit_block");
 
         console.log("Save Block Button:", saveBlockButton);
@@ -240,7 +240,7 @@ export const overlayHandler = (() => {
     };
 
     const handleClearEditOverlay = () => {
-        const clearEditButton = document.getElementById("clear_edit_button");
+        const clearEditButton = document.getElementById("clear_edit-button");
         if (!clearEditButton) return;
     
         clearEditButton.addEventListener("click", () => {

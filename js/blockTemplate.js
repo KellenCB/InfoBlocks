@@ -49,14 +49,16 @@ export const blockTemplate = (block) => {
     if (viewState === 'expanded') {
         const usesHTML = block.uses   ? block.uses.map((state, idx) => `<span class="circle ${state ? 'unfilled' : ''}" onclick="toggleBlockUse('${block.id}', ${idx}, event, this)"></span>`).join("") : "";
         content = `
-            <div class="block-actions">
-                <button class="action-button duplicate_button green-button" data-id="${block.id}" title="Copy">❐</button>
-                <button class="action-button edit_button orange-button" data-id="${block.id}" title="Edit">✎</button>
-                <button class="action-button remove_button red-button" data-id="${block.id}" title="Remove">×</button>
-            </div>
             <div class="block-header">
-                <h4>${block.title}</h4>
-                ${usesHTML ? `<div class="block-uses">${usesHTML}</div>` : ""}
+                <div class="block-header-left">
+                    <div class="block-title"><h4>${block.title}</h4></div>
+                    ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
+                </div>
+                <div class="block-actions">
+                    <button class="action-button duplicate-button green-button" data-id="${block.id}" title="Copy">❐</button>
+                    <button class="action-button edit-button orange-button" data-id="${block.id}" title="Edit">✎</button>
+                    <button class="action-button remove-button red-button" data-id="${block.id}" title="Remove">×</button>
+                </div>
             </div>
             <div class="tag-sections">
                 ${predefinedTagsHTML}
@@ -69,14 +71,14 @@ export const blockTemplate = (block) => {
         const usesHTML = block.uses   ? block.uses.map((state, idx) => `<span class="circle ${state ? 'unfilled' : ''}" onclick="toggleBlockUse('${block.id}', ${idx}, event, this)"></span>`).join("") : "";      
         // Condensed View:
         content = `
-            <div class="block-actions">
-                <button class="action-button duplicate_button green-button" data-id="${block.id}" title="Copy">❐</button>
-                <button class="action-button edit_button orange-button" data-id="${block.id}" title="Edit">✎</button>
-                <button class="action-button remove_button red-button" data-id="${block.id}" title="Remove">×</button>
-            </div>
             <div class="block-header">
-                <h4>${block.title}</h4>
+                <div class="block-title"><h4>${block.title}</h4></div>
                 ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
+                <div class="block-actions">
+                    <button class="action-button duplicate-button green-button" data-id="${block.id}" title="Copy">❐</button>
+                    <button class="action-button edit-button orange-button" data-id="${block.id}" title="Edit">✎</button>
+                    <button class="action-button remove-button red-button" data-id="${block.id}" title="Remove">×</button>
+                </div>
             </div>
         `;
     } else if (viewState === 'minimized') {
@@ -86,7 +88,7 @@ export const blockTemplate = (block) => {
     
         content = `
             <div class="block-header">
-                <h4>${block.title}</h4>
+                <div class="block-title"><h4>${block.title}</h4></div>
                 ${usesHTML ? `<div class="block-uses">${usesHTML}</div>` : ""}
             </div>
         `;

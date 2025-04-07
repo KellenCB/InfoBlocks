@@ -131,7 +131,7 @@ export const blockActionsHandler = (() => {
             return;
         }
 
-        if (target.classList.contains("duplicate_button")) {
+        if (target.classList.contains("duplicate-button")) {
             console.log("📄 Duplicating block:", blockId);
         
             const activeTab = appManager.getActiveTab();
@@ -141,7 +141,7 @@ export const blockActionsHandler = (() => {
         
             reapplySearchAndFilters();
                                 
-        } else if (target.classList.contains("edit_button")) {
+        } else if (target.classList.contains("edit-button")) {
             console.log("📝 Editing block:", blockId);
             isEditing = true;
             currentEditingBlockId = blockId;
@@ -194,7 +194,7 @@ export const blockActionsHandler = (() => {
         
             console.log("🟢 Edit Block Overlay Opened Successfully");
             document.querySelector(".edit-block-overlay").classList.add("show");
-        } else if (target.classList.contains("remove_button")) {
+        } else if (target.classList.contains("remove-button")) {
             console.log("🗑 Removing block:", blockId);
             appManager.removeBlock(blockId);
         

@@ -15,6 +15,13 @@ export const categoryTags = {
         className: "tag-spellLevel",
         tabs: ["tab2"]
     },
+
+    spell_level: { 
+        tags: ["Infusion"], 
+        className: "tag-spellLevel",
+        tabs: ["tab4"]
+    },
+
     spell_type: { 
         tags: ["Abjuration", "Conjuration", "Divination", "Enchantment", "Evocation", "Illusion", "Necromancy", "Transmutation", "Concerntration", "Ritual"], 
         className: "tag-spellType",

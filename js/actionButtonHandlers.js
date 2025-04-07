@@ -44,7 +44,6 @@ export const actionButtonHandlers = (() => {
         // Reset the DOM container and re-init the empty field
         const usesFieldContainer = document.getElementById("uses_field_overlay");
         if (usesFieldContainer) {
-            usesFieldContainer.innerHTML = "<h4>Uses</h4>"; // wipe DOM too
             initUsesField(usesFieldContainer, "uses_field_overlay_state");
         }
 

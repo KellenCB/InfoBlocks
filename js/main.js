@@ -427,11 +427,11 @@ const keyboardShortcutsHandler = (() => {
             const editBlockOverlay = document.querySelector(".edit-block-overlay");
             const spellSlotEditOverlay = document.querySelector(".spell-slot-edit-overlay");
 
-            const saveBlockButton = document.getElementById("save_block_button");
+            const saveBlockButton = document.getElementById("save-block-button");
             const cancelAddBlockButton = document.getElementById("cancel_add_block");
             const confirmClearButton = document.getElementById("confirm_clear_button");
             const cancelClearButton = document.getElementById("cancel_clear_button");
-            const saveEditButton = document.getElementById("save_edit_button");
+            const saveEditButton = document.getElementById("save-edit-button");
             const cancelEditButton = document.getElementById("cancel_edit_block");
             const saveSpellSlotButton = document.getElementById("save_spell_slot_changes");
             const cancelSpellSlotButton = document.getElementById("close_spell_slot_edit");
@@ -576,12 +576,12 @@ window.onload = async () => {
     attachEventListeners();
     blockActionsHandler.attachBlockActions();
 
-    const saveEditButton = document.getElementById("save_edit_button");
+    const saveEditButton = document.getElementById("save-edit-button");
     if (saveEditButton) {
         saveEditButton.addEventListener("click", saveEditHandler);
     }
 
-    const saveBlockButton = document.getElementById("save_block_button");
+    const saveBlockButton = document.getElementById("save-block-button");
     if (saveBlockButton) {
         saveBlockButton.addEventListener("click", handleSaveBlock);
     }

@@ -25,38 +25,38 @@
             <h1 id="page_title" contenteditable="true"></h1>
         </header>
     
-        <div class="action-button-section">
+        <div class="hero-button-section">
 
-            <button id="view_expanded_button" class="state-button">E</button>
-            <button id="view_condensed_button" class="state-button">C</button>
-            <button id="view_minimized_button" class="state-button">M</button>        
+            <button id="view_expanded_button" class="hero-button state-button">E</button>
+            <button id="view_condensed_button" class="hero-button state-button">C</button>
+            <button id="view_minimized_button" class="hero-button state-button">M</button>        
 
-            <button id="upload_button" class="green-border-button">
+            <button id="upload_button" class="hero-button green-border-button">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M12 4v16M8 8l4-4 4 4" stroke-width="2.5" />
                 </svg>
             </button>
     
-            <button id="download_button" class="green-border-button">
+            <button id="download_button" class="hero-button green-border-button">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M12 4v16M8 16l4 4 4-4" stroke-width="2.5"/>
                 </svg>
             </button>
     
-            <button id="add_block_button" class="green-button add-block-float">
+            <button id="add_block_button" class="hero-button green-button add-block-float">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M12 4V20" stroke="white" stroke-width="2"/>
                     <path d="M4 12H20" stroke="white" stroke-width="2"/>
                 </svg>
             </button>
     
-            <button id="edit_tab_button" class="orange-button">
+            <button id="edit_tab_button" class="hero-button orange-button">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M4 15.5V19h3.5l9.94-9.94-3.5-3.5L4 15.5zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.5 3.5 1.83-1.83z" />
                 </svg>
             </button>
     
-            <button id="bin_button" class="red-button bin-button">
+            <button id="bin_button" class="hero-button red-button bin-button">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M4 4L20 20" stroke="white" stroke-width="3"/>
                     <path d="M4 20L20 4" stroke="white" stroke-width="3"/>
@@ -209,7 +209,7 @@
         
         <!-- Tab 4: Character Sheet -->
         <div class="tab-content no-gap" id="tab4">
-            <div class="character-sheet-column">
+            <div class="character-sheet-stats">
                 <!-- Row 1 -->
                 <div class="descriptor-grid">
                     <div class="descriptor-box">
@@ -291,7 +291,7 @@
                             <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_str_score">15</span>
                         </div>
                         <div class="main-stat-box">
-                            <span class="stat-label">DEX</span>
+                            <span class="stat-label">+0</span>
                             <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_dex_bonus">+2</span>
                             <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_dex_score">14</span>
                         </div>
@@ -327,14 +327,14 @@
                         <div class="death-saves-box">
                             <span class="stat-label">Death Saves</span>
                             <div class="death-saves-row">
-                                <span class="circle toggle-circle" data-storage-key="tab4_deathSave_1"></span>
-                                <span class="circle toggle-circle" data-storage-key="tab4_deathSave_2"></span>
-                                <span class="circle toggle-circle" data-storage-key="tab4_deathSave_3"></span>
+                                <span class="circle toggle-circle deathSaveGreen" data-storage-key="tab4_deathSave_1"></span>
+                                <span class="circle toggle-circle deathSaveGreen" data-storage-key="tab4_deathSave_2"></span>
+                                <span class="circle toggle-circle deathSaveGreen" data-storage-key="tab4_deathSave_3"></span>
                             </div>
                             <div class="death-saves-row">
-                                <span class="circle toggle-circle" data-storage-key="tab4_deathSave_4"></span>
-                                <span class="circle toggle-circle" data-storage-key="tab4_deathSave_5"></span>
-                                <span class="circle toggle-circle" data-storage-key="tab4_deathSave_6"></span>
+                                <span class="circle toggle-circle deathSaveRed" data-storage-key="tab4_deathSave_4"></span>
+                                <span class="circle toggle-circle deathSaveRed" data-storage-key="tab4_deathSave_5"></span>
+                                <span class="circle toggle-circle deathSaveRed" data-storage-key="tab4_deathSave_6"></span>
                             </div>
                         </div>    
                 </div>
@@ -473,18 +473,42 @@
                 </div>
         
                 <div class="character-sheet-column">
-                    <!-- Attacks -->
-                    <div class="attacks_grid">
-                        <h3>Attacks</h3>
+                    <!-- Actions -->
+                    <div class="attacks-grid">
                         <div class="attack-row">
-                            <span class="attack-label">DEX</span>
-                            <span class="attack-name">Melle attack</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_attack1">0</span>
+                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_1">Action</span>
+                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_1">+0</span>
+                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_1">description</span>
                         </div>
                         <div class="attack-row">
-                            <span class="attack-label">DEX</span>
-                            <span class="attack-name">Shortbow</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_attack2">0</span>
+                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_2">Action</span>
+                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_2">+0</span>
+                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_2">description</span>
+                        </div>
+                        <div class="attack-row">
+                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_3">Action</span>
+                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_3">+0</span>
+                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_3">description</span>
+                        </div>
+                        <div class="attack-row">
+                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_4">Action</span>
+                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_4">+0</span>
+                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_4">description</span>
+                        </div>
+                        <div class="attack-row">
+                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_5">Action</span>
+                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_5">+0</span>
+                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_5">description</span>
+                        </div>
+                        <div class="attack-row">
+                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_6">Action</span>
+                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_6">+0</span>
+                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_6">description</span>
+                        </div>
+                        <div class="attack-row">
+                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_7">Action</span>
+                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_7">+0</span>
+                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_7">description</span>
                         </div>
                     </div>
                     
@@ -649,7 +673,7 @@
 
         <!-- Tab 8: Character Sheet -->
         <div class="tab-content no-gap" id="tab8">
-            <div class="character-sheet-column">
+            <div class="character-sheet-stats">
                 <!-- Row 1 -->
                 <div class="descriptor-grid">
                     <div class="descriptor-box">
@@ -729,7 +753,7 @@
                             <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_str_score">00</span>
                         </div>
                         <div class="main-stat-box">
-                            <span class="stat-label">DEX</span>
+                            <span class="stat-label">+0</span>
                             <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_dex_bonus">00</span>
                             <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_dex_score">00</span>
                         </div>
@@ -767,14 +791,14 @@
                     <div class="death-saves-box">
                         <span class="stat-label">Death Saves</span>
                         <div class="death-saves-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_1"></span>
-                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_2"></span>
-                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_3"></span>
+                            <span class="circle toggle-circle deathSaveGreen" data-storage-key="tab4_deathSave_1"></span>
+                            <span class="circle toggle-circle deathSaveGreen" data-storage-key="tab4_deathSave_2"></span>
+                            <span class="circle toggle-circle deathSaveGreen" data-storage-key="tab4_deathSave_3"></span>
                         </div>
                         <div class="death-saves-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_4"></span>
-                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_5"></span>
-                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_6"></span>
+                            <span class="circle toggle-circle deathSaveRed" data-storage-key="tab4_deathSave_4"></span>
+                            <span class="circle toggle-circle deathSaveRed" data-storage-key="tab4_deathSave_5"></span>
+                            <span class="circle toggle-circle deathSaveRed" data-storage-key="tab4_deathSave_6"></span>
                         </div>
                     </div>
                 </div>
@@ -817,9 +841,7 @@
                         <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_save_cha">0</span>
                     </div>
                 </div>
-        
                 <div class="horizontal-break"></div>
-        
                 <div class="skills">
                     <h3>Skills</h3>
                     <div class="skill-row">
@@ -915,19 +937,28 @@
                 </div>
             </div>
         
-            <!-- Attacks -->
+            <!-- Actions -->
             <div class="character-sheet-column">
-                <div class="attacks_grid">
-                    <h3>Attacks</h3>
+                <div class="attacks-grid">
                     <div class="attack-row">
-                        <span class="attack-label">DEX</span>
-                        <span class="attack-name">Melee Attack</span>
-                        <span class="editable" contenteditable="true" data-storage-key="tab8_attack1">0</span>
+                        <span class="attack-name editable" contenteditable="true" data-storage-key="tab8_attack_name_1">Action</span>
+                        <span class="attack-label editable" contenteditable="true" data-storage-key="tab8_attack_label_1">+0</span>
+                        <span class="attack-description editable" contenteditable="true" data-storage-key="tab8_attack_desc_1">description</span>
                     </div>
                     <div class="attack-row">
-                        <span class="attack-label">DEX</span>
-                        <span class="attack-name">Shortbow</span>
-                        <span class="editable" contenteditable="true" data-storage-key="tab8_attack2">0</span>
+                        <span class="attack-name editable" contenteditable="true" data-storage-key="tab8_attack_name_2">Action</span>
+                        <span class="attack-label editable" contenteditable="true" data-storage-key="tab8_attack_label_2">+0</span>
+                        <span class="attack-description editable" contenteditable="true" data-storage-key="tab8_attack_desc_2">description</span>
+                    </div>
+                    <div class="attack-row">
+                        <span class="attack-name editable" contenteditable="true" data-storage-key="tab8_attack_name_3">Action</span>
+                        <span class="attack-label editable" contenteditable="true" data-storage-key="tab8_attack_label_3">+0</span>
+                        <span class="attack-description editable" contenteditable="true" data-storage-key="tab8_attack_desc_3">description</span>
+                    </div>
+                    <div class="attack-row">
+                        <span class="attack-name editable" contenteditable="true" data-storage-key="tab8_attack_name_4">Action</span>
+                        <span class="attack-label editable" contenteditable="true" data-storage-key="tab8_attack_label_4">+0</span>
+                        <span class="attack-description editable" contenteditable="true" data-storage-key="tab8_attack_desc_4">description</span>
                     </div>
                 </div>
                 
@@ -964,7 +995,7 @@
             <textarea id="block_text_overlay" class="auto-resize" placeholder="Enter block text here..." rows="1"></textarea>
             <input type="text" id="tags_input_overlay" placeholder="Enter custom tags here..."  />
             <div class="overlay-tags" id="dynamic_overlay_tags"></div>
-            <button id="save_block_button" class="button green-button">Save Block</button>
+            <button id="save-block-button" class="button green-button">Save Block</button>
             <button id="clear_block_button" class="button orange-button">Clear</button>
             <button id="cancel_add_block" class="button red-button red-button">Cancel</button>
         </div>
@@ -985,8 +1016,8 @@
             </div>
             
             <!-- Save Edit Button -->
-            <button id="save_edit_button" class="button green-button">Save Changes</button>
-            <button id="clear_edit_button" class="button orange-button">Clear</button>
+            <button id="save-edit-button" class="button green-button">Save Changes</button>
+            <button id="clear_edit-button" class="button orange-button">Clear</button>
             <button id="cancel_edit_block" class="button red-button">Cancel</button>
         </div>
     </div>
