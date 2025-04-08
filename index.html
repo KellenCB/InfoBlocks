@@ -475,41 +475,6 @@
                 <div class="character-sheet-column">
                     <!-- Actions -->
                     <div class="attacks-grid">
-                        <div class="attack-row">
-                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_1">Action</span>
-                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_1">+0</span>
-                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_1">description</span>
-                        </div>
-                        <div class="attack-row">
-                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_2">Action</span>
-                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_2">+0</span>
-                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_2">description</span>
-                        </div>
-                        <div class="attack-row">
-                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_3">Action</span>
-                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_3">+0</span>
-                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_3">description</span>
-                        </div>
-                        <div class="attack-row">
-                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_4">Action</span>
-                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_4">+0</span>
-                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_4">description</span>
-                        </div>
-                        <div class="attack-row">
-                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_5">Action</span>
-                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_5">+0</span>
-                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_5">description</span>
-                        </div>
-                        <div class="attack-row">
-                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_6">Action</span>
-                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_6">+0</span>
-                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_6">description</span>
-                        </div>
-                        <div class="attack-row">
-                            <span class="attack-name editable" contenteditable="true" data-storage-key="tab4_attack_name_7">Action</span>
-                            <span class="attack-label editable" contenteditable="true" data-storage-key="tab4_attack_label_7">+0</span>
-                            <span class="attack-description editable" contenteditable="true" data-storage-key="tab4_attack_desc_7">description</span>
-                        </div>
                     </div>
                     
                     <!-- Feats & Abilities (Results Section) -->
@@ -995,12 +960,14 @@
             <textarea id="block_text_overlay" class="auto-resize" placeholder="Enter block text here..." rows="1"></textarea>
             <input type="text" id="tags_input_overlay" placeholder="Enter custom tags here..."  />
             <div class="overlay-tags" id="dynamic_overlay_tags"></div>
-            <button id="save-block-button" class="button green-button">Save Block</button>
-            <button id="clear_block_button" class="button orange-button">Clear</button>
-            <button id="cancel_add_block" class="button red-button red-button">Cancel</button>
+            <div class="overlay-controls">
+                <button id="save-block-button" class="button green-button">Save Block</button>
+                <button id="clear_block_button" class="button orange-button">Clear</button>
+                <button id="cancel_add_block" class="button red-button red-button">Cancel</button>
+            </div>
         </div>
     </div>
-                                                     
+                                                 
     <!-- Overlay for Editing Block -->
     <div class="edit-block-overlay">
         <div class="edit-block-form">
@@ -1016,9 +983,11 @@
             </div>
             
             <!-- Save Edit Button -->
-            <button id="save-edit-button" class="button green-button">Save Changes</button>
-            <button id="clear_edit-button" class="button orange-button">Clear</button>
-            <button id="cancel_edit_block" class="button red-button">Cancel</button>
+            <div class="overlay-controls">
+                <button id="save-edit-button" class="button green-button">Save Changes</button>
+                <button id="clear_edit-button" class="button orange-button">Clear</button>
+                <button id="cancel_edit_block" class="button red-button">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -1027,11 +996,25 @@
         <div class="cleardata-form">
             <h2>Clear All Data</h2>
             <p>Are you sure you want to clear all data?<br> <br> This action cannot be undone.<br> </p>
-            <button id="confirm_clear_button" class="button green-button">Yes</button>
-            <button id="cancel_clear_button" class="button red-button">No</button>
+            <div class="overlay-controls">
+                <button id="confirm_clear_button" class="button green-button">Yes</button>
+                <button id="cancel_clear_button" class="button red-button">No</button>
+            </div>
         </div>
     </div>
 
+    <!-- Overlay for Action Editing -->
+    <div class="actions-edit-overlay overlay">
+        <div class="actions-edit-overlay-content">
+            <h2>Actions Edit Overlay</h2>
+            <p>Edit your actions here...</p>
+            <div class="overlay-controls">
+                <button id="save_action_changes" class="button green-button">Save Changes</button>
+                <button id="close_action_edit" class="button red-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+      
     <!-- Overlay for Spell Slot Editing -->
     <div class="spell-slot-edit-overlay">
         <div class="spell-slot-edit-container">
@@ -1048,7 +1031,7 @@
             <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">8th Lvl</span></div>
             <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>
         </div>
-        <div class="spell-slot-buttons">
+        <div class="overlay-controls">
             <button id="save_spell_slot_changes" class="button green-button">Save Changes</button>
             <button id="close_spell_slot_edit" class="button red-button">Cancel</button>
         </div>

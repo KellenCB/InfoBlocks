@@ -163,7 +163,28 @@ document.addEventListener("DOMContentLoaded", () => {
             }, 100);
         });
     });
-                
+          
+    // Restore Tab4 attacks grid from localStorage
+    const savedAttacksGridHTML = localStorage.getItem("tab4_attacks_grid");
+    if (savedAttacksGridHTML) {
+      const tab4AttacksGrid = document.querySelector("#tab4 .attacks-grid");
+      if (tab4AttacksGrid) {
+        tab4AttacksGrid.innerHTML = savedAttacksGridHTML;
+        console.log("✅ Attacks grid restored from localStorage.");
+        
+        // Disable editing on each attack field in Tab 4
+        tab4AttacksGrid.querySelectorAll('.attack-name, .attack-label, .attack-description')
+          .forEach(field => {
+            field.contentEditable = "false";
+          });
+        console.log("✅ Attack fields in Tab 4 locked (contentEditable set to false).");
+        
+        // (Optionally, reinitialize dynamic row functionality if needed)
+        ensureExtraEmptyAttackRow();
+          }
+    }
+
+
     // Handle tab reordering
     document.querySelector(".tab-nav").addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -426,6 +447,7 @@ const keyboardShortcutsHandler = (() => {
             const clearDataOverlay = document.querySelector(".cleardata-overlay");
             const editBlockOverlay = document.querySelector(".edit-block-overlay");
             const spellSlotEditOverlay = document.querySelector(".spell-slot-edit-overlay");
+            const actionsEditOverlay = document.querySelector(".actions-edit-overlay");
 
             const saveBlockButton = document.getElementById("save-block-button");
             const cancelAddBlockButton = document.getElementById("cancel_add_block");
@@ -435,6 +457,8 @@ const keyboardShortcutsHandler = (() => {
             const cancelEditButton = document.getElementById("cancel_edit_block");
             const saveSpellSlotButton = document.getElementById("save_spell_slot_changes");
             const cancelSpellSlotButton = document.getElementById("close_spell_slot_edit");
+            const saveActionButton = document.getElementById("save_action_changes");
+            const cancelActionButton = document.getElementById("close_action_edit");
 
             if (addBlockOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && saveBlockButton) {
@@ -467,6 +491,15 @@ const keyboardShortcutsHandler = (() => {
                     cancelSpellSlotButton.click();
                 }
             }
+
+            if (actionsEditOverlay?.classList.contains("show")) {
+                if (event.key === "Enter" && saveActionButton) {
+                    saveActionButton.click();
+                } else if (event.key === "Escape" && cancelActionButton) {
+                    cancelActionButton.click();
+                }
+            }
+              
         });
 
         console.log("Keyboard shortcuts attached.");

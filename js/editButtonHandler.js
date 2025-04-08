@@ -116,89 +116,424 @@ document.addEventListener('DOMContentLoaded', () => {
     // Attach the event listener for opening the spell slot edit overlay
     // to the existing edit_tab_button from the header.
     const editTabButton = document.getElementById('edit_tab_button');
-        if (editTabButton) {
-            editTabButton.addEventListener('click', () => {
-                // ensures tab 2 is active
-                const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;
-                if (activeTab !== 'tab2') {
-                  console.warn('🛑 Edit tab button clicked, but Tab 2 is not active.');
-                  return;
+    if (editTabButton) {
+      editTabButton.addEventListener('click', () => {
+        const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;
+        if (activeTab === 'tab2') {
+          console.log('✏️ Spell Slot Edit Button Clicked via edit_tab_button in Tab 2');
+          const overlay = document.querySelector('.spell-slot-edit-overlay');
+          console.log('Overlay element:', overlay);
+          const mainSpellSlots = document.querySelectorAll('.spell-slot-group');
+          const overlaySpellSlots = document.querySelectorAll('.spell-slot-edit-overlay .spell-slot-group');
+    
+          if (overlay) {
+            overlay.classList.add('show');
+    
+            // Copy data from each main group to its overlay counterpart
+            mainSpellSlots.forEach((mainGroup, index) => {
+              const overlayGroup = overlaySpellSlots[index];
+              if (!overlayGroup) return;
+    
+              const titleElement = mainGroup.querySelector('.spell-slot-title');
+              const titleText = titleElement ? titleElement.textContent : `Level ${index + 1}`;
+              overlayGroup.innerHTML = `<span class="spell-slot-title">${titleText}</span>`;
+    
+              const mainCircles = mainGroup.querySelectorAll('.circle:not(.circle-button)');
+              mainCircles.forEach((circle) => {
+                const newCircle = document.createElement('div');
+                newCircle.classList.add('circle');
+                if (circle.classList.contains('unfilled')) {
+                  newCircle.classList.add('unfilled');
                 }
-            console.log('✏️ Spell Slot Edit Button Clicked via edit_tab_button');
-            const overlay = document.querySelector('.spell-slot-edit-overlay');
-            console.log('Overlay element:', overlay);
-            const mainSpellSlots = document.querySelectorAll('.spell-slot-group');
-            const overlaySpellSlots = document.querySelectorAll('.spell-slot-edit-overlay .spell-slot-group');
-    
-            if (overlay) {
-                overlay.classList.add('show');
-    
-                // Copy data from each main group to its overlay counterpart
-                mainSpellSlots.forEach((mainGroup, index) => {
-                const overlayGroup = overlaySpellSlots[index];
-                if (!overlayGroup) return;
-    
-                const titleElement = mainGroup.querySelector('.spell-slot-title');
-                const titleText = titleElement ? titleElement.textContent : `Level ${index + 1}`;
-                overlayGroup.innerHTML = `<span class="spell-slot-title">${titleText}</span>`;
-    
-                const mainCircles = mainGroup.querySelectorAll('.circle:not(.circle-button)');
-                mainCircles.forEach((circle) => {
-                    const newCircle = document.createElement('div');
-                    newCircle.classList.add('circle');
-                    if (circle.classList.contains('unfilled')) {
-                    newCircle.classList.add('unfilled');
-                    }
-                    newCircle.addEventListener('click', () => {
-                    newCircle.classList.toggle('unfilled');
-                    });
-                    overlayGroup.appendChild(newCircle);
+                newCircle.addEventListener('click', () => {
+                  newCircle.classList.toggle('unfilled');
                 });
+                overlayGroup.appendChild(newCircle);
+              });
     
-                const addButton = document.createElement('div');
-                addButton.classList.add('circle', 'circle-button');
-                addButton.innerHTML = "+";
-                addButton.addEventListener('click', () => {
-                    const newCircle = document.createElement('div');
-                    newCircle.classList.add('circle');
-                    newCircle.addEventListener('click', () => {
-                    newCircle.classList.toggle('unfilled');
-                    });
-                    overlayGroup.appendChild(newCircle);
+              const addButton = document.createElement('div');
+              addButton.classList.add('circle', 'circle-button');
+              addButton.innerHTML = "+";
+              addButton.addEventListener('click', () => {
+                const newCircle = document.createElement('div');
+                newCircle.classList.add('circle');
+                newCircle.addEventListener('click', () => {
+                  newCircle.classList.toggle('unfilled');
                 });
+                overlayGroup.appendChild(newCircle);
+              });
     
-                const removeButton = document.createElement('div');
-                removeButton.classList.add('circle', 'circle-button');
-                removeButton.innerHTML = "−";
-                removeButton.addEventListener('click', () => {
-                    const circles = overlayGroup.querySelectorAll('.circle:not(.circle-button)');
-                    if (circles.length > 0) {
-                    overlayGroup.removeChild(circles[circles.length - 1]);
-                    }
+              const removeButton = document.createElement('div');
+              removeButton.classList.add('circle', 'circle-button');
+              removeButton.innerHTML = "−";
+              removeButton.addEventListener('click', () => {
+                const circles = overlayGroup.querySelectorAll('.circle:not(.circle-button)');
+                if (circles.length > 0) {
+                  overlayGroup.removeChild(circles[circles.length - 1]);
+                }
+              });
+    
+              overlayGroup.insertBefore(addButton, overlayGroup.children[1] || null);
+              overlayGroup.insertBefore(removeButton, addButton.nextSibling);
+            });
+    
+            console.log('✅ Spell slot groups copied to overlay.');
+          } else {
+            console.warn('Spell slot edit overlay not found.');
+          }
+        } else if (activeTab === 'tab4') {
+            console.log('🛠 Actions Edit Button Clicked via edit_tab_button in Tab 4');
+            const actionsOverlay = document.querySelector('.actions-edit-overlay');
+            if (actionsOverlay) {
+              // Retrieve the overlay content container and header.
+              const overlayContent = actionsOverlay.querySelector('.actions-edit-overlay-content');
+              const headerElem = overlayContent.querySelector('h2');
+              const paraElem = overlayContent.querySelector('p');
+          
+              // Retrieve the attacks grid from Tab 4.
+              const tab4AttacksGrid = document.querySelector('#tab4 .attacks-grid');
+              if (tab4AttacksGrid) {
+                // Clone the attacks grid (its rows).
+                const attacksGridClone = tab4AttacksGrid.cloneNode(true);
+                
+                // Optional: Remove any placeholder paragraph after the header.
+                /*
+                if (headerElem && headerElem.nextElementSibling &&
+                    headerElem.nextElementSibling.tagName.toLowerCase() === 'p') {
+                    headerElem.nextElementSibling.remove();
+                }
+                */
+               
+                // Ensure all fields in the cloned grid are editable for the overlay.
+                attacksGridClone.querySelectorAll('.attack-name, .attack-label, .attack-description')
+                .forEach(field => {
+                    field.contentEditable = "true";
                 });
-    
-                overlayGroup.insertBefore(addButton, overlayGroup.children[1] || null);
-                overlayGroup.insertBefore(removeButton, addButton.nextSibling);
-                });
-    
-                console.log('✅ Spell slot groups copied to overlay.');
-            }
+
+
+                // Create or select a container for the cloned grid.
+                let container = overlayContent.querySelector('.attacks-edit-container');
+                if (!container) {
+                  container = document.createElement('div');
+                  container.classList.add('attacks-edit-container');
+                }
+                container.innerHTML = "";
+                container.appendChild(attacksGridClone);
+                
+                // Insert the container immediately after the header.
+                if (paraElem) {
+                    paraElem.parentNode.insertBefore(container, paraElem.nextSibling);
+                } else if (headerElem) {
+                    headerElem.parentNode.insertBefore(container, headerElem.nextSibling);
+                } else {
+                    overlayContent.insertBefore(container, overlayContent.firstChild);
+                }
+                            
+                // Add drag handles to each row in the overlay.
+                addDragHandlesToOverlay();
+                // Initialize dynamic empty row functionality.
+                initializeDynamicAttackRows();
+                // Initialize drag-and-drop on the rows.
+                initializeRowDragAndDrop();
+              } else {
+                console.warn('No attacks grid found in Tab 4.');
+                                            }
+              actionsOverlay.classList.add('show');
+            } else {
+              console.warn('Actions edit overlay not found.');
+                      }
+        } else {
+          console.warn('Edit tab button clicked, but no overlay is defined for this tab.');
+        }
+      });
+    } else {
+      console.error('Edit tab button with id "edit_tab_button" not found.');
+    }
+});
+
+// SAVE CHANGES functionality for the Actions Edit Overlay (Tab 4)
+const saveActionsButton = document.getElementById('save_action_changes');
+if (saveActionsButton) {
+    saveActionsButton.addEventListener('click', () => {
+    const container = document.querySelector('.actions-edit-overlay .attacks-edit-container');
+    if (container) {
+        const newGrid = container.querySelector('.attacks-grid');
+        if (newGrid) {
+        // Remove all drag-handle elements from each row.
+        newGrid.querySelectorAll('.drag-handle').forEach(handle => handle.remove());
+        
+        // Filter out completely empty rows.
+        let rows = Array.from(newGrid.querySelectorAll('.attack-row')).filter(row => !isAttackRowCompletelyEmpty(row));
+
+        // Re-index each remaining row sequentially starting from 1.
+        rows.forEach((row, index) => {
+            const newIndex = index + 1;
+            reNumberAttackRow(row, newIndex);
+        });
+
+        // Build new HTML from the re-indexed rows.
+        const newHTML = rows.map(row => row.outerHTML).join('');
+        
+        // Update the attacks grid in Tab 4.
+        const tab4AttacksGrid = document.querySelector('#tab4 .attacks-grid');
+        if (tab4AttacksGrid) {
+            tab4AttacksGrid.innerHTML = newHTML;
+            console.log('✅ Attacks grid updated in Tab 4 with re-indexed rows.');
+            
+            // Disable editing on each attack field (name, label, description)
+            tab4AttacksGrid.querySelectorAll('.attack-name, .attack-label, .attack-description').forEach(field => {
+                field.contentEditable = "false";
+            });
+
+            // Update localStorage for every element with a data-storage-key.
+            const keyElements = tab4AttacksGrid.querySelectorAll('[data-storage-key]');
+            keyElements.forEach(el => {
+            const key = el.getAttribute('data-storage-key');
+            const value = el.textContent.trim();
+            localStorage.setItem(key, value);
             });
         } else {
-            console.error('Edit tab button with id "edit_tab_button" not found.');
+            console.warn('Attacks grid not found in Tab 4.');
         }
+        
+        localStorage.setItem('tab4_attacks_grid', newHTML);
+        console.log('✅ Attacks grid changes saved to localStorage.');
+        } else {
+        console.warn('No cloned attacks grid found in the overlay container.');
+        }
+    } else {
+        console.warn('Attacks edit container not found in the actions edit overlay.');
+    }
+    
+    const actionsOverlay = document.querySelector('.actions-edit-overlay');
+    if (actionsOverlay) {
+        actionsOverlay.classList.remove('show');
+    }
     });
+} else {
+    console.warn('Save button with id "save_action_changes" not found.');
+}
+
+// CANCEL BUTTON functionality for both the Spell Slot Edit Overlay and the Actions Edit Overlay
+const overlayCancelConfigs = [
+    {
+      cancelId: 'close_spell_slot_edit',
+      overlaySelector: '.spell-slot-edit-overlay',
+      overlayName: 'Spell slot edit overlay'
+    },
+    {
+      cancelId: 'close_action_edit',
+      overlaySelector: '.actions-edit-overlay',
+      overlayName: 'Actions edit overlay'
+    }
+  ];
   
-    // CANCEL BUTTON functionality for the spell slot overlay
-    const cancelButton = document.getElementById('close_spell_slot_edit');
+  overlayCancelConfigs.forEach(({ cancelId, overlaySelector, overlayName }) => {
+    const cancelButton = document.getElementById(cancelId);
     if (cancelButton) {
       cancelButton.addEventListener('click', () => {
-        console.log('❌ Spell slot edit overlay cancelled.');
-        const overlay = document.querySelector('.spell-slot-edit-overlay');
+        console.log(`❌ ${overlayName} cancelled.`);
+        const overlay = document.querySelector(overlaySelector);
         if (overlay) {
           overlay.classList.remove('show');
         }
       });
     } else {
-      console.warn('Cancel button with id "close_spell_slot_edit" not found.');
+      console.warn(`Cancel button with id "${cancelId}" not found.`);
     }
+});
+
+
+// ---------------- Helper functions for dynamic attack rows ----------------
+
+// Helper: Placeholder trext for empty rows.
+function attachPlaceholder(element, placeholderText) {
+    element.textContent = placeholderText;
+    element.style.opacity = "0.5";
+    element.addEventListener('focus', function () {
+    if (this.textContent === placeholderText) {
+        this.textContent = "";
+        this.style.opacity = "1";
+    }
+    });
+    element.addEventListener('blur', function () {
+    if (this.textContent.trim() === "") {
+        this.textContent = placeholderText;
+        this.style.opacity = "0.5";
+    }
+    });
+}
+
+// Helper: Check if row is empty.
+function isAttackRowCompletelyEmpty(row) {
+    const nameField = row.querySelector('.attack-name');
+    const labelField = row.querySelector('.attack-label');
+    const descField = row.querySelector('.attack-description');
+
+    const nameEmpty = !nameField || nameField.textContent.trim() === "" || nameField.textContent.trim() === "Enter action name here...";
+    const labelEmpty = !labelField || labelField.textContent.trim() === "" || labelField.textContent.trim() === "+/-";
+    const descEmpty = !descField || descField.textContent.trim() === "" || descField.textContent.trim() === "Enter action description here...";
+
+    return nameEmpty && labelEmpty && descEmpty;
+}
+
+// Helper: Create empty rows.
+function createEmptyAttackRow(nextIndex) {
+    const row = document.createElement('div');
+    row.classList.add('attack-row');
+
+    // If your overlay should include a drag-handle, create and append it:
+    const dragHandle = document.createElement('span');
+    dragHandle.classList.add('drag-handle');
+    dragHandle.setAttribute('draggable', 'true');
+    // Simple hamburger icon
+    dragHandle.innerHTML = "&#9776;";
+    row.appendChild(dragHandle);
+
+    // Create the attack name field.
+    const attackName = document.createElement('span');
+    attackName.contentEditable = true;
+    attackName.classList.add('attack-name');
+    attackName.setAttribute('data-storage-key', `tab4_attack_name_${nextIndex}`);
+    attachPlaceholder(attackName, "Enter action name here...");
+
+    // Create the attack label field.
+    const attackLabel = document.createElement('span');
+    attackLabel.contentEditable = true;
+    attackLabel.classList.add('attack-label');
+    attackLabel.setAttribute('data-storage-key', `tab4_attack_label_${nextIndex}`);
+    attachPlaceholder(attackLabel, "+/-");
+
+    // Create the attack description field.
+    const attackDescription = document.createElement('span');
+    attackDescription.contentEditable = true;
+    attackDescription.classList.add('attack-description');
+    attackDescription.setAttribute('data-storage-key', `tab4_attack_description_${nextIndex}`);
+    attachPlaceholder(attackDescription, "Enter action description here...");
+
+    // Append the fields in order: attack name, attack label, then attack description.
+    row.appendChild(attackName);
+    row.appendChild(attackLabel);
+    row.appendChild(attackDescription);
+
+    // Listen for input events to ensure that a new empty row is appended as needed.
+    row.addEventListener('input', () => {
+    ensureExtraEmptyAttackRow();
+    });
+
+    return row;
+}
+
+// Helper: Drag to reorder rows.
+function addDragHandlesToOverlay() {
+    const grid = document.querySelector('.actions-edit-overlay .attacks-edit-container .attacks-grid');
+    if (!grid) return;
+    grid.querySelectorAll('.attack-row').forEach(row => {
+        if (!row.querySelector('.drag-handle')) {
+            const dragHandle = document.createElement('span');
+            dragHandle.classList.add('drag-handle');
+            dragHandle.setAttribute('draggable', 'true');
+            dragHandle.innerHTML = "&#9776;";
+            row.insertBefore(dragHandle, row.firstChild);
+        }
+    });
+}
+
+function initializeRowDragAndDrop() {
+    const grid = document.querySelector('.actions-edit-overlay .attacks-edit-container .attacks-grid');
+    if (!grid) return;
+    let dragSrcEl = null;
+  
+    grid.querySelectorAll('.attack-row').forEach(row => {
+      const handle = row.querySelector('.drag-handle');
+      if (handle) {
+        handle.addEventListener('dragstart', (e) => {
+          dragSrcEl = row;
+          row.classList.add('dragging'); // Add visual indication here.
+          e.dataTransfer.effectAllowed = 'move';
+          // Set some dummy data to satisfy Firefox requirements.
+          e.dataTransfer.setData('text/html', row.outerHTML);
+        });
+        handle.addEventListener('dragend', () => {
+          row.classList.remove('dragging'); // Remove visual indication.
+        });
+      }
+  
+      row.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      });
+  
+      row.addEventListener('drop', (e) => {
+        e.stopPropagation();
+        if (dragSrcEl && dragSrcEl !== row) {
+          // Determine insertion position
+          const bounding = row.getBoundingClientRect();
+          const offset = e.clientY - bounding.top;
+          if (offset > bounding.height / 2) {
+            row.parentNode.insertBefore(dragSrcEl, row.nextSibling);
+          } else {
+            row.parentNode.insertBefore(dragSrcEl, row);
+          }
+        }
+        return false;
+      });
+    });
+  }    
+
+// Helper: Re-number a given attack row to use a new sequential index.
+function reNumberAttackRow(row, newIndex) {
+    const nameField = row.querySelector('.attack-name');
+    if (nameField) {
+    nameField.setAttribute('data-storage-key', `tab4_attack_name_${newIndex}`);
+    }
+    const labelField = row.querySelector('.attack-label');
+    if (labelField) {
+    labelField.setAttribute('data-storage-key', `tab4_attack_label_${newIndex}`);
+    }
+    const descField = row.querySelector('.attack-description');
+    if (descField) {
+    descField.setAttribute('data-storage-key', `tab4_attack_description_${newIndex}`);
+    }
+}
+  
+
+// Ensures that the grid in the Actions Edit Overlay always has one extra empty row at the end.
+function ensureExtraEmptyAttackRow() {
+    const grid = document.querySelector('.actions-edit-overlay .attacks-edit-container .attacks-grid');
+    if (!grid) return;
+  
+    const rows = grid.querySelectorAll('.attack-row');
+    if (rows.length === 0) {
+      // If there are no rows, create the first empty row with index 1.
+      const newRow = createEmptyAttackRow(1);
+      grid.appendChild(newRow);
+      return;
+    }
+    const lastRow = rows[rows.length - 1];
+    if (!isAttackRowCompletelyEmpty(lastRow)) {
+      // Retrieve the index number from the last row's attack name field.
+      const key = lastRow.querySelector('.attack-name').getAttribute('data-storage-key'); // e.g. "attack_name_3"
+      const parts = key.split('_');
+      let index = parseInt(parts[parts.length - 1], 10);
+      if (isNaN(index)) {
+        index = rows.length;
+      }
+      const newRow = createEmptyAttackRow(index + 1);
+      grid.appendChild(newRow);
+    }
+  }
+  
+  // Call on initialization to add listeners to any existing rows and ensure an extra empty row.
+  function initializeDynamicAttackRows() {
+    const grid = document.querySelector('.actions-edit-overlay .attacks-edit-container .attacks-grid');
+    if (!grid) return;
+    const rows = grid.querySelectorAll('.attack-row');
+    rows.forEach(row => {
+      row.addEventListener('input', () => {
+        ensureExtraEmptyAttackRow();
+      });
+    });
+    ensureExtraEmptyAttackRow();
+  }
+  

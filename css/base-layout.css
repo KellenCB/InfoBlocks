@@ -374,7 +374,7 @@ html {
 }
 
 /* ==================================================================*/
-/* ======================= Spell slot styling =======================*/
+/* ======================= Uses styling =======================*/
 /* ==================================================================*/
 
 .uses-field {
@@ -396,15 +396,6 @@ html {
 }
   
 .uses-circles-container {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 7.5px;
-    width: fit-content;
-}
-  
-/* Container for the add/remove controls */
-.uses-controls-container {
     display: flex;
     flex-direction: row;
     align-items: center;
