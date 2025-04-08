@@ -402,3 +402,12 @@ html {
     gap: 7.5px;
     width: fit-content;
 }
+
+.uses-controls-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 7.5px;
+    width: fit-content;
+}

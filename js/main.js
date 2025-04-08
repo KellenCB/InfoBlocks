@@ -165,26 +165,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
           
     // Restore Tab4 attacks grid from localStorage
-    const savedAttacksGridHTML = localStorage.getItem("tab4_attacks_grid");
-    if (savedAttacksGridHTML) {
-      const tab4AttacksGrid = document.querySelector("#tab4 .attacks-grid");
-      if (tab4AttacksGrid) {
-        tab4AttacksGrid.innerHTML = savedAttacksGridHTML;
-        console.log("✅ Attacks grid restored from localStorage.");
-        
-        // Disable editing on each attack field in Tab 4
-        tab4AttacksGrid.querySelectorAll('.attack-name, .attack-label, .attack-description')
-          .forEach(field => {
-            field.contentEditable = "false";
-          });
-        console.log("✅ Attack fields in Tab 4 locked (contentEditable set to false).");
-        
-        // (Optionally, reinitialize dynamic row functionality if needed)
-        ensureExtraEmptyAttackRow();
+    ["tab4", "tab8"].forEach(tabId => {
+        const savedAttacksGridHTML = localStorage.getItem(tabId + "_attacks_grid");
+        if (savedAttacksGridHTML) {
+          const attacksGrid = document.querySelector("#" + tabId + " .attacks-grid");
+          if (attacksGrid) {
+            attacksGrid.innerHTML = savedAttacksGridHTML;
+            console.log("✅ Attacks grid restored from localStorage for " + tabId);
+            // Lock the fields so they aren't editable on the main screen.
+            attacksGrid.querySelectorAll('.attack-name, .attack-label, .attack-description')
+              .forEach(field => field.contentEditable = "false");
+          } else {
+            console.warn("Attacks grid element not found in " + tabId);
           }
-    }
-
-
+        }
+    });
+      
     // Handle tab reordering
     document.querySelector(".tab-nav").addEventListener("dragover", (e) => {
         e.preventDefault();
