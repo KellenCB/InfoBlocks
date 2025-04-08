@@ -16,9 +16,9 @@ export const categoryTags = {
         tabs: ["tab2"]
     },
 
-    spell_level: { 
+    Infusion: { 
         tags: ["Infusion"], 
-        className: "tag-spellLevel",
+        className: "tag-infusion",
         tabs: ["tab4"]
     },
 
