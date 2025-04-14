@@ -373,19 +373,25 @@ function isactionRowCompletelyEmpty(row) {
 // Helper: Create empty rows.
 function createEmptyactionRow(nextIndex, tabPrefix) {
   if (!tabPrefix) {
-      console.error("createEmptyactionRow: No tabPrefix provided.");
-      return document.createElement('div'); // Return an empty div as a fallback
+    console.error("createEmptyactionRow: No tabPrefix provided.");
+    return document.createElement('div'); // Fallback: empty div
   }
   
   const row = document.createElement('div');
   row.classList.add('action-row');
 
-  // Create and append the drag-handle.
+  // Create and append the drag-handle first.
   const dragHandle = document.createElement('span');
   dragHandle.classList.add('drag-handle');
   dragHandle.setAttribute('draggable', 'true');
   dragHandle.innerHTML = "&#9776;";
   row.appendChild(dragHandle);
+
+  // Create the toggle-action-view button and append it next to the drag handle.
+  const toggleButton = document.createElement('button');
+  toggleButton.classList.add('toggle-action-view', 'action-button');
+  toggleButton.innerHTML = "+";  // Set the default symbol
+  row.appendChild(toggleButton);
 
   // Create the action name field.
   const actionName = document.createElement('span');
@@ -408,18 +414,19 @@ function createEmptyactionRow(nextIndex, tabPrefix) {
   actionDescription.setAttribute('data-storage-key', `${tabPrefix}_action_description_${nextIndex}`);
   attachPlaceholder(actionDescription, "Enter action description here...");
 
-  // Append the fields in order: action name, action label, then action description.
+  // Append the editable fields to the row.
   row.appendChild(actionName);
   row.appendChild(actionLabel);
   row.appendChild(actionDescription);
 
   // Listen for input events so that a new empty row is appended as needed.
   row.addEventListener('input', () => {
-      ensureExtraEmptyactionRow();
+    ensureExtraEmptyactionRow();
   });
 
   return row;
 }
+
 
 // Helper: Drag to reorder rows.
 function addDragHandlesToOverlay() {
@@ -448,9 +455,8 @@ function initializeActionRowToggles() {
     // Find the toggle button within the row
     const toggleButton = row.querySelector('button');
     if (toggleButton) {
-      // Ensure the button shows a "+" and uses both the "action-button" and "blue-button" styles.
       toggleButton.innerHTML = "+";
-      toggleButton.classList.add('action-button', 'blue-button');
+      toggleButton.classList.add('toggle-action-view', 'action-button');
       
       // Ensure the button appears at the top by inserting it as the first child.
       row.insertBefore(toggleButton, row.firstChild);

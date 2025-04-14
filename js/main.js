@@ -4,6 +4,8 @@ import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
 import { actionButtonHandlers } from './actionButtonHandlers.js';
 import { tagHandler } from './tagHandler.js';
 import { categoryTags } from './tagConfig.js';
+import './resizeHandle.js';
+
 
 // 📌 Attach event listeners efficiently
 const attachEventListeners = () => {
@@ -197,7 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
     });    
-      
+
     // Handle tab reordering
     document.querySelector(".tab-nav").addEventListener("dragover", (e) => {
         e.preventDefault();
