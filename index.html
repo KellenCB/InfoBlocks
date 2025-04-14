@@ -80,8 +80,12 @@
             <div class="circle-section"></div>
            
             <div class="filter-and-results">
-                <div class="filter-section">
-                    <h2 class="section-header">Search & Filter</h2>
+
+                <button id="toggle_filter_1" class="toggle-filter-button">
+                    <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
+                </button>
+                
+                <div id="filter_section_1" class="filter-section">
                     <div class="search-container">
                         <input id="search_input_1" class="search_input" type="text" placeholder="Search by text" />
                         <button id="clear_search_button_1" class="clear-search">✖</button>
@@ -131,8 +135,11 @@
 
             <div class="filter-and-results">
 
-                <div class="filter-section">
-                    <h2 class="section-header">Search & Filter</h2>
+                <button id="toggle_filter_2" class="toggle-filter-button">
+                    <i class="fas fa-search"></i>
+                </button>
+                
+                <div id="filter_section_2" class="filter-section">
                     <div class="search-container">
                         <input id="search_input_2" class="search_input" type="text" placeholder="Search by text" />
                         <button id="clear_search_button_2" class="clear-search">✖</button>
@@ -168,8 +175,12 @@
         <!-- Tab 3: Notes -->
         <div class="tab-content" id="tab3">
             <div class="filter-and-results">
-                <div class="filter-section">
-                    <h2 class="section-header">Search & Filter</h2>
+
+                <button id="toggle_filter_3" class="toggle-filter-button">
+                    <i class="fas fa-search"></i>
+                </button>
+                
+                <div id="filter_section_3" class="filter-section">
                     <div class="search-container">
                         <input id="search_input_3" class="search_input" type="text" placeholder="Search by text" />
                         <button id="clear_search_button_3" class="clear-search">✖</button>
@@ -475,7 +486,7 @@
                         </div>
                         <div class="actions-overlay-top"></div>
                         <div class="actions-overlay-bottom"></div>
-                      </div>
+                    </div>
                                                                 
                     <!-- Feats & Abilities (Results Section) -->
                     <div id="results_section_4" class="results-section">
@@ -562,11 +573,15 @@
         </div>
         </div>
 
-        <!-- Tab 6: Empty Placeholder -->
+        <!-- Tab 6: Inventory -->
         <div class="tab-content" id="tab6">
             <div class="filter-and-results">
-                <div class="filter-section">
-                    <h2 class="section-header">Search & Filter</h2>
+
+                <button id="toggle_filter_6" class="toggle-filter-button">
+                    <i class="fas fa-search"></i>
+                </button>
+                
+                <div id="filter_section_6" class="filter-section">
                     <div class="search-container">
                         <input id="search_input_6" class="search_input" type="text" placeholder="Search by text" />
                         <button id="clear_search_button_6" class="clear-search">✖</button>
@@ -602,8 +617,12 @@
         <!-- Tab 7: Session Notes -->
         <div class="tab-content" id="tab7">
             <div class="filter-and-results">
-                <div class="filter-section">
-                    <h2 class="section-header">Search & Filter</h2>
+
+                <button id="toggle_filter_7" class="toggle-filter-button">
+                    <i class="fas fa-search"></i>
+                </button>
+                
+                <div id="filter_section_7" class="filter-section">
                     <div class="search-container">
                         <input id="search_input_7" class="search_input" type="text" placeholder="Search by text" />
                         <button id="clear_search_button_7" class="clear-search">✖</button>
@@ -901,32 +920,36 @@
                     </div>
                 </div>
             </div>
-        
-            <!-- Actions -->
+
             <div class="character-sheet-column">
-                <div class="actions-grid">
+                <!-- Actions -->
+                <div class="actions-grid-wrapper">
+                    <div class="actions-grid">
+                        <!-- Your grid content goes here -->
+                    </div>
+                    <div class="actions-overlay-top"></div>
+                    <div class="actions-overlay-bottom"></div>
                 </div>
-                
-            <!-- Feats & Abilities (Results Section) -->
-            <div id="results_section_8" class="results-section">
-                <div id="results_header_8" class="results-header">
-                    <h2 id="results_title_8" class="section-header" contenteditable="true">Feats & Abilities</h2>
-                    <div id="sort_controls_8" class="sort-controls">
-                        <span>Sort by:</span>
-                        <button id="sort_newest_8" class="sort-button">
-                            <i class="fas fa-sort-numeric-down"></i> Newest
-                        </button>
-                        <button id="sort_oldest_8" class="sort-button">
-                            <i class="fas fa-sort-numeric-up"></i> Oldest
-                        </button>
-                        <button id="sort_alpha_8" class="sort-button">
-                            <i class="fas fa-sort-alpha-down"></i> A-Z
-                        </button>
+            
+                <!-- Feats & Abilities (Results Section) -->
+                <div id="results_section_8" class="results-section">
+                    <div id="results_header_8" class="results-header">
+                        <h2 id="results_title_8" class="section-header" contenteditable="true">Feats & Abilities</h2>
+                        <div id="sort_controls_8" class="sort-controls">
+                            <span>Sort by:</span>
+                            <button id="sort_newest_8" class="sort-button">
+                                <i class="fas fa-sort-numeric-down"></i> Newest
+                            </button>
+                            <button id="sort_oldest_8" class="sort-button">
+                                <i class="fas fa-sort-numeric-up"></i> Oldest
+                            </button>
+                            <button id="sort_alpha_8" class="sort-button">
+                                <i class="fas fa-sort-alpha-down"></i> A-Z
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-
         </div>
     </div>
 
