@@ -133,7 +133,7 @@ html {
 
 .results-header {
     display: flex;
-    justify-content: space-between; 
+    justify-content: right; 
     align-items: top;
     position: sticky;
     top: 0;

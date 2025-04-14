@@ -103,6 +103,7 @@
 .add-block-overlay.show, .cleardata-overlay.show, .edit-block-overlay.show {
     display: flex;
     opacity: 1;
+    z-index: 10001;
 }
 
 .add-block-form, .cleardata-form, .edit-block-form {

@@ -45,10 +45,10 @@ function tooltipMouseLeave(e) {
   }
 }
 
-// Convenience function to attach tooltips to dynamic block and attack elements.
+// Convenience function to attach tooltips to dynamic block and action elements.
 function attachDynamicTooltips() {
-  // Adjust these selectors as needed to target the elements you want (e.g. the block title and attack row)
-  const targets = document.querySelectorAll(".block-title h4, .attack-name, .attack-description");
+  // Adjust these selectors as needed to target the elements you want (e.g. the block title and action row)
+  const targets = document.querySelectorAll(".block-title h4, .action-name, .action-description");
   attachTooltipHandlers(targets);
 }    
 
@@ -90,7 +90,6 @@ export const appManager = (() => {
       // Clear old content and render header with unique IDs for sort buttons.
       resultsSection.innerHTML = `
         <div id="results_header_${tabSuffix}" class="results-header">
-          <h2 id="results_title_${tabSuffix}" class="section-header" contenteditable="true"></h2>
           <div id="sort_controls_${tabSuffix}" class="sort-controls">
             <span>Sort by:</span>
             <button id="sort_newest_${tabSuffix}" class="sort-button ${selectedNew}">

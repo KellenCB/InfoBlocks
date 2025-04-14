@@ -181,22 +181,22 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Restore Tab4 attacks grid from localStorage
+    // Restore Tab4 actions grid from localStorage
     ["tab4", "tab8"].forEach(tabId => {
-        const savedAttacksGridHTML = localStorage.getItem(tabId + "_attacks_grid");
-        if (savedAttacksGridHTML) {
-          const attacksGrid = document.querySelector("#" + tabId + " .attacks-grid");
-          if (attacksGrid) {
-            attacksGrid.innerHTML = savedAttacksGridHTML;
-            console.log("✅ Attacks grid restored from localStorage for " + tabId);
+        const savedactionsGridHTML = localStorage.getItem(tabId + "_actions_grid");
+        if (savedactionsGridHTML) {
+          const actionsGrid = document.querySelector("#" + tabId + " .actions-grid");
+          if (actionsGrid) {
+            actionsGrid.innerHTML = savedactionsGridHTML;
+            console.log("✅ actions grid restored from localStorage for " + tabId);
             // Lock the fields so they aren't editable on the main screen.
-            attacksGrid.querySelectorAll('.attack-name, .attack-label, .attack-description')
+            actionsGrid.querySelectorAll('.action-name, .action-label, .action-description')
               .forEach(field => field.contentEditable = "false");
           } else {
-            console.warn("Attacks grid element not found in " + tabId);
+            console.warn("actions grid element not found in " + tabId);
           }
         }
-    });
+    });    
       
     // Handle tab reordering
     document.querySelector(".tab-nav").addEventListener("dragover", (e) => {

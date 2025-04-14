@@ -289,32 +289,77 @@ box-sizing: border-box;
     }
 
 /* =================================================================*/
-/* ======================== Attacks Styling ========================*/
+/* ======================== actions Styling ========================*/
 /* =================================================================*/
 
-  .attacks-grid {
-    position: relative;
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    background-color: #2a2a2a;
-    padding: 20px;
-    gap: 10px;
-    border-radius: 20px;
-    color: #fff;
-    margin-bottom: 20px;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow-y: auto;
+.actions-grid {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 10px;
+  color: #fff;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
-.attacks-edit-container {
+.actions-grid-wrapper {
+  position: relative;
+  display: flex;
+  flex: 1;
+  background-color: #2a2a2a;
+  color: #fff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.actions-overlay-top {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 20px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  background: linear-gradient(
+    rgba(42, 42, 42, 1) 0%,
+    rgba(42, 42, 42, 0.6) 65%,
+    rgba(42, 42, 42, 0) 100%
+    );
+  pointer-events: none;
+  z-index: 10;
+}
+
+.actions-overlay-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 20px;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  background: linear-gradient(
+    rgba(42, 42, 42, 0) 0%,
+    rgba(42, 42, 42, 0.5) 35%,
+    rgba(42, 42, 42, 1) 100%
+    );
+  pointer-events: none;
+  z-index: 10;
+}
+
+
+.actions-edit-container {
   position: relative; 
   padding-top: 0;
 }
 
-.attacks-gradient-overlay {
+.actions-gradient-overlay {
   position: absolute;
   top: -20;
   left: 0;
@@ -331,7 +376,7 @@ box-sizing: border-box;
   z-index: 5;
 }
 
-.attack-row {
+.action-row {
     display: flex;
     justify-content: left;
     align-items: center;
@@ -345,7 +390,7 @@ box-sizing: border-box;
     min-width: 0;
 }
 
-.attack-name {
+.action-name {
   flex: 2;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -353,11 +398,11 @@ box-sizing: border-box;
   min-width: 0; /* Ensure the text can shrink */
 }
 
-.attack-label {
+.action-label {
   min-width: 20px;
 }
 
-.attack-description {
+.action-description {
   flex: 5;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -433,21 +478,21 @@ box-sizing: border-box;
   gap: 20px;
 }
 
-.attacks-edit-container {
+.actions-edit-container {
   margin-top: 20px;
   margin-bottom: 10px;
 }
 
-.attacks-edit-container .attacks-grid {
+.actions-edit-container .actions-grid {
   margin-bottom: 0px;
   text-align: left;
 }
 
-.attacks-edit-container .attack-row {
+.actions-edit-container .action-row {
   gap: 30px;
 }
 
-.attacks-edit-container .attack-description {
+.actions-edit-container .action-description {
   flex: 5;
   overflow: auto;
   text-overflow: ellipsis;
@@ -455,7 +500,7 @@ box-sizing: border-box;
   line-height: 1.25rem;    
 }
 
-.attacks-edit-container .attack-name {
+.actions-edit-container .action-name {
   flex: 2;
   overflow: auto;
   text-overflow: ellipsis;
@@ -471,7 +516,7 @@ box-sizing: border-box;
   opacity: 0.5;
 }
 
-.actions-edit-overlay .attack-row.dragging {
+.actions-edit-overlay .action-row.dragging {
   opacity: 0.7;
   border: 2px dashed #ccc;
   transform: scale(1.02);

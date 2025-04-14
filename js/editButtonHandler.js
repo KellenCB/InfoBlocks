@@ -191,20 +191,20 @@ document.addEventListener('DOMContentLoaded', () => {
               const headerElem = overlayContent.querySelector('h2');
               const paraElem = overlayContent.querySelector('p');
               
-              // Query for the attacks grid in the source tab (either tab4 or tab8)
-              const sourceAttacksGrid = document.querySelector('#' + activeTab + ' .attacks-grid');
-              if (sourceAttacksGrid) {
-                const attacksGridClone = sourceAttacksGrid.cloneNode(true);
-                attacksGridClone.querySelectorAll('.attack-name, .attack-label, .attack-description')
+              // Query for the actions grid in the source tab (either tab4 or tab8)
+              const sourceactionsGrid = document.querySelector('#' + activeTab + ' .actions-grid');
+              if (sourceactionsGrid) {
+                const actionsGridClone = sourceactionsGrid.cloneNode(true);
+                actionsGridClone.querySelectorAll('.action-name, .action-label, .action-description')
                   .forEach(field => field.contentEditable = "true");
                 
-                let container = overlayContent.querySelector('.attacks-edit-container');
+                let container = overlayContent.querySelector('.actions-edit-container');
                 if (!container) {
                   container = document.createElement('div');
-                  container.classList.add('attacks-edit-container');
+                  container.classList.add('actions-edit-container');
                 }
                 container.innerHTML = "";
-                container.appendChild(attacksGridClone);
+                container.appendChild(actionsGridClone);
                 
                 if (paraElem) {
                   paraElem.parentNode.insertBefore(container, paraElem.nextSibling);
@@ -215,10 +215,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 addDragHandlesToOverlay();
-                initializeDynamicAttackRows();
+                initializeDynamicactionRows();
                 initializeRowDragAndDrop();
               } else {
-                console.warn('No attacks grid found in ' + activeTab + '.');
+                console.warn('No actions grid found in ' + activeTab + '.');
               }
               actionsOverlay.classList.add('show');
             } else {
@@ -245,33 +245,33 @@ if (saveActionsButton) {
       return;
     }
     
-    const container = document.querySelector('.actions-edit-overlay .attacks-edit-container');
+    const container = document.querySelector('.actions-edit-overlay .actions-edit-container');
     if (container) {
-      const newGrid = container.querySelector('.attacks-grid');
+      const newGrid = container.querySelector('.actions-grid');
       if (newGrid) {
         // Remove all drag handle elements from each row.
         newGrid.querySelectorAll('.drag-handle').forEach(handle => handle.remove());
         
         // Filter out completely empty rows.
-        let rows = Array.from(newGrid.querySelectorAll('.attack-row')).filter(row => !isAttackRowCompletelyEmpty(row));
+        let rows = Array.from(newGrid.querySelectorAll('.action-row')).filter(row => !isactionRowCompletelyEmpty(row));
 
         // Re-index each remaining row sequentially starting from 1 using currentTab as prefix.
         rows.forEach((row, index) => {
           const newIndex = index + 1;
-          reNumberAttackRow(row, newIndex, currentTab);
+          reNumberactionRow(row, newIndex, currentTab);
         });
 
         // Build new HTML content from the re-indexed rows.
         const newHTML = rows.map(row => row.outerHTML).join('');
         
-        // Update the attacks grid in the source tab (currentTab) with the new content.
-        const targetGrid = document.querySelector('#' + currentTab + ' .attacks-grid');
+        // Update the actions grid in the source tab (currentTab) with the new content.
+        const targetGrid = document.querySelector('#' + currentTab + ' .actions-grid');
         if (targetGrid) {
           targetGrid.innerHTML = newHTML;
-          console.log('✅ Attacks grid updated in ' + currentTab + ' with re-indexed rows.');
+          console.log('✅ actions grid updated in ' + currentTab + ' with re-indexed rows.');
           
           // Set fields to be non-editable when saved.
-          targetGrid.querySelectorAll('.attack-name, .attack-label, .attack-description').forEach(field => {
+          targetGrid.querySelectorAll('.action-name, .action-label, .action-description').forEach(field => {
             field.contentEditable = "false";
           });
           
@@ -282,16 +282,16 @@ if (saveActionsButton) {
             localStorage.setItem(key, value);
           });
         } else {
-          console.warn('Attacks grid not found in ' + currentTab + '.');
+          console.warn('actions grid not found in ' + currentTab + '.');
         }
         
-        localStorage.setItem(currentTab + '_attacks_grid', newHTML);
-        console.log('✅ Attacks grid changes saved to localStorage for ' + currentTab + '.');
+        localStorage.setItem(currentTab + '_actions_grid', newHTML);
+        console.log('✅ actions grid changes saved to localStorage for ' + currentTab + '.');
       } else {
-        console.warn('No cloned attacks grid found in the overlay container.');
+        console.warn('No cloned actions grid found in the overlay container.');
       }
     } else {
-      console.warn('Attacks edit container not found in the actions edit overlay.');
+      console.warn('actions edit container not found in the actions edit overlay.');
     }
     
     if (actionsOverlay) {
@@ -331,7 +331,7 @@ const overlayCancelConfigs = [
     }
 });
 
-// ---------------- Helper functions for dynamic attack rows ----------------
+// ---------------- Helper functions for dynamic action rows ----------------
 
 // Helper: Placeholder trext for empty rows.
 function attachPlaceholder(element, placeholderText) {
@@ -357,10 +357,10 @@ function attachPlaceholder(element, placeholderText) {
   }
   
 // Helper: Check if row is empty.
-function isAttackRowCompletelyEmpty(row) {
-    const nameField = row.querySelector('.attack-name');
-    const labelField = row.querySelector('.attack-label');
-    const descField = row.querySelector('.attack-description');
+function isactionRowCompletelyEmpty(row) {
+    const nameField = row.querySelector('.action-name');
+    const labelField = row.querySelector('.action-label');
+    const descField = row.querySelector('.action-description');
 
     const nameEmpty = !nameField || nameField.textContent.trim() === "" || nameField.textContent.trim() === "Enter action name here...";
     const labelEmpty = !labelField || labelField.textContent.trim() === "" || labelField.textContent.trim() === "+/-";
@@ -370,14 +370,14 @@ function isAttackRowCompletelyEmpty(row) {
 }
 
 // Helper: Create empty rows.
-function createEmptyAttackRow(nextIndex, tabPrefix) {
+function createEmptyactionRow(nextIndex, tabPrefix) {
     if (!tabPrefix) {
-        console.error("createEmptyAttackRow: No tabPrefix provided.");
+        console.error("createEmptyactionRow: No tabPrefix provided.");
         return document.createElement('div'); // Return an empty div as a fallback
     }
     
     const row = document.createElement('div');
-    row.classList.add('attack-row');
+    row.classList.add('action-row');
 
     // Create and append the drag-handle.
     const dragHandle = document.createElement('span');
@@ -386,35 +386,35 @@ function createEmptyAttackRow(nextIndex, tabPrefix) {
     dragHandle.innerHTML = "&#9776;";
     row.appendChild(dragHandle);
 
-    // Create the attack name field.
-    const attackName = document.createElement('span');
-    attackName.contentEditable = true;
-    attackName.classList.add('attack-name');
-    attackName.setAttribute('data-storage-key', `${tabPrefix}_attack_name_${nextIndex}`);
-    attachPlaceholder(attackName, "Enter action name here...");
+    // Create the action name field.
+    const actionName = document.createElement('span');
+    actionName.contentEditable = true;
+    actionName.classList.add('action-name');
+    actionName.setAttribute('data-storage-key', `${tabPrefix}_action_name_${nextIndex}`);
+    attachPlaceholder(actionName, "Enter action name here...");
 
-    // Create the attack label field.
-    const attackLabel = document.createElement('span');
-    attackLabel.contentEditable = true;
-    attackLabel.classList.add('attack-label');
-    attackLabel.setAttribute('data-storage-key', `${tabPrefix}_attack_label_${nextIndex}`);
-    attachPlaceholder(attackLabel, "+/-");
+    // Create the action label field.
+    const actionLabel = document.createElement('span');
+    actionLabel.contentEditable = true;
+    actionLabel.classList.add('action-label');
+    actionLabel.setAttribute('data-storage-key', `${tabPrefix}_action_label_${nextIndex}`);
+    attachPlaceholder(actionLabel, "+/-");
 
-    // Create the attack description field.
-    const attackDescription = document.createElement('span');
-    attackDescription.contentEditable = true;
-    attackDescription.classList.add('attack-description');
-    attackDescription.setAttribute('data-storage-key', `${tabPrefix}_attack_description_${nextIndex}`);
-    attachPlaceholder(attackDescription, "Enter action description here...");
+    // Create the action description field.
+    const actionDescription = document.createElement('span');
+    actionDescription.contentEditable = true;
+    actionDescription.classList.add('action-description');
+    actionDescription.setAttribute('data-storage-key', `${tabPrefix}_action_description_${nextIndex}`);
+    attachPlaceholder(actionDescription, "Enter action description here...");
 
-    // Append the fields in order: attack name, attack label, then attack description.
-    row.appendChild(attackName);
-    row.appendChild(attackLabel);
-    row.appendChild(attackDescription);
+    // Append the fields in order: action name, action label, then action description.
+    row.appendChild(actionName);
+    row.appendChild(actionLabel);
+    row.appendChild(actionDescription);
 
     // Listen for input events so that a new empty row is appended as needed.
     row.addEventListener('input', () => {
-        ensureExtraEmptyAttackRow();
+        ensureExtraEmptyactionRow();
     });
 
     return row;
@@ -423,9 +423,9 @@ function createEmptyAttackRow(nextIndex, tabPrefix) {
 
 // Helper: Drag to reorder rows.
 function addDragHandlesToOverlay() {
-    const grid = document.querySelector('.actions-edit-overlay .attacks-edit-container .attacks-grid');
+    const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
     if (!grid) return;
-    grid.querySelectorAll('.attack-row').forEach(row => {
+    grid.querySelectorAll('.action-row').forEach(row => {
         if (!row.querySelector('.drag-handle')) {
             const dragHandle = document.createElement('span');
             dragHandle.classList.add('drag-handle');
@@ -437,11 +437,11 @@ function addDragHandlesToOverlay() {
 }
 
 function initializeRowDragAndDrop() {
-    const grid = document.querySelector('.actions-edit-overlay .attacks-edit-container .attacks-grid');
+    const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
     if (!grid) return;
     let dragSrcEl = null;
   
-    grid.querySelectorAll('.attack-row').forEach(row => {
+    grid.querySelectorAll('.action-row').forEach(row => {
       const handle = row.querySelector('.drag-handle');
       if (handle) {
         handle.addEventListener('dragstart', (e) => {
@@ -478,66 +478,66 @@ function initializeRowDragAndDrop() {
     });
   }    
 
-// Helper: Re-number a given attack row to use a new sequential index.
-function reNumberAttackRow(row, newIndex, tabPrefix) {
-    const nameField = row.querySelector('.attack-name');
+// Helper: Re-number a given action row to use a new sequential index.
+function reNumberactionRow(row, newIndex, tabPrefix) {
+    const nameField = row.querySelector('.action-name');
     if (nameField) {
-      nameField.setAttribute('data-storage-key', `${tabPrefix}_attack_name_${newIndex}`);
+      nameField.setAttribute('data-storage-key', `${tabPrefix}_action_name_${newIndex}`);
     }
-    const labelField = row.querySelector('.attack-label');
+    const labelField = row.querySelector('.action-label');
     if (labelField) {
-      labelField.setAttribute('data-storage-key', `${tabPrefix}_attack_label_${newIndex}`);
+      labelField.setAttribute('data-storage-key', `${tabPrefix}_action_label_${newIndex}`);
     }
-    const descField = row.querySelector('.attack-description');
+    const descField = row.querySelector('.action-description');
     if (descField) {
-      descField.setAttribute('data-storage-key', `${tabPrefix}_attack_description_${newIndex}`);
+      descField.setAttribute('data-storage-key', `${tabPrefix}_action_description_${newIndex}`);
     }
   }    
 
 // Ensures that the grid in the Actions Edit Overlay always has one extra empty row at the end.
-function ensureExtraEmptyAttackRow() {
-    const grid = document.querySelector('.actions-edit-overlay .attacks-edit-container .attacks-grid');
+function ensureExtraEmptyactionRow() {
+    const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
     if (!grid) return;
   
     // Retrieve the current tab prefix from the overlay's dataset.
     const actionsOverlay = document.querySelector('.actions-edit-overlay');
     if (!actionsOverlay || !actionsOverlay.dataset.activeTab) {
-        console.error("ensureExtraEmptyAttackRow: Active tab is not defined in the overlay's dataset.");
+        console.error("ensureExtraEmptyactionRow: Active tab is not defined in the overlay's dataset.");
         return;
     }
     const tabPrefix = actionsOverlay.dataset.activeTab;
   
-    const rows = grid.querySelectorAll('.attack-row');
+    const rows = grid.querySelectorAll('.action-row');
     if (rows.length === 0) {
         // If there are no rows, create the first empty row with index 1.
-        const newRow = createEmptyAttackRow(1, tabPrefix);
+        const newRow = createEmptyactionRow(1, tabPrefix);
         grid.appendChild(newRow);
         return;
     }
     const lastRow = rows[rows.length - 1];
-    if (!isAttackRowCompletelyEmpty(lastRow)) {
-        // Retrieve the index number from the last row's attack name field.
-        const key = lastRow.querySelector('.attack-name').getAttribute('data-storage-key'); // e.g. "tab4_attack_name_3"
+    if (!isactionRowCompletelyEmpty(lastRow)) {
+        // Retrieve the index number from the last row's action name field.
+        const key = lastRow.querySelector('.action-name').getAttribute('data-storage-key'); // e.g. "tab4_action_name_3"
         const parts = key.split('_');
         let index = parseInt(parts[parts.length - 1], 10);
         if (isNaN(index)) {
             index = rows.length;
         }
-        const newRow = createEmptyAttackRow(index + 1, tabPrefix);
+        const newRow = createEmptyactionRow(index + 1, tabPrefix);
         grid.appendChild(newRow);
     }
 }
   
   // Call on initialization to add listeners to any existing rows and ensure an extra empty row.
-  function initializeDynamicAttackRows() {
-    const grid = document.querySelector('.actions-edit-overlay .attacks-edit-container .attacks-grid');
+  function initializeDynamicactionRows() {
+    const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
     if (!grid) return;
-    const rows = grid.querySelectorAll('.attack-row');
+    const rows = grid.querySelectorAll('.action-row');
     rows.forEach(row => {
       row.addEventListener('input', () => {
-        ensureExtraEmptyAttackRow();
+        ensureExtraEmptyactionRow();
       });
     });
-    ensureExtraEmptyAttackRow();
+    ensureExtraEmptyactionRow();
   }
   

@@ -62,14 +62,14 @@
 
     <div class="container fade-in">
         <div class="tab-nav fade-in">
-            <button class="tab-button active" data-tab="tab1" draggable="true">Tab 1</button> <!-- Magic Items -->
-            <button class="tab-button" data-tab="tab2" draggable="true">Tab 2</button> <!-- Spells -->
-            <button class="tab-button" data-tab="tab3" draggable="true">Tab 3</button> <!-- Notes -->
-            <button class="tab-button" data-tab="tab4" draggable="true">Character Sheet</button> <!-- Character Sheet -->
-            <button class="tab-button" data-tab="tab5" draggable="true">Dice Roller</button> <!-- Dice -->
-            <button class="tab-button" data-tab="tab6" draggable="true">Tab 6</button> <!-- Inventory -->
-            <button class="tab-button" data-tab="tab7" draggable="true">Tab 7</button> <!-- Session Notes -->
-            <button class="tab-button" data-tab="tab8" draggable="true">Crank</button> <!-- Feats & Abilites -->
+            <button class="tab-button active" data-tab="tab1" draggable="true">Magic Items</button>
+            <button class="tab-button" data-tab="tab2" draggable="true">Spells</button> 
+            <button class="tab-button" data-tab="tab3" draggable="true">Notes</button>
+            <button class="tab-button" data-tab="tab4" draggable="true">Hazard</button>
+            <button class="tab-button" data-tab="tab5" draggable="true">Dice Roller</button>
+            <button class="tab-button" data-tab="tab6" draggable="true">Inventory</button>
+            <button class="tab-button" data-tab="tab7" draggable="true">Session Notes</button>
+            <button class="tab-button" data-tab="tab8" draggable="true">Crank</button>
         </div>
     </div>
 
@@ -469,10 +469,14 @@
         
                 <div class="character-sheet-column">
                     <!-- Actions -->
-                    <div class="attacks-grid">
-                        <!-- Attack rows dynamically generated -->
-                    </div>
-                                          
+                    <div class="actions-grid-wrapper">
+                        <div class="actions-grid">
+                          <!-- Your grid content goes here -->
+                        </div>
+                        <div class="actions-overlay-top"></div>
+                        <div class="actions-overlay-bottom"></div>
+                      </div>
+                                                                
                     <!-- Feats & Abilities (Results Section) -->
                     <div id="results_section_4" class="results-section">
                         <div id="results_header" class="results-header">
@@ -745,7 +749,7 @@
                         <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_save">00</span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label">Spell Attack</span>
+                        <span class="stat-label">Spell attack</span>
                         <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_attack">00</span>
                     </div>
 
@@ -900,7 +904,7 @@
         
             <!-- Actions -->
             <div class="character-sheet-column">
-                <div class="attacks-grid">
+                <div class="actions-grid">
                 </div>
                 
             <!-- Feats & Abilities (Results Section) -->
