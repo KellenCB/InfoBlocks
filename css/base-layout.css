@@ -422,7 +422,7 @@ html {
 /* ===================================================================*/
 
 .permanent-items-container {
-    display: block;
+    display: inline-block;
 }
 
 .permanent-block {

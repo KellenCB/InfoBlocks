@@ -12,7 +12,7 @@
   overflow-x: auto;
   box-sizing: border-box;
   width: 100%;
-  }
+}
 
 .character-sheet-row {
 display: flex;
@@ -292,19 +292,6 @@ box-sizing: border-box;
 /* ======================== actions Styling ========================*/
 /* =================================================================*/
 
-.actions-grid {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  gap: 10px;
-  color: #fff;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow-y: auto;
-}
-
 .actions-grid-wrapper {
   position: relative;
   display: flex;
@@ -317,6 +304,19 @@ box-sizing: border-box;
   box-sizing: border-box;
   overflow-y: auto;
   margin-bottom: 20px;
+}
+
+.actions-grid {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 10px;
+  color: #fff;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .actions-overlay-top {
@@ -377,37 +377,62 @@ box-sizing: border-box;
 }
 
 .action-row {
-    display: flex;
-    justify-content: left;
-    align-items: center;
-    background-color: #444; 
-    padding: 10px 15px;
-    border-radius: 10px;
-    gap: 15px;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    min-width: 0;
+  display: flex;
+  justify-content: left;
+  background-color: #444; 
+  padding: 10px 15px;
+  border-radius: 10px;
+  gap: 15px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
-.action-name {
-  flex: 2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0; /* Ensure the text can shrink */
+.action-row .expended {
+  align-items: start;
 }
 
-.action-label {
+.action-row .condensed {
+  align-items: center;
+}
+
+
+/* Default button styling for the toggle */
+.toggle-action-view {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background-color: #666;
+  transition: background-color 0.2s ease;
+  color: white;
+  cursor: pointer;
+}
+
+.action-name, .action-label, .action-description {
   min-width: 20px;
 }
 
-.action-description {
-  flex: 5;
+.action-name {flex: 2;}
+
+.action-description { flex: 5;}
+
+.action-row.expanded .action-name,
+.action-row.expanded .action-label,
+.action-row.expanded .action-description {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.action-row.condensed .action-name,
+.action-row.condensed .action-label,
+.action-row.condensed .action-description {
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0; /* Ensure the text can shrink */
 }
 
 .toggle-circle {
@@ -440,7 +465,6 @@ box-sizing: border-box;
   background-color: #ff6b6b;
   border: 1px solid #ff6b6b;
 }
-
 
 /* =================================================================*/
 /* ==================== Actions Overlay Styling ====================*/

@@ -112,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   
     initSpellSlotSection();
+    initializeActionRowToggles();
   
     // Attach the event listener for opening the spell slot edit overlay
     // to the existing edit_tab_button from the header.
@@ -371,161 +372,210 @@ function isactionRowCompletelyEmpty(row) {
 
 // Helper: Create empty rows.
 function createEmptyactionRow(nextIndex, tabPrefix) {
-    if (!tabPrefix) {
-        console.error("createEmptyactionRow: No tabPrefix provided.");
-        return document.createElement('div'); // Return an empty div as a fallback
-    }
-    
-    const row = document.createElement('div');
-    row.classList.add('action-row');
+  if (!tabPrefix) {
+      console.error("createEmptyactionRow: No tabPrefix provided.");
+      return document.createElement('div'); // Return an empty div as a fallback
+  }
+  
+  const row = document.createElement('div');
+  row.classList.add('action-row');
 
-    // Create and append the drag-handle.
-    const dragHandle = document.createElement('span');
-    dragHandle.classList.add('drag-handle');
-    dragHandle.setAttribute('draggable', 'true');
-    dragHandle.innerHTML = "&#9776;";
-    row.appendChild(dragHandle);
+  // Create and append the drag-handle.
+  const dragHandle = document.createElement('span');
+  dragHandle.classList.add('drag-handle');
+  dragHandle.setAttribute('draggable', 'true');
+  dragHandle.innerHTML = "&#9776;";
+  row.appendChild(dragHandle);
 
-    // Create the action name field.
-    const actionName = document.createElement('span');
-    actionName.contentEditable = true;
-    actionName.classList.add('action-name');
-    actionName.setAttribute('data-storage-key', `${tabPrefix}_action_name_${nextIndex}`);
-    attachPlaceholder(actionName, "Enter action name here...");
+  // Create the action name field.
+  const actionName = document.createElement('span');
+  actionName.contentEditable = true;
+  actionName.classList.add('action-name');
+  actionName.setAttribute('data-storage-key', `${tabPrefix}_action_name_${nextIndex}`);
+  attachPlaceholder(actionName, "Enter action name here...");
 
-    // Create the action label field.
-    const actionLabel = document.createElement('span');
-    actionLabel.contentEditable = true;
-    actionLabel.classList.add('action-label');
-    actionLabel.setAttribute('data-storage-key', `${tabPrefix}_action_label_${nextIndex}`);
-    attachPlaceholder(actionLabel, "+/-");
+  // Create the action label field.
+  const actionLabel = document.createElement('span');
+  actionLabel.contentEditable = true;
+  actionLabel.classList.add('action-label');
+  actionLabel.setAttribute('data-storage-key', `${tabPrefix}_action_label_${nextIndex}`);
+  attachPlaceholder(actionLabel, "+/-");
 
-    // Create the action description field.
-    const actionDescription = document.createElement('span');
-    actionDescription.contentEditable = true;
-    actionDescription.classList.add('action-description');
-    actionDescription.setAttribute('data-storage-key', `${tabPrefix}_action_description_${nextIndex}`);
-    attachPlaceholder(actionDescription, "Enter action description here...");
+  // Create the action description field.
+  const actionDescription = document.createElement('span');
+  actionDescription.contentEditable = true;
+  actionDescription.classList.add('action-description');
+  actionDescription.setAttribute('data-storage-key', `${tabPrefix}_action_description_${nextIndex}`);
+  attachPlaceholder(actionDescription, "Enter action description here...");
 
-    // Append the fields in order: action name, action label, then action description.
-    row.appendChild(actionName);
-    row.appendChild(actionLabel);
-    row.appendChild(actionDescription);
+  // Append the fields in order: action name, action label, then action description.
+  row.appendChild(actionName);
+  row.appendChild(actionLabel);
+  row.appendChild(actionDescription);
 
-    // Listen for input events so that a new empty row is appended as needed.
-    row.addEventListener('input', () => {
-        ensureExtraEmptyactionRow();
-    });
+  // Listen for input events so that a new empty row is appended as needed.
+  row.addEventListener('input', () => {
+      ensureExtraEmptyactionRow();
+  });
 
-    return row;
+  return row;
 }
-
 
 // Helper: Drag to reorder rows.
 function addDragHandlesToOverlay() {
-    const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
-    if (!grid) return;
-    grid.querySelectorAll('.action-row').forEach(row => {
-        if (!row.querySelector('.drag-handle')) {
-            const dragHandle = document.createElement('span');
-            dragHandle.classList.add('drag-handle');
-            dragHandle.setAttribute('draggable', 'true');
-            dragHandle.innerHTML = "&#9776;";
-            row.insertBefore(dragHandle, row.firstChild);
-        }
-    });
+  const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
+  if (!grid) return;
+  grid.querySelectorAll('.action-row').forEach(row => {
+      if (!row.querySelector('.drag-handle')) {
+          const dragHandle = document.createElement('span');
+          dragHandle.classList.add('drag-handle');
+          dragHandle.setAttribute('draggable', 'true');
+          dragHandle.innerHTML = "&#9776;";
+          row.insertBefore(dragHandle, row.firstChild);
+      }
+  });
+}
+
+function initializeActionRowToggles() {
+  console.log("initializeActionRowToggles executing.");
+
+  // Set the initial state (condensed) for all existing .action-row elements.
+  const actionRows = document.querySelectorAll('.action-row');
+  actionRows.forEach(row => {
+    row.classList.add('condensed');
+    row.classList.remove('expanded');
+
+    // Find the toggle button within the row
+    const toggleButton = row.querySelector('button');
+    if (toggleButton) {
+      // Ensure the button shows a "+" and uses both the "action-button" and "blue-button" styles.
+      toggleButton.innerHTML = "+";
+      toggleButton.classList.add('action-button', 'blue-button');
+      
+      // Ensure the button appears at the top by inserting it as the first child.
+      row.insertBefore(toggleButton, row.firstChild);
+    } else {
+      console.warn("No toggle button found in action-row:", row);
+    }
+  });
+
+  // Use event delegation on the document to catch clicks on any .action-row button,
+  // ensuring that even dynamically added rows (e.g. in an edit overlay) have toggle functionality.
+  document.addEventListener('click', function(e) {
+    const toggleButton = e.target.closest('.action-row button');
+    if (toggleButton) {
+      e.preventDefault();
+      const row = toggleButton.closest('.action-row');
+      if (!row) {
+        console.warn("Toggle button clicked, but no parent .action-row found.");
+        return;
+      }
+      // Toggle between expanded and condensed states and update button symbol accordingly.
+      if (row.classList.contains('expanded')) {
+        row.classList.remove('expanded');
+        row.classList.add('condensed');
+        toggleButton.textContent = "+";
+        console.log(`Action row containing button "${toggleButton.textContent}" toggled to condensed.`);
+      } else {
+        row.classList.remove('condensed');
+        row.classList.add('expanded');
+        toggleButton.textContent = "-";
+        console.log(`Action row containing button "${toggleButton.textContent}" toggled to expanded.`);
+      }
+    }
+  });
 }
 
 function initializeRowDragAndDrop() {
-    const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
-    if (!grid) return;
-    let dragSrcEl = null;
-  
-    grid.querySelectorAll('.action-row').forEach(row => {
-      const handle = row.querySelector('.drag-handle');
-      if (handle) {
-        handle.addEventListener('dragstart', (e) => {
-          dragSrcEl = row;
-          row.classList.add('dragging'); // Add visual indication here.
-          e.dataTransfer.effectAllowed = 'move';
-          // Set some dummy data to satisfy Firefox requirements.
-          e.dataTransfer.setData('text/html', row.outerHTML);
-        });
-        handle.addEventListener('dragend', () => {
-          row.classList.remove('dragging'); // Remove visual indication.
-        });
-      }
-  
-      row.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
+  const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
+  if (!grid) return;
+  let dragSrcEl = null;
+
+  grid.querySelectorAll('.action-row').forEach(row => {
+    const handle = row.querySelector('.drag-handle');
+    if (handle) {
+      handle.addEventListener('dragstart', (e) => {
+        dragSrcEl = row;
+        row.classList.add('dragging'); // Add visual indication here.
+        e.dataTransfer.effectAllowed = 'move';
+        // Set some dummy data to satisfy Firefox requirements.
+        e.dataTransfer.setData('text/html', row.outerHTML);
       });
-  
-      row.addEventListener('drop', (e) => {
-        e.stopPropagation();
-        if (dragSrcEl && dragSrcEl !== row) {
-          // Determine insertion position
-          const bounding = row.getBoundingClientRect();
-          const offset = e.clientY - bounding.top;
-          if (offset > bounding.height / 2) {
-            row.parentNode.insertBefore(dragSrcEl, row.nextSibling);
-          } else {
-            row.parentNode.insertBefore(dragSrcEl, row);
-          }
-        }
-        return false;
+      handle.addEventListener('dragend', () => {
+        row.classList.remove('dragging'); // Remove visual indication.
       });
+    }
+
+    row.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
     });
-  }    
+
+    row.addEventListener('drop', (e) => {
+      e.stopPropagation();
+      if (dragSrcEl && dragSrcEl !== row) {
+        // Determine insertion position
+        const bounding = row.getBoundingClientRect();
+        const offset = e.clientY - bounding.top;
+        if (offset > bounding.height / 2) {
+          row.parentNode.insertBefore(dragSrcEl, row.nextSibling);
+        } else {
+          row.parentNode.insertBefore(dragSrcEl, row);
+        }
+      }
+      return false;
+    });
+  });
+}    
 
 // Helper: Re-number a given action row to use a new sequential index.
 function reNumberactionRow(row, newIndex, tabPrefix) {
-    const nameField = row.querySelector('.action-name');
-    if (nameField) {
-      nameField.setAttribute('data-storage-key', `${tabPrefix}_action_name_${newIndex}`);
-    }
-    const labelField = row.querySelector('.action-label');
-    if (labelField) {
-      labelField.setAttribute('data-storage-key', `${tabPrefix}_action_label_${newIndex}`);
-    }
-    const descField = row.querySelector('.action-description');
-    if (descField) {
-      descField.setAttribute('data-storage-key', `${tabPrefix}_action_description_${newIndex}`);
-    }
-  }    
+  const nameField = row.querySelector('.action-name');
+  if (nameField) {
+    nameField.setAttribute('data-storage-key', `${tabPrefix}_action_name_${newIndex}`);
+  }
+  const labelField = row.querySelector('.action-label');
+  if (labelField) {
+    labelField.setAttribute('data-storage-key', `${tabPrefix}_action_label_${newIndex}`);
+  }
+  const descField = row.querySelector('.action-description');
+  if (descField) {
+    descField.setAttribute('data-storage-key', `${tabPrefix}_action_description_${newIndex}`);
+  }
+}    
 
 // Ensures that the grid in the Actions Edit Overlay always has one extra empty row at the end.
 function ensureExtraEmptyactionRow() {
-    const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
-    if (!grid) return;
-  
-    // Retrieve the current tab prefix from the overlay's dataset.
-    const actionsOverlay = document.querySelector('.actions-edit-overlay');
-    if (!actionsOverlay || !actionsOverlay.dataset.activeTab) {
-        console.error("ensureExtraEmptyactionRow: Active tab is not defined in the overlay's dataset.");
-        return;
-    }
-    const tabPrefix = actionsOverlay.dataset.activeTab;
-  
-    const rows = grid.querySelectorAll('.action-row');
-    if (rows.length === 0) {
-        // If there are no rows, create the first empty row with index 1.
-        const newRow = createEmptyactionRow(1, tabPrefix);
-        grid.appendChild(newRow);
-        return;
-    }
-    const lastRow = rows[rows.length - 1];
-    if (!isactionRowCompletelyEmpty(lastRow)) {
-        // Retrieve the index number from the last row's action name field.
-        const key = lastRow.querySelector('.action-name').getAttribute('data-storage-key'); // e.g. "tab4_action_name_3"
-        const parts = key.split('_');
-        let index = parseInt(parts[parts.length - 1], 10);
-        if (isNaN(index)) {
-            index = rows.length;
-        }
-        const newRow = createEmptyactionRow(index + 1, tabPrefix);
-        grid.appendChild(newRow);
-    }
+  const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
+  if (!grid) return;
+
+  // Retrieve the current tab prefix from the overlay's dataset.
+  const actionsOverlay = document.querySelector('.actions-edit-overlay');
+  if (!actionsOverlay || !actionsOverlay.dataset.activeTab) {
+      console.error("ensureExtraEmptyactionRow: Active tab is not defined in the overlay's dataset.");
+      return;
+  }
+  const tabPrefix = actionsOverlay.dataset.activeTab;
+
+  const rows = grid.querySelectorAll('.action-row');
+  if (rows.length === 0) {
+      // If there are no rows, create the first empty row with index 1.
+      const newRow = createEmptyactionRow(1, tabPrefix);
+      grid.appendChild(newRow);
+      return;
+  }
+  const lastRow = rows[rows.length - 1];
+  if (!isactionRowCompletelyEmpty(lastRow)) {
+      // Retrieve the index number from the last row's action name field.
+      const key = lastRow.querySelector('.action-name').getAttribute('data-storage-key'); // e.g. "tab4_action_name_3"
+      const parts = key.split('_');
+      let index = parseInt(parts[parts.length - 1], 10);
+      if (isNaN(index)) {
+          index = rows.length;
+      }
+      const newRow = createEmptyactionRow(index + 1, tabPrefix);
+      grid.appendChild(newRow);
+  }
 }
   
   // Call on initialization to add listeners to any existing rows and ensure an extra empty row.
