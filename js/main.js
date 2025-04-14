@@ -21,7 +21,24 @@ const attachEventListeners = () => {
     document.getElementById("dynamic_tags_section")?.addEventListener("click", handleTagFilter);
 };
 
-// Sequential fade-in function
+/* ===================================================================*/
+/* ========================== MENU BUTTON ============================*/
+/* ===================================================================*/
+
+const menuButton = document.getElementById("Menu_button");
+const menuOverlay = document.getElementById("menu_overlay");
+
+if (menuButton && menuOverlay) {
+  menuButton.addEventListener("click", () => {
+    menuOverlay.classList.toggle("active");
+    menuButton.classList.toggle("menu-button-open");
+  });
+}
+  
+/* ===================================================================*/
+/* ===================== SEQUENTIAL FADE IN ==========================*/
+/* ===================================================================*/
+
 const fadeInElementsSequentially = (container = document) => {
     const allFadeInElements = container.querySelectorAll('.fade-in');
     const visibleElements = Array.from(allFadeInElements).filter(el => el.offsetParent !== null);
@@ -163,7 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }, 100);
         });
     });
-          
+
     // Restore Tab4 attacks grid from localStorage
     ["tab4", "tab8"].forEach(tabId => {
         const savedAttacksGridHTML = localStorage.getItem(tabId + "_attacks_grid");
@@ -431,7 +448,9 @@ const initializeDynamicTags = () => {
     });
 };
 
-// KEYBOARD SHORTCUTS //
+/* ==================================================================*/
+/* ======================= KEYBOARD SHORTCUTS =======================*/
+/* ==================================================================*/
 const keyboardShortcutsHandler = (() => {
     const handleKeyboardShortcuts = () => {
         document.addEventListener("keydown", (event) => {
@@ -505,8 +524,9 @@ const keyboardShortcutsHandler = (() => {
 })();
 
 
-// VIEWSTATES //
-
+/* ==================================================================*/
+/* ========================== VIEWSTATES ============================*/
+/* ==================================================================*/
 const updateBlocksViewState = (newState) => {
     const activeTab = appManager.getActiveTab();
     let blocks = appManager.getBlocks(activeTab);

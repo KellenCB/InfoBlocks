@@ -331,7 +331,6 @@ const overlayCancelConfigs = [
     }
 });
 
-
 // ---------------- Helper functions for dynamic attack rows ----------------
 
 // Helper: Placeholder trext for empty rows.

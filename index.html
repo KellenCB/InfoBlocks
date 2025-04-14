@@ -30,18 +30,6 @@
             <button id="view_expanded_button" class="hero-button state-button">E</button>
             <button id="view_condensed_button" class="hero-button state-button">C</button>
             <button id="view_minimized_button" class="hero-button state-button">M</button>        
-
-            <button id="upload_button" class="hero-button green-border-button">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M12 4v16M8 8l4-4 4 4" stroke-width="2.5" />
-                </svg>
-            </button>
-    
-            <button id="download_button" class="hero-button green-border-button">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M12 4v16M8 16l4 4 4-4" stroke-width="2.5"/>
-                </svg>
-            </button>
     
             <button id="add_block_button" class="hero-button green-button add-block-float">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -56,12 +44,19 @@
                 </svg>
             </button>
     
-            <button id="bin_button" class="hero-button red-button bin-button">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M4 4L20 20" stroke="white" stroke-width="3"/>
-                    <path d="M4 20L20 4" stroke="white" stroke-width="3"/>
+            <button id="Menu_button" class="hero-button Menu-button">
+                <span class="menu-icon-wrapper">
+                <!-- Default Menu (Open) Icon -->
+                <svg id="menu-icon-default" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
-            </button>    
+            
+                <!-- Close (X) Icon -->
+                <svg id="menu-icon-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 6l12 12M6 18L18 6" />
+                </svg>
+                </span>
+            </button>
         </div>
     </div>
 
@@ -475,8 +470,9 @@
                 <div class="character-sheet-column">
                     <!-- Actions -->
                     <div class="attacks-grid">
+                        <!-- Attack rows dynamically generated -->
                     </div>
-                    
+                                          
                     <!-- Feats & Abilities (Results Section) -->
                     <div id="results_section_4" class="results-section">
                         <div id="results_header" class="results-header">
@@ -929,8 +925,51 @@
 
         </div>
     </div>
-    
 
+    <!-- Menu Overlay Container -->
+    <div id="menu_overlay" class="menu-overlay">
+        <div class="menu-content">
+          <div class="overlay-buttons">
+            <button id="upload_button" class="menu-item-button">
+              Upload 
+              <span class="button-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 4v16M8 8l4-4 4 4"/>
+                </svg>
+              </span>
+            </button>
+      
+            <button id="download_button" class="menu-item-button">
+              Download 
+              <span class="button-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 4v16M8 16l4 4 4-4"/>
+                </svg>
+              </span>
+            </button>
+      
+            <button id="bin_button" class="menu-item-button bin-button">
+              Clear All Data 
+              <span class="button-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" stroke-width="3">
+                  <path d="M4 4L20 20"/>
+                  <path d="M4 20L20 4"/>
+                </svg>
+              </span>
+            </button>
+          </div>
+              
+        <div class="menu_footer">
+            <nav>
+            <ul>
+                <li><a href="#About">About</a></li>
+                <li><a href="#Contact">Contact</a></li>
+            </ul>
+            </nav>
+        </div>
+        </div>
+    </div>
+      
     <!-- Overlay for Adding Block -->
     <div class="add-block-overlay">
         <div class="add-block-form">

@@ -247,6 +247,159 @@ html {
   }
 
 
+/* =================================================================*/
+/* ============================ Tooltip ============================*/
+/* =================================================================*/
+
+.text-tooltip {
+    position: absolute;
+    background-color: rgba(31, 31, 31, 0.95);
+    color: #fff;
+    padding: 15px 15px;
+    border-radius: 10px;
+    box-shadow: 10px rgba(0,0,0,.8);
+    font-size: 14px;
+    line-height: 1.5;
+    letter-spacing: 1.2;
+    z-index: 10000;
+    max-width: 300px;
+    word-break: break-word;
+    pointer-events: none;
+}
+    
+/* ==================================================================*/
+/* ========================== Menu Styling ==========================*/
+/* ==================================================================*/
+
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;  
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-in-out;
+    z-index: 9998;
+    display: flex;
+    justify-content: flex-end;
+    align-items: stretch;
+}
+
+.menu-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.menu-content {
+    width: 300px;
+    background-color: #2a2a2a;
+    color: #ddd;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
+    padding: 35px;
+    padding-top: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.overlay-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.menu-item-button {
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 15px;
+    font-size: 16px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background-color 0.3s, border-color 0.3s, transform 0.2s;
+    border: 2px solid transparent;
+    background-color: #444;
+    color: #fff;
+}
+
+.button-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;  
+}
+
+.menu_footer {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid #444;
+}
+
+.menu-icon-wrapper {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-icon-wrapper svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    stroke: currentColor;
+}
+
+#menu-icon-default {
+    opacity: 1;
+    transform: scale(1);
+}
+
+#menu-icon-close {
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+.menu_footer nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+.menu_footer nav ul li {
+    margin-bottom: 10px;
+}
+
+.menu_footer nav ul li a {
+    color: #bbb;
+    text-decoration: none;
+    font-size: 16px;
+    transition: color 0.3s;
+}
+
+.menu_footer nav ul li a:hover {
+    color: #4CAF50;
+  }     
+
+/* ===================================================================*/
+/* ======================== Inventory styling ========================*/
+/* ===================================================================*/
+
+
+.gold-bg { background-color: rgba(255, 215, 0, 0.5);}
+
+.silver-bg { background-color: rgba(192, 192, 192, 0.5);}
+
+.copper-bg { background-color: rgba(226, 135, 67, 0.5);}
+
 /* Inventory Coin Counters */
 
 .permanent-items-container {
@@ -268,20 +421,8 @@ html {
     margin-bottom: 4px;
     width: auto;
     white-space: nowrap;
-    
+   
 }
-
-/* ===================================================================*/
-/* ======================== Inventory styling ========================*/
-/* ===================================================================*/
-
-
-.gold-bg { background-color: rgba(255, 215, 0, 0.5);}
-
-.silver-bg { background-color: rgba(192, 192, 192, 0.5);}
-
-.copper-bg { background-color: rgba(226, 135, 67, 0.5);}
-
 
 /* ==================================================================*/
 /* ======================= Spell slot styling =======================*/
@@ -374,7 +515,7 @@ html {
 }
 
 /* ==================================================================*/
-/* ======================= Uses styling =======================*/
+/* ========================== Uses styling ==========================*/
 /* ==================================================================*/
 
 .uses-field {

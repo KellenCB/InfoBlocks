@@ -40,6 +40,24 @@
     border: 0px;
 }
 
+#Menu_button {
+    position: relative;
+    z-index: 9999;
+    background-color: #444;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-button-open #menu-icon-default {
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+.menu-button-open #menu-icon-close {
+    opacity: 1;
+    transform: scale(1);
+}
+
 .hero-button svg {
     width: 20px;
     height: 20px;
