@@ -65,13 +65,13 @@
     height: 35px;
     margin: 6px;
     color: var(--user-color);
-    background-color: transparent; /* outlined by default */
+    background-color: transparent;
     border: 1px solid var(--user-color);
     border-radius: 30px;
     cursor: pointer;
     font-size: 16px;
     letter-spacing: 0.3px;
-    transition: background-color 0.3s, transform 0.2s, color 0.3s;
+    transition: background-color 0.6s, transform 0.5s;
     white-space: nowrap;
     display: inline-flex;
     align-items: center;
@@ -93,7 +93,6 @@
 .tag-button.tag-magicItemType { border-color: var(--magicItemType-color); color: var(--magicItemType-color);}
 .tag-button.tag-magicItemBonus { border-color: var(--magicItemBonus-color); color: var(--magicItemBonus-color);}
 .tag-button.tag-equippedCheck { border-color: var(--equippedCheck-color); color: var(--equippedCheck-color);}
-
 
 .tag-button.selected { background-color: var(--user-color); color: #333; font-weight: bolder;}
 
