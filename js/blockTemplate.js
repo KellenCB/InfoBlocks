@@ -1,5 +1,6 @@
 import { tagHandler } from './tagHandler.js';
 import { categoryTags } from './tagConfig.js';
+import { toggleBlockUse } from './circleToggle.js';
 
 export const blockTemplate = (block) => {
     // Ensure a default view state
@@ -46,32 +47,51 @@ export const blockTemplate = (block) => {
     // Render content based on view state
     let content = "";
     if (viewState === 'expanded') {
+        const usesHTML = block.uses   ? block.uses.map((state, idx) => `<span class="circle ${state ? 'unfilled' : ''}" onclick="toggleBlockUse('${block.id}', ${idx}, event, this)"></span>`).join("") : "";
         content = `
-            <div class="block-actions">
-                <button class="action-button duplicate_button green-button" data-id="${block.id}" title="Copy">❐</button>
-                <button class="action-button edit_button orange-button" data-id="${block.id}" title="Edit">✎</button>
-                <button class="action-button remove_button red-button" data-id="${block.id}" title="Remove">×</button>
+            <div class="block-header">
+                <div class="block-header-left">
+                    <div class="block-title"><h4>${block.title}</h4></div>
+                    ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
+                </div>
+                <div class="block-actions">
+                    <button class="action-button duplicate-button green-button" data-id="${block.id}" title="Copy">❐</button>
+                    <button class="action-button edit-button orange-button" data-id="${block.id}" title="Edit">✎</button>
+                    <button class="action-button remove-button red-button" data-id="${block.id}" title="Remove">×</button>
+                </div>
             </div>
-            <h4>${block.title}</h4>
             <div class="tag-sections">
                 ${predefinedTagsHTML}
                 ${userTagsHTML}
             </div>
             <p>${processedText}</p>
         `;
-        } else if (viewState === 'condensed') {
+
+    } else if (viewState === 'condensed') {
+        const usesHTML = block.uses   ? block.uses.map((state, idx) => `<span class="circle ${state ? 'unfilled' : ''}" onclick="toggleBlockUse('${block.id}', ${idx}, event, this)"></span>`).join("") : "";      
         // Condensed View:
         content = `
-            <div class="block-actions">
-                <button class="action-button duplicate_button green-button" data-id="${block.id}" title="Copy">❐</button>
-                <button class="action-button edit_button orange-button" data-id="${block.id}" title="Edit">✎</button>
-                <button class="action-button remove_button red-button" data-id="${block.id}" title="Remove">×</button>
+            <div class="block-header">
+                <div class="block-title"><h4>${block.title}</h4></div>
+                ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
+                <div class="block-actions">
+                    <button class="action-button duplicate-button green-button" data-id="${block.id}" title="Copy">❐</button>
+                    <button class="action-button edit-button orange-button" data-id="${block.id}" title="Edit">✎</button>
+                    <button class="action-button remove-button red-button" data-id="${block.id}" title="Remove">×</button>
+                </div>
             </div>
-            <h4>${block.title}</h4>
         `;
     } else if (viewState === 'minimized') {
-        // Minimized View:
-        content = `<h4>${block.title}</h4>`;
+        const usesHTML = block.uses
+            ? block.uses.map((state, idx) => `<span class="circle ${state ? 'unfilled' : ''}" onclick="toggleBlockUse('${block.id}', ${idx}, event, this)"></span>`).join("")
+            : "";
+    
+        content = `
+            <div class="block-header">
+                <div class="block-title"><h4>${block.title}</h4></div>
+                ${usesHTML ? `<div class="block-uses">${usesHTML}</div>` : ""}
+            </div>
+        `;
     }
 
     // Add the viewState as a class to the container for targeted styling

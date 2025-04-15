@@ -25,56 +25,51 @@
             <h1 id="page_title" contenteditable="true"></h1>
         </header>
     
-        <div class="action-button-section">
+        <div class="hero-button-section">
 
-            <button id="view_expanded_button" class="state-button">E</button>
-            <button id="view_condensed_button" class="state-button">C</button>
-            <button id="view_minimized_button" class="state-button">M</button>        
-
-            <button id="upload_button" class="green-border-button">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M12 4v16M8 8l4-4 4 4" stroke-width="2.5" />
-                </svg>
-            </button>
+            <button id="view_expanded_button" class="hero-button state-button">E</button>
+            <button id="view_condensed_button" class="hero-button state-button">C</button>
+            <button id="view_minimized_button" class="hero-button state-button">M</button>        
     
-            <button id="download_button" class="green-border-button">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M12 4v16M8 16l4 4 4-4" stroke-width="2.5"/>
-                </svg>
-            </button>
-    
-            <button id="add_block_button" class="green-button add-block-float">
+            <button id="add_block_button" class="hero-button green-button add-block-float">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M12 4V20" stroke="white" stroke-width="2"/>
                     <path d="M4 12H20" stroke="white" stroke-width="2"/>
                 </svg>
             </button>
     
-            <button id="edit_tab_button" class="orange-button">
+            <button id="edit_tab_button" class="hero-button orange-button">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M4 15.5V19h3.5l9.94-9.94-3.5-3.5L4 15.5zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.5 3.5 1.83-1.83z" />
                 </svg>
             </button>
     
-            <button id="bin_button" class="red-button bin-button">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M4 4L20 20" stroke="white" stroke-width="3"/>
-                    <path d="M4 20L20 4" stroke="white" stroke-width="3"/>
+            <button id="Menu_button" class="hero-button Menu-button">
+                <span class="menu-icon-wrapper">
+                <!-- Default Menu (Open) Icon -->
+                <svg id="menu-icon-default" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
-            </button>    
+            
+                <!-- Close (X) Icon -->
+                <svg id="menu-icon-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 6l12 12M6 18L18 6" />
+                </svg>
+                </span>
+            </button>
         </div>
     </div>
 
     <div class="container fade-in">
         <div class="tab-nav fade-in">
-            <button class="tab-button active" data-tab="tab1" draggable="true">Tab 1</button> <!-- Magic Items -->
-            <button class="tab-button" data-tab="tab2" draggable="true">Tab 2</button> <!-- Spells -->
-            <button class="tab-button" data-tab="tab3" draggable="true">Tab 3</button> <!-- Notes -->
-            <button class="tab-button" data-tab="tab4" draggable="true">Character Sheet</button> <!-- Character Sheet -->
-            <button class="tab-button" data-tab="tab5" draggable="true">Dice Roller</button> <!-- Dice -->
-            <button class="tab-button" data-tab="tab6" draggable="true">Tab 6</button> <!-- Inventory -->
-            <button class="tab-button" data-tab="tab7" draggable="true">Tab 7</button> <!-- Session Notes -->
-            <button class="tab-button" data-tab="tab8" draggable="true">Crank</button> <!-- Feats & Abilites -->
+            <button class="tab-button active" data-tab="tab1" draggable="true">Magic Items</button>
+            <button class="tab-button" data-tab="tab2" draggable="true">Spells</button> 
+            <button class="tab-button" data-tab="tab3" draggable="true">Notes</button>
+            <button class="tab-button" data-tab="tab4" draggable="true">Hazard</button>
+            <button class="tab-button" data-tab="tab5" draggable="true">Dice Roller</button>
+            <button class="tab-button" data-tab="tab6" draggable="true">Inventory</button>
+            <button class="tab-button" data-tab="tab7" draggable="true">Session Notes</button>
+            <button class="tab-button" data-tab="tab8" draggable="true">Crank</button>
         </div>
     </div>
 
@@ -85,8 +80,12 @@
             <div class="circle-section"></div>
            
             <div class="filter-and-results">
-                <div class="filter-section">
-                    <h2 class="section-header">Search & Filter</h2>
+
+                <button id="toggle_filter_1" class="toggle-filter-button">
+                    <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
+                </button>
+                
+                <div id="filter_section_1" class="filter-section">
                     <div class="search-container">
                         <input id="search_input_1" class="search_input" type="text" placeholder="Search by text" />
                         <button id="clear_search_button_1" class="clear-search">✖</button>
@@ -136,8 +135,11 @@
 
             <div class="filter-and-results">
 
-                <div class="filter-section">
-                    <h2 class="section-header">Search & Filter</h2>
+                <button id="toggle_filter_2" class="toggle-filter-button">
+                    <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
+                </button>
+                
+                <div id="filter_section_2" class="filter-section">
                     <div class="search-container">
                         <input id="search_input_2" class="search_input" type="text" placeholder="Search by text" />
                         <button id="clear_search_button_2" class="clear-search">✖</button>
@@ -173,8 +175,12 @@
         <!-- Tab 3: Notes -->
         <div class="tab-content" id="tab3">
             <div class="filter-and-results">
-                <div class="filter-section">
-                    <h2 class="section-header">Search & Filter</h2>
+
+                <button id="toggle_filter_3" class="toggle-filter-button">
+                    <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
+                </button>
+                
+                <div id="filter_section_3" class="filter-section">
                     <div class="search-container">
                         <input id="search_input_3" class="search_input" type="text" placeholder="Search by text" />
                         <button id="clear_search_button_3" class="clear-search">✖</button>
@@ -209,7 +215,7 @@
         
         <!-- Tab 4: Character Sheet -->
         <div class="tab-content no-gap" id="tab4">
-            <div class="character-sheet-column">
+            <div class="character-sheet-stats">
                 <!-- Row 1 -->
                 <div class="descriptor-grid">
                     <div class="descriptor-box">
@@ -291,7 +297,7 @@
                             <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_str_score">15</span>
                         </div>
                         <div class="main-stat-box">
-                            <span class="stat-label">DEX</span>
+                            <span class="stat-label">+0</span>
                             <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_dex_bonus">+2</span>
                             <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_dex_score">14</span>
                         </div>
@@ -327,14 +333,14 @@
                         <div class="death-saves-box">
                             <span class="stat-label">Death Saves</span>
                             <div class="death-saves-row">
-                                <span class="circle toggle-circle" data-storage-key="tab4_deathSave_1"></span>
-                                <span class="circle toggle-circle" data-storage-key="tab4_deathSave_2"></span>
-                                <span class="circle toggle-circle" data-storage-key="tab4_deathSave_3"></span>
+                                <span class="circle toggle-circle deathSaveGreen" data-storage-key="tab4_deathSave_1"></span>
+                                <span class="circle toggle-circle deathSaveGreen" data-storage-key="tab4_deathSave_2"></span>
+                                <span class="circle toggle-circle deathSaveGreen" data-storage-key="tab4_deathSave_3"></span>
                             </div>
                             <div class="death-saves-row">
-                                <span class="circle toggle-circle" data-storage-key="tab4_deathSave_4"></span>
-                                <span class="circle toggle-circle" data-storage-key="tab4_deathSave_5"></span>
-                                <span class="circle toggle-circle" data-storage-key="tab4_deathSave_6"></span>
+                                <span class="circle toggle-circle deathSaveRed" data-storage-key="tab4_deathSave_4"></span>
+                                <span class="circle toggle-circle deathSaveRed" data-storage-key="tab4_deathSave_5"></span>
+                                <span class="circle toggle-circle deathSaveRed" data-storage-key="tab4_deathSave_6"></span>
                             </div>
                         </div>    
                 </div>
@@ -472,22 +478,18 @@
                     </div>
                 </div>
         
-                <div class="character-sheet-column">
-                    <!-- Attacks -->
-                    <div class="attacks_grid">
-                        <h3>Attacks</h3>
-                        <div class="attack-row">
-                            <span class="attack-label">DEX</span>
-                            <span class="attack-name">Melle attack</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_attack1">0</span>
+                <div class="character-sheet-column np-gap">
+                    <!-- Actions -->
+                    <div class="actions-grid-wrapper">
+                        <div class="actions-grid">
+                          <!-- Your grid content goes here -->
                         </div>
-                        <div class="attack-row">
-                            <span class="attack-label">DEX</span>
-                            <span class="attack-name">Shortbow</span>
-                            <span class="editable" contenteditable="true" data-storage-key="tab4_attack2">0</span>
-                        </div>
+                        <div class="actions-overlay-top"></div>
+                        <div class="actions-overlay-bottom"></div>
                     </div>
-                    
+                      
+                    <div class="resizable-handle"></div>
+
                     <!-- Feats & Abilities (Results Section) -->
                     <div id="results_section_4" class="results-section">
                         <div id="results_header" class="results-header">
@@ -573,11 +575,15 @@
         </div>
         </div>
 
-        <!-- Tab 6: Empty Placeholder -->
+        <!-- Tab 6: Inventory -->
         <div class="tab-content" id="tab6">
             <div class="filter-and-results">
-                <div class="filter-section">
-                    <h2 class="section-header">Search & Filter</h2>
+
+                <button id="toggle_filter_6" class="toggle-filter-button">
+                    <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
+                </button>
+                
+                <div id="filter_section_6" class="filter-section">
                     <div class="search-container">
                         <input id="search_input_6" class="search_input" type="text" placeholder="Search by text" />
                         <button id="clear_search_button_6" class="clear-search">✖</button>
@@ -613,8 +619,12 @@
         <!-- Tab 7: Session Notes -->
         <div class="tab-content" id="tab7">
             <div class="filter-and-results">
-                <div class="filter-section">
-                    <h2 class="section-header">Search & Filter</h2>
+
+                <button id="toggle_filter_7" class="toggle-filter-button">
+                    <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
+                </button>
+                
+                <div id="filter_section_7" class="filter-section">
                     <div class="search-container">
                         <input id="search_input_7" class="search_input" type="text" placeholder="Search by text" />
                         <button id="clear_search_button_7" class="clear-search">✖</button>
@@ -649,7 +659,7 @@
 
         <!-- Tab 8: Character Sheet -->
         <div class="tab-content no-gap" id="tab8">
-            <div class="character-sheet-column">
+            <div class="character-sheet-stats">
                 <!-- Row 1 -->
                 <div class="descriptor-grid">
                     <div class="descriptor-box">
@@ -729,7 +739,7 @@
                             <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_str_score">00</span>
                         </div>
                         <div class="main-stat-box">
-                            <span class="stat-label">DEX</span>
+                            <span class="stat-label">+0</span>
                             <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_dex_bonus">00</span>
                             <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_dex_score">00</span>
                         </div>
@@ -760,21 +770,21 @@
                         <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_save">00</span>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label">Spell Attack</span>
+                        <span class="stat-label">Spell attack</span>
                         <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_attack">00</span>
                     </div>
 
                     <div class="death-saves-box">
                         <span class="stat-label">Death Saves</span>
                         <div class="death-saves-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_1"></span>
-                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_2"></span>
-                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_3"></span>
+                            <span class="circle toggle-circle deathSaveGreen" data-storage-key="tab4_deathSave_1"></span>
+                            <span class="circle toggle-circle deathSaveGreen" data-storage-key="tab4_deathSave_2"></span>
+                            <span class="circle toggle-circle deathSaveGreen" data-storage-key="tab4_deathSave_3"></span>
                         </div>
                         <div class="death-saves-row">
-                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_4"></span>
-                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_5"></span>
-                            <span class="circle toggle-circle" data-storage-key="tab8_deathSave_6"></span>
+                            <span class="circle toggle-circle deathSaveRed" data-storage-key="tab4_deathSave_4"></span>
+                            <span class="circle toggle-circle deathSaveRed" data-storage-key="tab4_deathSave_5"></span>
+                            <span class="circle toggle-circle deathSaveRed" data-storage-key="tab4_deathSave_6"></span>
                         </div>
                     </div>
                 </div>
@@ -817,9 +827,7 @@
                         <span class="skill-plus editable" contenteditable="true" data-storage-key="tab8_save_cha">0</span>
                     </div>
                 </div>
-        
                 <div class="horizontal-break"></div>
-        
                 <div class="skills">
                     <h3>Skills</h3>
                     <div class="skill-row">
@@ -914,70 +922,108 @@
                     </div>
                 </div>
             </div>
-        
-            <!-- Attacks -->
+
             <div class="character-sheet-column">
-                <div class="attacks_grid">
-                    <h3>Attacks</h3>
-                    <div class="attack-row">
-                        <span class="attack-label">DEX</span>
-                        <span class="attack-name">Melee Attack</span>
-                        <span class="editable" contenteditable="true" data-storage-key="tab8_attack1">0</span>
+                <!-- Actions -->
+                <div class="actions-grid-wrapper">
+                    <div class="actions-grid">
+                        <!-- Your grid content goes here -->
                     </div>
-                    <div class="attack-row">
-                        <span class="attack-label">DEX</span>
-                        <span class="attack-name">Shortbow</span>
-                        <span class="editable" contenteditable="true" data-storage-key="tab8_attack2">0</span>
-                    </div>
+                    <div class="actions-overlay-top"></div>
+                    <div class="actions-overlay-bottom"></div>
                 </div>
-                
-            <!-- Feats & Abilities (Results Section) -->
-            <div id="results_section_8" class="results-section">
-                <div id="results_header_8" class="results-header">
-                    <h2 id="results_title_8" class="section-header" contenteditable="true">Feats & Abilities</h2>
-                    <div id="sort_controls_8" class="sort-controls">
-                        <span>Sort by:</span>
-                        <button id="sort_newest_8" class="sort-button">
-                            <i class="fas fa-sort-numeric-down"></i> Newest
-                        </button>
-                        <button id="sort_oldest_8" class="sort-button">
-                            <i class="fas fa-sort-numeric-up"></i> Oldest
-                        </button>
-                        <button id="sort_alpha_8" class="sort-button">
-                            <i class="fas fa-sort-alpha-down"></i> A-Z
-                        </button>
+            
+                <div class="resizable-handle"></div>
+
+                <!-- Feats & Abilities (Results Section) -->
+                <div id="results_section_8" class="results-section">
+                    <div id="results_header_8" class="results-header">
+                        <h2 id="results_title_8" class="section-header" contenteditable="true">Feats & Abilities</h2>
+                        <div id="sort_controls_8" class="sort-controls">
+                            <span>Sort by:</span>
+                            <button id="sort_newest_8" class="sort-button">
+                                <i class="fas fa-sort-numeric-down"></i> Newest
+                            </button>
+                            <button id="sort_oldest_8" class="sort-button">
+                                <i class="fas fa-sort-numeric-up"></i> Oldest
+                            </button>
+                            <button id="sort_alpha_8" class="sort-button">
+                                <i class="fas fa-sort-alpha-down"></i> A-Z
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
+    <!-- Menu Overlay Container -->
+    <div id="menu_overlay" class="menu-overlay">
+        <div class="menu-content">
+          <div class="overlay-buttons">
+            <button id="upload_button" class="menu-item-button">
+              Upload 
+              <span class="button-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 4v16M8 8l4-4 4 4"/>
+                </svg>
+              </span>
+            </button>
+      
+            <button id="download_button" class="menu-item-button">
+              Download 
+              <span class="button-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 4v16M8 16l4 4 4-4"/>
+                </svg>
+              </span>
+            </button>
+      
+            <button id="bin_button" class="menu-item-button bin-button">
+              Clear All Data 
+              <span class="button-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" stroke-width="3">
+                  <path d="M4 4L20 20"/>
+                  <path d="M4 20L20 4"/>
+                </svg>
+              </span>
+            </button>
+          </div>
+              
+        <div class="menu_footer">
+            <nav>
+            <ul>
+                <li><a href="#About">About</a></li>
+                <li><a href="#Contact">Contact</a></li>
+            </ul>
+            </nav>
+        </div>
         </div>
     </div>
-    
-
-  
-
+      
     <!-- Overlay for Adding Block -->
     <div class="add-block-overlay">
         <div class="add-block-form">
             <h2>Add Information Block</h2>
             <input type="text" id="title_input_overlay" placeholder="Enter block title here..." />
+            <div id="uses_field_overlay" class="uses-field"></div>        
             <textarea id="block_text_overlay" class="auto-resize" placeholder="Enter block text here..." rows="1"></textarea>
             <input type="text" id="tags_input_overlay" placeholder="Enter custom tags here..."  />
-           
             <div class="overlay-tags" id="dynamic_overlay_tags"></div>
-
-            <button id="save_block_button" class="button green-button">Save Block</button>
-            <button id="clear_block_button" class="button orange-button">Clear</button>
-            <button id="cancel_add_block" class="button red-button red-button">Cancel</button>
+            <div class="overlay-controls">
+                <button id="save-block-button" class="button green-button">Save Block</button>
+                <button id="clear_block_button" class="button orange-button">Clear</button>
+                <button id="cancel_add_block" class="button red-button red-button">Cancel</button>
+            </div>
         </div>
     </div>
-                                                     
+                                                 
     <!-- Overlay for Editing Block -->
     <div class="edit-block-overlay">
         <div class="edit-block-form">
             <h2>Edit Information Block</h2>
             <input type="text" id="title_input_edit_overlay" placeholder="Edit title block" />
+            <div id="uses_field_edit_overlay" class="uses-field"></div>        
             <textarea id="block_text_edit_overlay" class="auto-resize" placeholder="Edit block text here..." rows="1"></textarea>
             <input type="text" id="tags_input_edit_overlay" placeholder="Edit tags (comma separated)" />
 
@@ -987,9 +1033,11 @@
             </div>
             
             <!-- Save Edit Button -->
-            <button id="save_edit_button" class="button green-button">Save Changes</button>
-            <button id="clear_edit_button" class="button orange-button">Clear</button>
-            <button id="cancel_edit_block" class="button red-button">Cancel</button>
+            <div class="overlay-controls">
+                <button id="save-edit-button" class="button green-button">Save Changes</button>
+                <button id="clear_edit-button" class="button orange-button">Clear</button>
+                <button id="cancel_edit_block" class="button red-button">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -998,11 +1046,25 @@
         <div class="cleardata-form">
             <h2>Clear All Data</h2>
             <p>Are you sure you want to clear all data?<br> <br> This action cannot be undone.<br> </p>
-            <button id="confirm_clear_button" class="button green-button">Yes</button>
-            <button id="cancel_clear_button" class="button red-button">No</button>
+            <div class="overlay-controls">
+                <button id="confirm_clear_button" class="button green-button">Yes</button>
+                <button id="cancel_clear_button" class="button red-button">No</button>
+            </div>
         </div>
     </div>
 
+    <!-- Overlay for Action Editing -->
+    <div class="actions-edit-overlay overlay">
+        <div class="actions-edit-overlay-content">
+            <h2>Actions Edit Overlay</h2>
+            <p>Edit your actions here...</p>
+            <div class="overlay-controls">
+                <button id="save_action_changes" class="button green-button">Save Changes</button>
+                <button id="close_action_edit" class="button red-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+      
     <!-- Overlay for Spell Slot Editing -->
     <div class="spell-slot-edit-overlay">
         <div class="spell-slot-edit-container">
@@ -1019,7 +1081,7 @@
             <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">8th Lvl</span></div>
             <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>
         </div>
-        <div class="spell-slot-buttons">
+        <div class="overlay-controls">
             <button id="save_spell_slot_changes" class="button green-button">Save Changes</button>
             <button id="close_spell_slot_edit" class="button red-button">Cancel</button>
         </div>
@@ -1033,11 +1095,13 @@
     <script type="module" src="js/blockActionsHandler.js"></script>
     <script type="module" src="js/overlayHandler.js"></script>
     <script type="module" src="js/tagHandler.js"></script>
-    <script src="js/circleToggle.js"></script>
-    <script src="js/upload_download.js"></script>
-    <script src="js/page-title.js"></script>
+    <script type="module" src="js/circleToggle.js"></script>
     <script type="module" src="js/editButtonHandler.js"></script>
     <script type="module" src="js/diceRoller.js"></script>
+    <script type="module" src="js/resizeHandle.js"></script>
+
+    <script src="js/upload_download.js"></script>
+    <script src="js/page-title.js"></script>
 
 </body>
 </html>

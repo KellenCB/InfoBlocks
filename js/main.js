@@ -4,6 +4,8 @@ import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
 import { actionButtonHandlers } from './actionButtonHandlers.js';
 import { tagHandler } from './tagHandler.js';
 import { categoryTags } from './tagConfig.js';
+import './resizeHandle.js';
+
 
 // 📌 Attach event listeners efficiently
 const attachEventListeners = () => {
@@ -21,7 +23,24 @@ const attachEventListeners = () => {
     document.getElementById("dynamic_tags_section")?.addEventListener("click", handleTagFilter);
 };
 
-// Sequential fade-in function
+/* ===================================================================*/
+/* ========================== MENU BUTTON ============================*/
+/* ===================================================================*/
+
+const menuButton = document.getElementById("Menu_button");
+const menuOverlay = document.getElementById("menu_overlay");
+
+if (menuButton && menuOverlay) {
+  menuButton.addEventListener("click", () => {
+    menuOverlay.classList.toggle("active");
+    menuButton.classList.toggle("menu-button-open");
+  });
+}
+  
+/* ===================================================================*/
+/* ===================== SEQUENTIAL FADE IN ==========================*/
+/* ===================================================================*/
+
 const fadeInElementsSequentially = (container = document) => {
     const allFadeInElements = container.querySelectorAll('.fade-in');
     const visibleElements = Array.from(allFadeInElements).filter(el => el.offsetParent !== null);
@@ -163,7 +182,24 @@ document.addEventListener("DOMContentLoaded", () => {
             }, 100);
         });
     });
-                
+
+    // Restore Tab4 actions grid from localStorage
+    ["tab4", "tab8"].forEach(tabId => {
+        const savedactionsGridHTML = localStorage.getItem(tabId + "_actions_grid");
+        if (savedactionsGridHTML) {
+          const actionsGrid = document.querySelector("#" + tabId + " .actions-grid");
+          if (actionsGrid) {
+            actionsGrid.innerHTML = savedactionsGridHTML;
+            console.log("✅ actions grid restored from localStorage for " + tabId);
+            // Lock the fields so they aren't editable on the main screen.
+            actionsGrid.querySelectorAll('.action-name, .action-label, .action-description')
+              .forEach(field => field.contentEditable = "false");
+          } else {
+            console.warn("actions grid element not found in " + tabId);
+          }
+        }
+    });    
+
     // Handle tab reordering
     document.querySelector(".tab-nav").addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -234,7 +270,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     tag.classList.remove("selected")
                 );
                 searchInput.value = "";
-                tagHandler.clearSelectedTags();
+                tagHandler.clearSelectedTags(`tab${tabNumber}`);
                 const activeTab = `tab${tabNumber}`;
                 appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
             });
@@ -288,23 +324,34 @@ const handleTagFilter = (event) => {
     const target = event.target;
     if (!target.classList.contains("tag-button")) return;
 
-    const tag = target.dataset.tag;
-    console.log("Filtering by tag:", tag);
+    // Toggle the selected class for this tag button
     target.classList.toggle("selected");
 
-    const selectedTags = [...document.querySelectorAll(".tag-button.selected")].map(t => t.dataset.tag);
+    // Determine the active tab and its corresponding dynamic tags container
+    const activeTab = appManager.getActiveTab(); // e.g., "tab3"
+    const tabNumber = activeTab.replace("tab", "");
+    const container = document.getElementById(`dynamic_tags_section_${tabNumber}`);
+    
+    // Query only within that container
+    const selectedTags = container 
+        ? [...container.querySelectorAll(".tag-button.selected")].map(t => t.dataset.tag)
+        : [];
+
     console.log("Selected Tags:", selectedTags);
 
+    // Get blocks for the active tab and filter them
     const filteredBlocks = selectedTags.length
-        ? appManager.getBlocks().filter(block => selectedTags.every(t => block.tags.includes(t)))
-        : appManager.getBlocks();
+        ? appManager.getBlocks(activeTab).filter(block =>
+              selectedTags.every(t => block.tags.includes(t))
+          )
+        : appManager.getBlocks(activeTab);
 
-    appManager.renderBlocks();
+    appManager.renderBlocks(activeTab, filteredBlocks);
 };
 
 // 📌 Handle search functionality
 const handleSearch = () => {
-    const searchInput = document.getElementById("search_input");
+    const searchInput = document.getElementById("search_input_${tabSuffix}");
     if (!searchInput) {
         console.error("❌ Search input box not found!");
         return;
@@ -355,15 +402,17 @@ const handleSearch = () => {
 const clearFilters = (event) => {
     console.log("Clear Filters button clicked");
     const tabNumber = event.currentTarget.id.split("_").pop();
-    document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`).forEach(tag => tag.classList.remove("selected"));
+    document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`).forEach(tag =>
+        tag.classList.remove("selected")
+    );
     const searchInput = document.getElementById(`search_input_${tabNumber}`);
     if (searchInput) {
         searchInput.value = "";
     }
-    tagHandler.clearSelectedTags();
+    tagHandler.clearSelectedTags(`tab${tabNumber}`);
     const activeTab = `tab${tabNumber}`;
     appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
-    const updatedTags = tagHandler.getSelectedTags(); 
+    const updatedTags = tagHandler.getSelectedTags(`tab${tabNumber}`); 
     console.log("🔵 Currently selected tags:", updatedTags);
 };
 
@@ -401,7 +450,9 @@ const initializeDynamicTags = () => {
     });
 };
 
-// KEYBOARD SHORTCUTS //
+/* ==================================================================*/
+/* ======================= KEYBOARD SHORTCUTS =======================*/
+/* ==================================================================*/
 const keyboardShortcutsHandler = (() => {
     const handleKeyboardShortcuts = () => {
         document.addEventListener("keydown", (event) => {
@@ -413,15 +464,18 @@ const keyboardShortcutsHandler = (() => {
             const clearDataOverlay = document.querySelector(".cleardata-overlay");
             const editBlockOverlay = document.querySelector(".edit-block-overlay");
             const spellSlotEditOverlay = document.querySelector(".spell-slot-edit-overlay");
+            const actionsEditOverlay = document.querySelector(".actions-edit-overlay");
 
-            const saveBlockButton = document.getElementById("save_block_button");
+            const saveBlockButton = document.getElementById("save-block-button");
             const cancelAddBlockButton = document.getElementById("cancel_add_block");
             const confirmClearButton = document.getElementById("confirm_clear_button");
             const cancelClearButton = document.getElementById("cancel_clear_button");
-            const saveEditButton = document.getElementById("save_edit_button");
+            const saveEditButton = document.getElementById("save-edit-button");
             const cancelEditButton = document.getElementById("cancel_edit_block");
             const saveSpellSlotButton = document.getElementById("save_spell_slot_changes");
             const cancelSpellSlotButton = document.getElementById("close_spell_slot_edit");
+            const saveActionButton = document.getElementById("save_action_changes");
+            const cancelActionButton = document.getElementById("close_action_edit");
 
             if (addBlockOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && saveBlockButton) {
@@ -454,6 +508,15 @@ const keyboardShortcutsHandler = (() => {
                     cancelSpellSlotButton.click();
                 }
             }
+
+            if (actionsEditOverlay?.classList.contains("show")) {
+                if (event.key === "Enter" && saveActionButton) {
+                    saveActionButton.click();
+                } else if (event.key === "Escape" && cancelActionButton) {
+                    cancelActionButton.click();
+                }
+            }
+              
         });
 
         console.log("Keyboard shortcuts attached.");
@@ -463,21 +526,47 @@ const keyboardShortcutsHandler = (() => {
 })();
 
 
-// VIEWSTATES //
-
+/* ==================================================================*/
+/* ========================== VIEWSTATES ============================*/
+/* ==================================================================*/
 const updateBlocksViewState = (newState) => {
     const activeTab = appManager.getActiveTab();
     let blocks = appManager.getBlocks(activeTab);
+    
+    // Update the viewState for each block
     blocks.forEach(block => {
       block.viewState = newState;
     });
     localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
-    appManager.renderBlocks(activeTab);
-    // Only update active view state if it’s not "expanded"
+    
+    // Retrieve current search input value for this tab
+    const tabNumber = activeTab.replace("tab", "");
+    const searchInput = document.getElementById(`search_input_${tabNumber}`);
+    let filteredBlocks = blocks;
+    if (searchInput && searchInput.value.trim() !== "") {
+        const query = searchInput.value.trim().toLowerCase();
+        filteredBlocks = filteredBlocks.filter(block =>
+            block.title.toLowerCase().includes(query) ||
+            block.text.toLowerCase().includes(query)
+        );
+    }
+    
+    // Retrieve the selected tags for the active tab
+    const selectedTags = tagHandler.getSelectedTags(activeTab);
+    if (selectedTags.length > 0) {
+        filteredBlocks = filteredBlocks.filter(block =>
+            selectedTags.every(tag => block.tags.includes(tag))
+        );
+    }
+    
+    // Render blocks using the filtered list
+    appManager.renderBlocks(activeTab, filteredBlocks);
+    
+    // Only update active view state in localStorage if it's not "expanded"
     if(newState !== "expanded"){
       localStorage.setItem(`activeViewState_${activeTab}`, newState);
     }
-  };
+};
   
 const updateViewToggleButtons = () => {
     // Remove the active class from all buttons
@@ -538,12 +627,12 @@ window.onload = async () => {
     attachEventListeners();
     blockActionsHandler.attachBlockActions();
 
-    const saveEditButton = document.getElementById("save_edit_button");
+    const saveEditButton = document.getElementById("save-edit-button");
     if (saveEditButton) {
         saveEditButton.addEventListener("click", saveEditHandler);
     }
 
-    const saveBlockButton = document.getElementById("save_block_button");
+    const saveBlockButton = document.getElementById("save-block-button");
     if (saveBlockButton) {
         saveBlockButton.addEventListener("click", handleSaveBlock);
     }

@@ -16,13 +16,9 @@
     font-size: 16px;
     background-color: #444; 
     color: #fff;
-    border: 1px solid #555; 
+    border: 0px; 
     border-radius: 8px;
     transition: border-color 0.3s;
-}
-
-#search_input:focus { 
-    border-color: #fff; 
 }
 
 .clear-search {
@@ -103,6 +99,7 @@
 .add-block-overlay.show, .cleardata-overlay.show, .edit-block-overlay.show {
     display: flex;
     opacity: 1;
+    z-index: 10001;
 }
 
 .add-block-form, .cleardata-form, .edit-block-form {

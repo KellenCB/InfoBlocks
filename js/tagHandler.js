@@ -24,8 +24,8 @@ export const tagHandler = (() => {
         });
     };
     
-    const clearSelectedTags = () => {
-        setSelectedTags([]);
+    const clearSelectedTags = (activeTab) => {
+        selectedTagsByTab[activeTab] = [];
         Object.keys(categoryTags).forEach(category => {
             const list = document.getElementById(`${category}_tags_list`);
             if (list) {

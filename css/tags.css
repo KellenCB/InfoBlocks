@@ -18,7 +18,7 @@
     flex-wrap: wrap;
     flex-direction: column;
     justify-content: flex-start; 
-    align-items: center;
+    align-items: flex-start;
     text-align: left;
     max-width: 100%;
     padding: 15px 0px 15px 0px;
@@ -42,39 +42,71 @@
     flex-wrap: wrap;
 }
 
+:root {
+    --user-color: #e4e0e0;
+    --part-color: #CDF564;
+    --action-color: #07f371;
+    --ability-color: #bf5eff;
+    --damage-color: #F037A5;
+    --condition-color: #ffa927;
+    --spell-color: #2b7bf1;
+    --spellLevel-color: #49c1e6;
+    --infusion-color: #49c1e6;
+    --modifier-color: #FF4632;
+    --charges-color: #43ffef; 
+    --itemType-color: #ff7f00;
+    --magicItemType-color: #07f371;
+    --magicItemBonus-color: #F037A5;
+    --equippedCheck-color: #FF4632;
+}
+
 .tag-button {
-    color: #ffffff;
-    background-color: #b963d3;
     padding: 14px;
     height: 35px;
     margin: 6px;
-    border: none;
+    color: var(--user-color);
+    background-color: transparent;
+    border: 1px solid var(--user-color);
     border-radius: 30px;
     cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s, transform 0.2s;
+    font-size: 16px;
+    letter-spacing: 0.3px;
+    transition: background-color 0.6s, transform 0.5s;
     white-space: nowrap;
     display: inline-flex;
-    align-items: center; 
+    align-items: center;
 }
 
-.tag-partType { background-color: #41af26; }
-.tag-actionType { background-color: #eb861b; }
-.tag-abilityType { background-color: #f137e2; }
-.tag-damageType { background-color: #9527fc; }
-.tag-conditionType { background-color: #34b469; }
-.tag-spellType { background-color: #4A90E2; }
-.tag-spellLevel { background-color: #49c1e6; }
-.tag-modifierType { background-color: #ee6270; }
-.tag-Charges { background-color: #444; border: 1px solid #49c1e6; color: #49c1e6;}
+.tag-button:hover { transform: scale(1.05); }
 
+.tag-partType { border-color: var(--part-color); color: var(--part-color);}
+.tag-actionType { border-color: var(--action-color); color: var(--action-color);}
+.tag-abilityType { border-color: var(--ability-color); color: var(--ability-color);}
+.tag-damageType { border-color: var(--damage-color); color: var(--damage-color);}
+.tag-conditionType { border-color: var(--condition-color); color: var(--condition-color);}
+.tag-spellType { border-color: var(--spell-color); color: var(--spell-color);}
+.tag-spellLevel { border-color: var(--spellLevel-color); color: var(--spellLevel-color);}
+.tag-infusion { border-color: var(--infusion-color); color: var(--infusion-color);}
+.tag-modifierType { border-color: var(--modifier-color); color: var(--modifier-color);}
+.tag-Charges { border-color: var(--charges-color); color: var(--charges-color);}
+.tag-button.tag-itemType { border-color: var(--itemType-color); color: var(--itemType-color);}
+.tag-button.tag-magicItemType { border-color: var(--magicItemType-color); color: var(--magicItemType-color);}
+.tag-button.tag-magicItemBonus { border-color: var(--magicItemBonus-color); color: var(--magicItemBonus-color);}
+.tag-button.tag-equippedCheck { border-color: var(--equippedCheck-color); color: var(--equippedCheck-color);}
 
-.tag-button.selected {
-    transition: opacity 0.3s, transform 0.2s;
-    opacity: 50%;
-}
+.tag-button.selected { background-color: var(--user-color); color: #333; font-weight: bolder;}
 
-.tag-button:hover {
-    transform: scale(1.05);
-}
-
+.tag-button.selected.tag-partType { background-color: var(--part-color);}
+.tag-button.selected.tag-actionType { background-color: var(--action-color);}
+.tag-button.selected.tag-abilityType { background-color: var(--ability-color);}
+.tag-button.selected.tag-damageType { background-color: var(--damage-color);}
+.tag-button.selected.tag-conditionType { background-color: var(--condition-color);}
+.tag-button.selected.tag-spellType { background-color: var(--spell-color);}
+.tag-button.selected.tag-spellLevel { background-color: var(--spellLevel-color);}
+.tag-button.selected.tag-infusion { background-color: var(--infusion-color);}
+.tag-button.selected.tag-modifierType { background-color: var(--modifier-color);}
+.tag-button.selected.tag-Charges { background-color: var(--charges-color);}
+.tag-button.selected.tag-itemType { background-color: var(--itemType-color);}
+.tag-button.selected.tag-magicItemType { background-color: var(--magicItemType-color)}
+.tag-button.selected.tag-magicItemBonus { background-color: var(--magicItemBonus-color)}
+.tag-button.selected.tag-equippedCheck { background-color: var(--equippedCheck-color)}
