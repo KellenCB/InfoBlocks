@@ -129,10 +129,11 @@ export function initDiceRoller() {
   
       // ─── Trim history as before ─────────────────────────────
       pruneHistory();
-    });
     entry.addEventListener("animationend", () => {
       entry.classList.remove("new-entry");
-    });    
+    }); 
+  });
+   
   }  
   
   // Attach event listener for the Clear All button
