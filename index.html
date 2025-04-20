@@ -73,7 +73,7 @@
             <button class="tab-button" data-tab="tab6" draggable="true">Inventory</button>
             <button class="tab-button" data-tab="tab3" draggable="true">Notes</button>
             <button class="tab-button" data-tab="tab7" draggable="true">Session Notes</button>
-            <button class="tab-button" data-tab="tab5" draggable="true">Dice Roller</button>
+            <button class="tab-button" data-tab="tab5" draggable="true">Quest Log</button>
         </div>
     </div>
 
@@ -456,67 +456,30 @@
             </div>
         </div>
                             
-        <!-- Tab 5: Dice Roller -->
+        <!-- Tab 5: Quest Log -->
         <div class="tab-content" id="tab5">
-            <div class="dice-roller-container">
-            <!-- Left Panel: Dice Selection & Selected Dice -->
-            <div class="dice-left-panel">
-                <h2>Dice Roller</h2>
-                <div class="dice-selection">
-                <button class="dice-button" data-dice="4">
-                    <div class="dice-wrapper">
-                    <img src="images/d_4.svg" alt="D4" />
-                    <span class="dice-label">D4</span>
-                    </div>
+            <div class="filter-and-results">
+
+                <button id="toggle_filter_5" class="toggle-filter-button">
+                    <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
                 </button>
-                <button class="dice-button" data-dice="6">
-                    <div class="dice-wrapper">
-                    <img src="images/d_6.svg" alt="D6" />
-                    <span class="dice-label">D6</span>
-                    </div>
-                </button>
-                <button class="dice-button" data-dice="8">
-                    <div class="dice-wrapper">
-                    <img src="images/d_8.svg" alt="D8" />
-                    <span class="dice-label">D8</span>
-                    </div>
-                </button>
-                <button class="dice-button" data-dice="10">
-                    <div class="dice-wrapper">
-                    <img src="images/d_10.svg" alt="D10" />
-                    <span class="dice-label">D10</span>
-                    </div>
-                </button>
-                <button class="dice-button" data-dice="12">
-                    <div class="dice-wrapper">
-                    <img src="images/d_12.svg" alt="D12" />
-                    <span class="dice-label">D12</span>
-                    </div>
-                </button>
-                <button class="dice-button" data-dice="20">
-                    <div class="dice-wrapper">
-                    <img src="images/d_20.svg" alt="D20" />
-                    <span class="dice-label">D20</span>
-                    </div>
-                </button>
-                </div>
                 
-                <!-- Selected Dice Container & Buttons -->
-                <div class="selected-dice-wrapper">
-                <button id="roll-button">Roll!</button>
-                <button id="clear-selected-button">Clear All</button>
-                <div class="selected-dice-container"></div>
+                <div id="filter_section_5" class="filter-section">
+                    <div class="search-container">
+                        <input id="search_input_5" class="search_input" type="text" placeholder="Search by text" />
+                        <button id="clear_search_button_5" class="clear-search">✖</button>
+                    </div>
+
+                    <div id="all_tags_container" class="tag-section">
+                        <div id="dynamic_tags_section_5"></div>
+                    </div>
+                    
+                    <button id="clear_filters_button_5" class="clear_filters_button">Clear Filters</button>
+                </div>
+
+                <div id="results_section_5" class="results-section">
                 </div>
             </div>
-            
-            <!-- Right Panel: Roll Results -->
-            <div class="dice-right-panel">
-                <div class="roll-result">
-                <h3>Roll Results</h3>
-                <!-- Roll results go here -->
-                </div>
-            </div>
-        </div>
         </div>
 
         <!-- Tab 6: Inventory -->
@@ -856,7 +819,7 @@
                 </div>
             </div>
         </div>
-    </div>
+        </div>
 
     <!-- Menu Overlay Container -->
     <div id="menu_overlay" class="menu-overlay">
@@ -901,7 +864,69 @@
         </div>
         </div>
     </div>
-      
+
+    <!-- Dice Roller Overlay -->
+    <div id="dice-overlay" class="overlay">
+        <div class="overlay-backdrop"></div>
+        <div class="dice-roller-overlay-content">
+            <div class="dice-roller-container">
+                <div class="dice-selection">
+                    <button class="dice-button" data-dice="4">
+                    <div class="dice-wrapper">
+                    <img src="images/d_4.svg" alt="D4" />
+                    <span class="dice-label">D4</span>
+                    </div>
+                </button>
+                <button class="dice-button" data-dice="6">
+                    <div class="dice-wrapper">
+                    <img src="images/d_6.svg" alt="D6" />
+                    <span class="dice-label">D6</span>
+                    </div>
+                </button>
+                <button class="dice-button" data-dice="8">
+                    <div class="dice-wrapper">
+                    <img src="images/d_8.svg" alt="D8" />
+                    <span class="dice-label">D8</span>
+                    </div>
+                </button>
+                <button class="dice-button" data-dice="10">
+                    <div class="dice-wrapper">
+                    <img src="images/d_10.svg" alt="D10" />
+                    <span class="dice-label">D10</span>
+                    </div>
+                </button>
+                <button class="dice-button" data-dice="12">
+                    <div class="dice-wrapper">
+                    <img src="images/d_12.svg" alt="D12" />
+                    <span class="dice-label">D12</span>
+                    </div>
+                </button>
+                <button class="dice-button" data-dice="20">
+                    <div class="dice-wrapper">
+                    <img src="images/d_20.svg" alt="D20" />
+                    <span class="dice-label">D20</span>
+                    </div>
+                </button>
+                </div>
+                
+                <!-- Selected Dice Container & Buttons -->
+                <div class="selected-dice-wrapper">
+                <button id="roll-button">Roll!</button>
+                <button id="clear-selected-button">Clear All</button>
+                <div class="selected-dice-container"></div>
+                </div>
+            </div>
+        
+            <!-- Right Panel: Roll Results -->
+            <div class="dice-right-panel">
+                <div class="roll-results">
+                    <h3>Roll Results</h3>
+                <!-- Roll results go here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Overlay for Adding Block -->
     <div class="add-block-overlay">
         <div class="add-block-form">

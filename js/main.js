@@ -37,7 +37,36 @@ if (menuButton && menuOverlay) {
     menuButton.classList.toggle("menu-button-open");
   });
 }
-  
+
+/* ===================================================================*/
+/* ========================== DICE ROLELR OVERLAY ============================*/
+/* ===================================================================*/
+
+// AFTER: dice overlay open/close
+const diceMenuButton = document.getElementById("dice-menu-button");
+const diceOverlay    = document.getElementById("dice-overlay");
+const closeDiceBtn   = document.getElementById("close-dice-overlay");
+
+if (diceMenuButton && diceOverlay) {
+  diceMenuButton.addEventListener("click", () => {
+    diceOverlay.classList.toggle("show");
+    if (diceOverlay.classList.contains("show")) {
+      import('./diceRoller.js').then(mod => mod.initDiceRoller());
+    }
+  });
+}
+
+if (closeDiceBtn && diceOverlay) {
+  closeDiceBtn.addEventListener("click", () => {
+    diceOverlay.classList.remove("show");
+  });
+}
+
+// Close when clicking the backdrop
+diceOverlay
+  ?.querySelector('.overlay-backdrop')
+  .addEventListener('click', () => diceOverlay.classList.remove('show'));
+
 /* ===================================================================*/
 /* ===================== SEQUENTIAL FADE IN ==========================*/
 /* ===================================================================*/
