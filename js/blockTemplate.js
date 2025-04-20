@@ -64,7 +64,9 @@ export const blockTemplate = (block) => {
                 ${predefinedTagsHTML}
                 ${userTagsHTML}
             </div>
-            <p>${processedText}</p>
+            <div class="block-body">
+                <p>${processedText}</p>
+            </div>
         `;
 
     } else if (viewState === 'condensed') {

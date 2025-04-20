@@ -7,6 +7,7 @@ import { categoryTags } from './tagConfig.js';
 import './resizeHandle.js';
 
 
+
 // 📌 Attach event listeners efficiently
 const attachEventListeners = () => {
     console.log("Attaching event listeners");
@@ -677,23 +678,22 @@ window.onload = async () => {
                 
     function initializeToggleCircles(tabId) {
         const container = document.getElementById(tabId);
-        if (!container) {
-            return;
-        }
+        if (!container) return;
+        
         container.querySelectorAll('.toggle-circle').forEach((circle, index) => {
             const key = circle.getAttribute('data-storage-key') || `${tabId}_toggle_${index}`;
-            let savedState = localStorage.getItem(key);
-            if (savedState === null) {
-                circle.classList.add('unfilled');
-                localStorage.setItem(key, 'true');
-            } else if (savedState === 'true') {
-                circle.classList.add('unfilled');
-            } else {
-                circle.classList.remove('unfilled');
+            // If no value in storage, assume NOT filled → store false
+            if (localStorage.getItem(key) === null) {
+            localStorage.setItem(key, 'false');
             }
+        
+            // Now read it as a boolean and add exactly one class
+            const isFilled = localStorage.getItem(key) === 'true';
+            circle.classList.add(isFilled ? 'filled' : 'unfilled');
+            circle.classList.remove(isFilled ? 'unfilled' : 'filled');
         });
     }
-                    
+                          
     ["tab1", "tab2", "tab3", "tab4", "tab5", "tab6", "tab7", "tab8"].forEach(tabId => {
         initializeEditableFields(tabId);
         initializeToggleCircles(tabId);

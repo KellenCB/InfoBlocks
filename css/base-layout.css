@@ -112,6 +112,7 @@ html {
     display: flex;
     flex-direction: row;
     width: 100%;
+    height: 100%;
     gap: 20px;
     overflow: hidden;
 }
@@ -276,6 +277,14 @@ html {
 
 .block:last-child {
     margin-bottom: 0;
+}
+
+.block-body {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0px 0px 0px 0px;
+    pointer-events: none;
 }
 
 .fade-in {

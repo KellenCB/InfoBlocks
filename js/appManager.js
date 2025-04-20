@@ -100,6 +100,10 @@ export const appManager = (() => {
             <button id="sort_alpha_${tabSuffix}" class="sort-button ${selectedAlpha}">
               <i class="fas fa-sort-alpha-down"></i> A-Z
             </button>
+            <button id="results-settings_${tabSuffix}" class="results-settings">
+              ...
+            </button>
+
           </div>
         </div>
       `;

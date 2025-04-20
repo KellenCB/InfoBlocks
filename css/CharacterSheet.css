@@ -451,6 +451,10 @@
   background-color: #fff;
 }
 
+.toggle-circle.unfilled {
+  background-color: transparent;
+}
+
 .no-gap {
   gap: 0px;
 }

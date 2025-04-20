@@ -10,6 +10,11 @@
     color: white;
 }
 
+.clear-button {
+    background-color: transparent;
+    color: white;
+}
+
 .green-border-button {
     background-color: transparent;
     border: 2px solid #4CAF50 !important;
@@ -39,6 +44,12 @@
     transition: all 0.3s ease-in-out;
     border: 0px;
 }
+
+.dice-menu-button {
+    width: 41px;
+    height: 41px;
+}
+
 
 #Menu_button {
     position: relative;
@@ -112,14 +123,26 @@
 }
 
 .clear_filters_button {
+    padding: 14px;
+    height: 35px;
+    margin: 6px;
+    color: var(--user-color);
     background-color: #06ade4;
-    color: white;
-    margin-top: 20px;
-    height: 3rem;
-    width: 95%;
-    border-radius: 1.5rem;
-    padding: 8px 12px;
     border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    letter-spacing: 0.3px;
+    transition: background-color 0.6s, transform 0.5s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+}
+
+.clear_filters_button:hover {
+    background-color: #70dbff;
 }
 
 #save-block-button {
@@ -174,6 +197,11 @@
     .circle.unfilled {
         border: 1px solid var(--circle-color);
         background-color: transparent;
+    }
+
+    .circle.filled {
+        border: 1px solid var(--circle-color);
+        background-color: #fff;
     }
 
     .circle-button {
