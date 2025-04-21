@@ -176,6 +176,10 @@ html {
     width: 33%;
 }
 
+.filter-section-wrapper.hidden {
+    display: none;
+}  
+
 .filter-section {
     height: 100%;
     width: 100%;

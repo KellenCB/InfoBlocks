@@ -188,18 +188,24 @@ export const appManager = (() => {
 
   ToggleFilters.forEach(button => {
     button.addEventListener("click", () => {
-      // Find the filter-section within the same filter-and-results container.
-      const filterSection = button.closest(".filter-and-results").querySelector(".filter-section");
-      filterSection.classList.toggle("hidden");
+      const container = button.closest(".filter-and-results");
+      const selectors = [
+        ".filter-section",
+        ".filter-section-wrapper",
+        ".filter-section-overlay-top",
+        ".filter-section-overlay-bottom"
+      ].join(", ");
+  
+      container
+        .querySelectorAll(selectors)
+        .forEach(el => el.classList.toggle("hidden"));
 
-      // Update the button icon based on the visibility of the filter section.
+      const filterSection = container.querySelector(".filter-section");
       if (filterSection.classList.contains("hidden")) {
-        // When hidden, show the filter icon.
         button.innerHTML = '<img src="./images/Filter_Open_Icon.svg" alt="Filter icon">';
       } else {
-        // When visible, show the left arrow icon.
         button.innerHTML = '<img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">';
-      }
+      }  
     });
   });
 
