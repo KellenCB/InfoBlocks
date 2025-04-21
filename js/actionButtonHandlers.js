@@ -7,8 +7,11 @@ export let selectedFilterTagsBeforeAdd = [];
 
 export const actionButtonHandlers = (() => {
   const attachActionButtonListeners = () => {
+
+    const activeTab = appManager.getActiveTab();  
+    const tabSuffix = activeTab.replace("tab", "");  
+
     const elements = {
-      addBlockButton: document.getElementById("add_block_button"),
       binButtons: document.querySelectorAll(".bin-button"),
       addBlockOverlay: document.querySelector(".add-block-overlay"),
       clearDataOverlay: document.querySelector(".cleardata-overlay"),
@@ -17,6 +20,11 @@ export const actionButtonHandlers = (() => {
     };
 
     // Add Block Button
+    const headerEl = document.getElementById(`results_header_${tabSuffix}`);
+    elements.addBlockButton = headerEl
+      ? headerEl.querySelector("#add_block_button")
+      : null;
+    
     if (elements.addBlockButton && elements.addBlockOverlay) {
       elements.addBlockButton.addEventListener("click", () => {
         console.log("➕ Add Block Button Clicked - Resetting Overlay");

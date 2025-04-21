@@ -100,6 +100,17 @@
     color: white;
 }
 
+.add-block-button {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    color: white;
+    font-size: 18px;
+}
+
 /* General Button Styling */
 
 .button {

@@ -1,15 +1,10 @@
 
-.sort-controls {
+.header-controls {
     display: flex;
     justify-content: flex-end;
-    align-items: top;
+    align-items: center;
     height: auto;
-    gap: 10px;
-}
-
-.sort-controls span {
-    font-weight: bold;
-    margin-right: 5px;
+    gap: 15px;
 }
 
 .sort-button {
