@@ -488,11 +488,17 @@ export const appManager = (() => {
       }
     
       // Attach click-to-toggle view behavior for non-permanent blocks.
-      document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`).forEach(blockEl => {
-        blockEl.addEventListener("click", function (e) {
-          // Ignore clicks on action buttons and tag buttons
-          if (e.target.closest(".action-button") || e.target.closest(".tag-button") || e.target.closest(".circle")) return;
-      
+      document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`)
+        .forEach(blockEl => {
+          blockEl.addEventListener("click", function (e) {
+            // Ignore clicks on action buttons and tag buttons
+            if (e.target.closest(".action-button") ||
+                e.target.closest(".tag-button") ||
+                e.target.closest(".block-title") ||
+                e.target.closest(".block-body") ||
+                e.target.closest(".block-body") ||
+                e.target.closest(".circle")) return;
+
           const blockId = blockEl.getAttribute("data-id");
           const blocksArr = getBlocks(tab);
           const targetBlock = blocksArr.find(b => b.id === blockId);
