@@ -38,7 +38,7 @@ html {
     padding-left: 20px;
     padding-right: 20px;
     gap: 20px;
-    height: calc(100vh - 217px);  /* Adjust for correct height */
+    height: calc(100vh - 213px);  /* Adjust for correct height */
     display: flex;
     flex-direction: column;
 }
@@ -54,13 +54,14 @@ html {
     flex-shrink: 0;
     opacity: 0;
     transition: opacity 0.3s ease;
+    overflow: auto;
 }
 
 /* Layout for sections */
 .title-section {
     display: flex;
     height: auto;
-    width: 100%;
+    width: calc(100% - 191px);
     align-items: center;
     justify-content: flex-start;
     background-color: #2a2a2a;
@@ -73,7 +74,13 @@ html {
 #page_title {
     min-height: 1.5em;
     transform: translateY(+5px);
+    overflow: hidden;
+    white-space: nowrap;
 }
+
+#page_title:not(:focus) { text-overflow: ellipsis; }
+
+#page_title:focus { text-overflow: unset; }
 
 #page_title:empty:before {
     content: "Enter Custom Title Here...";
@@ -87,7 +94,7 @@ html {
     align-items: center;
     justify-content: center;
     background-color: #2a2a2a;
-    padding: 15px 20px;
+    padding: 12px 20px;
     border-radius: 20px;
     gap: 10px;
     box-sizing: border-box;
