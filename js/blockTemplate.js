@@ -103,7 +103,7 @@ export const blockTemplate = (block) => {
             : "";
         content = `
             <div class=\"block-header\">
-                <div class=\"block-title\"><h4>${block.title}</h4></div>
+                <div class=\"block-title-minimized\"><h4>${block.title}</h4></div>
                 ${usesHTML ? `<div class=\"block-uses\">${usesHTML}</div>` : ""}
             </div>
         `;
