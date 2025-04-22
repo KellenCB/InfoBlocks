@@ -661,15 +661,14 @@ export const appManager = (() => {
       document.getElementById("view_minimized_button")?.classList.add("active");
   });
 
-  const savedViewState = localStorage.getItem("activeViewState") || "condensed";
-  updateBlocksViewState(savedViewState);
-
-  if (savedViewState === "condensed") {
-      document.getElementById("view_condensed_button")?.classList.add("active");
-  } else if (savedViewState === "minimized") {
-      document.getElementById("view_minimized_button")?.classList.add("active");
-  }
-
+  const tab = getActiveTab(); 
+  const savedViewState = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
+  // Highlight the correct button, but do NOT overwrite every block on load
+  document
+    .querySelectorAll(`#view-toggle-dropdown_${tab.replace("tab","")} .view-toggle-item`)
+    .forEach(item => {
+      item.classList.toggle(item.dataset.state === savedViewState);
+  });
 
 /* =================================================================*/
 /* ======================== DATA MANAGEMENT ========================*/
