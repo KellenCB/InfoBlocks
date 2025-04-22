@@ -1,12 +1,9 @@
-import { appManager } from './appManager.js';
+import { appManager, actionButtonHandlers } from './appManager.js';
 import { blockActionsHandler, saveEditHandler } from './blockActionsHandler.js';
 import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
-import { actionButtonHandlers } from './actionButtonHandlers.js';
 import { tagHandler } from './tagHandler.js';
 import { categoryTags } from './tagConfig.js';
 import './resizeHandle.js';
-
-
 
 // 📌 Attach event listeners efficiently
 const attachEventListeners = () => {

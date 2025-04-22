@@ -2,10 +2,139 @@
 import { categoryTags } from './tagConfig.js';
 import { blockTemplate } from './blockTemplate.js';
 import { tagHandler } from './tagHandler.js';
+import { overlayHandler, initUsesField } from './overlayHandler.js';
+
 
 
 const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
-  
+
+
+
+export let selectedFilterTagsBeforeAdd = [];
+
+/* ==================================================================*/
+/* ============================== TABS ==============================*/
+/* ==================================================================*/
+
+const getActiveTab = () => {
+  return document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+};
+
+
+/* ==================================================================*/
+/* ======================== ACTION BUTTONS ==========================*/
+/* ==================================================================*/
+
+
+export const actionButtonHandlers = (() => {
+  const attachActionButtonListeners = () => {
+
+    const activeTab = getActiveTab();  
+    const tabSuffix = activeTab.replace("tab", "");  
+
+    const elements = {
+      binButtons: document.querySelectorAll(".bin-button"),
+      addBlockOverlay: document.querySelector(".add-block-overlay"),
+      clearDataOverlay: document.querySelector(".cleardata-overlay"),
+      confirmClearButton: document.getElementById("confirm_clear_button"),
+      cancelClearButton: document.getElementById("cancel_clear_button"),
+    };
+
+    // Add Block Button
+    const headerEl = document.getElementById(`results_header_${tabSuffix}`);
+    elements.addBlockButton = headerEl
+      ? headerEl.querySelector("#add_block_button")
+      : null;
+    
+    if (elements.addBlockButton && elements.addBlockOverlay) {
+      elements.addBlockButton.addEventListener("click", () => {
+        console.log("➕ Add Block Button Clicked - Resetting Overlay");
+
+        // Store selected filter tags before opening the overlay
+        selectedFilterTagsBeforeAdd = tagHandler.getSelectedTags();
+        console.log("✅ Stored search & filter tags BEFORE adding a block:", selectedFilterTagsBeforeAdd);
+
+        // Deselect all overlay tags
+        document.querySelectorAll(".add-block-overlay .tag-button.selected").forEach(tag => {
+          tag.classList.remove("selected");
+        });
+
+        // Clear input fields
+        const titleInput = document.getElementById("title_input_overlay");
+        const textInput = document.getElementById("block_text_overlay");
+        const tagInputField = document.getElementById("tags_input_overlay");
+        if (titleInput) titleInput.value = "";
+        if (textInput) textInput.value = "";
+        if (tagInputField) tagInputField.value = "";
+
+        // Clear saved uses state
+        localStorage.removeItem("uses_field_overlay_state");
+
+        // Reset the DOM container and re-init the empty field
+        const usesFieldContainer = document.getElementById("uses_field_overlay");
+        if (usesFieldContainer) {
+            initUsesField(usesFieldContainer, "uses_field_overlay_state");
+        }
+
+        // Clear stored overlay tags if defined
+        if (window.selectedOverlayTags && typeof selectedOverlayTags === "object") {
+          Object.keys(selectedOverlayTags).forEach(category => {
+            selectedOverlayTags[category] = [];
+          });
+          console.log("✅ Cleared stored selectedOverlayTags.");
+        }
+
+        // Initialize overlay predefined tags
+        overlayHandler.initializeOverlayTagHandlers("dynamic_overlay_tags");
+
+        // Open overlay and focus the title input after a short delay
+        elements.addBlockOverlay.classList.add("show");
+        if (titleInput) setTimeout(() => titleInput.focus(), 50);
+      });
+    } else {
+      console.error("❌ Error: Add Block button or overlay not found.");
+    }
+
+    // Bin Buttons (Clear Local Storage)
+    if (elements.binButtons.length > 0 && elements.clearDataOverlay) {
+      elements.binButtons.forEach(binButton => {
+        binButton.addEventListener("click", () => {
+          console.log("🗑 Bin button clicked");
+          elements.clearDataOverlay.classList.add("show");
+        });
+      });
+    } else {
+      console.error("❌ Error: Bin button(s) or clear data overlay not found.");
+    }
+
+    // Confirm Clear Data - Purge entire localStorage and reload
+    if (elements.confirmClearButton && elements.clearDataOverlay) {
+      elements.confirmClearButton.addEventListener("click", () => {
+        console.log("✅ Confirm Clear Data button clicked");
+        localStorage.clear();
+        alert("All data has been cleared.");
+        location.reload();
+      });
+    } else {
+      console.error("❌ Error: Confirm Clear button not found.");
+    }
+
+    // Cancel Clear Data - Simply close the overlay
+    if (elements.cancelClearButton && elements.clearDataOverlay) {
+      elements.cancelClearButton.addEventListener("click", () => {
+        console.log("❌ Cancel Clear Data button clicked");
+        elements.clearDataOverlay.classList.remove("show");
+      });
+    } else {
+      console.error("❌ Error: Cancel Clear button not found.");
+    }
+
+    console.log("✅ Action button event listeners attached");
+  };
+
+  return { attachActionButtonListeners };
+})();
+
 
 export const appManager = (() => {
   let userBlocks = JSON.parse(localStorage.getItem("userBlocks")) || [];
@@ -58,14 +187,6 @@ export const appManager = (() => {
     const targets = document.querySelectorAll(".block-title h4, .action-name, .action-description");
     attachTooltipHandlers(targets);
   }  
-
-/* ==================================================================*/
-/* ============================== TABS ==============================*/
-/* ==================================================================*/
-
-  const getActiveTab = () => {
-      return document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
-  };
   
 /* ==================================================================*/
 /* ============================== TAGS ==============================*/
@@ -130,7 +251,7 @@ export const appManager = (() => {
       }).join("");
       html += `</div>`;
     } else {
-      html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}"><p>No user-defined tags</p></div>`;
+      html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}"></div>`;
     }
   
     // Then render predefined tags grouped by category that apply to the active tab
@@ -256,6 +377,17 @@ export const appManager = (() => {
       </div>
     `;  
 
+    const addBtn = document.getElementById(`results_header_${tabSuffix}`)
+      .querySelector('#add_block_button');
+    if (addBtn) {
+      addBtn.onclick = () => {
+        // same overlay-reset code you had in actionButtonHandlers…
+        initUsesField(document.getElementById('uses_field_overlay'), 'uses_field_overlay_state');
+        overlayHandler.initializeOverlayTagHandlers('dynamic_overlay_tags');
+        document.querySelector('.add-block-overlay').classList.add('show');
+      };
+    }
+
     // 2) wire up the view‑state dropdown
     const settingsBtn  = document.getElementById(`results-settings_${tabSuffix}`);
     const viewDropdown = document.getElementById(`view-toggle-dropdown_${tabSuffix}`);
@@ -305,7 +437,7 @@ export const appManager = (() => {
         // 3) close the dropdown
         viewDropdown.classList.add("hidden");
       });
-  });  
+    });  
       
     // ── 3) SORT DROPDOWN ──
     const sortBtn      = document.getElementById(`results-sort-btn_${tabSuffix}`);
@@ -343,34 +475,34 @@ export const appManager = (() => {
     });
     
       
-      // In tab6, insert the three permanent editable elements at the top.
-      if (tab === "tab6") {
-          const permanentItems = [
-            { id: "perm1", defaultValue: "00" },
-            { id: "perm2", defaultValue: "00" },
-            { id: "perm3", defaultValue: "00" }
-          ];
-          const colorClasses = {
-            perm1: "gold-bg",
-            perm2: "silver-bg",
-            perm3: "copper-bg"
-          };
-        
-          let permanentHTML = "";
-          permanentItems.forEach(({ id, defaultValue }) => {
-            const savedValue = localStorage.getItem(`permanentItem_${id}`) || defaultValue;
-            permanentHTML += `
-              <div class="block minimized permanent-block ${colorClasses[id]}" data-id="${id}">
-                <h4 class="permanent-title" contenteditable="true">${savedValue}</h4>
-              </div>
-            `;
-          });
-          // Insert a container wrapping the permanent items.
-          resultsSection.insertAdjacentHTML("beforeend", `
-            <div class="permanent-items-container">
-              ${permanentHTML}
+    // In tab6, insert the three permanent editable elements at the top.
+    if (tab === "tab6") {
+        const permanentItems = [
+          { id: "perm1", defaultValue: "00" },
+          { id: "perm2", defaultValue: "00" },
+          { id: "perm3", defaultValue: "00" }
+        ];
+        const colorClasses = {
+          perm1: "gold-bg",
+          perm2: "silver-bg",
+          perm3: "copper-bg"
+        };
+      
+        let permanentHTML = "";
+        permanentItems.forEach(({ id, defaultValue }) => {
+          const savedValue = localStorage.getItem(`permanentItem_${id}`) || defaultValue;
+          permanentHTML += `
+            <div class="block minimized permanent-block ${colorClasses[id]}" data-id="${id}">
+              <h4 class="permanent-title" contenteditable="true">${savedValue}</h4>
             </div>
-          `);
+          `;
+        });
+        // Insert a container wrapping the permanent items.
+        resultsSection.insertAdjacentHTML("beforeend", `
+          <div class="permanent-items-container">
+            ${permanentHTML}
+          </div>
+        `);
       }
               
       // Render user blocks
@@ -441,9 +573,9 @@ export const appManager = (() => {
         });
       });
     
-      updateTags();
-      initializeTitles();
-      attachDynamicTooltips();
+    updateTags();
+    initializeTitles();
+    attachDynamicTooltips();
   };
 
   const sortBlocks = (mode) => {
