@@ -244,8 +244,8 @@ html {
     padding-bottom: 20px;
 }
 
-.tag-sections {
-    margin: 8px 0px;
+.block-tags {
+    margin-top: 6px;
 }
 
 .block {
@@ -337,6 +337,7 @@ html {
     width: 100%;
     padding: 0px 0px 0px 0px;
     pointer-events: none;
+    margin-top: 6px;
 }
 
 .fade-in {

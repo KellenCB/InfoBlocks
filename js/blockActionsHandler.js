@@ -63,16 +63,18 @@ export const saveEditHandler = () => {
     const allTags = combinedTagsLowercase.map(tag => tag.charAt(0).toUpperCase() + tag.slice(1));
 
     // Check for required fields
-    if (!titleInput || !textInput) {
-        alert("All fields (Title and Text) are required.");
+    if (
+        !titleInput ||
+        (activeTab !== "tab6" && !textInput)
+    ) {
+        alert(
+        activeTab === "tab6"
+            ? "A title is required."
+            : "All fields (Title and Text) are required."
+        );
         return;
     }
-
-    if (!currentEditingBlockId) {
-        console.error("❌ No block ID found for editing.");
-        return;
-    }
-
+  
     // Save the edited block
     const usesState = JSON.parse(localStorage.getItem("uses_field_edit_overlay_state") || "[]");
     appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, currentEditingBlockId, blocks[blockIndex].timestamp);

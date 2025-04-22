@@ -579,11 +579,18 @@ export const appManager = (() => {
   const saveBlock = (tab, blockTitle, text, tags, uses, blockId = null, timestamp = null) => {
     console.log(`📥 Attempting to save block in ${tab}:`, { blockTitle, text, tags, uses, blockId, timestamp });
     
-    if (!blockTitle || !text) {
-        console.error("❌ Block title and text are required");
-        return false;
+    if (
+      !blockTitle ||
+      (tab !== "tab6" && !text)
+    ) {
+      console.error(
+        tab === "tab6"
+          ? "❌ Block title is required for Tab 6"
+          : "❌ Block title and text are required"
+      );
+      return false;
     }
-    
+  
     let userBlocks = getBlocks(tab);
     console.log(`📦 Blocks retrieved for ${tab}:`, userBlocks);
     
