@@ -426,8 +426,7 @@
 .action-row.expanded .action-label,
 .action-row.expanded .action-description {
   white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
+  overflow-wrap: break-word;
 }
 
 .action-row.condensed .action-name,
@@ -449,6 +448,10 @@
 
 .toggle-circle.filled {
   background-color: #fff;
+}
+
+.toggle-circle.unfilled {
+  background-color: transparent;
 }
 
 .no-gap {

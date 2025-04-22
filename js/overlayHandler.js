@@ -96,18 +96,23 @@ export const handleSaveBlock = () => {
         // Retrieve and trim title and text inputs
         const titleElement = document.getElementById("title_input_overlay");
         const textElement = document.getElementById("block_text_overlay");
-        if (!titleElement || !textElement) {
-            console.error("❌ Input elements not found!");
+        const titleInput = titleElement?.value.trim()  || "";
+        const textInput  = textElement?.value.trim()   || "";
+        const activeTab  = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+
+
+        // on all tabs except "tab6", require both title and text
+        if (
+            titleInput === "" ||
+            (activeTab !== "tab6" && textInput === "")
+        ) {
+            alert(activeTab === "tab6"
+            ? "A title is required."
+            : "All fields (Title and Text) are required."
+            );
             return;
         }
-        const titleInput = titleElement.value.trim();
-        const textInput = textElement.value.trim();
-
-        if (titleInput === "" || textInput === "") {
-            alert("All fields (Title and Text) are required.");
-            return;
-        }
-
+  
         // --- Tag Processing Starts Here ---
 
         // 1. Extract typed tags from the input field, trim and normalize to lowercase.
@@ -123,7 +128,6 @@ export const handleSaveBlock = () => {
         ).map(tag => tag.dataset.tag.trim().toLowerCase());
 
         // 3. Get the active tab.
-        const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
 
         // 4. For Tab 3: filter out any typed tags that already exist in the dynamic overlay.
         const exceptionTabs = ["tab3", "tab6", "tab7"];

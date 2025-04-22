@@ -72,6 +72,6 @@ export const categoryTags = {
     equipped_check: {
         tags: ["Equipped", "Attuned"], 
         className: "tag-equippedCheck",
-        tabs: ["tab6", "tab7", "tab3"] 
+        tabs: ["tab6"] 
     },
 };

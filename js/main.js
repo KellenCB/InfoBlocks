@@ -1,11 +1,9 @@
-import { appManager } from './appManager.js';
+import { appManager, actionButtonHandlers } from './appManager.js';
 import { blockActionsHandler, saveEditHandler } from './blockActionsHandler.js';
 import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
-import { actionButtonHandlers } from './actionButtonHandlers.js';
 import { tagHandler } from './tagHandler.js';
 import { categoryTags } from './tagConfig.js';
 import './resizeHandle.js';
-
 
 // 📌 Attach event listeners efficiently
 const attachEventListeners = () => {
@@ -36,7 +34,36 @@ if (menuButton && menuOverlay) {
     menuButton.classList.toggle("menu-button-open");
   });
 }
-  
+
+/* ===================================================================*/
+/* ========================== DICE ROLELR OVERLAY ============================*/
+/* ===================================================================*/
+
+// AFTER: dice overlay open/close
+const diceMenuButton = document.getElementById("dice-menu-button");
+const diceOverlay    = document.getElementById("dice-overlay");
+const closeDiceBtn   = document.getElementById("close-dice-overlay");
+
+if (diceMenuButton && diceOverlay) {
+  diceMenuButton.addEventListener("click", () => {
+    diceOverlay.classList.toggle("show");
+    if (diceOverlay.classList.contains("show")) {
+      import('./diceRoller.js').then(mod => mod.initDiceRoller());
+    }
+  });
+}
+
+if (closeDiceBtn && diceOverlay) {
+  closeDiceBtn.addEventListener("click", () => {
+    diceOverlay.classList.remove("show");
+  });
+}
+
+// Close when clicking the backdrop
+diceOverlay
+  ?.querySelector('.overlay-backdrop')
+  .addEventListener('click', () => diceOverlay.classList.remove('show'));
+
 /* ===================================================================*/
 /* ===================== SEQUENTIAL FADE IN ==========================*/
 /* ===================================================================*/
@@ -138,47 +165,18 @@ document.addEventListener("DOMContentLoaded", () => {
             targetContent.style.display = "flex";
             localStorage.setItem("activeTab", targetTab);
         
-            // Render blocks as before...
-            if (targetTab !== "tab5") {
-                // Retrieve blocks for the target tab
-                let blocks = appManager.getBlocks(targetTab);
+            appManager.renderBlocks(targetTab);
+            appManager.updateTags();
+            actionButtonHandlers.attachActionButtonListeners();
               
-                // Apply search filtering for this tab if present
-                const tabNumber = targetTab.replace("tab", "");
-                const searchInput = document.getElementById(`search_input_${tabNumber}`);
-                if (searchInput && searchInput.value.trim() !== "") {
-                  const query = searchInput.value.trim().toLowerCase();
-                  blocks = blocks.filter(block =>
-                    block.title.toLowerCase().includes(query) ||
-                    block.text.toLowerCase().includes(query)
-                  );
-                }
-              
-                // Apply tag filters using per-tab settings
-                const selectedTags = tagHandler.getSelectedTags(targetTab);
-                if (selectedTags.length > 0) {
-                  blocks = blocks.filter(block =>
-                    selectedTags.every(tag => block.tags.includes(tag))
-                  );
-                }
-              
-                // Render using the filtered list
-                appManager.renderBlocks(targetTab, blocks);
-                appManager.updateTags();
-              } else {
-                import('./diceRoller.js').then(module => {
-                  module.initDiceRoller();
-                });
-              }
-              
-              // Update view toggle buttons if needed
-              updateViewToggleButtons();
-              
-              setTimeout(() => {
-                const computedStyle = window.getComputedStyle(targetContent);
-                if (computedStyle.display === "none") {
-                  targetContent.style.display = "flex";
-                }
+            const tabSuffix = targetTab.replace("tab", "");
+            appManager.updateViewToggleDropdown(tabSuffix);
+            
+            setTimeout(() => {
+            const computedStyle = window.getComputedStyle(targetContent);
+            if (computedStyle.display === "none") {
+                targetContent.style.display = "flex";
+            }
             }, 100);
         });
     });
@@ -197,6 +195,23 @@ document.addEventListener("DOMContentLoaded", () => {
           } else {
             console.warn("actions grid element not found in " + tabId);
           }
+        }
+        // ─── PLACEHOLDER FOR EMPTY ACTIONS GRID ───
+        const wrapper = document.querySelector("#" + tabId + " .actions-grid-wrapper");
+        if (wrapper) {
+            // only add once
+            if (!wrapper.querySelector('.actions-placeholder') &&
+                wrapper.querySelectorAll('.actions-grid .action-row').length === 0) {
+            const p = document.createElement('p');
+            p.classList.add('actions-placeholder');
+            p.textContent = 'Use the edit tab button to add actions here…';
+            p.style.position  = 'absolute';
+            p.style.top       = '50%';
+            p.style.left      = '50%';
+            p.style.transform = 'translate(-50%, -50%)';
+            p.style.opacity   = '0.25';
+            wrapper.appendChild(p);
+            }
         }
     });    
 
@@ -349,55 +364,6 @@ const handleTagFilter = (event) => {
     appManager.renderBlocks(activeTab, filteredBlocks);
 };
 
-// 📌 Handle search functionality
-const handleSearch = () => {
-    const searchInput = document.getElementById("search_input_${tabSuffix}");
-    if (!searchInput) {
-        console.error("❌ Search input box not found!");
-        return;
-    }
-
-    searchInput.addEventListener("input", () => {
-        const query = searchInput.value.trim().toLowerCase();
-        console.log("🔍 Searching for:", query);
-
-        const selectedTags = tagHandler.getSelectedTags();
-        console.log("🟠 Currently Selected Tags:", selectedTags);
-
-        let filteredBlocks = selectedTags.length
-            ? appManager.getBlocks().filter(block =>
-                  selectedTags.every(t =>
-                      block.tags.map(bt => bt.trim().toLowerCase()).includes(t.toLowerCase())
-                  )
-              )
-            : appManager.getBlocks();
-
-        console.log("🟢 Blocks After Tag Filtering (Before Search):", filteredBlocks);
-
-        const searchResults = filteredBlocks.filter(block =>
-            block.title.toLowerCase().includes(query) ||
-            block.text.toLowerCase().includes(query)
-        );
-                        
-        console.log("✅ Final Search Results (Matching Search & Tags):", searchResults);
-
-        const highlightMatch = (text, query) => {
-            if (!query) return text;
-            const regex = new RegExp(`(${query})`, "gi");
-            return text.replace(regex, `<span class="highlight">$1</span>`);
-        };
-
-        const highlightedBlocks = searchResults.map(block => ({
-            ...block,
-            title: highlightMatch(block.title, query),
-            text: highlightMatch(block.text, query),
-            highlighted: true
-        }));
-        
-        appManager.renderBlocks(appManager.getActiveTab(), highlightedBlocks);
-    });
-};
-
 // Clear filters and reset results for the specific tab
 const clearFilters = (event) => {
     console.log("Clear Filters button clicked");
@@ -527,99 +493,9 @@ const keyboardShortcutsHandler = (() => {
 
 
 /* ==================================================================*/
-/* ========================== VIEWSTATES ============================*/
-/* ==================================================================*/
-const updateBlocksViewState = (newState) => {
-    const activeTab = appManager.getActiveTab();
-    let blocks = appManager.getBlocks(activeTab);
-    
-    // Update the viewState for each block
-    blocks.forEach(block => {
-      block.viewState = newState;
-    });
-    localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
-    
-    // Retrieve current search input value for this tab
-    const tabNumber = activeTab.replace("tab", "");
-    const searchInput = document.getElementById(`search_input_${tabNumber}`);
-    let filteredBlocks = blocks;
-    if (searchInput && searchInput.value.trim() !== "") {
-        const query = searchInput.value.trim().toLowerCase();
-        filteredBlocks = filteredBlocks.filter(block =>
-            block.title.toLowerCase().includes(query) ||
-            block.text.toLowerCase().includes(query)
-        );
-    }
-    
-    // Retrieve the selected tags for the active tab
-    const selectedTags = tagHandler.getSelectedTags(activeTab);
-    if (selectedTags.length > 0) {
-        filteredBlocks = filteredBlocks.filter(block =>
-            selectedTags.every(tag => block.tags.includes(tag))
-        );
-    }
-    
-    // Render blocks using the filtered list
-    appManager.renderBlocks(activeTab, filteredBlocks);
-    
-    // Only update active view state in localStorage if it's not "expanded"
-    if(newState !== "expanded"){
-      localStorage.setItem(`activeViewState_${activeTab}`, newState);
-    }
-};
-  
-const updateViewToggleButtons = () => {
-    // Remove the active class from all buttons
-    const expandedBtn = document.getElementById("view_expanded_button");
-    const condensedBtn = document.getElementById("view_condensed_button");
-    const minimizedBtn = document.getElementById("view_minimized_button");
-    
-    [expandedBtn, condensedBtn, minimizedBtn].forEach(btn => {
-      btn.classList.remove("active");
-    });
-  
-    const activeTab = appManager.getActiveTab();
-    // Use the per‑tab key; default to "condensed" if nothing is stored.
-    let savedViewState = localStorage.getItem(`activeViewState_${activeTab}`) || "condensed";
-  
-    if (savedViewState === "expanded") {
-      expandedBtn.classList.add("active");
-    } else if (savedViewState === "condensed") {
-      condensedBtn.classList.add("active");
-    } else if (savedViewState === "minimized") {
-      minimizedBtn.classList.add("active");
-    }
-};
-  
-const clearToggleClasses = () => {
-    document.getElementById("view_condensed_button")?.classList.remove("active");
-    document.getElementById("view_minimized_button")?.classList.remove("active");
-};
+/* ============================== FIN ================================*/
+/* ===================================================================*/
 
-document.getElementById("view_expanded_button")?.addEventListener("click", () => {
-    updateBlocksViewState("expanded");
-});
-
-document.getElementById("view_condensed_button")?.addEventListener("click", () => {
-    updateBlocksViewState("condensed");
-    clearToggleClasses();
-    document.getElementById("view_condensed_button")?.classList.add("active");
-});
-
-document.getElementById("view_minimized_button")?.addEventListener("click", () => {
-    updateBlocksViewState("minimized");
-    clearToggleClasses();
-    document.getElementById("view_minimized_button")?.classList.add("active");
-});
-
-const savedViewState = localStorage.getItem("activeViewState") || "condensed";
-updateBlocksViewState(savedViewState);
-
-if (savedViewState === "condensed") {
-    document.getElementById("view_condensed_button")?.classList.add("active");
-} else if (savedViewState === "minimized") {
-    document.getElementById("view_minimized_button")?.classList.add("active");
-}
 
 window.onload = async () => {
     console.log("🔄 Window Loaded - Initializing App");
@@ -641,6 +517,7 @@ window.onload = async () => {
     await appManager.loadBlocks();
     appManager.renderBlocks(appManager.getActiveTab());
     appManager.updateTags();
+    actionButtonHandlers.attachActionButtonListeners();
 
     function initializeEditableFields(tabId) {
         const container = document.getElementById(tabId);
@@ -677,23 +554,22 @@ window.onload = async () => {
                 
     function initializeToggleCircles(tabId) {
         const container = document.getElementById(tabId);
-        if (!container) {
-            return;
-        }
+        if (!container) return;
+        
         container.querySelectorAll('.toggle-circle').forEach((circle, index) => {
             const key = circle.getAttribute('data-storage-key') || `${tabId}_toggle_${index}`;
-            let savedState = localStorage.getItem(key);
-            if (savedState === null) {
-                circle.classList.add('unfilled');
-                localStorage.setItem(key, 'true');
-            } else if (savedState === 'true') {
-                circle.classList.add('unfilled');
-            } else {
-                circle.classList.remove('unfilled');
+            // If no value in storage, assume NOT filled → store false
+            if (localStorage.getItem(key) === null) {
+            localStorage.setItem(key, 'false');
             }
+        
+            // Now read it as a boolean and add exactly one class
+            const isFilled = localStorage.getItem(key) === 'true';
+            circle.classList.add(isFilled ? 'filled' : 'unfilled');
+            circle.classList.remove(isFilled ? 'unfilled' : 'filled');
         });
     }
-                    
+                          
     ["tab1", "tab2", "tab3", "tab4", "tab5", "tab6", "tab7", "tab8"].forEach(tabId => {
         initializeEditableFields(tabId);
         initializeToggleCircles(tabId);

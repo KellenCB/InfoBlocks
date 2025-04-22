@@ -20,25 +20,24 @@ const diceImages = {
 // Array to store selected dice (each entry is the number of sides)
 let selectedDice = [];
 
-/**
- * Initialize the dice roller functionality.
- * Call this after the DOM is loaded and #tab5 is present.
- */
+
+/* Initialize the dice roller functionality.*/
+
 export function initDiceRoller() {
   if (diceRollerInitialized) return;
   diceRollerInitialized = true;
 
-  const tab5 = document.getElementById("tab5");
-  if (!tab5) {
-    console.warn("Tab 5 not found in DOM. Dice roller not initialized.");
+  const container = document.querySelector("#dice-overlay .dice-roller-container");
+  if (!container) {
+    console.warn("Dice overlay container not found.");
     return;
   }
 
-  const diceButtons = tab5.querySelectorAll(".dice-button");
-  const selectedDiceContainer = tab5.querySelector(".selected-dice-container");
-  const rollButton = tab5.querySelector("#roll-button");
-  const clearButton = tab5.querySelector("#clear-selected-button");
-  const rollResult = tab5.querySelector(".roll-result");
+  const diceButtons           = container.querySelectorAll(".dice-button");
+  const selectedDiceContainer = container.querySelector(".selected-dice-container");
+  const rollButton            = container.querySelector("#roll-button");
+  const clearButton           = container.querySelector("#clear-selected-button");
+  const rollResult            = container.parentElement.querySelector(".roll-results");
 
   // Attach event listeners for dice selection buttons
   diceButtons.forEach(button => {
@@ -49,36 +48,94 @@ export function initDiceRoller() {
     });
   });
 
+  // Helper to trim history to last 5 entries
+  function pruneHistory() {
+    // rollResult.children[0] is the <h3> header
+    while (rollResult.children.length > 1 + 5) {
+      rollResult.removeChild(rollResult.lastChild);
+    }
+  }
+
   // Attach event listener for the Roll button
   if (rollButton) {
     rollButton.addEventListener("click", () => {
+      // ─── Build the new entry ───────────────────────────────
+      const entry = document.createElement("div");
+      entry.classList.add("roll-history-entry", "new-entry");
+  
       if (selectedDice.length === 0) {
-        rollResult.textContent = "No dice selected!";
-        return;
+        entry.textContent = "No dice selected!";
+      } else {
+        let total = 0;
+        const rollsContainer = document.createElement("div");
+        rollsContainer.classList.add("rolls-container");
+  
+        selectedDice.forEach(sides => {
+          const roll = rollDie(sides);
+          total += roll;
+          const rollDieElement = document.createElement("div");
+          rollDieElement.classList.add("roll-die");
+          rollDieElement.innerHTML = `
+            <div class="roll-die-wrapper" data-dice="${sides}">
+              <img src="${diceImages[sides]}" alt="D${sides}" />
+              <span class="roll-number">${roll}</span>
+            </div>
+          `;
+          rollsContainer.appendChild(rollDieElement);
+        });
+  
+        entry.appendChild(rollsContainer);
+        const totalDiv = document.createElement("div");
+        totalDiv.classList.add("total");
+        totalDiv.textContent = `Total: ${total}`;
+        entry.appendChild(totalDiv);
       }
-      let total = 0;
-      const rollsContainer = document.createElement("div");
-      rollsContainer.classList.add("rolls-container");
-      // For each selected die, roll it and create a result element
-      selectedDice.forEach(sides => {
-        const roll = rollDie(sides);
-        total += roll;
-        const rollDieElement = document.createElement("div");
-        rollDieElement.classList.add("roll-die");
-        rollDieElement.innerHTML = `
-          <div class="roll-die-wrapper" data-dice="${sides}">
-            <img src="${diceImages[sides]}" alt="D${sides}" />
-            <span class="roll-number">${roll}</span>
-          </div>
-        `;
-        rollsContainer.appendChild(rollDieElement);
+  
+      // ─── Measure its height ────────────────────────────────
+      entry.style.position   = 'absolute';
+      entry.style.visibility = 'hidden';
+      rollResult.insertBefore(entry, rollResult.children[1]);
+      const newHeight = entry.offsetHeight;
+      entry.style.removeProperty('position');
+      entry.style.removeProperty('visibility');
+  
+      // ─── Shift existing entries DOWN ───────────────────────
+      const others = Array.from(
+        rollResult.querySelectorAll(".roll-history-entry")
+      ).slice(1); // skip the just‑inserted new one
+  
+      // 1) Jump them down instantly
+      others.forEach(el => {
+        el.style.transform = `translateY(${newHeight}px)`;
       });
-      rollResult.innerHTML = `<h3>Roll Results</h3>`;
-      rollResult.appendChild(rollsContainer);
-      rollResult.innerHTML += `<div class="total">Total: ${total}</div>`;
-    });
-  }
-
+  
+      // 2) On next frame, clear transform so they animate into place
+      requestAnimationFrame(() => {
+        others.forEach(el => {
+          el.style.transform = '';
+        });
+      });
+  
+      // ─── SLIDE THE NEW ENTRY IN ────────────────────────────
+      // Start it above + invisible
+      entry.style.transform = `translateY(-${newHeight}px)`;
+      entry.style.opacity   = '0';
+  
+      requestAnimationFrame(() => {
+        // Animate to natural spot + full opacity
+        entry.style.transform = '';
+        entry.style.opacity   = '1';
+      });
+  
+      // ─── Trim history as before ─────────────────────────────
+      pruneHistory();
+    entry.addEventListener("animationend", () => {
+      entry.classList.remove("new-entry");
+    }); 
+  });
+   
+  }  
+  
   // Attach event listener for the Clear All button
   if (clearButton) {
     clearButton.addEventListener("click", () => {
@@ -108,3 +165,24 @@ export function initDiceRoller() {
     });
   }
 }
+
+// ─── Dice Overlay Keyboard Shortcuts ───────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  const overlay = document.getElementById('dice-overlay');
+  if (!overlay?.classList.contains('show')) return;
+
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    overlay.classList.remove('show');
+    // blur any focused element so no outline remains
+    document.activeElement.blur();
+  }
+  else if (e.key === 'Enter') {
+    e.preventDefault();
+    const rollBtn = document.getElementById('roll-button');
+    if (rollBtn) {
+      rollBtn.click();            // run your Roll! logic :contentReference[oaicite:0]{index=0}&#8203;:contentReference[oaicite:1]{index=1}
+      document.activeElement.blur();  // remove focus ring from dice button
+    }
+  }
+});

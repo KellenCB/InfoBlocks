@@ -1,5 +1,5 @@
 * {
-font-family: 'Roboto', sans-serif; /* Apply Roboto font globally */
+font-family: 'Roboto', sans-serif;
 margin: 0; 
 padding: 0;
 box-sizing: border-box;
@@ -21,9 +21,9 @@ color: #fff;
 
 h4 {
 font-size: 18px;
-font-weight: medium;
-text-transform: uppercase;
-letter-spacing: 0.065em;
+font-weight: Medium;
+/* text-transform: uppercase; */
+letter-spacing: 0.045em;
 color: #fff;
 }
 
@@ -39,9 +39,7 @@ line-height: 1.5em;
 }
 
 .highlight {
-    background-color: rgba(255, 200, 0, 0.6);
+    background-color: rgba(255, 200, 0, 0.781);
     color: #fff;
-    padding: 2px 4px;
     border-radius: 4px;
-    text-shadow: 0px 0px 4px rgba(255, 200, 0, 0.8);
 }

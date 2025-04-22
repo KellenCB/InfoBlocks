@@ -1,14 +1,10 @@
-.sort-controls {
-    display: flex;
-    justify-content: flex-end;  /* Aligns items to the right */
-    align-items: top;
-    height: auto;
-    gap: 10px;  /* Adds spacing between buttons */
-}
 
-.sort-controls span {
-    font-weight: bold;
-    margin-right: 5px;
+.header-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    height: auto;
+    gap: 15px;
 }
 
 .sort-button {
@@ -27,5 +23,27 @@
 }
 
 .sort-button.selected {
+    opacity: 1;
+}
+
+.results-settings {
+    color: white;
+    background-color: aquamarine;
+    background: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.3s ease-in-out;
+    border: none;
+}
+
+.results-settings:hover {
+    opacity: 1;
+}
+
+.results-settings.selected {
     opacity: 1;
 }
