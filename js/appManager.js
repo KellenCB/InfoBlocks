@@ -3,12 +3,9 @@ import { categoryTags } from './tagConfig.js';
 import { blockTemplate } from './blockTemplate.js';
 import { tagHandler } from './tagHandler.js';
 import { overlayHandler, initUsesField } from './overlayHandler.js';
-
-
+import { attachDynamicTooltips } from './tooltips.js';
 
 const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
-
-
 
 export let selectedFilterTagsBeforeAdd = [];
 
@@ -141,52 +138,6 @@ export const appManager = (() => {
   let title = localStorage.getItem("pageTitle") || "Information Blocks";
   
   const resultsSection = document.getElementById("results_section");
-
-/* ===================================================================*/
-/* ======================== ... TOOLTIP ==============================*/
-/* ===================================================================*/
-
-  // Attach tooltip behavior to a list of elements.
-  function attachTooltipHandlers(elements) {
-    elements.forEach(el => {
-      // Remove any existing listeners to avoid duplicate bindings.
-      el.removeEventListener("mouseenter", tooltipMouseEnter);
-      el.removeEventListener("mouseleave", tooltipMouseLeave);
-      
-      el.addEventListener("mouseenter", tooltipMouseEnter);
-      el.addEventListener("mouseleave", tooltipMouseLeave);
-    });
-  }
-
-  function tooltipMouseEnter(e) {
-    const el = e.currentTarget;
-
-    el._tooltipTimer = setTimeout(() => {
-        const tooltip = document.createElement("div");
-        tooltip.classList.add("text-tooltip");
-        tooltip.textContent = el.textContent;
-        document.body.appendChild(tooltip);
-        const rect = el.getBoundingClientRect();
-        tooltip.style.left = `${rect.left}px`;
-        tooltip.style.top = `${rect.bottom + 5}px`;
-        el._tooltip = tooltip;
-    }, 750);
-  }
-
-  function tooltipMouseLeave(e) {
-    const el = e.currentTarget;
-    clearTimeout(el._tooltipTimer);
-    if (el._tooltip) {
-      el._tooltip.remove();
-      el._tooltip = null;
-    }
-  }
-
-  function attachDynamicTooltips() {
-    // Adjust these selectors as needed to target the elements you want (e.g. the block title and action row)
-    const targets = document.querySelectorAll(".block-title h4, .action-name, .action-description");
-    attachTooltipHandlers(targets);
-  }  
   
 /* ==================================================================*/
 /* ============================== TAGS ==============================*/
