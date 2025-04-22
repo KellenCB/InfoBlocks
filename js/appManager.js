@@ -381,9 +381,6 @@ export const appManager = (() => {
       .querySelector('#add_block_button');
     if (addBtn) {
       addBtn.onclick = () => {
-        // same overlay-reset code you had in actionButtonHandlers…
-        initUsesField(document.getElementById('uses_field_overlay'), 'uses_field_overlay_state');
-        overlayHandler.initializeOverlayTagHandlers('dynamic_overlay_tags');
         document.querySelector('.add-block-overlay').classList.add('show');
       };
     }
@@ -510,6 +507,19 @@ export const appManager = (() => {
       console.log(`📦 Blocks to render for ${tab}:`, blocks);
       if (blocks.length === 0) {
         console.warn(`⚠️ No blocks found for ${tab}`);
+        const placeholderClass = 'results-placeholder';
+          if (!resultsSection.querySelector(`.${placeholderClass}`)) {
+          const p = document.createElement('p');
+          p.classList.add(placeholderClass);
+          p.textContent = 'Use the + button to add items here…';
+          p.style.position  = 'absolute';
+          p.style.top       = '50%';
+          p.style.left      = '50%';
+          p.style.transform = 'translate(-50%, -50%)';
+          p.style.textAlign = 'center';
+          p.style.opacity = '0.25';
+          resultsSection.appendChild(p);
+        }
       }
       blocks.forEach(block => {
         resultsSection.insertAdjacentHTML("beforeend", blockTemplate(block));

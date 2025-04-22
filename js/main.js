@@ -196,6 +196,23 @@ document.addEventListener("DOMContentLoaded", () => {
             console.warn("actions grid element not found in " + tabId);
           }
         }
+        // ─── PLACEHOLDER FOR EMPTY ACTIONS GRID ───
+        const wrapper = document.querySelector("#" + tabId + " .actions-grid-wrapper");
+        if (wrapper) {
+            // only add once
+            if (!wrapper.querySelector('.actions-placeholder') &&
+                wrapper.querySelectorAll('.actions-grid .action-row').length === 0) {
+            const p = document.createElement('p');
+            p.classList.add('actions-placeholder');
+            p.textContent = 'Use the edit tab button to add actions here…';
+            p.style.position  = 'absolute';
+            p.style.top       = '50%';
+            p.style.left      = '50%';
+            p.style.transform = 'translate(-50%, -50%)';
+            p.style.opacity   = '0.25';
+            wrapper.appendChild(p);
+            }
+        }
     });    
 
     // Handle tab reordering

@@ -24,9 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalKey = `spellSlotTotalCircles_group_${groupId}`;
             let circleStates = JSON.parse(localStorage.getItem(stateKey)) || {};
             let totalCircles = localStorage.getItem(totalKey)
-                ? parseInt(localStorage.getItem(totalKey))
-                : 10;
-    
+                ? parseInt(localStorage.getItem(totalKey), 10)
+                : 0;
+                                          
             const createCircle = (index, state = true, prepend = false) => {
                 const circle = document.createElement('div');
                 circle.classList.add('circle');
@@ -55,6 +55,16 @@ document.addEventListener('DOMContentLoaded', () => {
             updateGroupVisibility(groupContainer);
             });
     
+            const visibleGroups = spellSlotSection.querySelectorAll('.spell-slot-group:not(.hidden)');
+            if (visibleGroups.length === 0) {
+              const placeholder = document.createElement('p');
+              placeholder.textContent = 'Use the edit tab button to add spell slots here…';
+              placeholder.style.margin = 'auto';
+              placeholder.style.textAlign = 'center';
+              placeholder.style.opacity = '0.25';
+              spellSlotSection.appendChild(placeholder);
+            }
+            
             // Save button for the spell slot edit overlay
             const saveButton = document.getElementById('save_spell_slot_changes');
             if (saveButton) {

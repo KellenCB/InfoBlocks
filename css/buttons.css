@@ -136,7 +136,7 @@
 .clear_filters_button {
     padding: 14px;
     height: 35px;
-    margin: 6px;
+    margin: 6px 6px 6px 0px;
     color: var(--user-color);
     background-color: #06ade4;
     border: none;
