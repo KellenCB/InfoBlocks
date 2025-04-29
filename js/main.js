@@ -4,6 +4,7 @@ import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
 import { tagHandler } from './tagHandler.js';
 import { categoryTags } from './tagConfig.js';
 import './resizeHandle.js';
+import { stripHTML } from './appManager.js';
 
 // 📌 Attach event listeners efficiently
 const attachEventListeners = () => {
@@ -236,62 +237,102 @@ document.addEventListener("DOMContentLoaded", () => {
             return offset < 0 && offset > closest.offset ? { offset, element: child } : closest;
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
-
+      
     // Function to attach search and clear event listeners for a specific tab
     function setupTabSearchAndFilters(tabNumber) {
-        const searchInput = document.getElementById(`search_input_${tabNumber}`);
-        const clearSearchButton = document.getElementById(`clear_search_button_${tabNumber}`);
+        const searchInput        = document.getElementById(`search_input_${tabNumber}`);
+        const clearSearchButton  = document.getElementById(`clear_search_button_${tabNumber}`);
         const clearFiltersButton = document.getElementById(`clear_filters_button_${tabNumber}`);
-
-        if (!searchInput) {
-            return;
-        }
-
-        searchInput.addEventListener("input", () => {
-            const query = searchInput.value.trim().toLowerCase();
-            const activeTab = `tab${tabNumber}`;
-
-            const filteredBlocks = appManager.getBlocks(activeTab).filter(block =>
-                block.title.toLowerCase().includes(query) || block.text.toLowerCase().includes(query)
-            );
-
-            const highlightMatch = (text, query) => {
-                if (!query) return text;
-                const regex = new RegExp(`(${query})`, "gi");
-                return text.replace(regex, `<span class="highlight">$1</span>`);
-            };
-
-            const highlightedBlocks = filteredBlocks.map(block => ({
-                ...block,
-                title: highlightMatch(block.title, query),
-                text: highlightMatch(block.text, query),
-                highlighted: query.length > 0
-            }));
-
-            appManager.renderBlocks(activeTab, highlightedBlocks);
+      
+        if (!searchInput) return;
+      
+        // escape user input for Regex
+        const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      
+        // highlight inside plain text (for titles)
+        const highlightInText = (text, query) => {
+          if (!query) return text;
+          const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
+          return text.replace(re, `<span class="highlight">$1</span>`);
+        };
+      
+        // highlight inside an HTML snippet by walking its text nodes
+        const highlightInHTML = (html, query) => {
+          if (!query) return html;
+          const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
+          const container = document.createElement('div');
+          container.innerHTML = html;
+          const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+          const textNodes = [];
+          while (walker.nextNode()) textNodes.push(walker.currentNode);
+      
+          textNodes.forEach(node => {
+            const parent = node.parentNode;
+            let lastIndex = 0;
+            const frag = document.createDocumentFragment();
+            const text = node.nodeValue;
+            text.replace(re, (match, p1, offset) => {
+              // append preceding text
+              if (offset > lastIndex) {
+                frag.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
+              }
+              // append highlighted span
+              const span = document.createElement('span');
+              span.className = 'highlight';
+              span.textContent = match;
+              frag.appendChild(span);
+              lastIndex = offset + match.length;
+            });
+            // append any trailing text
+            if (lastIndex < text.length) {
+              frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+            }
+            // only replace if we actually matched
+            if (frag.childNodes.length) parent.replaceChild(frag, node);
+          });
+      
+          return container.innerHTML;
+        };
+      
+        searchInput.addEventListener('input', () => {
+          const query     = searchInput.value.trim().toLowerCase();
+          const activeTab = `tab${tabNumber}`;
+          const allBlocks = appManager.getBlocks(activeTab);
+      
+          // 1) filter on plain-text
+          const filtered = allBlocks.filter(block => {
+            return block.title.toLowerCase().includes(query)
+                || stripHTML(block.text).toLowerCase().includes(query);
+          });
+      
+          // 2) highlight inside the HTML (for body) and in plain text (for title)
+          const highlighted = filtered.map(block => ({
+            ...block,
+            title: highlightInText(block.title, query),
+            text:  highlightInHTML(block.text, query),
+            highlighted: query.length > 0
+          }));
+      
+          appManager.renderBlocks(activeTab, highlighted);
         });
-
-        if (clearSearchButton) {
-            clearSearchButton.addEventListener("click", () => {
-                searchInput.value = "";
-                const activeTab = `tab${tabNumber}`;
-                appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
-            });
-        }
-
-        if (clearFiltersButton) {
-            clearFiltersButton.addEventListener("click", () => {
-                document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`).forEach(tag =>
-                    tag.classList.remove("selected")
-                );
-                searchInput.value = "";
-                tagHandler.clearSelectedTags(`tab${tabNumber}`);
-                const activeTab = `tab${tabNumber}`;
-                appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
-            });
-        }
-    }
-
+      
+        clearSearchButton?.addEventListener('click', () => {
+          searchInput.value = '';
+          const activeTab = `tab${tabNumber}`;
+          appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
+        });
+      
+        clearFiltersButton?.addEventListener('click', () => {
+            document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`)
+                .forEach(tag => tag.classList.remove('selected'));
+          
+            searchInput.value = '';
+            tagHandler.clearSelectedTags(`tab${tabNumber}`);
+            const activeTab = `tab${tabNumber}`;
+            appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
+        });
+      }
+          
     [1, 2, 3, 4, 5, 6, 7, 8].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
 
     if (activeTabId === "tab5") {
@@ -445,12 +486,18 @@ const keyboardShortcutsHandler = (() => {
 
             if (addBlockOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && saveBlockButton) {
-                    saveBlockButton.click();
+                    // if inside a bullet or numbered list, let Enter create a new list item
+                    const inUL = document.queryCommandState('insertUnorderedList');
+                    const inOL = document.queryCommandState('insertOrderedList');
+                    if (!(inUL || inOL)) {
+                        event.preventDefault();
+                        saveBlockButton.click();
+                    }
                 } else if (event.key === "Escape" && cancelAddBlockButton) {
                     cancelAddBlockButton.click();
                 }
             }
-
+                
             if (clearDataOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && confirmClearButton) {
                     confirmClearButton.click();

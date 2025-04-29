@@ -6,14 +6,15 @@ import { tagHandler } from './tagHandler.js';
 import { appManager } from './appManager.js';
 import { overlayHandler } from './overlayHandler.js';
 import { initUsesField } from './overlayHandler.js';
+import { stripHTML } from './appManager.js';
 
 export const saveEditHandler = () => {
     console.log("✅ Save Edit Button Clicked!");
 
     // Retrieve and trim the title and text
-    const titleInput = document.getElementById("title_input_edit_overlay").value.trim();
-    const textInput = document.getElementById("block_text_edit_overlay").value.trim();
-
+        const titleInput = document.getElementById("title_input_edit_overlay").value.trim();
+        const textInput  = document.getElementById("block_text_edit_overlay").innerHTML.trim();
+    
     // Extract typed tags from the input field, trimming and normalizing to lowercase
     let tagsInput = document.getElementById("tags_input_edit_overlay").value
         .split(",")
@@ -57,7 +58,7 @@ export const saveEditHandler = () => {
     tagsInput = tagsInput.filter(tag => !currentBlockTags.includes(tag));
 
     // Combine: include any remaining typed tags, selected tag buttons, and the block’s current tags
-    const combinedTagsLowercase = [...new Set([...tagsInput, ...selectedPredefinedTags])];
+    const combinedTagsLowercase = [...new Set([...currentBlockTags, ...tagsInput, ...selectedPredefinedTags])];
 
     // Re-capitalize each tag (first letter uppercase, rest lowercase) for display purposes
     const allTags = combinedTagsLowercase.map(tag => tag.charAt(0).toUpperCase() + tag.slice(1));
@@ -92,13 +93,15 @@ export const saveEditHandler = () => {
     let filteredBlocks = appManager.getBlocks(activeTab);
 
     if (searchQuery) {
-        filteredBlocks = filteredBlocks.filter(block =>
-            block.title.toLowerCase().includes(searchQuery) ||
-            block.text.toLowerCase().includes(searchQuery) ||
-            block.tags.some(tag => tag.toLowerCase().includes(searchQuery))
-        );
+        filteredBlocks = filteredBlocks.filter(block => {
+            const titleMatch = block.title.toLowerCase().includes(searchQuery);
+            const textMatch  = stripHTML(block.text).toLowerCase().includes(searchQuery);
+            const tagMatch   = block.tags.some(tag =>
+                tag.toLowerCase().includes(searchQuery));
+            return titleMatch || textMatch || tagMatch;
+        });
     }
-
+      
     if (selectedTags.length > 0) {
         filteredBlocks = filteredBlocks.filter(block =>
             selectedTags.every(tag =>
@@ -152,8 +155,10 @@ export const blockActionsHandler = (() => {
             console.log("✅ Stored search & filter tags BEFORE editing:", selectedFilterTags);
         
             document.getElementById("title_input_edit_overlay").value = block.title;
-            document.getElementById("block_text_edit_overlay").value = block.text;
-        
+            const editBody = document.getElementById("block_text_edit_overlay");
+            editBody.innerHTML = block.text.replace(/\n/g, "<br>");
+            editBody.dispatchEvent(new Event('input'));
+                    
             const usesFieldContainerEdit = document.getElementById("uses_field_edit_overlay");
             if (usesFieldContainerEdit) {
                 // Store the current block's uses state (or an empty array if none exists)
@@ -216,7 +221,7 @@ export const blockActionsHandler = (() => {
         if (searchQuery) {
             filteredBlocks = filteredBlocks.filter(block =>
                 block.title.toLowerCase().includes(searchQuery) ||
-                block.text.toLowerCase().includes(searchQuery) ||
+                stripHTML(block.text).toLowerCase().includes(searchQuery) ||
                 block.tags.some(tag => tag.toLowerCase().includes(searchQuery))
             );
         }

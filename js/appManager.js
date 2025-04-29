@@ -7,6 +7,12 @@ import { attachDynamicTooltips } from './tooltips.js';
 
 const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
 
+export function stripHTML(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html || '';
+  return tmp.textContent || tmp.innerText || '';
+}
+
 export let selectedFilterTagsBeforeAdd = [];
 
 /* ==================================================================*/
@@ -519,10 +525,10 @@ export const appManager = (() => {
           const searchInput = document.getElementById(`search_input_${tab.replace("tab", "")}`);
           if (searchInput && searchInput.value.trim() !== "") {
             const query = searchInput.value.trim().toLowerCase();
-            filteredBlocks = filteredBlocks.filter(block =>
-              block.title.toLowerCase().includes(query) ||
-              block.text.toLowerCase().includes(query)
-            );
+                filteredBlocks = filteredBlocks.filter(block =>
+                block.title.toLowerCase().includes(query) ||
+                stripHTML(block.text).toLowerCase().includes(query)
+              );
           }
           
           // Apply tag filters if any are selected

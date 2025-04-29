@@ -97,9 +97,8 @@ export const handleSaveBlock = () => {
         const titleElement = document.getElementById("title_input_overlay");
         const textElement = document.getElementById("block_text_overlay");
         const titleInput = titleElement?.value.trim()  || "";
-        const textInput  = textElement?.value.trim()   || "";
-        const activeTab  = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
-
+        const textInput = textElement?.innerHTML.trim()   || "";
+        const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
 
         // on all tabs except "tab6", require both title and text
         if (
@@ -163,9 +162,9 @@ export const handleSaveBlock = () => {
 
             // Clear inputs & close overlay.
             titleElement.value = "";
-            textElement.value = "";
+            textElement.innerHTML = "";
+            textElement.dispatchEvent(new Event('input'));
             document.getElementById("tags_input_overlay").value = "";
-            // Remove selection from any tag buttons in the overlay.
             document.querySelectorAll(".add-block-overlay .tag-button.selected").forEach(tag => {
                 tag.classList.remove("selected");
             });
@@ -249,7 +248,7 @@ export const overlayHandler = (() => {
     
         clearEditButton.addEventListener("click", () => {
             const titleInput = document.getElementById("title_input_edit_overlay");
-            const textInput = document.getElementById("block_text_edit_overlay");
+            const textInput = document.getElementById("block_text_edit_overlay").innerHTML.trim();
             const tagsInput = document.getElementById("tags_input_edit_overlay");
     
             // Clear all input fields
@@ -440,6 +439,129 @@ export const overlayHandler = (() => {
         observeOverlay(editBlockOverlay);
     };
 
+
+/* ==================================================================*/
+/* ========================== TEXT TOOLBAR ==========================*/
+/* ==================================================================*/
+
+function addFormatToolbar() {
+    const configs = [
+      { formSel: '.add-block-form', textareaId: 'block_text_overlay' },
+      { formSel: '.edit-block-form',   textareaId: 'block_text_edit_overlay' }
+    ];
+  
+    configs.forEach(({ formSel, textareaId }) => {
+      const form = document.querySelector(formSel);
+      if (!form) return;
+      const editor = form.querySelector(`#${textareaId}`);
+      if (!editor) return;
+  
+      // Build the toolbar element
+      const toolbar = document.createElement('div');
+      toolbar.className = 'text-toolbar';
+      toolbar.innerHTML = `
+        <button type="button" data-action="bold"><i class="fas fa-bold"></i></button>
+        <button type="button" data-action="italic"><i class="fas fa-italic"></i></button>
+        <button type="button" data-action="underline"><i class="fas fa-underline"></i></button>
+        <button type="button" data-action="link"><i class="fas fa-link"></i></button>
+        <button type="button" data-action="insertUnorderedList"><i class="fas fa-list-ul"></i></button>
+        <button type="button" data-action="insertOrderedList"><i class="fas fa-list-ol"></i></button>
+        <button type="button" data-action="increaseFont"><i class="fas fa-arrow-up"></i></button>
+        <select id="font-size-select">
+            <option value="3">16px</option>
+            <option value="4">18px</option>
+            <option value="5">24px</option>
+            <option value="6">32px</option>
+            <option value="7">48px</option>
+        </select>
+        <button type="button" data-action="decreaseFont"><i class="fas fa-arrow-down"></i></button>
+        <button type="button" data-action="uppercase">A↑</button>
+        <button type="button" data-action="sentencecase">Aa</button>
+        <button type="button" data-action="lowercase">a↓</button>
+      `;
+  
+      const wrapper = document.createElement('div');
+      wrapper.className = 'editor-toolbar-wrapper';
+      editor.parentNode.replaceChild(wrapper, editor);
+      wrapper.appendChild(toolbar);
+      wrapper.appendChild(editor);
+  
+      const buttons = toolbar.querySelectorAll('button');
+      const sizeSelect = toolbar.querySelector('#font-size-select');
+  
+      // Change handler for dropdown
+      sizeSelect.addEventListener('change', () => {
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('fontSize', false, sizeSelect.value);
+        updateToolbarState();
+      });
+  
+      // Update UI state
+      function updateToolbarState() {
+        buttons.forEach(btn => {
+          const action = btn.dataset.action;
+          const active = document.queryCommandState(action);
+          btn.classList.toggle('selected', active);
+        });
+        const sel = window.getSelection();
+        if (sel.rangeCount && sel.toString()) {
+          const node = sel.getRangeAt(0).startContainer.parentNode;
+          const sizePx = window.getComputedStyle(node).fontSize;
+          const map = { '10px':'1','13px':'2','16px':'3','18px':'4','24px':'5','32px':'6','48px':'7' };
+          if (map[sizePx]) sizeSelect.value = map[sizePx];
+        }
+      }
+  
+      // Wire up all buttons including spinner
+      buttons.forEach(btn => {
+        btn.addEventListener('mousedown', e => {
+          e.preventDefault();
+          const action = btn.dataset.action;
+          if (action === 'link') {
+            const url = prompt('Enter URL');
+            if (url) document.execCommand('createLink', false, url.startsWith('http') ? url : `https://${url}`);
+          } else if (action === 'increaseFont') {
+            let idx = sizeSelect.selectedIndex;
+            if (idx < sizeSelect.options.length - 1) {
+              sizeSelect.selectedIndex = idx + 1;
+              sizeSelect.dispatchEvent(new Event('change'));
+            }
+          } else if (action === 'decreaseFont') {
+            let idx = sizeSelect.selectedIndex;
+            if (idx > 0) {
+              sizeSelect.selectedIndex = idx - 1;
+              sizeSelect.dispatchEvent(new Event('change'));
+            }
+          } else if (['uppercase','sentencecase','lowercase'].includes(action)) {
+            // fallback span-transform if needed
+            // transformSelection logic here
+          } else {
+            document.execCommand(action, false, null);
+          }
+          updateToolbarState();
+        });
+      });
+  
+      editor.addEventListener('keyup', updateToolbarState);
+      editor.addEventListener('mouseup', updateToolbarState);
+    });
+  }
+    
+// Re-add this helper so initializeEventHandlers can call it
+function initCEPlaceholder(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const update = () => {
+        const txt = el.textContent.replace(/\u200B/g, '').trim();
+        el.classList.toggle('empty', txt === '');
+      };
+      el.addEventListener('input', update);
+      el.addEventListener('focus', update);
+      el.addEventListener('blur', update);
+      update();
+    }
+    
+
     const initializeEventHandlers = () => {
         handleSaveBlock();
         handleClearBlock();
@@ -448,7 +570,10 @@ export const overlayHandler = (() => {
         handleCancelEditOverlay();
         handleTagSelection();
         initializeTextareas();
-        addOverlayListeners();        
+        addOverlayListeners();
+        addFormatToolbar();   
+        initCEPlaceholder('block_text_overlay');
+        initCEPlaceholder('block_text_edit_overlay');     
     };
 
     return { 

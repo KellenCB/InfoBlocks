@@ -967,10 +967,12 @@
     <div class="add-block-overlay">
         <div class="add-block-form">
             <h2>Add Information Block</h2>
-            <input type="text" id="title_input_overlay" placeholder="Enter block title here..." />
-            <div id="uses_field_overlay" class="uses-field"></div>        
-            <textarea id="block_text_overlay" class="auto-resize" placeholder="Enter block text here..." rows="1"></textarea>
-            <input type="text" id="tags_input_overlay" placeholder="Enter custom tags here..."  />
+            <div class="add_and_edit_inputs">
+                <input type="text" id="title_input_overlay" placeholder="Enter block title here..." />
+                <div id="uses_field_overlay" class="uses-field"></div>   
+                <div id="block_text_overlay" class="auto-resize" contenteditable="true" data-placeholder="Enter block text here..." rows="1"></div>
+                <input type="text" id="tags_input_overlay" placeholder="Enter custom tags here..."  />
+            </div>
             <div class="overlay-tags" id="dynamic_overlay_tags"></div>
             <div class="overlay-controls">
                 <button id="save-block-button" class="button green-button">Save Block</button>
@@ -984,11 +986,12 @@
     <div class="edit-block-overlay">
         <div class="edit-block-form">
             <h2>Edit Information Block</h2>
-            <input type="text" id="title_input_edit_overlay" placeholder="Edit title block" />
-            <div id="uses_field_edit_overlay" class="uses-field"></div>        
-            <textarea id="block_text_edit_overlay" class="auto-resize" placeholder="Edit block text here..." rows="1"></textarea>
-            <input type="text" id="tags_input_edit_overlay" placeholder="Edit tags (comma separated)" />
-
+            <div class="add_and_edit_inputs">
+                <input type="text" id="title_input_edit_overlay" placeholder="Edit title block" />
+                <div id="uses_field_edit_overlay" class="uses-field"></div>        
+                <div id="block_text_edit_overlay" class="auto-resize" contenteditable="true" data-placeholder="Enter block text here..." rows="1"></div>
+                <input type="text" id="tags_input_edit_overlay" placeholder="Edit tags (comma separated)" />
+            </div>
             <!-- Section where predefined tags should be displayed -->
             <div class="overlay-tags" id="dynamic_overlay_tags">
                 <div id="predefined_tags_edit"></div>

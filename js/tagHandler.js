@@ -82,12 +82,24 @@ export const tagHandler = (() => {
         
             // Apply search filtering if a query is present
             if (searchQuery.length > 0) {
-                filteredBlocks = filteredBlocks.filter(block =>
-                block.title.toLowerCase().includes(searchQuery) ||
-                block.text.toLowerCase().includes(searchQuery)
-                );
-            }
-        
+                // find all rendered blocks in this tab
+                const blocksEls = document
+                  .querySelector(`.results-section[data-tab="${activeTab}"]`)
+                  .querySelectorAll('.block');
+              
+                blocksEls.forEach(el => {
+                  const title = el.querySelector('.block-header h4')?.textContent.toLowerCase() || '';
+                  const body  = el.querySelector('.block-body')?.textContent.toLowerCase()   || '';
+              
+                  // show if either title or body matches, hide otherwise
+                  if (title.includes(searchQuery) || body.includes(searchQuery)) {
+                    el.style.display = '';
+                  } else {
+                    el.style.display = 'none';
+                  }
+                });
+              }
+                      
             // Re-render blocks for the active tab using the filtered list,
             // then update the tag UI so that the selected tags remain highlighted.
             appManager.renderBlocks(activeTab, filteredBlocks);

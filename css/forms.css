@@ -25,7 +25,7 @@
     position: absolute;
     right: 10px;
     top: 50%;
-    transform: translateY(-50%); /* Perfect vertical centering */
+    transform: translateY(-50%);
     background: none;
     border: none;
     cursor: pointer;
@@ -48,14 +48,20 @@
     stroke: #666;
     stroke-width: 2;
 }
+
 /* ==================================================================*/
 /* ========================= Add Block Form =========================*/
 /* ==================================================================*/
 
-.add-block-form input, .edit-block-form input,
-.add-block-form textarea, .edit-block-form textarea {
+.add_and_edit_inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin: 18px 0;
+}
+
+.add-block-form input, .edit-block-form input{
     width: 100%;
-    margin: 10px 0;
     padding: 12px;
     font-size: 16px;
     background-color: #444;
@@ -64,12 +70,128 @@
     border-radius: 8px;
     box-sizing: border-box;
     transition: border-color 0.3s;
+    text-align: left;
 }
 
-.add-block-form textarea, .edit-block-form textarea {
+#block_text_overlay,
+#block_text_edit_overlay {
     min-height: 100px;
+    padding: 12px;
+    resize: vertical;
+    overflow: auto;
+    max-height: 60vh;  
 }
 
+.auto-resize[contenteditable] {
+    font-family: inherit;
+    position: relative;
+}  
+
+.auto-resize[contenteditable].empty::before {
+    content: attr(data-placeholder);
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    pointer-events: none;
+    user-select: none;
+    color: #bbb;
+    opacity: 0.5;
+    letter-spacing: 0.2px;
+    font-style: normal;
+    font-size: inherit;
+    font-family: inherit;
+}
+
+.auto-resize[contenteditable]::before { content: ""; }
+
+.auto-resize[contenteditable] {
+    position: relative;
+    padding-top: 15px;
+    box-sizing: border-box;  
+}
+
+::placeholder {
+    color: #bbb;
+    opacity: 0.5;
+    letter-spacing: 0.2px;
+}  
+
+/* ==================================================================*/
+/* ========================= Text Toolbar =========================*/
+/* ==================================================================*/
+  
+.editor-toolbar-wrapper {
+    width: 100%;
+    font-size: 16px;
+    background-color: #444;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+    text-align: left;
+}
+
+.editor-toolbar-wrapper .text-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    background: transparent;
+    z-index: 1;
+    justify-content: left;
+}
+  
+.text-toolbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    gap: 7px;
+    z-index: 2;
+    pointer-events: none;
+    border-bottom: 1px solid #555;
+    overflow: auto;
+}
+
+.text-toolbar button, #font-size-select {
+    background-color: #555;
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 7px 7px 7px;
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    z-index: 3;
+    pointer-events: auto;
+}
+
+.text-toolbar button.selected {
+    background-color: #666;
+    border-color: #888;
+    color: #fff;
+    opacity: 1;
+}
+
+/* ─── List styling inside the editable box ─── */
+#block_text_overlay ul,
+#block_text_edit_overlay ul,
+#block_text_overlay ol,
+#block_text_edit_overlay ol,
+.block-body ul,
+.block-body ol {
+    margin-right: 0.5em 0;
+    padding-left: 1.5em;   /* indent the bullets/numbers */
+}
+
+#block_text_overlay li,
+#block_text_edit_overlay li,
+.block-body li {
+    margin-right: 0.25em 0;      /* small vertical spacing */
+    line-height: 1.4;      /* comfortable line height */
+    margin-bottom: 12px;
+
+}
 
 
 /* ==================================================================*/
@@ -109,11 +231,8 @@
     width: 350px;
     text-align: center;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-    transform: translateY(-20px);
-    transition: transform 0.4s;
 }
 
 .add-block-form.show, .cleardata-form.show, .edit-block-overlay.show {
-    transform: translateY(0);
     z-index: 1000;
 }
