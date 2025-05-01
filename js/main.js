@@ -463,30 +463,45 @@ const initializeDynamicTags = () => {
 const keyboardShortcutsHandler = (() => {
     const handleKeyboardShortcuts = () => {
         document.addEventListener("keydown", (event) => {
+            // grab all the overlays and buttons up front
+            const addBlockOverlay        = document.querySelector(".add-block-overlay");
+            const clearDataOverlay       = document.querySelector(".cleardata-overlay");
+            const editBlockOverlay       = document.querySelector(".edit-block-overlay");
+            const spellSlotEditOverlay   = document.querySelector(".spell-slot-edit-overlay");
+            const actionsEditOverlay     = document.querySelector(".actions-edit-overlay");
+
+            const saveBlockButton        = document.getElementById("save-block-button");
+            const cancelAddBlockButton   = document.getElementById("cancel_add_block");
+            const confirmClearButton     = document.getElementById("confirm_clear_button");
+            const cancelClearButton      = document.getElementById("cancel_clear_button");
+            const saveEditButton         = document.getElementById("save-edit-button");
+            const cancelEditButton       = document.getElementById("cancel_edit_block");
+            const saveSpellSlotButton    = document.getElementById("save_spell_slot_changes");
+            const cancelSpellSlotButton  = document.getElementById("close_spell_slot_edit");
+            const saveActionButton       = document.getElementById("save_action_changes");
+            const cancelActionButton     = document.getElementById("close_action_edit");
+
+            // ── 1) Ctrl+Enter = “Save” in Add-Block or Edit-Block, even inside lists
+            if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                if (addBlockOverlay?.classList.contains("show") && saveBlockButton) {
+                    saveBlockButton.click();
+                } else if (editBlockOverlay?.classList.contains("show") && saveEditButton) {
+                    saveEditButton.click();
+                }
+                return;  // don’t continue to the “ignore modifiers” bail
+            }
+
+            // ── 2) now bail on any remaining modifier combos
             if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
                 return;
             }
 
-            const addBlockOverlay = document.querySelector(".add-block-overlay");
-            const clearDataOverlay = document.querySelector(".cleardata-overlay");
-            const editBlockOverlay = document.querySelector(".edit-block-overlay");
-            const spellSlotEditOverlay = document.querySelector(".spell-slot-edit-overlay");
-            const actionsEditOverlay = document.querySelector(".actions-edit-overlay");
-
-            const saveBlockButton = document.getElementById("save-block-button");
-            const cancelAddBlockButton = document.getElementById("cancel_add_block");
-            const confirmClearButton = document.getElementById("confirm_clear_button");
-            const cancelClearButton = document.getElementById("cancel_clear_button");
-            const saveEditButton = document.getElementById("save-edit-button");
-            const cancelEditButton = document.getElementById("cancel_edit_block");
-            const saveSpellSlotButton = document.getElementById("save_spell_slot_changes");
-            const cancelSpellSlotButton = document.getElementById("close_spell_slot_edit");
-            const saveActionButton = document.getElementById("save_action_changes");
-            const cancelActionButton = document.getElementById("close_action_edit");
+            // ── 3) original per-overlay Enter/Escape logic ──
 
             if (addBlockOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && saveBlockButton) {
-                    // if inside a bullet or numbered list, let Enter create a new list item
+                    // if inside a list, drop a new item instead of saving
                     const inUL = document.queryCommandState('insertUnorderedList');
                     const inOL = document.queryCommandState('insertOrderedList');
                     if (!(inUL || inOL)) {
@@ -497,7 +512,7 @@ const keyboardShortcutsHandler = (() => {
                     cancelAddBlockButton.click();
                 }
             }
-                
+
             if (clearDataOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && confirmClearButton) {
                     confirmClearButton.click();
@@ -508,7 +523,12 @@ const keyboardShortcutsHandler = (() => {
 
             if (editBlockOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && saveEditButton) {
-                    saveEditButton.click();
+                    const inUL = document.queryCommandState('insertUnorderedList');
+                    const inOL = document.queryCommandState('insertOrderedList');
+                    if (!(inUL || inOL)) {
+                        event.preventDefault();
+                        saveEditButton.click();
+                    }
                 } else if (event.key === "Escape" && cancelEditButton) {
                     cancelEditButton.click();
                 }
@@ -529,7 +549,6 @@ const keyboardShortcutsHandler = (() => {
                     cancelActionButton.click();
                 }
             }
-              
         });
 
         console.log("Keyboard shortcuts attached.");
