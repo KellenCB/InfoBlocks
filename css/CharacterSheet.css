@@ -3,6 +3,7 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  width: 100%;
   }
 
 .character-sheet-column {
@@ -35,22 +36,24 @@
   height: auto;
   width:2px;
   min-width: 2px;
+  background-color: white;
+  opacity: 50%;
 }
 
 .horizontal-break {
   height: 2px;
   min-height: 2px;
   width: 100%;
-}
-
-.horizontal-break,
-.vertical-break {
   background-color: white;
   opacity: 50%;
 }
 
-/* Row 1 */
-  .descriptor-grid {
+
+/* ==================================================================*/
+/* ============================== ROW 1 =============================*/
+/* ==================================================================*/
+
+.descriptor-grid {
     display: flex;
     flex: 1;
     width: 100%;
@@ -86,7 +89,9 @@
     opacity: 50%;
   }
 
-/* Row 2 */
+/* ==================================================================*/
+/* ============================== ROW 2 =============================*/
+/* ==================================================================*/
 
   .hp-container-row {
     display: flex;
@@ -109,16 +114,15 @@
   .main-hp-stat-box{
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     flex: 1.5;
     text-align: center;
     gap: 5px;
   }
 
   .current-hp-stat-box {
-    display: inline-flex;
+    display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: center;
     align-content: center;
     margin: 0px 10px 0px 10px;
     gap: 15px;
@@ -140,6 +144,7 @@
     gap: 15px;
     border-radius: 20px;
     margin-bottom: 20px;
+    width: 100%;
   }
 
   .stats-grid {
@@ -167,9 +172,8 @@
     font-size: 40px;
     font-weight: bold;
     min-width: 10px;
-    width: fit-content;
-    margin-left: auto;
-    margin-right: auto;
+    width: auto;
+    margin: 0px 5px;
     text-align: center;  
   }
 
@@ -188,7 +192,9 @@
     margin-bottom: 3px;
   }
 
-  /* Row 3 */
+/* ==================================================================*/
+/* ============================== ROW 3 =============================*/
+/* ==================================================================*/
 
   .main-stats-container-row {
     display: flex;
@@ -240,7 +246,7 @@
   }
   
 /* ==================================================================*/
-/* ===================== SACING THROWS & SKILLS =====================*/
+/* ===================== SAVING THROWS & SKILLS =====================*/
 /* ==================================================================*/
 
 
@@ -292,6 +298,18 @@
 /* =================================================================*/
 /* ======================== ACTIONS STYLING ========================*/
 /* =================================================================*/
+
+.actions-and-features {
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
+  overflow-x: auto;
+  box-sizing: border-box;
+  width: 100%;
+  align-items: center;
+}
+
+.actions-and-features .results-section { height: 50%; }
 
 .actions-grid-wrapper {
   position: relative;
@@ -356,7 +374,6 @@
   z-index: 10;
 }
 
-
 .actions-edit-container {
   position: relative; 
   padding-top: 0;
@@ -414,19 +431,19 @@
   cursor: pointer;
 }
 
-.action-name, .action-label, .action-description {
+.action-name {
+  flex: 2;
   min-width: 20px;
 }
 
-.action-name {flex: 2;}
+.action-label {
+  flex: 0.5;
+  min-width: 20px;
+}
 
-.action-description { flex: 5;}
-
-.action-row.expanded .action-name,
-.action-row.expanded .action-label,
-.action-row.expanded .action-description {
-  white-space: normal;
-  overflow-wrap: break-word;
+.action-description {
+  flex: 5;
+  min-width: 20px;
 }
 
 .action-row.condensed .action-name,
@@ -435,6 +452,18 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.action-row.expanded .action-name,
+.action-row.expanded .action-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.action-row.expanded .action-description {
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .toggle-circle {
@@ -456,20 +485,6 @@
 
 .no-gap {
   gap: 0px;
-}
-
-/* ==================================================================*/
-/* ======================= DEATH SAVE STYLING =======================*/
-/* ==================================================================*/
-
-.deathSaveGreen {
-  background-color: #4CAF50;
-  border: 1px solid #4CAF50;
-
-}
-.deathSaveRed {
-  background-color: #ff6b6b;
-  border: 1px solid #ff6b6b;
 }
 
 /* =================================================================*/
@@ -559,4 +574,47 @@
   opacity: 0.7;
   border: 2px dashed #ccc;
   transform: scale(1.02);
+}
+
+
+@media screen and (orientation: landscape) {
+
+  .actions-and-features {
+    display: flex;
+    flex-direction: row;
+    overflow-y: hidden;
+    overflow-x: auto;
+    box-sizing: border-box;
+    width: 100%;
+    align-items: center;
+    gap: 20px
+  }
+
+  .actions-grid-wrapper {
+    height: 100%; 
+    max-height: 100%;
+    color: #fff;
+    border-radius: 20px;
+    width: 50%;
+    box-sizing: border-box;
+    overflow-y: auto;
+  }
+
+  .actions-grid {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 10px;
+    color: #fff;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+  }
+
+  .actions-and-features .results-section { height: 100%; }
+
+  .resizable-handle { display: none; }
+
 }

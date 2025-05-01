@@ -31,6 +31,10 @@ p {
     line-height: 1.5em;
 }
 
+u {
+    line-height: 2em;
+}
+
 .highlight {
     background-color: rgba(255, 200, 0, 0.781);
     color: #fff;
