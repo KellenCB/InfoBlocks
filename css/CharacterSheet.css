@@ -311,35 +311,6 @@
 
 .actions-and-features .results-section { height: 50%; }
 
-.actions-grid-wrapper {
-  position: relative;
-  display: flex;
-  height: 50%; 
-  min-height: 80px;
-  max-height: calc(100% - 120px - 32px);
-  flex-shrink: 0;
-  background-color: #2a2a2a;
-  color: #fff;
-  border-radius: 20px;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow-y: auto;
-}
-
-.actions-grid {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  gap: 10px;
-  color: #fff;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow-y: auto;
-}
-
 .actions-overlay-top {
   position: absolute;
   left: 0;
@@ -374,6 +345,56 @@
   z-index: 10;
 }
 
+.actions-grid-wrapper {
+  position: relative;
+  display: flex;
+  height: 50%; 
+  min-height: 80px;
+  max-height: calc(100% - 120px - 32px);
+  flex-shrink: 0;
+  background-color: #2a2a2a;
+  color: #fff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.actions-grid {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 10px;
+  color: #fff;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.action-row {
+  display: flex;
+  justify-content: left;
+  background-color: #444; 
+  padding: 11px 15px;
+  border-radius: 10px;
+  gap: 15px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.action-row .expended {
+  align-items: start;
+}
+
+.action-row .condensed {
+  align-items: center;
+}
+
 .actions-edit-container {
   position: relative; 
   padding-top: 0;
@@ -396,32 +417,13 @@
   z-index: 5;
 }
 
-.action-row {
-  display: flex;
-  justify-content: left;
-  background-color: #444; 
-  padding: 10px 15px;
-  border-radius: 10px;
-  gap: 15px;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  min-width: 0;
-}
 
-.action-row .expended {
-  align-items: start;
-}
-
-.action-row .condensed {
-  align-items: center;
-}
 
 
 /* Default button styling for the toggle */
 .toggle-action-view {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -429,6 +431,7 @@
   transition: background-color 0.2s ease;
   color: white;
   cursor: pointer;
+  font-size: 15px;
 }
 
 .action-name {
@@ -456,14 +459,13 @@
 
 .action-row.expanded .action-name,
 .action-row.expanded .action-label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: wrap;
 }
 
 .action-row.expanded .action-description {
   white-space: normal;
   overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 .toggle-circle {
@@ -533,6 +535,11 @@
   text-align: left;
 }
 
+.actions-edit-container .action-row {
+  transition: transform 0.2s ease;
+}
+
+
 .actions-edit-container .action-row > * {
   margin-right: 20px;
 }
@@ -562,8 +569,27 @@
 }
 
 .actions-edit-overlay .drag-handle {
-  opacity: 0.5;
-  transform: translateY(-1px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  cursor: grab;                    
+  user-select: none;
+  -webkit-user-drag: none;
+  background: rgba(255,255,255,0.05);
+  transition: background .2s;
+  border-radius: 4px;
+}
+
+.actions-edit-overlay .drag-handle:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  background: rgba(255,255,255,0.25);
 }
 
 .actions-edit-overlay .action-button {
@@ -571,11 +597,23 @@
 }
 
 .actions-edit-overlay .action-row.dragging {
-  opacity: 0.7;
-  border: 2px dashed #ccc;
-  transform: scale(1.02);
+  opacity: 0.2;
 }
 
+.actions-edit-container .drag-image {
+  opacity: 1;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transform: scale(1.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* ─── Drop indicators ─── */
+.actions-edit-container .drop-indicator {
+  height: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+  transition: height 0.2s ease, margin 0.2s ease, background 0.2s ease;
+}
 
 @media screen and (orientation: landscape) {
 
@@ -605,12 +643,13 @@
     display: flex;
     flex-direction: column;
     padding: 20px;
-    gap: 10px;
+    gap: 20px;
     color: #fff;
     width: 100%;
     height: 100%;
     box-sizing: border-box;
     overflow-y: auto;
+    padding-top: 70px;
   }
 
   .actions-and-features .results-section { height: 100%; }

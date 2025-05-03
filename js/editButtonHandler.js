@@ -207,8 +207,18 @@ document.addEventListener('DOMContentLoaded', () => {
               if (sourceactionsGrid) {
                 const actionsGridClone = sourceactionsGrid.cloneNode(true);
                 actionsGridClone.querySelectorAll('.action-name, .action-label, .action-description')
-                  .forEach(field => field.contentEditable = "true");
-                
+                  .forEach(field => {
+                    field.contentEditable = "true";
+                      // re-attach placeholder behavior on empty fields
+                      const placeholder =
+                        field.classList.contains('action-name')
+                          ? 'Enter action name here...'
+                          : field.classList.contains('action-label')
+                            ? '+/-'
+                            : 'Enter action description here...';
+                      attachPlaceholder(field, placeholder);
+                    });
+                                    
                 let container = overlayContent.querySelector('.actions-edit-container');
                 if (!container) {
                   container = document.createElement('div');
@@ -272,6 +282,20 @@ if (saveActionsButton) {
           reNumberactionRow(row, newIndex, currentTab);
         });
 
+        // ─── Strip unwanted inline styles (e.g. text-wrap-mode: nowrap) ───
+        rows.forEach(row => {
+          row.querySelectorAll('[style]').forEach(el => {
+            const style = el.getAttribute('style');
+            // remove any text-wrap-mode declarations
+            const cleaned = style.replace(/text-wrap-mode\s*:\s*nowrap;?/gi, '');
+            if (cleaned.trim()) {
+              el.setAttribute('style', cleaned);
+            } else {
+              el.removeAttribute('style');
+            }
+          });
+        });
+
         // Build new HTML content from the re-indexed rows.
         const newHTML = rows.map(row => row.outerHTML).join('');
         
@@ -279,6 +303,25 @@ if (saveActionsButton) {
         const targetGrid = document.querySelector('#' + currentTab + ' .actions-grid');
         if (targetGrid) {
           targetGrid.innerHTML = newHTML;
+            // ─── CLEAN UP PLACEHOLDER FIELDS ───
+            targetGrid
+              .querySelectorAll('.action-name, .action-label, .action-description')
+              .forEach(field => {
+                const txt = field.textContent.trim();
+                // If it's one of the placeholders, wipe it out
+                if (
+                  txt === 'Enter action name here...' ||
+                  txt === '+/-' ||
+                  txt === 'Enter action description here...'
+                ) {
+                  field.textContent = '';
+                }
+                // Remove any leftover inline style (opacity, etc)
+                field.removeAttribute('style');
+                // And lock it down
+                field.contentEditable = "false";
+              });
+
           console.log('✅ actions grid updated in ' + currentTab + ' with re-indexed rows.');
           
           // Set fields to be non-editable when saved.
@@ -353,9 +396,11 @@ function attachPlaceholder(element, placeholderText) {
     }
     
     element.addEventListener('focus', function () {
-      // Immediately clear the field on focus
-      this.textContent = "";
-      this.style.opacity = "1";
+      // Only clear if it’s still showing the placeholder
+      if (this.textContent.trim() === placeholderText) {
+        this.textContent = "";
+        this.style.opacity = "1";
+      }
     });
     
     element.addEventListener('blur', function () {
@@ -392,7 +437,7 @@ function createEmptyactionRow(nextIndex, tabPrefix) {
 
   // Create and append the drag-handle first.
   const dragHandle = document.createElement('span');
-  dragHandle.classList.add('drag-handle');
+  dragHandle.setAttribute('tabindex', '0');
   dragHandle.setAttribute('draggable', 'true');
   dragHandle.innerHTML = "&#9776;";
   row.appendChild(dragHandle);
@@ -446,6 +491,7 @@ function addDragHandlesToOverlay() {
       if (!row.querySelector('.drag-handle')) {
           const dragHandle = document.createElement('span');
           dragHandle.classList.add('drag-handle');
+          dragHandle.setAttribute('tabindex', '0');
           dragHandle.setAttribute('draggable', 'true');
           dragHandle.innerHTML = "&#9776;";
           row.insertBefore(dragHandle, row.firstChild);
@@ -507,42 +553,109 @@ function initializeRowDragAndDrop() {
   if (!grid) return;
   let dragSrcEl = null;
 
+  // ─── Clean up previous listeners & draggable flags ───
+  grid.querySelectorAll('.action-row').forEach(row => {
+    row.removeAttribute('draggable');
+    if (row._dragstart) {
+      row.removeEventListener('dragstart', row._dragstart);
+      delete row._dragstart;
+    }
+    if (row._dragend) {
+      row.removeEventListener('dragend', row._dragend);
+      delete row._dragend;
+    }
+  });
+
+  // ─── Arm each row when its handle is pressed ───
   grid.querySelectorAll('.action-row').forEach(row => {
     const handle = row.querySelector('.drag-handle');
-    if (handle) {
-      handle.addEventListener('dragstart', (e) => {
-        dragSrcEl = row;
-        row.classList.add('dragging'); // Add visual indication here.
-        e.dataTransfer.effectAllowed = 'move';
-        // Set some dummy data to satisfy Firefox requirements.
-        e.dataTransfer.setData('text/html', row.outerHTML);
-      });
-      handle.addEventListener('dragend', () => {
-        row.classList.remove('dragging'); // Remove visual indication.
-      });
-    }
+    if (!handle) return;
 
-    row.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
+    handle.addEventListener('mousedown', () => {
+      row.setAttribute('draggable', 'true');
+    });
+    handle.addEventListener('mouseup', () => {
+      row.removeAttribute('draggable');
     });
 
-    row.addEventListener('drop', (e) => {
-      e.stopPropagation();
-      if (dragSrcEl && dragSrcEl !== row) {
-        // Determine insertion position
-        const bounding = row.getBoundingClientRect();
-        const offset = e.clientY - bounding.top;
-        if (offset > bounding.height / 2) {
-          row.parentNode.insertBefore(dragSrcEl, row.nextSibling);
-        } else {
-          row.parentNode.insertBefore(dragSrcEl, row);
-        }
-      }
-      return false;
-    });
+    const onDragStart = e => {
+      dragSrcEl = row;
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', '');
+    };
+    row.addEventListener('dragstart', onDragStart);
+    row._dragstart = onDragStart;
+
+    const onDragEnd = () => {
+      row.classList.remove('dragging');
+      row.removeAttribute('draggable');
+      // clean up any leftover indicator
+      document.querySelectorAll('.drop-indicator').forEach(d => d.remove());
+    };
+    row.addEventListener('dragend', onDragEnd);
+    row._dragend = onDragEnd;
   });
-}    
+
+  // ─── One single between-row indicator ───
+  const dropIndicator = document.createElement('div');
+  dropIndicator.className = 'drop-indicator';
+
+  // ─── dragover: only show indicator if it would change position ───
+// ─── Delegate dragover to show indicator only when it would actually move the row ───
+grid.addEventListener('dragover', e => {
+  e.preventDefault();
+  const row = e.target.closest('.action-row');
+  if (!row) return;
+
+  // 1) get the full static ordering of rows (including the one being dragged)
+  const allRows      = Array.from(grid.querySelectorAll('.action-row'));
+  const originalIdx  = allRows.indexOf(dragSrcEl);
+  const targetIdx    = allRows.indexOf(row);
+
+  // 2) if you're over the dragged row itself or an unknown element, hide indicator
+  if (targetIdx < 0 || targetIdx === originalIdx) {
+    if (dropIndicator.parentNode) dropIndicator.parentNode.removeChild(dropIndicator);
+    return;
+  }
+
+  // 3) calculate pointer offset within that row
+  const { top, height } = row.getBoundingClientRect();
+  const offset = e.clientY - top;
+
+  // 4) suppress indicator on the “near” half of the adjacent row
+  const isAboveNeighbor = targetIdx === originalIdx - 1;
+  const isBelowNeighbor = targetIdx === originalIdx + 1;
+  if ((isAboveNeighbor && offset >= height/2) ||
+      (isBelowNeighbor && offset <  height/2)) {
+    if (dropIndicator.parentNode) dropIndicator.parentNode.removeChild(dropIndicator);
+    return;
+  }
+
+  // 5) otherwise place it in the proper gap
+  if (dropIndicator.parentNode) {
+    dropIndicator.parentNode.removeChild(dropIndicator);
+  }
+  if (offset < height/2) {
+    row.parentNode.insertBefore(dropIndicator, row);
+  } else {
+    row.parentNode.insertBefore(dropIndicator, row.nextSibling);
+  }
+});
+
+  // ─── drop: insert at the indicator, if present ───
+  grid.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!dropIndicator.parentNode) return;
+
+    const ref = dropIndicator.nextSibling;
+    dropIndicator.parentNode.removeChild(dropIndicator);
+    grid.insertBefore(dragSrcEl, ref);
+
+    dragSrcEl.classList.remove('dragging');
+    dragSrcEl.removeAttribute('draggable');
+  });
+}
 
 // Helper: Re-number a given action row to use a new sequential index.
 function reNumberactionRow(row, newIndex, tabPrefix) {
