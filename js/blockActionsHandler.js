@@ -8,6 +8,8 @@ import { overlayHandler } from './overlayHandler.js';
 import { initUsesField } from './overlayHandler.js';
 import { stripHTML } from './appManager.js';
 
+let pendingDeleteBlockId = null;
+
 export const saveEditHandler = () => {
     console.log("✅ Save Edit Button Clicked!");
 
@@ -202,11 +204,33 @@ export const blockActionsHandler = (() => {
             console.log("🟢 Edit Block Overlay Opened Successfully");
             document.querySelector(".edit-block-overlay").classList.add("show");
         } else if (target.classList.contains("remove-button")) {
-            console.log("🗑 Removing block:", blockId);
-            appManager.removeBlock(blockId);
+            // Show confirmation overlay instead of immediate delete
+            pendingDeleteBlockId = blockId;
+            const overlay = document.querySelector(".remove-block-overlay");
+            overlay && overlay.classList.add("show");
+        } 
         
-            reapplySearchAndFilters();
-        }
+        const initDeleteConfirmation = () => {
+            const confirmBtn = document.getElementById("confirm_remove_button");
+            const cancelBtn = document.getElementById("cancel_remove_button");
+            if (confirmBtn && cancelBtn) {
+                confirmBtn.addEventListener("click", () => {
+                if (pendingDeleteBlockId) {
+                    appManager.removeBlock(pendingDeleteBlockId);
+                    pendingDeleteBlockId = null;
+                    reapplySearchAndFilters();
+                }
+                document.querySelector(".remove-block-overlay").classList.remove("show");
+                });
+                cancelBtn.addEventListener("click", () => {
+                pendingDeleteBlockId = null;
+                document.querySelector(".remove-block-overlay").classList.remove("show");
+                });
+            }
+        };
+        
+        initDeleteConfirmation();
+          
     };
 
     function reapplySearchAndFilters() {
