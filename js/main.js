@@ -6,6 +6,32 @@ import { categoryTags } from './tagConfig.js';
 import './resizeHandle.js';
 import { stripHTML } from './appManager.js';
 
+function filterAndRender(tabNumber) {
+    const activeTab = `tab${tabNumber}`;
+    let blocks = appManager.getBlocks(activeTab);
+  
+    // 1) by tags
+    const sel = tagHandler.getSelectedTags(activeTab);
+    if (sel.length) {
+      blocks = blocks.filter(b => sel.every(t => b.tags.includes(t)));
+    }
+  
+    // 2) by search
+    const query = document
+      .getElementById(`search_input_${tabNumber}`)
+      .value
+      .trim()
+      .toLowerCase();
+    if (query) {
+      blocks = blocks.filter(b =>
+        b.title.toLowerCase().includes(query) ||
+        stripHTML(b.text).toLowerCase().includes(query)
+      );
+    }
+  
+    appManager.renderBlocks(activeTab, blocks);
+  }  
+
 // 📌 Attach event listeners efficiently
 const attachEventListeners = () => {
     console.log("Attaching event listeners");
@@ -154,34 +180,57 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error("❌ Error: targetTab is undefined.");
                 return;
             }
+    
             // Hide all tabs, remove active classes, etc.
             tabButtons.forEach(btn => btn.classList.remove("active"));
             tabContents.forEach(content => {
                 content.classList.remove("active");
                 content.style.display = "none";
             });
+    
             // Show the new active tab
             event.currentTarget.classList.add("active");
             targetContent.classList.add("active");
             targetContent.style.display = "flex";
             localStorage.setItem("activeTab", targetTab);
         
-            appManager.renderBlocks(targetTab);
             appManager.updateTags();
             actionButtonHandlers.attachActionButtonListeners();
-              
+
+            // Re-apply search + tag filters 
             const tabSuffix = targetTab.replace("tab", "");
-            appManager.updateViewToggleDropdown(tabSuffix);
-            
-            setTimeout(() => {
-            const computedStyle = window.getComputedStyle(targetContent);
-            if (computedStyle.display === "none") {
-                targetContent.style.display = "flex";
+            const allBlocks = appManager.getBlocks(targetTab);
+            const searchInput = document.getElementById(`search_input_${tabSuffix}`);
+            const query = searchInput?.value.trim().toLowerCase() || "";
+    
+            // Filter by text
+            let filtered = query
+              ? allBlocks.filter(block =>
+                  block.title.toLowerCase().includes(query) ||
+                  stripHTML(block.text).toLowerCase().includes(query)
+                )
+              : allBlocks;
+    
+            // Filter by selected tags
+            const selectedTags = tagHandler.getSelectedTags(targetTab);
+            if (selectedTags.length) {
+              filtered = filtered.filter(block =>
+                selectedTags.every(tag => block.tags.includes(tag))
+              );
             }
+    
+            //  3) Render the filtered set 
+            appManager.renderBlocks(targetTab, filtered);
+            appManager.updateViewToggleDropdown(tabSuffix);
+            setTimeout(() => {
+                const cs = window.getComputedStyle(targetContent);
+                if (cs.display === "none") {
+                    targetContent.style.display = "flex";
+                }
             }, 100);
         });
     });
-
+    
     // Restore Tab4 actions grid from localStorage
     ["tab4", "tab8"].forEach(tabId => {
         const savedactionsGridHTML = localStorage.getItem(tabId + "_actions_grid");
@@ -295,43 +344,23 @@ document.addEventListener("DOMContentLoaded", () => {
         };
       
         searchInput.addEventListener('input', () => {
-          const query     = searchInput.value.trim().toLowerCase();
-          const activeTab = `tab${tabNumber}`;
-          const allBlocks = appManager.getBlocks(activeTab);
-      
-          // 1) filter on plain-text
-          const filtered = allBlocks.filter(block => {
-            return block.title.toLowerCase().includes(query)
-                || stripHTML(block.text).toLowerCase().includes(query);
-          });
-      
-          // 2) highlight inside the HTML (for body) and in plain text (for title)
-          const highlighted = filtered.map(block => ({
-            ...block,
-            title: highlightInText(block.title, query),
-            text:  highlightInHTML(block.text, query),
-            highlighted: query.length > 0
-          }));
-      
-          appManager.renderBlocks(activeTab, highlighted);
+            filterAndRender(tabNumber);
         });
-      
+                          
         clearSearchButton?.addEventListener('click', () => {
-          searchInput.value = '';
-          const activeTab = `tab${tabNumber}`;
-          appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
-        });
-      
-        clearFiltersButton?.addEventListener('click', () => {
-            document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`)
-                .forEach(tag => tag.classList.remove('selected'));
-          
             searchInput.value = '';
-            tagHandler.clearSelectedTags(`tab${tabNumber}`);
-            const activeTab = `tab${tabNumber}`;
-            appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
+            filterAndRender(tabNumber);
         });
-      }
+                  
+        clearFiltersButton?.addEventListener('click', () => {
+            document
+                .querySelectorAll(`#tab${tabNumber} .tag-button.selected`)
+                .forEach(b => b.classList.remove('selected'));
+            tagHandler.clearSelectedTags(`tab${tabNumber}`);
+            searchInput.value = '';
+            filterAndRender(tabNumber);
+        });
+    }
           
     [1, 2, 3, 4, 5, 6, 7, 8].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
 
@@ -376,35 +405,23 @@ document.querySelectorAll("#tab4 .editable, #tab8 .editable").forEach(field => {
 });
 
 // 📌 Handle tag filtering
+// main.js
 const handleTagFilter = (event) => {
-    const target = event.target;
-    if (!target.classList.contains("tag-button")) return;
-
-    // Toggle the selected class for this tag button
-    target.classList.toggle("selected");
-
-    // Determine the active tab and its corresponding dynamic tags container
-    const activeTab = appManager.getActiveTab(); // e.g., "tab3"
-    const tabNumber = activeTab.replace("tab", "");
-    const container = document.getElementById(`dynamic_tags_section_${tabNumber}`);
-    
-    // Query only within that container
-    const selectedTags = container 
-        ? [...container.querySelectorAll(".tag-button.selected")].map(t => t.dataset.tag)
-        : [];
-
-    console.log("Selected Tags:", selectedTags);
-
-    // Get blocks for the active tab and filter them
-    const filteredBlocks = selectedTags.length
-        ? appManager.getBlocks(activeTab).filter(block =>
-              selectedTags.every(t => block.tags.includes(t))
-          )
-        : appManager.getBlocks(activeTab);
-
-    appManager.renderBlocks(activeTab, filteredBlocks);
+    const btn = event.target;
+    if (!btn.classList.contains("tag-button")) return;
+    btn.classList.toggle("selected");
+  
+    const tabNumber = appManager.getActiveTab().replace("tab", "");
+    // store tags in your handler
+    const selected = [...document
+      .getElementById(`dynamic_tags_section_${tabNumber}`)
+      .querySelectorAll(".tag-button.selected")]
+      .map(b => b.dataset.tag);
+    tagHandler.setSelectedTags(`tab${tabNumber}`, selected);
+  
+    filterAndRender(tabNumber);
 };
-
+    
 // Clear filters and reset results for the specific tab
 const clearFilters = (event) => {
     console.log("Clear Filters button clicked");
