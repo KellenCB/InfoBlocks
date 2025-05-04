@@ -742,15 +742,25 @@ export const appManager = (() => {
   };
                     
   const removeBlock = (blockId) => {
-      if (!blockId) return;
+    if (!blockId) return null;
+    const activeTab = getActiveTab();
+    const userBlocks = getBlocks(activeTab);
+    const idx = userBlocks.findIndex(b => b.id === blockId);
+    if (idx === -1) return null;
+    const [removed] = userBlocks.splice(idx, 1);
+    localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(userBlocks));
+    return removed;
+    };
   
-      const activeTab = getActiveTab();
-      let userBlocks = getBlocks(activeTab);
-  
-      const updatedBlocks = userBlocks.filter(block => block.id !== blockId);
-      localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(updatedBlocks));;
+  const restoreBlock = (block) => {
+    if (!block) return false;
+    const activeTab = getActiveTab();
+    const userBlocks = getBlocks(activeTab);
+    userBlocks.unshift(block);
+    localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(userBlocks));
+    return true;
   };
-        
+    
 /* ==================================================================*/
 /* ======================== HELPER FUNCTIONS ========================*/
 /* ==================================================================*/
@@ -820,6 +830,7 @@ export const appManager = (() => {
         // Data management
         saveBlock,
         removeBlock,
+        restoreBlock,
 
         // Helper functions
         clearFilters,

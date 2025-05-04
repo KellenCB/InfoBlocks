@@ -486,7 +486,6 @@ const keyboardShortcutsHandler = (() => {
             const editBlockOverlay       = document.querySelector(".edit-block-overlay");
             const spellSlotEditOverlay   = document.querySelector(".spell-slot-edit-overlay");
             const actionsEditOverlay     = document.querySelector(".actions-edit-overlay");
-
             const saveBlockButton        = document.getElementById("save-block-button");
             const cancelAddBlockButton   = document.getElementById("cancel_add_block");
             const confirmClearButton     = document.getElementById("confirm_clear_button");
@@ -497,6 +496,11 @@ const keyboardShortcutsHandler = (() => {
             const cancelSpellSlotButton  = document.getElementById("close_spell_slot_edit");
             const saveActionButton       = document.getElementById("save_action_changes");
             const cancelActionButton     = document.getElementById("close_action_edit");
+            const removeBlockOverlay     = document.querySelector(".remove-block-overlay");
+            const cancelRemoveButton     = document.getElementById("cancel_remove_button");
+            const confirmRemoveButton    = document.getElementById("confirm_remove_button");
+            const menuOverlay            = document.getElementById("menu_overlay");
+            const menuButton             = document.getElementById("Menu_button");
 
             // ── 1) Ctrl+Enter = “Save” in Add-Block or Edit-Block, even inside lists
             if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
@@ -566,6 +570,21 @@ const keyboardShortcutsHandler = (() => {
                     cancelActionButton.click();
                 }
             }
+
+            if (removeBlockOverlay?.classList.contains("show")) {
+                if (event.key === "Enter" && confirmRemoveButton) {
+                    event.preventDefault();
+                    confirmRemoveButton.click();
+                } else if (event.key === "Escape" && cancelRemoveButton) {
+                    cancelRemoveButton.click();
+                }
+            }
+
+            if (event.key === "Escape" && menuOverlay?.classList.contains("active")) {
+                menuOverlay.classList.remove("active");
+                menuButton?.classList.remove("menu-button-open");
+            }            
+                
         });
 
         console.log("Keyboard shortcuts attached.");

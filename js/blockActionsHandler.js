@@ -8,8 +8,6 @@ import { overlayHandler } from './overlayHandler.js';
 import { initUsesField } from './overlayHandler.js';
 import { stripHTML } from './appManager.js';
 
-let pendingDeleteBlockId = null;
-
 export const saveEditHandler = () => {
     console.log("✅ Save Edit Button Clicked!");
 
@@ -123,6 +121,34 @@ export const saveEditHandler = () => {
 export let selectedFilterTags = []; // ✅ Stores the search & filter tags before editing
 
 export const blockActionsHandler = (() => {
+    let pendingDeleteBlockId = null;
+    let lastDeletedBlock    = null;
+    
+    // wire up the Undo-button against this IIFE’s lastDeletedBlock
+    const initUndoLastDelete = () => {
+        const undoBtn = document.getElementById("undo_delete_button");
+        if (!undoBtn) return;
+        undoBtn.onclick = () => {
+        console.log("UNDO CLICKED ▶️", lastDeletedBlock);
+        if (!lastDeletedBlock?.block) {
+            window.alert("Nothing to undo");
+            return;
+        }
+        // restore + close menu
+        const { tab, block } = lastDeletedBlock;
+        document.querySelector(`.tab-button[data-tab="${tab}"]`)?.click();
+        appManager.restoreBlock(block);
+        lastDeletedBlock = null;
+        reapplySearchAndFilters();
+        document.getElementById("menu_overlay")?.classList.remove("active");
+        document.getElementById("Menu_button")?.classList.remove("menu-button-open");
+        };
+    };
+    
+// ensure it runs once on load
+document.addEventListener("DOMContentLoaded", initUndoLastDelete);
+
+
     const handleBlockActions = (event) => {
         const target = event.target;
         const blockId = target.getAttribute("data-id");
@@ -208,30 +234,33 @@ export const blockActionsHandler = (() => {
             pendingDeleteBlockId = blockId;
             const overlay = document.querySelector(".remove-block-overlay");
             overlay && overlay.classList.add("show");
-        } 
-        
+        }
+          
         const initDeleteConfirmation = () => {
             const confirmBtn = document.getElementById("confirm_remove_button");
             const cancelBtn = document.getElementById("cancel_remove_button");
             if (confirmBtn && cancelBtn) {
                 confirmBtn.addEventListener("click", () => {
-                if (pendingDeleteBlockId) {
-                    appManager.removeBlock(pendingDeleteBlockId);
-                    pendingDeleteBlockId = null;
-                    reapplySearchAndFilters();
-                }
-                document.querySelector(".remove-block-overlay").classList.remove("show");
-                });
+                    if (pendingDeleteBlockId) {
+                      // 1) remember which tab we’re on
+                      const deletedTab = appManager.getActiveTab();
+                      // 2) remove & keep the block data
+                      const deletedBlock = appManager.removeBlock(pendingDeleteBlockId);
+                      lastDeletedBlock = { tab: deletedTab, block: deletedBlock };
+                      pendingDeleteBlockId = null;
+                      reapplySearchAndFilters();
+                    }
+                    document.querySelector(".remove-block-overlay").classList.remove("show");
+                  });
                 cancelBtn.addEventListener("click", () => {
                 pendingDeleteBlockId = null;
                 document.querySelector(".remove-block-overlay").classList.remove("show");
-                });
+              });
             }
         };
-        
+                                    
         initDeleteConfirmation();
-          
-    };
+    };  
 
     function reapplySearchAndFilters() {
         const activeTab = appManager.getActiveTab();
@@ -267,13 +296,15 @@ export const blockActionsHandler = (() => {
     }
 
     const attachBlockActions = () => {
+        initUndoLastDelete();
+
         document.querySelectorAll(".results-section").forEach(resultsSection => {
-            resultsSection.removeEventListener("click", handleBlockActions); // Prevent duplicate listeners
+            resultsSection.removeEventListener("click", handleBlockActions);
             resultsSection.addEventListener("click", handleBlockActions);
         });
-    
-        console.log("✅ Block action handlers attached to all tabs!");
-    };        
 
+        console.log("✅ Block action handlers attached to all tabs!");
+    };
+    
     return { attachBlockActions };
 })();
