@@ -344,12 +344,29 @@ document.addEventListener("DOMContentLoaded", () => {
         };
       
         searchInput.addEventListener('input', () => {
+            const query = searchInput.value.trim();
             filterAndRender(tabNumber);
+
+            // apply highlighting to visible blocks
+            const resultsSection = document.getElementById(`results_section_${tabNumber}`);
+            // highlight titles (plain text)
+            resultsSection.querySelectorAll('.block-title').forEach(el => {
+                el.innerHTML = highlightInText(el.textContent, query);
+            });
+            // highlight bodies (HTML)
+            resultsSection.querySelectorAll('.block-body').forEach(el => {
+                el.innerHTML = highlightInHTML(el.innerHTML, query);
+            });
         });
                           
         clearSearchButton?.addEventListener('click', () => {
             searchInput.value = '';
             filterAndRender(tabNumber);
+            // remove any leftover highlights
+            const resultsSection = document.getElementById(`results_section_${tabNumber}`);
+            resultsSection.querySelectorAll('.highlight').forEach(span => {
+                span.replaceWith(document.createTextNode(span.textContent));
+            });
         });
                   
         clearFiltersButton?.addEventListener('click', () => {
