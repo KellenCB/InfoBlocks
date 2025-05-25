@@ -232,3 +232,17 @@
         height: 18px;
         width: 18px;
     }
+
+/* ==================================================================*/
+/* ======================= DEATH SAVE STYLING =======================*/
+/* ==================================================================*/
+
+.deathSaveGreen {
+    background-color: #4CAF50;
+    border: 1px solid #4CAF50;
+}
+
+.deathSaveRed {
+    background-color: #ff6b6b;
+    border: 1px solid #ff6b6b;
+}

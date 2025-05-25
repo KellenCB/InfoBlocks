@@ -1,4 +1,4 @@
-import { appManager } from './appManager.js';
+import { appManager, stripHTML } from './appManager.js';
 import { categoryTags } from './tagConfig.js';
 
 export const tagHandler = (() => {
@@ -83,11 +83,11 @@ export const tagHandler = (() => {
             // Apply search filtering if a query is present
             if (searchQuery.length > 0) {
                 filteredBlocks = filteredBlocks.filter(block =>
-                block.title.toLowerCase().includes(searchQuery) ||
-                block.text.toLowerCase().includes(searchQuery)
+                    block.title.toLowerCase().includes(searchQuery) ||
+                    stripHTML(block.text).toLowerCase().includes(searchQuery)
                 );
             }
-        
+                      
             // Re-render blocks for the active tab using the filtered list,
             // then update the tag UI so that the selected tags remain highlighted.
             appManager.renderBlocks(activeTab, filteredBlocks);

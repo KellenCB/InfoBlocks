@@ -6,14 +6,15 @@ import { tagHandler } from './tagHandler.js';
 import { appManager } from './appManager.js';
 import { overlayHandler } from './overlayHandler.js';
 import { initUsesField } from './overlayHandler.js';
+import { stripHTML } from './appManager.js';
 
 export const saveEditHandler = () => {
     console.log("✅ Save Edit Button Clicked!");
 
     // Retrieve and trim the title and text
-    const titleInput = document.getElementById("title_input_edit_overlay").value.trim();
-    const textInput = document.getElementById("block_text_edit_overlay").value.trim();
-
+        const titleInput = document.getElementById("title_input_edit_overlay").value.trim();
+        const textInput  = document.getElementById("block_text_edit_overlay").innerHTML.trim();
+    
     // Extract typed tags from the input field, trimming and normalizing to lowercase
     let tagsInput = document.getElementById("tags_input_edit_overlay").value
         .split(",")
@@ -57,7 +58,7 @@ export const saveEditHandler = () => {
     tagsInput = tagsInput.filter(tag => !currentBlockTags.includes(tag));
 
     // Combine: include any remaining typed tags, selected tag buttons, and the block’s current tags
-    const combinedTagsLowercase = [...new Set([...tagsInput, ...selectedPredefinedTags])];
+    const combinedTagsLowercase = [...new Set([...currentBlockTags, ...tagsInput, ...selectedPredefinedTags])];
 
     // Re-capitalize each tag (first letter uppercase, rest lowercase) for display purposes
     const allTags = combinedTagsLowercase.map(tag => tag.charAt(0).toUpperCase() + tag.slice(1));
@@ -92,13 +93,15 @@ export const saveEditHandler = () => {
     let filteredBlocks = appManager.getBlocks(activeTab);
 
     if (searchQuery) {
-        filteredBlocks = filteredBlocks.filter(block =>
-            block.title.toLowerCase().includes(searchQuery) ||
-            block.text.toLowerCase().includes(searchQuery) ||
-            block.tags.some(tag => tag.toLowerCase().includes(searchQuery))
-        );
+        filteredBlocks = filteredBlocks.filter(block => {
+            const titleMatch = block.title.toLowerCase().includes(searchQuery);
+            const textMatch  = stripHTML(block.text).toLowerCase().includes(searchQuery);
+            const tagMatch   = block.tags.some(tag =>
+                tag.toLowerCase().includes(searchQuery));
+            return titleMatch || textMatch || tagMatch;
+        });
     }
-
+      
     if (selectedTags.length > 0) {
         filteredBlocks = filteredBlocks.filter(block =>
             selectedTags.every(tag =>
@@ -118,6 +121,34 @@ export const saveEditHandler = () => {
 export let selectedFilterTags = []; // ✅ Stores the search & filter tags before editing
 
 export const blockActionsHandler = (() => {
+    let pendingDeleteBlockId = null;
+    let lastDeletedBlock    = null;
+    
+    // wire up the Undo-button against this IIFE’s lastDeletedBlock
+    const initUndoLastDelete = () => {
+        const undoBtn = document.getElementById("undo_delete_button");
+        if (!undoBtn) return;
+        undoBtn.onclick = () => {
+        console.log("UNDO CLICKED ▶️", lastDeletedBlock);
+        if (!lastDeletedBlock?.block) {
+            window.alert("Nothing to undo");
+            return;
+        }
+        // restore + close menu
+        const { tab, block } = lastDeletedBlock;
+        document.querySelector(`.tab-button[data-tab="${tab}"]`)?.click();
+        appManager.restoreBlock(block);
+        lastDeletedBlock = null;
+        reapplySearchAndFilters();
+        document.getElementById("menu_overlay")?.classList.remove("active");
+        document.getElementById("Menu_button")?.classList.remove("menu-button-open");
+        };
+    };
+    
+// ensure it runs once on load
+document.addEventListener("DOMContentLoaded", initUndoLastDelete);
+
+
     const handleBlockActions = (event) => {
         const target = event.target;
         const blockId = target.getAttribute("data-id");
@@ -152,8 +183,10 @@ export const blockActionsHandler = (() => {
             console.log("✅ Stored search & filter tags BEFORE editing:", selectedFilterTags);
         
             document.getElementById("title_input_edit_overlay").value = block.title;
-            document.getElementById("block_text_edit_overlay").value = block.text;
-        
+            const editBody = document.getElementById("block_text_edit_overlay");
+            editBody.innerHTML = block.text.replace(/\n/g, "<br>");
+            editBody.dispatchEvent(new Event('input'));
+                    
             const usesFieldContainerEdit = document.getElementById("uses_field_edit_overlay");
             if (usesFieldContainerEdit) {
                 // Store the current block's uses state (or an empty array if none exists)
@@ -197,12 +230,37 @@ export const blockActionsHandler = (() => {
             console.log("🟢 Edit Block Overlay Opened Successfully");
             document.querySelector(".edit-block-overlay").classList.add("show");
         } else if (target.classList.contains("remove-button")) {
-            console.log("🗑 Removing block:", blockId);
-            appManager.removeBlock(blockId);
-        
-            reapplySearchAndFilters();
+            // Show confirmation overlay instead of immediate delete
+            pendingDeleteBlockId = blockId;
+            const overlay = document.querySelector(".remove-block-overlay");
+            overlay && overlay.classList.add("show");
         }
-    };
+          
+        const initDeleteConfirmation = () => {
+            const confirmBtn = document.getElementById("confirm_remove_button");
+            const cancelBtn = document.getElementById("cancel_remove_button");
+            if (confirmBtn && cancelBtn) {
+                confirmBtn.addEventListener("click", () => {
+                    if (pendingDeleteBlockId) {
+                      // 1) remember which tab we’re on
+                      const deletedTab = appManager.getActiveTab();
+                      // 2) remove & keep the block data
+                      const deletedBlock = appManager.removeBlock(pendingDeleteBlockId);
+                      lastDeletedBlock = { tab: deletedTab, block: deletedBlock };
+                      pendingDeleteBlockId = null;
+                      reapplySearchAndFilters();
+                    }
+                    document.querySelector(".remove-block-overlay").classList.remove("show");
+                  });
+                cancelBtn.addEventListener("click", () => {
+                pendingDeleteBlockId = null;
+                document.querySelector(".remove-block-overlay").classList.remove("show");
+              });
+            }
+        };
+                                    
+        initDeleteConfirmation();
+    };  
 
     function reapplySearchAndFilters() {
         const activeTab = appManager.getActiveTab();
@@ -216,7 +274,7 @@ export const blockActionsHandler = (() => {
         if (searchQuery) {
             filteredBlocks = filteredBlocks.filter(block =>
                 block.title.toLowerCase().includes(searchQuery) ||
-                block.text.toLowerCase().includes(searchQuery) ||
+                stripHTML(block.text).toLowerCase().includes(searchQuery) ||
                 block.tags.some(tag => tag.toLowerCase().includes(searchQuery))
             );
         }
@@ -238,13 +296,15 @@ export const blockActionsHandler = (() => {
     }
 
     const attachBlockActions = () => {
+        initUndoLastDelete();
+
         document.querySelectorAll(".results-section").forEach(resultsSection => {
-            resultsSection.removeEventListener("click", handleBlockActions); // Prevent duplicate listeners
+            resultsSection.removeEventListener("click", handleBlockActions);
             resultsSection.addEventListener("click", handleBlockActions);
         });
-    
-        console.log("✅ Block action handlers attached to all tabs!");
-    };        
 
+        console.log("✅ Block action handlers attached to all tabs!");
+    };
+    
     return { attachBlockActions };
 })();

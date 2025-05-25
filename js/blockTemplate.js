@@ -44,17 +44,17 @@ export const blockTemplate = (block) => {
     ` : "";
 
     // Process block text formatting
-    let processedText = block.text || "";
-    if (block.highlighted) {
-        processedText = processedText.replace(/\n/g, '<br>');
-    } else {
-        processedText = processedText
-            .replace(/\n/g, '<br>')
-            .replace(/\*(.*?)\*/g, '<span style=\"font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase;\">$1</span>');
-    }
+        let bodyHTML = block.text || "";
+        bodyHTML = bodyHTML
+          .replace(/<div[^>]*>/gi, '')      // strip any opening <div>
+          .replace(/^(&nbsp;|\s)+/gi, '')   // strip any leading &nbsp; or whitespace
+          .replace(/<\/div>/gi, '<br>')     // convert closing </div> to <br>
+          .replace(/<p[^>]*>/gi, '')        // strip any opening <p>
+          .replace(/<\/p>/gi, '<br>')       // convert closing </p> to <br>
+          .trim();                          // remove leading/trailing whitespace
 
     // Determine if there is body content
-    const hasBody = processedText.trim() !== "";
+    const hasBody = bodyHTML.trim() !== "";
 
     // Render content based on view state
     let content = "";
@@ -76,9 +76,9 @@ export const blockTemplate = (block) => {
             </div>
             ${tagSectionsHTML}
             ${ hasBody ? `
-            <div class=\"block-body\">
-                <p>${processedText}</p>
-            </div>
+                <div class="block-body">
+                    <span>${bodyHTML}</span>
+                </div>
             ` : "" }
         `;
 

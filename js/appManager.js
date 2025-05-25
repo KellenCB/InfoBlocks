@@ -7,6 +7,12 @@ import { attachDynamicTooltips } from './tooltips.js';
 
 const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
 
+export function stripHTML(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html || '';
+  return tmp.textContent || tmp.innerText || '';
+}
+
 export let selectedFilterTagsBeforeAdd = [];
 
 /* ==================================================================*/
@@ -388,8 +394,10 @@ export const appManager = (() => {
     });  
       
     // ── 3) SORT DROPDOWN ──
-    const sortBtn      = document.getElementById(`results-sort-btn_${tabSuffix}`);
-    const sortDropdown = document.getElementById(`sort-dropdown_${tabSuffix}`);
+    const sortBtn       = document.getElementById(`results-sort-btn_${tabSuffix}`);
+    const sortDropdown  = document.getElementById(`sort-dropdown_${tabSuffix}`);
+    // load saved sort for this tab (default to “newest”)
+    const savedSortMode = localStorage.getItem(`activeSortOrder_${tab}`) || "newest";
     
     // a) Toggle the sort menu open/closed
     sortBtn.addEventListener("click", e => {
@@ -406,19 +414,29 @@ export const appManager = (() => {
       sortDropdown.classList.add("hidden");
     });
     
-    // c) Wire each sort‑item to sortBlocks() + highlight current
+    // c) Wire each sort-item to a per-tab sort function + highlight savedSortMode
     sortDropdown.querySelectorAll(".sort-item").forEach(item => {
-      const mode = item.dataset.sort;  // "newest" | "oldest" | "alpha" | "unalpha"
-    
-      // initial highlight
-      item.classList.toggle("selected", mode === currentSortMode);
-    
-      // on click
-      item.addEventListener("click", () => {
-        sortBlocks(mode);
-        sortDropdown.querySelectorAll(".sort-item").forEach(i => i.classList.remove("selected"));
-        item.classList.add("selected");
+      const mode = item.dataset.sort;
+
+      // initial highlight based on savedSortMode
+      item.classList.toggle("selected", mode === savedSortMode);
+
+      // on click, save and re-render only this tab
+      item.addEventListener("click", e => {
+        e.stopPropagation();
+        // persist new sort for this tab
+        localStorage.setItem(`activeSortOrder_${tab}`, mode);
+        // update highlight
+        sortDropdown.querySelectorAll(".sort-item")
+          .forEach(i => i.classList.toggle("selected", i === item));
+        // close dropdown
         sortDropdown.classList.add("hidden");
+        // re-render this section with new sort
+        const sorted = getBlocks(tab); 
+        renderBlocks(tab, sorted);
+        // re-apply tags + view toggle highlight
+        updateTags();
+        updateViewToggleDropdown(tabSuffix);
       });
     });
     
@@ -519,10 +537,10 @@ export const appManager = (() => {
           const searchInput = document.getElementById(`search_input_${tab.replace("tab", "")}`);
           if (searchInput && searchInput.value.trim() !== "") {
             const query = searchInput.value.trim().toLowerCase();
-            filteredBlocks = filteredBlocks.filter(block =>
-              block.title.toLowerCase().includes(query) ||
-              block.text.toLowerCase().includes(query)
-            );
+                filteredBlocks = filteredBlocks.filter(block =>
+                block.title.toLowerCase().includes(query) ||
+                stripHTML(block.text).toLowerCase().includes(query)
+              );
           }
           
           // Apply tag filters if any are selected
@@ -593,15 +611,16 @@ export const appManager = (() => {
       const storedBlocks = localStorage.getItem(`userBlocks_${tab}`);
       const parsedBlocks = storedBlocks ? JSON.parse(storedBlocks) : [];
 
-      // ✅ Apply sorting based on the currently selected mode
-      if (currentSortMode === "newest") {
+      // ✅ Apply per-tab sorting based on savedSortOrder_{tab} (default “newest”)
+      const sortMode = localStorage.getItem(`activeSortOrder_${tab}`) || "newest";
+      if (sortMode === "newest") {
           parsedBlocks.sort((a, b) => b.timestamp - a.timestamp);
-      } else if (currentSortMode === "oldest") {
+      } else if (sortMode === "oldest") {
           parsedBlocks.sort((a, b) => a.timestamp - b.timestamp);
-      } else if (currentSortMode === "alpha") {
+      } else if (sortMode === "alpha") {
           parsedBlocks.sort((a, b) => a.title.localeCompare(b.title));
-      } else if (currentSortMode === "unalpha") {
-        parsedBlocks.sort((a, b) => b.title.localeCompare(a.title));
+      } else if (sortMode === "unalpha") {
+          parsedBlocks.sort((a, b) => b.title.localeCompare(a.title));
       }
 
       return parsedBlocks;
@@ -736,15 +755,25 @@ export const appManager = (() => {
   };
                     
   const removeBlock = (blockId) => {
-      if (!blockId) return;
+    if (!blockId) return null;
+    const activeTab = getActiveTab();
+    const userBlocks = getBlocks(activeTab);
+    const idx = userBlocks.findIndex(b => b.id === blockId);
+    if (idx === -1) return null;
+    const [removed] = userBlocks.splice(idx, 1);
+    localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(userBlocks));
+    return removed;
+    };
   
-      const activeTab = getActiveTab();
-      let userBlocks = getBlocks(activeTab);
-  
-      const updatedBlocks = userBlocks.filter(block => block.id !== blockId);
-      localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(updatedBlocks));;
+  const restoreBlock = (block) => {
+    if (!block) return false;
+    const activeTab = getActiveTab();
+    const userBlocks = getBlocks(activeTab);
+    userBlocks.unshift(block);
+    localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(userBlocks));
+    return true;
   };
-        
+    
 /* ==================================================================*/
 /* ======================== HELPER FUNCTIONS ========================*/
 /* ==================================================================*/
@@ -814,6 +843,7 @@ export const appManager = (() => {
         // Data management
         saveBlock,
         removeBlock,
+        restoreBlock,
 
         // Helper functions
         clearFilters,

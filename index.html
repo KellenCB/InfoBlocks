@@ -452,7 +452,7 @@
                     </div>
                 </div>
         
-                <div class="character-sheet-column np-gap">
+                <div class="actions-and-features">
                     <!-- Actions -->
                     <div class="actions-grid-wrapper">
                         <div class="actions-grid">
@@ -705,7 +705,6 @@
                 </div>
             </div>
 
-
         <div class="character-sheet-row">
             <!-- Saving Throws & Skills -->
             <div class="saving-throws-and-skills-column">
@@ -838,7 +837,7 @@
                 </div>
             </div>
 
-            <div class="character-sheet-column">
+            <div class="actions-and-features">
                 <!-- Actions -->
                 <div class="actions-grid-wrapper">
                     <div class="actions-grid">
@@ -879,6 +878,10 @@
               </span>
             </button>
       
+            <button id="undo_delete_button" class="menu-item-button">
+                Undo Last Delete 
+            </button>
+
             <button id="bin_button" class="menu-item-button bin-button">
               Clear All Data 
               <span class="button-icon">
@@ -967,10 +970,12 @@
     <div class="add-block-overlay">
         <div class="add-block-form">
             <h2>Add Information Block</h2>
-            <input type="text" id="title_input_overlay" placeholder="Enter block title here..." />
-            <div id="uses_field_overlay" class="uses-field"></div>        
-            <textarea id="block_text_overlay" class="auto-resize" placeholder="Enter block text here..." rows="1"></textarea>
-            <input type="text" id="tags_input_overlay" placeholder="Enter custom tags here..."  />
+            <div class="add_and_edit_inputs">
+                <input type="text" id="title_input_overlay" placeholder="Enter block title here..." />
+                <div id="uses_field_overlay" class="uses-field"></div>   
+                <div id="block_text_overlay" class="auto-resize" contenteditable="true" data-placeholder="Enter block text here..." rows="1"></div>
+                <input type="text" id="tags_input_overlay" placeholder="Enter custom tags here..."  />
+            </div>
             <div class="overlay-tags" id="dynamic_overlay_tags"></div>
             <div class="overlay-controls">
                 <button id="save-block-button" class="button green-button">Save Block</button>
@@ -984,11 +989,12 @@
     <div class="edit-block-overlay">
         <div class="edit-block-form">
             <h2>Edit Information Block</h2>
-            <input type="text" id="title_input_edit_overlay" placeholder="Edit title block" />
-            <div id="uses_field_edit_overlay" class="uses-field"></div>        
-            <textarea id="block_text_edit_overlay" class="auto-resize" placeholder="Edit block text here..." rows="1"></textarea>
-            <input type="text" id="tags_input_edit_overlay" placeholder="Edit tags (comma separated)" />
-
+            <div class="add_and_edit_inputs">
+                <input type="text" id="title_input_edit_overlay" placeholder="Edit title block" />
+                <div id="uses_field_edit_overlay" class="uses-field"></div>        
+                <div id="block_text_edit_overlay" class="auto-resize" contenteditable="true" data-placeholder="Enter block text here..." rows="1"></div>
+                <input type="text" id="tags_input_edit_overlay" placeholder="Edit tags (comma separated)" />
+            </div>
             <!-- Section where predefined tags should be displayed -->
             <div class="overlay-tags" id="dynamic_overlay_tags">
                 <div id="predefined_tags_edit"></div>
@@ -1007,7 +1013,7 @@
     <div class="cleardata-overlay">
         <div class="cleardata-form">
             <h2>Clear All Data</h2>
-            <p>Are you sure you want to clear all data?<br> <br> This action cannot be undone.<br> </p>
+            <p><br>Are you sure you want to clear all data?<br> </p> <p style = "text-transform: uppercase; font-weight: bold; letter-spacing: 1px;"><br> This action cannot be undone.</p><p> <br> If you want to retain any information in the character sheet first use the download function to save the data so that it can reuploaded later.</p>
             <div class="overlay-controls">
                 <button id="confirm_clear_button" class="button green-button">Yes</button>
                 <button id="cancel_clear_button" class="button red-button">No</button>
@@ -1050,7 +1056,18 @@
     </div>
 </div>
 
-
+<!-- Overlay for Deleting Block -->
+<div class="cleardata-overlay remove-block-overlay">
+    <div class="cleardata-form">
+      <h2>Delete Information Block</h2>
+      <p>Are you sure you want to delete this block?</p>
+      <div class="overlay-controls">
+        <button id="confirm_remove_button" class="button green-button">Yes</button>
+        <button id="cancel_remove_button" class="button red-button">No</button>
+      </div>
+    </div>
+  </div>
+  
     <script type="module" src="js/tagConfig.js"></script>
     <script type="module" src="js/appManager.js"></script>
     <script type="module" src="js/main.js"></script>
