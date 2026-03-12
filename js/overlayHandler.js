@@ -312,7 +312,9 @@ export const overlayHandler = (() => {
         const exceptionTabs = ["tab3", "tab6", "tab7"];
     
         // Get predefined and user-defined tags
-        const predefinedTagList = Object.values(categoryTags).flatMap(cat => cat.tags);
+        const predefinedTagList = Object.entries(categoryTags)
+            .filter(([_, data]) => data.tabs.includes(activeTab))
+            .flatMap(([_, data]) => data.tags);
         const userDefinedTags = [
             ...new Set(
                 appManager.getBlocks(activeTab)

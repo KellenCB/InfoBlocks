@@ -2,17 +2,21 @@ import { tagHandler } from './tagHandler.js';
 import { categoryTags } from './tagConfig.js';
 import { toggleBlockUse } from './circleToggle.js';
 
-export const blockTemplate = (block) => {
-    // Ensure a default view state
+export const blockTemplate = (block, tab = "tab1") => {
     const viewState = block.viewState || 'expanded';
     const selectedTags = tagHandler.getSelectedTags();
 
-    // Build tags HTML
+    const tabPredefinedTags = Object.entries(categoryTags)
+        .filter(([_, data]) => data.tabs.includes(tab))
+        .flatMap(([_, data]) => data.tags);
+
     const predefinedTagsByCategory = Object.fromEntries(
-        Object.entries(categoryTags).map(([category, data]) => [
-            category,
-            Array.isArray(data.tags) ? data.tags.filter(tag => block.tags.includes(tag)) : []
-        ])
+        Object.entries(categoryTags)
+            .filter(([_, data]) => data.tabs.includes(tab))
+            .map(([category, data]) => [
+                category,
+                Array.isArray(data.tags) ? data.tags.filter(tag => block.tags.includes(tag)) : []
+            ])
     );
 
     const predefinedTagsHTML = Object.entries(predefinedTagsByCategory)
@@ -25,7 +29,7 @@ export const blockTemplate = (block) => {
         )
         .join("");
 
-    const predefinedTagList = Object.values(categoryTags).flatMap(data => data.tags);
+    const predefinedTagList = tabPredefinedTags;
     const userTags = block.tags
         .filter(tag => !predefinedTagList.includes(tag))
         .map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase());
@@ -44,14 +48,14 @@ export const blockTemplate = (block) => {
     ` : "";
 
     // Process block text formatting
-        let bodyHTML = block.text || "";
-        bodyHTML = bodyHTML
-          .replace(/<div[^>]*>/gi, '')      // strip any opening <div>
-          .replace(/^(&nbsp;|\s)+/gi, '')   // strip any leading &nbsp; or whitespace
-          .replace(/<\/div>/gi, '<br>')     // convert closing </div> to <br>
-          .replace(/<p[^>]*>/gi, '')        // strip any opening <p>
-          .replace(/<\/p>/gi, '<br>')       // convert closing </p> to <br>
-          .trim();                          // remove leading/trailing whitespace
+    let bodyHTML = block.text || "";
+    bodyHTML = bodyHTML
+        .replace(/<div[^>]*>/gi, '')
+        .replace(/^(&nbsp;|\s)+/gi, '')
+        .replace(/<\/div>/gi, '<br>')
+        .replace(/<p[^>]*>/gi, '')
+        .replace(/<\/p>/gi, '<br>')
+        .trim();
 
     // Determine if there is body content
     const hasBody = bodyHTML.trim() !== "";
@@ -81,7 +85,6 @@ export const blockTemplate = (block) => {
                 </div>
             ` : "" }
         `;
-
     } else if (viewState === 'condensed') {
         const usesHTML = block.uses
             ? block.uses.map((state, idx) => `<span class=\"circle ${state ? 'unfilled' : ''}\" onclick=\"toggleBlockUse('${block.id}', ${idx}, event, this)\"></span>`).join("")

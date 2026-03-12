@@ -191,7 +191,10 @@ export const appManager = (() => {
     const selectedTags = tagHandler.getSelectedTags(activeTab);
   
     // Get all predefined tags from tagConfig.js
-    const allPredefined = Object.values(categoryTags).flatMap(cat => cat.tags);
+    const allPredefined = Object.entries(categoryTags)
+        .filter(([_, data]) => data.tabs.includes(activeTab))
+        .flatMap(([_, data]) => data.tags);
+
     // Determine user-defined tags (those not in the predefined list)
     const usedUserTags = usedTags
       .filter(tag => !allPredefined.includes(tag))
@@ -498,7 +501,7 @@ export const appManager = (() => {
         }
       }
       blocks.forEach(block => {
-        resultsSection.insertAdjacentHTML("beforeend", blockTemplate(block));
+          resultsSection.insertAdjacentHTML("beforeend", blockTemplate(block, tab));
       });
       console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
         
