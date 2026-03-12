@@ -112,12 +112,12 @@ export const actionButtonHandlers = (() => {
 
     // Confirm Clear Data - Purge entire localStorage and reload
     if (elements.confirmClearButton && elements.clearDataOverlay) {
-      elements.confirmClearButton.addEventListener("click", () => {
+      elements.confirmClearButton.onclick = () => {
         console.log("✅ Confirm Clear Data button clicked");
         localStorage.clear();
         alert("All data has been cleared.");
         location.reload();
-      });
+    };
     } else {
       console.error("❌ Error: Confirm Clear button not found.");
     }
