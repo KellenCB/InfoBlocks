@@ -267,6 +267,8 @@ export const appManager = (() => {
   ToggleFilters.forEach(button => {
     button.addEventListener("click", () => {
       const container = button.closest(".filter-and-results");
+      const tabContent = button.closest(".tab-content");
+      const tabId = tabContent ? tabContent.id : null;
       const selectors = [
         ".filter-section",
         ".filter-section-wrapper",
@@ -279,13 +281,18 @@ export const appManager = (() => {
         .forEach(el => el.classList.toggle("hidden"));
 
       const filterSection = container.querySelector(".filter-section");
-      if (filterSection.classList.contains("hidden")) {
+      const isHidden = filterSection.classList.contains("hidden");
+
+      if (isHidden) {
         button.innerHTML = '<img src="./images/Filter_Open_Icon.svg" alt="Filter icon">';
       } else {
         button.innerHTML = '<img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">';
-      }  
+      }
+
+      if (tabId) localStorage.setItem(`filterVisible_${tabId}`, (!isHidden).toString());
     });
   });
+
 
 /* ==================================================================*/
 /* ============================= BLOCKS =============================*/

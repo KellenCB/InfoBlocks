@@ -130,6 +130,29 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Tab order restored:", savedOrder);
     }
 
+    // Restore filter section visibility for each tab
+    [1, 2, 3, 4, 5, 6, 7, 8].forEach(num => {
+    const tabId = `tab${num}`;
+    const saved = localStorage.getItem(`filterVisible_${tabId}`);
+    if (saved === "false") {
+        const tab = document.getElementById(tabId);
+        if (!tab) return;
+        const button = tab.querySelector(".toggle-filter-button");
+        const container = tab.querySelector(".filter-and-results");
+        if (!button || !container) return;
+
+        const selectors = [
+            ".filter-section",
+            ".filter-section-wrapper",
+            ".filter-section-overlay-top",
+            ".filter-section-overlay-bottom"
+        ].join(", ");
+
+        container.querySelectorAll(selectors).forEach(el => el.classList.add("hidden"));
+        button.innerHTML = '<img src="./images/Filter_Open_Icon.svg" alt="Filter icon">';
+        }
+    });
+
     const tabButtons = document.querySelectorAll(".tab-button");
     tabButtons.forEach(button => {
         button.addEventListener("dragstart", () => {
