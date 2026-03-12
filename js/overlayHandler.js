@@ -131,7 +131,7 @@ export const handleSaveBlock = () => {
         // 4. For Tab 3: filter out any typed tags that already exist in the dynamic overlay.
         const exceptionTabs = ["tab3", "tab6", "tab7"];
         if (exceptionTabs.includes(activeTab)) {
-            const dynamicTagsContainer = document.getElementById("dynamic_overlay_tags");
+            const dynamicTagsContainer = document.getElementById("add_block_overlay_tags");
             let existingUserDefinedTags = [];
             if (dynamicTagsContainer) {
                 existingUserDefinedTags = Array.from(
@@ -325,7 +325,7 @@ export const overlayHandler = (() => {
         .map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase())
         .sort((a, b) => a.localeCompare(b));
                     
-        if (containerId === "dynamic_overlay_tags") {
+        if (containerId === "dynamic_overlay_tags" || containerId === "add_block_overlay_tags") {
             if (exceptionTabs.includes(activeTab)) {
                 let html = "";
                 // Add user-defined tags, if any:

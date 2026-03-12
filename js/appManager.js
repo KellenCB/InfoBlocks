@@ -88,7 +88,7 @@ export const actionButtonHandlers = (() => {
         }
 
         // Initialize overlay predefined tags
-        overlayHandler.initializeOverlayTagHandlers("dynamic_overlay_tags");
+        overlayHandler.initializeOverlayTagHandlers("add_block_overlay_tags");
 
         // Open overlay and focus the title input after a short delay
         elements.addBlockOverlay.classList.add("show");
