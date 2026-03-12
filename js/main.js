@@ -265,6 +265,25 @@ document.addEventListener("DOMContentLoaded", () => {
             // Lock the fields so they aren't editable on the main screen.
             actionsGrid.querySelectorAll('.action-name, .action-label, .action-description')
               .forEach(field => field.contentEditable = "false");
+            // restore condensed/expanded display state
+            actionsGrid.querySelectorAll('.action-row').forEach(row => {
+              console.log('viewState:', row.dataset.viewState, '| classes:', row.className);
+              const btn = row.querySelector('button');
+              if (row.dataset.viewState === 'expanded') {
+                row.classList.remove('condensed');
+                row.classList.add('expanded');
+                if (btn) btn.textContent = "-";
+              } else {
+                row.classList.remove('expanded');
+                row.classList.add('condensed');
+                if (btn) btn.textContent = "+";
+                // collapse to first line
+                row.querySelectorAll('.action-name, .action-label, .action-description').forEach(field => {
+                  if (!field.dataset.fullContent) field.dataset.fullContent = field.innerHTML;
+                  field.innerHTML = field.innerHTML.split('<br>')[0];
+                });
+              }
+            });
           } else {
             console.warn("actions grid element not found in " + tabId);
           }
@@ -617,6 +636,19 @@ const keyboardShortcutsHandler = (() => {
                     confirmRemoveButton.click();
                 } else if (event.key === "Escape" && cancelRemoveButton) {
                     cancelRemoveButton.click();
+                }
+            }
+
+            const removeActionOverlay = document.querySelector('.remove-action-overlay');
+            const confirmRemoveActionButton = document.getElementById('confirm_remove_action_button');
+            const cancelRemoveActionButton = document.getElementById('cancel_remove_action_button');
+
+            if (removeActionOverlay?.classList.contains('show')) {
+                if (event.key === 'Enter' && confirmRemoveActionButton) {
+                    event.preventDefault();
+                    confirmRemoveActionButton.click();
+                } else if (event.key === 'Escape' && cancelRemoveActionButton) {
+                    cancelRemoveActionButton.click();
                 }
             }
 

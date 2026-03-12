@@ -272,6 +272,7 @@ if (saveActionsButton) {
       if (newGrid) {
         // Remove all drag handle elements from each row.
         newGrid.querySelectorAll('.drag-handle').forEach(handle => handle.remove());
+        newGrid.querySelectorAll('.remove-action-button').forEach(btn => btn.remove());
         
         // Filter out completely empty rows.
         let rows = Array.from(newGrid.querySelectorAll('.action-row')).filter(row => !isactionRowCompletelyEmpty(row));
@@ -297,7 +298,13 @@ if (saveActionsButton) {
         });
 
         // Build new HTML content from the re-indexed rows.
-        const newHTML = rows.map(row => row.outerHTML).join('');
+        const newHTML = rows.map(row => {
+          // ensure full content is saved not the condensed first-line version
+          row.querySelectorAll('.action-name, .action-label, .action-description').forEach(field => {
+            if (field.dataset.fullContent) field.innerHTML = field.dataset.fullContent;
+          });
+          return row.outerHTML;
+        }).join('');
         
         // Update the actions grid in the source tab (currentTab) with the new content.
         const targetGrid = document.querySelector('#' + currentTab + ' .actions-grid');
@@ -437,6 +444,7 @@ function createEmptyactionRow(nextIndex, tabPrefix) {
 
   // Create and append the drag-handle first.
   const dragHandle = document.createElement('span');
+  dragHandle.classList.add('drag-handle');
   dragHandle.setAttribute('tabindex', '0');
   dragHandle.setAttribute('draggable', 'true');
   dragHandle.innerHTML = "&#9776;";
@@ -477,25 +485,36 @@ function createEmptyactionRow(nextIndex, tabPrefix) {
   // Listen for input events so that a new empty row is appended as needed.
   row.addEventListener('input', () => {
     ensureExtraEmptyactionRow();
+    // add remove button once row has content
+    if (!isactionRowCompletelyEmpty(row) && !row.querySelector('.remove-action-button')) {
+      const removeButton = document.createElement('button');
+      removeButton.classList.add('action-button', 'red-button', 'remove-action-button');
+      removeButton.textContent = '×';
+      row.appendChild(removeButton);
+    }
   });
-
   return row;
 }
-
 
 // Helper: Drag to reorder rows.
 function addDragHandlesToOverlay() {
   const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
   if (!grid) return;
   grid.querySelectorAll('.action-row').forEach(row => {
-      if (!row.querySelector('.drag-handle')) {
-          const dragHandle = document.createElement('span');
-          dragHandle.classList.add('drag-handle');
-          dragHandle.setAttribute('tabindex', '0');
-          dragHandle.setAttribute('draggable', 'true');
-          dragHandle.innerHTML = "&#9776;";
-          row.insertBefore(dragHandle, row.firstChild);
-      }
+    if (!row.querySelector('.drag-handle')) {
+        const dragHandle = document.createElement('span');
+        dragHandle.classList.add('drag-handle');
+        dragHandle.setAttribute('tabindex', '0');
+        dragHandle.setAttribute('draggable', 'true');
+        dragHandle.innerHTML = "&#9776;";
+        row.insertBefore(dragHandle, row.firstChild);
+    }
+    if (!row.querySelector('.remove-action-button') && !isactionRowCompletelyEmpty(row)) {
+        const removeButton = document.createElement('button');
+        removeButton.classList.add('action-button', 'red-button', 'remove-action-button');
+        removeButton.textContent = '×';
+        row.appendChild(removeButton);
+    }
   });
 }
 
@@ -505,8 +524,10 @@ function initializeActionRowToggles() {
   // Set the initial state (condensed) for all existing .action-row elements.
   const actionRows = document.querySelectorAll('.action-row');
   actionRows.forEach(row => {
-    row.classList.add('condensed');
-    row.classList.remove('expanded');
+    if (!row.dataset.viewState) {
+      row.classList.add('condensed');
+      row.classList.remove('expanded');
+    }
 
     // Find the toggle button within the row
     const toggleButton = row.querySelector('button');
@@ -532,17 +553,50 @@ function initializeActionRowToggles() {
         console.warn("Toggle button clicked, but no parent .action-row found.");
         return;
       }
-      // Toggle between expanded and condensed states and update button symbol accordingly.
       if (row.classList.contains('expanded')) {
         row.classList.remove('expanded');
         row.classList.add('condensed');
+        row.dataset.viewState = 'condensed';
         toggleButton.textContent = "+";
-        console.log(`Action row containing button "${toggleButton.textContent}" toggled to condensed.`);
+        row.querySelectorAll('.action-name, .action-label, .action-description').forEach(field => {
+          if (!field.dataset.fullContent) field.dataset.fullContent = field.innerHTML;
+          field.innerHTML = field.innerHTML.split('<br>')[0];
+        });
       } else {
         row.classList.remove('condensed');
         row.classList.add('expanded');
+        row.dataset.viewState = 'expanded';
         toggleButton.textContent = "-";
-        console.log(`Action row containing button "${toggleButton.textContent}" toggled to expanded.`);
+        row.querySelectorAll('.action-name, .action-label, .action-description').forEach(field => {
+          if (field.dataset.fullContent) field.innerHTML = field.dataset.fullContent;
+        });
+      }
+      // save state after either toggle
+      const actionsGrid = row.closest('.actions-grid');
+      const tabContent = row.closest('.tab-content');
+      if (actionsGrid && tabContent) {
+        const rows = Array.from(actionsGrid.querySelectorAll('.action-row'));
+        const html = rows.map(r => {
+          const clone = r.cloneNode(true);
+          clone.querySelectorAll('.action-name, .action-label, .action-description').forEach(field => {
+              if (field.dataset.fullContent) field.innerHTML = field.dataset.fullContent;
+          });
+          // strip text-wrap-mode: nowrap from any inner elements
+          clone.querySelectorAll('[style]').forEach(el => {
+            const style = el.getAttribute('style');
+            const cleaned = style.replace(/text-wrap-mode\s*:\s*nowrap;?/gi, '');
+            if (cleaned.trim()) {
+              el.setAttribute('style', cleaned);
+            } else {
+              el.removeAttribute('style');
+            }
+          });
+          const state = clone.dataset.viewState || 'condensed';
+          clone.classList.remove('condensed', 'expanded');
+          clone.classList.add(state);
+          return clone.outerHTML;
+        }).join('');
+        localStorage.setItem(tabContent.id + '_actions_grid', html);
       }
     }
   });
@@ -706,17 +760,46 @@ function ensureExtraEmptyactionRow() {
       grid.appendChild(newRow);
   }
 }
-  
-  // Call on initialization to add listeners to any existing rows and ensure an extra empty row.
-  function initializeDynamicactionRows() {
-    const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
-    if (!grid) return;
-    const rows = grid.querySelectorAll('.action-row');
-    rows.forEach(row => {
-      row.addEventListener('input', () => {
-        ensureExtraEmptyactionRow();
-      });
+
+let pendingRemoveRow = null;
+
+document.addEventListener('click', e => {
+    const removeBtn = e.target.closest('.remove-action-button');
+    if (!removeBtn) return;
+    pendingRemoveRow = removeBtn.closest('.action-row');
+    const overlay = document.querySelector('.remove-action-overlay');
+    if (overlay) overlay.classList.add('show');
+});
+
+const confirmRemoveAction = document.getElementById('confirm_remove_action_button');
+const cancelRemoveAction = document.getElementById('cancel_remove_action_button');
+
+if (confirmRemoveAction) {
+    confirmRemoveAction.onclick = () => {
+        if (pendingRemoveRow) {
+            pendingRemoveRow.remove();
+            pendingRemoveRow = null;
+        }
+        document.querySelector('.remove-action-overlay').classList.remove('show');
+    };
+}
+
+if (cancelRemoveAction) {
+    cancelRemoveAction.onclick = () => {
+        pendingRemoveRow = null;
+        document.querySelector('.remove-action-overlay').classList.remove('show');
+    };
+}
+
+// Call on initialization to add listeners to any existing rows and ensure an extra empty row.
+function initializeDynamicactionRows() {
+  const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
+  if (!grid) return;
+  const rows = grid.querySelectorAll('.action-row');
+  rows.forEach(row => {
+    row.addEventListener('input', () => {
+      ensureExtraEmptyactionRow();
     });
-    ensureExtraEmptyactionRow();
-  }
-  
+  });
+  ensureExtraEmptyactionRow();
+}
