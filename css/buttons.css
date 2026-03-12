@@ -250,3 +250,12 @@
     width: 16px;
     height: 16px;
 }
+
+.deathSaveGreen.toggle-circle { background-color: #4CAF50; border-color: #4CAF50; }
+.deathSaveRed.toggle-circle   { background-color: #ff6b6b; border-color: #ff6b6b; }
+
+.deathSaveGreen.toggle-circle.unfilled { background-color: transparent; }
+.deathSaveRed.toggle-circle.unfilled   { background-color: transparent; }
+
+.deathSaveGreen.toggle-circle.filled { background-color: #4CAF50; border-color: #4CAF50; }
+.deathSaveRed.toggle-circle.filled   { background-color: #ff6b6b; border-color: #ff6b6b; }
