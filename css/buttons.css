@@ -240,9 +240,13 @@
 .deathSaveGreen {
     background-color: #4CAF50;
     border: 1px solid #4CAF50;
+    width: 16px;
+    height: 16px;
 }
 
 .deathSaveRed {
     background-color: #ff6b6b;
     border: 1px solid #ff6b6b;
+    width: 16px;
+    height: 16px;
 }
