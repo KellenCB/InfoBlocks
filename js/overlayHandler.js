@@ -449,7 +449,7 @@ export const overlayHandler = (() => {
 function addFormatToolbar() {
     const configs = [
       { formSel: '.add-block-form', textareaId: 'block_text_overlay' },
-      { formSel: '.edit-block-form',   textareaId: 'block_text_edit_overlay' }
+      { formSel: '.edit-block-form', textareaId: 'block_text_edit_overlay' }
     ];
   
     configs.forEach(({ formSel, textareaId }) => {
@@ -462,13 +462,13 @@ function addFormatToolbar() {
       const toolbar = document.createElement('div');
       toolbar.className = 'text-toolbar';
       toolbar.innerHTML = `
-        <button type="button" data-action="bold"><i class="fas fa-bold"></i></button>
-        <button type="button" data-action="italic"><i class="fas fa-italic"></i></button>
-        <button type="button" data-action="underline"><i class="fas fa-underline"></i></button>
-        <button type="button" data-action="link"><i class="fas fa-link"></i></button>
-        <button type="button" data-action="insertUnorderedList"><i class="fas fa-list-ul"></i></button>
-        <button type="button" data-action="insertOrderedList"><i class="fas fa-list-ol"></i></button>
-        <button type="button" data-action="increaseFont"><i class="fas fa-arrow-up"></i></button>
+        <button type="button" data-action="bold" data-tooltip="Bold"><i class="fas fa-bold"></i></button>
+        <button type="button" data-action="italic" data-tooltip="Italic"><i class="fas fa-italic"></i></button>
+        <button type="button" data-action="underline" data-tooltip="Underline"><i class="fas fa-underline"></i></button>
+        <button type="button" data-action="link" data-tooltip="Link"><i class="fas fa-link"></i></button>
+        <button type="button" data-action="insertUnorderedList" data-tooltip="Unordered List"><i class="fas fa-list-ul"></i></button>
+        <button type="button" data-action="insertOrderedList" data-tooltip="Ordered List"><i class="fas fa-list-ol"></i></button>
+        <button type="button" data-action="increaseFont" data-tooltip="Increase Font"><i class="fas fa-arrow-up"></i></button>
         <select id="font-size-select">
             <option value="3">16px</option>
             <option value="4">18px</option>
@@ -476,10 +476,12 @@ function addFormatToolbar() {
             <option value="6">32px</option>
             <option value="7">48px</option>
         </select>
-        <button type="button" data-action="decreaseFont"><i class="fas fa-arrow-down"></i></button>
-        <button type="button" data-action="uppercase">A↑</button>
-        <button type="button" data-action="sentencecase">Aa</button>
-        <button type="button" data-action="lowercase">a↓</button>
+        <button type="button" data-action="decreaseFont" data-tooltip="Decrease Font"><i class="fas fa-arrow-down"></i></button>
+        <button type="button" data-action="uppercase" data-tooltip="Uppercase">A↑</button>
+        <button type="button" data-action="sentencecase" data-tooltip="Sentence case">Aa</button>
+        <button type="button" data-action="lowercase" data-tooltip="Lowercase">a↓</button>
+        <button type="button" data-action="removeStyling" data-tooltip="Remove styling">✕</button>
+        <button type="button" data-action="findReplace" data-tooltip="Find and Replace">A→B</button>
       `;
   
       const wrapper = document.createElement('div');
@@ -487,7 +489,231 @@ function addFormatToolbar() {
       editor.parentNode.replaceChild(wrapper, editor);
       wrapper.appendChild(toolbar);
       wrapper.appendChild(editor);
-  
+
+      // ── Find & Replace Panel — created BEFORE buttons forEach ──
+      const frPanel = document.createElement('div');
+      frPanel.className = 'find-replace-panel hidden';
+      frPanel.innerHTML = `
+        <div class="find-replace-row">
+            <input type="text" class="fr-find" placeholder="Find..." />
+            <input type="text" class="fr-replace" placeholder="Replace..." />
+        </div>
+        <div class="find-replace-row">
+            <button type="button" class="fr-btn fr-find-next">Find Next</button>
+            <button type="button" class="fr-btn fr-replace-one">Replace One</button>
+            <button type="button" class="fr-btn fr-replace-all">Replace All</button>
+            <button type="button" class="fr-btn fr-close">✕</button>
+        </div>
+        <div class="fr-feedback"></div>
+      `;
+      wrapper.insertBefore(frPanel, editor);
+
+      let frMatches = [];
+      let frIndex = -1;
+
+      const frFind = frPanel.querySelector('.fr-find');
+      const frReplace = frPanel.querySelector('.fr-replace');
+      const frFeedback = frPanel.querySelector('.fr-feedback');
+
+      // remove all highlights entirely
+      const clearFrHighlights = () => {
+        editor.querySelectorAll('span.fr-highlight, span.fr-highlight-active').forEach(span => {
+          span.replaceWith(...span.childNodes);
+        });
+        editor.normalize();
+      };
+
+      // walk text nodes to find matches — does NOT touch the DOM
+      const findTextMatches = () => {
+        const results = [];
+        const query = frFind.value;
+        if (!query) return results;
+        const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        const walk = (node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.nodeValue;
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+              results.push({ node, index: match.index, length: match[0].length });
+            }
+          } else {
+            // skip highlight spans so we don't double-match
+            if (node.nodeType === Node.ELEMENT_NODE &&
+                (node.classList.contains('fr-highlight') || node.classList.contains('fr-highlight-active'))) {
+              results.push({ node: node.firstChild, index: 0, length: node.textContent.length });
+              return;
+            }
+            node.childNodes.forEach(walk);
+          }
+        };
+        walk(editor);
+        return results;
+      };
+
+      // highlight all matches subtly, with optional active index highlighted more prominently
+      const highlightAll = (activeIdx = -1) => {
+        clearFrHighlights();
+        if (frMatches.length === 0) return;
+        // wrap each match in a span — go in reverse to preserve text node indices
+        [...frMatches].reverse().forEach(({ node, index, length }, reversedI) => {
+          const actualI = frMatches.length - 1 - reversedI;
+          if (!node || !node.parentNode) return;
+          const range = document.createRange();
+          range.setStart(node, index);
+          range.setEnd(node, index + length);
+          const span = document.createElement('span');
+          span.className = actualI === activeIdx ? 'fr-highlight-active' : 'fr-highlight';
+          range.surroundContents(span);
+        });
+        // scroll active match into view
+        if (activeIdx >= 0) {
+          const active = editor.querySelector('span.fr-highlight-active');
+          if (active) {
+            active.scrollIntoView({ block: 'nearest' });
+          }
+        }
+    };
+
+      // rebuild match list from current DOM state
+      const buildMatches = () => {
+        clearFrHighlights();
+        frMatches = findTextMatches();
+        frIndex = -1;
+        frFeedback.textContent = '';
+        if (frMatches.length === 0) {
+          if (frFind.value) frFeedback.textContent = 'No matches found';
+        } else {
+          frFeedback.textContent = `${frMatches.length} match${frMatches.length !== 1 ? 'es' : ''} found`;
+          highlightAll();
+        }
+      };
+
+      frFind.addEventListener('input', () => {
+        buildMatches();
+      });
+
+      frPanel.querySelector('.fr-find-next').addEventListener('mousedown', e => {
+        e.preventDefault();
+        // rebuild from clean DOM before advancing
+        clearFrHighlights();
+        frMatches = findTextMatches();
+        if (frMatches.length === 0) {
+          frFeedback.textContent = 'No matches found';
+          return;
+        }
+        frIndex = (frIndex + 1) % frMatches.length;
+        highlightAll(frIndex);
+        if (frIndex === frMatches.length - 1) {
+          frFeedback.textContent = `Match ${frIndex + 1} of ${frMatches.length} — no more matches after this`;
+        } else {
+          frFeedback.textContent = `Match ${frIndex + 1} of ${frMatches.length}`;
+        }
+      });
+
+      frPanel.querySelector('.fr-replace-one').addEventListener('mousedown', e => {
+        e.preventDefault();
+        if (frIndex < 0 || frMatches.length === 0) {
+          frFeedback.textContent = 'Use Find Next to select a match first';
+          return;
+        }
+        const active = editor.querySelector('span.fr-highlight-active');
+        if (!active) {
+          frFeedback.textContent = 'Use Find Next to select a match first';
+          return;
+        }
+
+        // replace the active span's text with the replacement value
+        // keep a reference to where we are so we can highlight the replacement
+        const replacedIndex = frIndex;
+        const replaceText = frReplace.value;
+
+        // swap content of active span to replacement text and change to fr-highlight
+        // so it stays visible after rebuild
+        active.textContent = replaceText;
+        active.className = 'fr-highlight-active';
+
+        // clear all other highlights, leaving only the replaced one
+        editor.querySelectorAll('span.fr-highlight').forEach(span => {
+          span.replaceWith(...span.childNodes);
+        });
+        editor.normalize();
+
+        // find fresh matches (excludes the replaced word since it's now different)
+        frMatches = findTextMatches();
+
+        // frIndex should point to the next match after the replaced one
+        // since one match was removed, the next match is now at replacedIndex
+        // (or wrap to 0 if we were at the last one)
+        if (frMatches.length === 0) {
+          frIndex = -1;
+          frFeedback.textContent = 'No more matches';
+          // clear the replacement highlight too since there's nothing left to find
+          editor.querySelectorAll('span.fr-highlight-active').forEach(span => {
+            span.replaceWith(...span.childNodes);
+          });
+          editor.normalize();
+        } else {
+          // set frIndex to one before where we'll next click Find Next
+          frIndex = replacedIndex - 1;
+          if (frIndex < -1) frIndex = frMatches.length - 1;
+          frFeedback.textContent = `${frMatches.length} match${frMatches.length !== 1 ? 'es' : ''} remaining — use Find Next to continue`;
+          // highlight all remaining matches subtly using highlightAll
+          // but only clear fr-highlight spans, leaving the fr-highlight-active replaced word intact
+          editor.querySelectorAll('span.fr-highlight').forEach(span => {
+            span.replaceWith(...span.childNodes);
+          });
+          editor.normalize();
+          frMatches = findTextMatches();
+          [...frMatches].reverse().forEach(({ node, index, length }) => {
+            if (!node || !node.parentNode) return;
+            const range = document.createRange();
+            range.setStart(node, index);
+            range.setEnd(node, index + length);
+            const span = document.createElement('span');
+            span.className = 'fr-highlight';
+            range.surroundContents(span);
+          });
+        }
+    });
+
+      frPanel.querySelector('.fr-replace-all').addEventListener('mousedown', e => {
+        e.preventDefault();
+        clearFrHighlights();
+        frMatches = findTextMatches();
+        if (frMatches.length === 0) {
+          frFeedback.textContent = 'No matches found';
+          return;
+        }
+        const count = frMatches.length;
+        const replaceText = frReplace.value;
+        // replace from last to first to preserve indices, wrap in highlight span
+        [...frMatches].reverse().forEach(({ node, index, length }) => {
+          if (!node || !node.parentNode) return;
+          const range = document.createRange();
+          range.setStart(node, index);
+          range.setEnd(node, index + length);
+          const span = document.createElement('span');
+          span.className = 'fr-highlight';
+          range.surroundContents(span);
+          span.textContent = replaceText;
+        });
+        editor.normalize();
+        frMatches = [];
+        frIndex = -1;
+        frFeedback.textContent = `${count} replacement${count !== 1 ? 's' : ''} made`;
+      });
+
+      frPanel.querySelector('.fr-close').addEventListener('mousedown', e => {
+        e.preventDefault();
+        clearFrHighlights();
+        frPanel.classList.add('hidden');
+        frMatches = [];
+        frIndex = -1;
+        frFeedback.textContent = '';
+        frFind.value = '';
+        frReplace.value = '';
+      });
+
       const buttons = toolbar.querySelectorAll('button');
       const sizeSelect = toolbar.querySelector('#font-size-select');
   
@@ -514,10 +740,39 @@ function addFormatToolbar() {
         }
       }
   
-      // Wire up all buttons including spinner
+      // tooltip logic
+      let activeTooltip = null;
       buttons.forEach(btn => {
+        const tooltipText = btn.dataset.tooltip;
+        if (tooltipText) {
+          btn.addEventListener('mouseenter', () => {
+            clearTimeout(btn._tooltipTimer);
+            btn._tooltipTimer = setTimeout(() => {
+              const tip = document.createElement('div');
+              tip.classList.add('text-tooltip');
+              tip.textContent = tooltipText;
+              document.body.appendChild(tip);
+              const rect = btn.getBoundingClientRect();
+              tip.style.left = `${rect.left}px`;
+              tip.style.top = `${rect.bottom + 5}px`;
+              activeTooltip = tip;
+            }, 750);
+          });
+          btn.addEventListener('mouseleave', () => {
+            clearTimeout(btn._tooltipTimer);
+            if (activeTooltip) {
+              activeTooltip.remove();
+              activeTooltip = null;
+            }
+          });
+        }
+
         btn.addEventListener('mousedown', e => {
           e.preventDefault();
+          if (activeTooltip) {
+            activeTooltip.remove();
+            activeTooltip = null;
+          }
           const action = btn.dataset.action;
           if (action === 'link') {
             const url = prompt('Enter URL');
@@ -534,18 +789,124 @@ function addFormatToolbar() {
               sizeSelect.selectedIndex = idx - 1;
               sizeSelect.dispatchEvent(new Event('change'));
             }
+          } else if (action === 'removeStyling') {
+            const sel = window.getSelection();
+            if (!sel.rangeCount) return;
+            const range = sel.getRangeAt(0);
+            const selectedText = range.toString();
+            if (!selectedText) return;
+
+            const frag = range.cloneContents();
+            const tempDiv = document.createElement('div');
+            tempDiv.appendChild(frag);
+
+            tempDiv.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+            tempDiv.querySelectorAll('p, div, li').forEach(el => {
+              el.insertAdjacentText('afterend', '\n');
+              el.replaceWith(el.textContent);
+            });
+            tempDiv.querySelectorAll('ul, ol').forEach(el => el.replaceWith(el.textContent));
+            tempDiv.querySelectorAll('*').forEach(el => el.replaceWith(el.textContent));
+
+            const newFrag = document.createDocumentFragment();
+            const lines = tempDiv.textContent.split('\n');
+            lines.forEach((line, i) => {
+              newFrag.appendChild(document.createTextNode(line));
+              if (i < lines.length - 1) newFrag.appendChild(document.createElement('br'));
+            });
+
+            range.deleteContents();
+            range.insertNode(newFrag);
+          } else if (action === 'findReplace') {
+            frPanel.classList.toggle('hidden');
+            if (!frPanel.classList.contains('hidden')) {
+              frFind.focus();
+            } else {
+              clearFrHighlights();
+              frMatches = [];
+              frIndex = -1;
+              frFeedback.textContent = '';
+            }
           } else if (['uppercase','sentencecase','lowercase'].includes(action)) {
             // fallback span-transform if needed
-            // transformSelection logic here
           } else {
             document.execCommand(action, false, null);
           }
           updateToolbarState();
         });
       });
-  
+
       editor.addEventListener('keyup', updateToolbarState);
       editor.addEventListener('mouseup', updateToolbarState);
+
+      editor.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !frPanel.classList.contains('hidden')) {
+          e.stopPropagation();
+          clearFrHighlights();
+          frPanel.classList.add('hidden');
+          frMatches = [];
+          frIndex = -1;
+          frFeedback.textContent = '';
+        }
+      });
+
+      frPanel.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          e.stopPropagation();
+          clearFrHighlights();
+          frPanel.classList.add('hidden');
+          frMatches = [];
+          frIndex = -1;
+          frFeedback.textContent = '';
+          frFind.value = '';
+          frReplace.value = '';
+        }
+      });
+
+      editor.addEventListener('paste', e => {
+        e.preventDefault();
+        const html = e.clipboardData.getData('text/html');
+        const text = e.clipboardData.getData('text/plain');
+
+        let cleaned = '';
+        if (html) {
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+
+          tempDiv.querySelectorAll('*').forEach(el => {
+            el.removeAttribute('style');
+            el.removeAttribute('color');
+            el.removeAttribute('face');
+            el.removeAttribute('size');
+            el.removeAttribute('bgcolor');
+            el.removeAttribute('background');
+            el.removeAttribute('class');
+          });
+
+          tempDiv.querySelectorAll('span').forEach(span => {
+            span.replaceWith(...span.childNodes);
+          });
+
+          tempDiv.querySelectorAll('font').forEach(font => {
+            font.replaceWith(...font.childNodes);
+          });
+
+          tempDiv.querySelectorAll('a').forEach(a => {
+            a.replaceWith(...a.childNodes);
+          });
+
+          cleaned = tempDiv.innerHTML;
+        } else {
+          cleaned = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\n/g, '<br>');
+        }
+
+        document.execCommand('insertHTML', false, cleaned);
+        updateToolbarState();
+      });
     });
   }
     

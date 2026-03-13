@@ -581,7 +581,6 @@ const keyboardShortcutsHandler = (() => {
 
             if (addBlockOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && saveBlockButton) {
-                    // if inside a list, drop a new item instead of saving
                     const inUL = document.queryCommandState('insertUnorderedList');
                     const inOL = document.queryCommandState('insertOrderedList');
                     if (!(inUL || inOL)) {
@@ -589,7 +588,8 @@ const keyboardShortcutsHandler = (() => {
                         saveBlockButton.click();
                     }
                 } else if (event.key === "Escape" && cancelAddBlockButton) {
-                    cancelAddBlockButton.click();
+                    const openFrPanel = addBlockOverlay.querySelector('.find-replace-panel:not(.hidden)');
+                    if (!openFrPanel) cancelAddBlockButton.click();
                 }
             }
 
@@ -610,9 +610,11 @@ const keyboardShortcutsHandler = (() => {
                         saveEditButton.click();
                     }
                 } else if (event.key === "Escape" && cancelEditButton) {
-                    cancelEditButton.click();
+                    const openFrPanel = editBlockOverlay.querySelector('.find-replace-panel:not(.hidden)');
+                    if (!openFrPanel) cancelEditButton.click();
                 }
             }
+
 
             if (spellSlotEditOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && saveSpellSlotButton) {
