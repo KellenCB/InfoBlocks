@@ -43,7 +43,7 @@ export const saveEditHandler = () => {
     const currentBlockTags = blocks[blockIndex].tags.map(tag => tag.trim().toLowerCase());
 
     // For Tab 3: filter out any typed tags that already exist in the dynamic overlay
-    const exceptionTabs = ["tab3", "tab6", "tab7", "tab9"];
+    const exceptionTabs = ["tab3", "tab5", "tab6", "tab7", "tab9"];
     if (exceptionTabs.includes(activeTab)) {
             const dynamicTagsContainer = document.getElementById("dynamic_overlay_tags");
         let existingUserDefinedTags = [];
@@ -213,7 +213,7 @@ document.addEventListener("DOMContentLoaded", initUndoLastDelete);
         
             const activeTab = appManager.getActiveTab(); // (you already have this)
 
-            const exceptionTabs = ["tab3", "tab6", "tab7", "tab9"];
+            const exceptionTabs = ["tab3", "tab5", "tab6", "tab7", "tab9"];
             if (exceptionTabs.includes(activeTab)) {
                 document.getElementById("tags_input_edit_overlay").value = "";
             } else {

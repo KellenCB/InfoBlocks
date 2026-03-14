@@ -347,9 +347,10 @@ export const appManager = (() => {
     const addBtn = document.getElementById(`results_header_${tabSuffix}`)
       .querySelector('#add_block_button');
     if (addBtn) {
-      addBtn.onclick = () => {
-        document.querySelector('.add-block-overlay').classList.add('show');
-      };
+        addBtn.onclick = () => {
+            overlayHandler.initializeOverlayTagHandlers("add_block_overlay_tags");
+            document.querySelector('.add-block-overlay').classList.add('show');
+        };
     }
 
     // 2) wire up the view‑state dropdown

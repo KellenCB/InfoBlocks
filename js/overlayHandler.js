@@ -139,7 +139,7 @@ export const handleSaveBlock = () => {
         // 3. Get the active tab.
 
         // 4. For Tab 3: filter out any typed tags that already exist in the dynamic overlay.
-        const exceptionTabs = ["tab3", "tab6", "tab7", "tab9"];
+        const exceptionTabs = ["tab3", "tab5", "tab6", "tab7", "tab9"];
         if (exceptionTabs.includes(activeTab)) {
             const dynamicTagsContainer = document.getElementById("add_block_overlay_tags");
             let existingUserDefinedTags = [];
@@ -323,7 +323,7 @@ export const overlayHandler = (() => {
     
         tagsContainer.innerHTML = "";
         const activeTab = appManager.getActiveTab();
-        const exceptionTabs = ["tab3", "tab6", "tab7", "tab9"];
+        const exceptionTabs = ["tab3", "tab5", "tab6", "tab7", "tab9"];
     
         // Get predefined and user-defined tags
         const predefinedTagList = Object.entries(categoryTags)
