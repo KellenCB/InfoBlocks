@@ -39,12 +39,9 @@
     
             <button id="Menu_button" class="hero-button Menu-button">
                 <span class="menu-icon-wrapper">
-                <!-- Default Menu (Open) Icon -->
                 <svg id="menu-icon-default" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
-            
-                <!-- Close (X) Icon -->
                 <svg id="menu-icon-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M6 6l12 12M6 18L18 6" />
                 </svg>
@@ -57,8 +54,7 @@
         <div class="tab-nav fade-in">
             <button class="tab-button active" data-tab="tab4" draggable="true">Hazard</button>
             <button class="tab-button" data-tab="tab8" draggable="true">Crank</button>
-            <button class="tab-button" data-tab="tab1" draggable="true">Magic Items</button>
-            <button class="tab-button" data-tab="tab2" draggable="true">Spells</button> 
+            <button class="tab-button" data-tab="tab9" draggable="true">Feats & Magic</button>
             <button class="tab-button" data-tab="tab6" draggable="true">Inventory</button>
             <button class="tab-button" data-tab="tab3" draggable="true">Notes</button>
             <button class="tab-button" data-tab="tab7" draggable="true">Session Notes</button>
@@ -67,93 +63,7 @@
     </div>
 
     <div class="tabs-content fade-in">
-        <!-- Tab 1: Magic Items -->
-        <div class="tab-content" id="tab1">
-           
-            <div class="circle-section"></div>
-           
-            <div class="filter-and-results">
 
-                <button id="toggle_filter_1" class="toggle-filter-button">
-                    <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
-                </button>
-                
-
-                <div class="filter-section-wrapper">
-
-                    <div class="filter-section-overlay-top"></div>
-                    <div class="filter-section-overlay-bottom"></div>
-
-                    <div id="filter_section_1" class="filter-section">
-
-
-                        <div class="search-container">
-                            <input id="search_input_1" class="search_input" type="text" placeholder="Search by text" />
-                            <button id="clear_search_button_1" class="clear-search">✖</button>
-                        </div>
-
-                        <div id="all_tags_container" class="tag-section">
-                            <div id="dynamic_tags_section_1"></div>
-                        </div>
-                        
-                        <button id="clear_filters_button_1" class="clear_filters_button">Clear Filters</button>
-        
-                    
-                    </div>
-                </div>
-
-                <div id="results_section_1" class="results-section">
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab 2: Spell list -->
-        <div class="tab-content" id="tab2">
-
-            <div class="spell-slot-section ">
-                <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">1st Lvl</span></div>
-                <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">2nd Lvl</span></div>
-                <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">3rd Lvl</span></div>
-                <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">4th Lvl</span></div>
-                <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">5th Lvl</span></div>
-                <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">6th Lvl</span></div>
-                <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">7th Lvl</span></div>
-                <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">8th Lvl</span></div>
-                <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>            
-            </div>
-
-            <div class="filter-and-results">
-
-                <button id="toggle_filter_2" class="toggle-filter-button">
-                    <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
-                </button>
-                
-
-                <div class="filter-section-wrapper">
-
-                    <div class="filter-section-overlay-top"></div>
-                    <div class="filter-section-overlay-bottom"></div>
-
-                    <div id="filter_section_2" class="filter-section">
-                        <div class="search-container">
-                            <input id="search_input_2" class="search_input" type="text" placeholder="Search by text" />
-                            <button id="clear_search_button_2" class="clear-search">✖</button>
-                        </div>
-
-                        <div id="all_tags_container" class="tag-section">
-                            <div id="dynamic_tags_section_2"></div>
-                        </div>
-                        
-                        <button id="clear_filters_button_2" class="clear_filters_button">Clear Filters</button>
-                    </div>
-            
-                </div>
-
-                <div id="results_section_2" class="results-section">
-                </div>
-            </div>
-        </div>
-    
         <!-- Tab 3: Notes -->
         <div class="tab-content" id="tab3">
             <div class="filter-and-results">
@@ -163,23 +73,18 @@
                 </button>
                 
                 <div class="filter-section-wrapper">
-
                     <div class="filter-section-overlay-top"></div>
                     <div class="filter-section-overlay-bottom"></div>
-
                     <div id="filter_section_3" class="filter-section">
                         <div class="search-container">
                             <input id="search_input_3" class="search_input" type="text" placeholder="Search by text" />
                             <button id="clear_search_button_3" class="clear-search">✖</button>
                         </div>
-
                         <div id="all_tags_container" class="tag-section">
                             <div id="dynamic_tags_section_3"></div>
                         </div>
-                        
                         <button id="clear_filters_button_3" class="clear_filters_button">Clear Filters</button>
                     </div>
-
                 </div>
 
                 <div id="results_section_3" class="results-section">
@@ -187,7 +92,7 @@
             </div>
         </div>
         
-        <!-- Tab 4: Character Sheet -->
+        <!-- Tab 4: Hazard Character Sheet -->
         <div class="tab-content no-gap" id="tab4">
             <div class="character-sheet-stats">
                 <!-- Row 1 -->
@@ -221,29 +126,22 @@
                             <span class="stat-label">HP</span>
                             <div class="current-hp-stat-box" style="display: flex; gap: 10px;">
                                 <span class="large-value editable" contenteditable="true" data-storage-key="tab4_hp">86</span>
-                        
                                 <span class="large-value" style="font-weight:100;">/</span>
-                         
                                 <span class="large-value editable" contenteditable="true" data-storage-key="tab4_maxhp">00</span>
                             </div>
                         </div>
-                        
                         <div class="vertical-break"></div>
-
                         <div class="hp-stat-box">
                             <span class="stat-label">Temp HP</span>
                             <span class="large-value editable" contenteditable="true" data-storage-key="tab4_temp_hp">+5</span>
                         </div>
-
                         <div class="vertical-break"></div>
-
                         <div class="hp-stat-box">
                             <span class="stat-label">Hit Die</span>
                             <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_hit_die">1d10</span>
                             <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_hit_die_ratio">6 / 8</span>
                         </div>
                     </div>
-
                     <div class="stat-box">
                         <span class="stat-label">AC</span>
                         <span class="large-value editable" contenteditable="true" data-storage-key="tab4_ac">18</span>
@@ -296,32 +194,31 @@
                             <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_cha_score"></span>
                         </div>
                     </div>
-                        <div class="stat-box">
-                            <span class="stat-label">Spell Save</span>
-                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_spell_save">3</span>
+                    <div class="stat-box">
+                        <span class="stat-label">Spell Save</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_spell_save">3</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Spell attack</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_spell_attack">3</span>
+                    </div>
+                    <div class="death-saves-box">
+                        <span class="stat-label">Death Saves</span>
+                        <div class="death-saves-row">
+                            <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab4_deathSave_1"></span>
+                            <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab4_deathSave_2"></span>
+                            <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab4_deathSave_3"></span>
                         </div>
-                        <div class="stat-box">
-                            <span class="stat-label">Spell attack</span>
-                            <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_spell_attack">3</span>
+                        <div class="death-saves-row">
+                            <span class="circle deathSaveRed toggle-circle" data-storage-key="tab4_deathSave_4"></span>
+                            <span class="circle deathSaveRed toggle-circle" data-storage-key="tab4_deathSave_5"></span>
+                            <span class="circle deathSaveRed toggle-circle" data-storage-key="tab4_deathSave_6"></span>
                         </div>
-                        <div class="death-saves-box">
-                            <span class="stat-label">Death Saves</span>
-                            <div class="death-saves-row">
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab4_deathSave_1"></span>
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab4_deathSave_2"></span>
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab4_deathSave_3"></span>
-                            </div>
-                            <div class="death-saves-row">
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab4_deathSave_4"></span>
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab4_deathSave_5"></span>
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab4_deathSave_6"></span>
-                            </div>
-                        </div>    
+                    </div>    
                 </div>
             </div>
         
             <div class="character-sheet-row">
-                <!-- Saving Throws & Skills -->
                 <div class="saving-throws-and-skills-column">
                     <div class="saving-throws">
                         <h3>Saving Throws</h3>
@@ -453,19 +350,10 @@
                 </div>
         
                 <div class="actions-and-features">
-                    <!-- Actions -->
                     <div class="actions-grid-wrapper">
-                        <div class="actions-grid">
-                          <!-- Your grid content goes here -->
-                        </div>
+                        <div class="actions-grid"></div>
                         <div class="actions-overlay-top"></div>
                         <div class="actions-overlay-bottom"></div>
-                    </div>
-                      
-                    <div class="resizable-handle"></div>
-
-                    <!-- Feats & Abilities (Results Section) -->
-                    <div id="results_section_4" class="results-section">
                     </div>
                 </div>
             </div>
@@ -480,23 +368,18 @@
                 </button>
                 
                 <div class="filter-section-wrapper">
-
                     <div class="filter-section-overlay-top"></div>
                     <div class="filter-section-overlay-bottom"></div>
-
                     <div id="filter_section_5" class="filter-section">
                         <div class="search-container">
                             <input id="search_input_5" class="search_input" type="text" placeholder="Search by text" />
                             <button id="clear_search_button_5" class="clear-search">✖</button>
                         </div>
-
                         <div id="all_tags_container" class="tag-section">
                             <div id="dynamic_tags_section_5"></div>
                         </div>
-                        
                         <button id="clear_filters_button_5" class="clear_filters_button">Clear Filters</button>
                     </div>
-
                 </div>
 
                 <div id="results_section_5" class="results-section">
@@ -513,23 +396,18 @@
                 </button>
                 
                 <div class="filter-section-wrapper">
-
                     <div class="filter-section-overlay-top"></div>
                     <div class="filter-section-overlay-bottom"></div>
-
                     <div id="filter_section_6" class="filter-section">
                         <div class="search-container">
                             <input id="search_input_6" class="search_input" type="text" placeholder="Search by text" />
                             <button id="clear_search_button_6" class="clear-search">✖</button>
                         </div>
-
                         <div id="all_tags_container" class="tag-section">
                             <div id="dynamic_tags_section_6"></div>
                         </div>
-                        
                         <button id="clear_filters_button_6" class="clear_filters_button">Clear Filters</button>
                     </div>
-
                 </div>
 
                 <div id="results_section_6" class="results-section">
@@ -548,23 +426,18 @@
                 </button>
                 
                 <div class="filter-section-wrapper">
-
                     <div class="filter-section-overlay-top"></div>
                     <div class="filter-section-overlay-bottom"></div>
-
                     <div id="filter_section_7" class="filter-section">
                         <div class="search-container">
                             <input id="search_input_7" class="search_input" type="text" placeholder="Search by text" />
                             <button id="clear_search_button_7" class="clear-search">✖</button>
                         </div>
-
                         <div id="all_tags_container" class="tag-section">
                             <div id="dynamic_tags_section_7"></div>
                         </div>
-                        
                         <button id="clear_filters_button_7" class="clear_filters_button">Clear Filters</button>
                     </div>
-
                 </div>
 
                 <div id="results_section_7" class="results-section">
@@ -572,7 +445,7 @@
             </div>
         </div>
 
-        <!-- Tab 8: Character Sheet -->
+        <!-- Tab 8: Crank Character Sheet -->
         <div class="tab-content no-gap" id="tab8">
             <div class="character-sheet-stats">
                 <!-- Row 1 -->
@@ -610,23 +483,18 @@
                                 <span class="large-value editable" contenteditable="true" data-storage-key="tab8_maxhp">00</span>
                             </div>
                         </div>
-                        
                         <div class="vertical-break"></div>
-
                         <div class="hp-stat-box">
                             <span class="stat-label">Temp HP</span>
                             <span class="large-value editable" contenteditable="true" data-storage-key="tab8_temp_hp">0</span>
                         </div>
-
                         <div class="vertical-break"></div>
-
                         <div class="hp-stat-box">
                             <span class="stat-label">Hit Die</span>
                             <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die">00</span>
                             <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die_ratio">0</span>
                         </div>
                     </div>
-
                     <div class="stat-box">
                         <span class="stat-label">AC</span>
                         <span class="large-value editable" contenteditable="true" data-storage-key="tab8_ac">00</span>
@@ -679,7 +547,6 @@
                             <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_cha_score">0</span>
                         </div>
                     </div>
-
                     <div class="stat-box">
                         <span class="stat-label">Spell Save</span>
                         <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_save">00</span>
@@ -688,7 +555,6 @@
                         <span class="stat-label">Spell attack</span>
                         <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_spell_attack">00</span>
                     </div>
-
                     <div class="death-saves-box">
                         <span class="stat-label">Death Saves</span>
                         <div class="death-saves-row">
@@ -705,155 +571,198 @@
                 </div>
             </div>
 
-        <div class="character-sheet-row">
-            <!-- Saving Throws & Skills -->
-            <div class="saving-throws-and-skills-column">
-                <div class="saving-throws">
-                    <h3>Saving Throws</h3>
-                    <div class="save-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_save_str_toggle"></span>
-                        <span class="save-label">Strength</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_save_str"></span>
+            <div class="character-sheet-row">
+                <div class="saving-throws-and-skills-column">
+                    <div class="saving-throws">
+                        <h3>Saving Throws</h3>
+                        <div class="save-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_save_str_toggle"></span>
+                            <span class="save-label">Strength</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_save_str"></span>
+                        </div>
+                        <div class="save-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_save_dex_toggle"></span>
+                            <span class="save-label">Dexterity</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_save_dex"></span>
+                        </div>
+                        <div class="save-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_save_con_toggle"></span>
+                            <span class="save-label">Constitution</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_save_con"></span>
+                        </div>
+                        <div class="save-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_save_int_toggle"></span>
+                            <span class="save-label">Intelligence</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_save_int"></span>
+                        </div>
+                        <div class="save-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_save_wis_toggle"></span>
+                            <span class="save-label">Wisdom</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_save_wis"></span>
+                        </div>
+                        <div class="save-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_save_cha_toggle"></span>
+                            <span class="save-label">Charisma</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_save_cha"></span>
+                        </div>
                     </div>
-                    <div class="save-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_save_dex_toggle"></span>
-                        <span class="save-label">Dexterity</span>
-                        <span class="skill-plus calculated"  data-storage-key="tab8_save_dex"></span>
-                    </div>
-                    <div class="save-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_save_con_toggle"></span>
-                        <span class="save-label">Constitution</span>
-                        <span class="skill-plus calculated"  data-storage-key="tab8_save_con"></span>
-                    </div>
-                    <div class="save-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_save_int_toggle"></span>
-                        <span class="save-label">Intelligence</span>
-                        <span class="skill-plus calculated"  data-storage-key="tab8_save_int"></span>
-                    </div>
-                    <div class="save-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_save_wis_toggle"></span>
-                        <span class="save-label">Wisdom</span>
-                        <span class="skill-plus calculated"  data-storage-key="tab8_save_wis"></span>
-                    </div>
-                    <div class="save-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_save_cha_toggle"></span>
-                        <span class="save-label">Charisma</span>
-                        <span class="skill-plus calculated"  data-storage-key="tab8_save_cha"></span>
+                    <div class="horizontal-break"></div>
+                    <div class="skills">
+                        <h3>Skills</h3>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_acrobatics_toggle"></span>
+                            <span class="skill-label">Acrobatics (dex)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_acrobatics">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_animal_handling_toggle"></span>
+                            <span class="skill-label">Animal Handling (wis)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_animal_handling">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_arcana_toggle"></span>
+                            <span class="skill-label">Arcana (int)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_arcana">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_athletics_toggle"></span>
+                            <span class="skill-label">Athletics (str)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_athletics">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_deception_toggle"></span>
+                            <span class="skill-label">Deception (cha)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_deception">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_history_toggle"></span>
+                            <span class="skill-label">History (int)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_history">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_insight_toggle"></span>
+                            <span class="skill-label">Insight (wis)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_insight">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_intimidation_toggle"></span>
+                            <span class="skill-label">Intimidation (cha)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_intimidation">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_investigation_toggle"></span>
+                            <span class="skill-label">Investigation (int)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_investigation">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_medicine_toggle"></span>
+                            <span class="skill-label">Medicine (wis)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_medicine">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_nature_toggle"></span>
+                            <span class="skill-label">Nature (int)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_nature">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_perception_toggle"></span>
+                            <span class="skill-label">Perception (wis)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_perception">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_performance_toggle"></span>
+                            <span class="skill-label">Performance (cha)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_performance">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_persuasion_toggle"></span>
+                            <span class="skill-label">Persuasion (cha)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_persuasion">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_religion_toggle"></span>
+                            <span class="skill-label">Religion (int)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_religion">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_sleight_of_hand_toggle"></span>
+                            <span class="skill-label">Sleight of Hand (dex)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_sleight_of_hand">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_stealth_toggle"></span>
+                            <span class="skill-label">Stealth (dex)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_stealth">0</span>
+                        </div>
+                        <div class="skill-row">
+                            <span class="circle toggle-circle" data-storage-key="tab8_skill_survival_toggle"></span>
+                            <span class="skill-label">Survival (wis)</span>
+                            <span class="skill-plus calculated" data-storage-key="tab8_skill_survival">0</span>
+                        </div>
                     </div>
                 </div>
-                <div class="horizontal-break"></div>
-                <div class="skills">
-                    <h3>Skills</h3>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_acrobatics_toggle"></span>
-                        <span class="skill-label">Acrobatics (dex)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_acrobatics">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_animal_handling_toggle"></span>
-                        <span class="skill-label">Animal Handling (wis)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_animal_handling">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_arcana_toggle"></span>
-                        <span class="skill-label">Arcana (int)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_arcana">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_athletics_toggle"></span>
-                        <span class="skill-label">Athletics (str)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_athletics">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_deception_toggle"></span>
-                        <span class="skill-label">Deception (cha)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_deception">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_history_toggle"></span>
-                        <span class="skill-label">History (int)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_history">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_insight_toggle"></span>
-                        <span class="skill-label">Insight (wis)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_insight">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_intimidation_toggle"></span>
-                        <span class="skill-label">Intimidation (cha)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_intimidation">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_investigation_toggle"></span>
-                        <span class="skill-label">Investigation (int)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_investigation">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_medicine_toggle"></span>
-                        <span class="skill-label">Medicine (wis)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_medicine">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_nature_toggle"></span>
-                        <span class="skill-label">Nature (int)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_nature">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_perception_toggle"></span>
-                        <span class="skill-label">Perception (wis)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_perception">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_performance_toggle"></span>
-                        <span class="skill-label">Performance (cha)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_performance">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_persuasion_toggle"></span>
-                        <span class="skill-label">Persuasion (cha)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_persuasion">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_religion_toggle"></span>
-                        <span class="skill-label">Religion (int)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_religion">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_sleight_of_hand_toggle"></span>
-                        <span class="skill-label">Sleight of Hand (dex)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_sleight_of_hand">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_stealth_toggle"></span>
-                        <span class="skill-label">Stealth (dex)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_stealth">0</span>
-                    </div>
-                    <div class="skill-row">
-                        <span class="circle toggle-circle" data-storage-key="tab8_skill_survival_toggle"></span>
-                        <span class="skill-label">Survival (wis)</span>
-                        <span class="skill-plus calculated" data-storage-key="tab8_skill_survival">0</span>
-                    </div>
-                </div>
-            </div>
 
-            <div class="actions-and-features">
-                <!-- Actions -->
-                <div class="actions-grid-wrapper">
-                    <div class="actions-grid">
-                        <!-- Your grid content goes here -->
+                <div class="actions-and-features">
+                    <div class="actions-grid-wrapper">
+                        <div class="actions-grid"></div>
+                        <div class="actions-overlay-top"></div>
+                        <div class="actions-overlay-bottom"></div>
                     </div>
-                    <div class="actions-overlay-top"></div>
-                    <div class="actions-overlay-bottom"></div>
-                </div>
-            
-                <div class="resizable-handle"></div>
-
-                <!-- Feats & Abilities (Results Section) -->
-                <div id="results_section_8" class="results-section">
                 </div>
             </div>
         </div>
+
+        <!-- Tab 9: Feats & Magic -->
+        <div class="tab-content" id="tab9">
+
+            <div class="circle-section"></div>
+
+            <div class="spell-slot-section">
+                <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">1st Lvl</span></div>
+                <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">2nd Lvl</span></div>
+                <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">3rd Lvl</span></div>
+                <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">4th Lvl</span></div>
+                <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">5th Lvl</span></div>
+                <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">6th Lvl</span></div>
+                <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">7th Lvl</span></div>
+                <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">8th Lvl</span></div>
+                <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>
+            </div>
+
+            <div class="filter-and-results">
+
+                <button id="toggle_filter_9" class="toggle-filter-button">
+                    <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
+                </button>
+
+                <div class="filter-section-wrapper">
+                    <div class="filter-section-overlay-top"></div>
+                    <div class="filter-section-overlay-bottom"></div>
+                    <div id="filter_section_9" class="filter-section">
+
+                        <div class="search-container">
+                            <input id="search_input_9" class="search_input" type="text" placeholder="Search by text" />
+                            <button id="clear_search_button_9" class="clear-search">✖</button>
+                        </div>
+
+                        <div class="character-type-tags" id="character_type_tags_9">
+                            <button class="tag-button tag-characterType" data-tag="Hazard">Hazard</button>
+                            <button class="tag-button tag-characterType" data-tag="Crank">Crank</button>
+                            <button class="tag-button tag-characterType" data-tag="Spell">Spell</button>
+                            <button class="tag-button tag-characterType" data-tag="Magic Item">Magic Item</button>
+                        </div>
+
+                        <div id="all_tags_container" class="tag-section">
+                            <div id="dynamic_tags_section_9"></div>
+                        </div>
+
+                        <button id="clear_filters_button_9" class="clear_filters_button">Clear Filters</button>
+                    </div>
+                </div>
+
+                <div id="results_section_9" class="results-section">
+                </div>
+            </div>
         </div>
 
     <!-- Menu Overlay Container -->
@@ -911,56 +820,51 @@
             <div class="dice-roller-container">
                 <div class="dice-selection">
                     <button class="dice-button" data-dice="4">
-                    <div class="dice-wrapper">
-                    <img src="images/d_4.svg" alt="D4" />
-                    <span class="dice-label">D4</span>
-                    </div>
-                </button>
-                <button class="dice-button" data-dice="6">
-                    <div class="dice-wrapper">
-                    <img src="images/d_6.svg" alt="D6" />
-                    <span class="dice-label">D6</span>
-                    </div>
-                </button>
-                <button class="dice-button" data-dice="8">
-                    <div class="dice-wrapper">
-                    <img src="images/d_8.svg" alt="D8" />
-                    <span class="dice-label">D8</span>
-                    </div>
-                </button>
-                <button class="dice-button" data-dice="10">
-                    <div class="dice-wrapper">
-                    <img src="images/d_10.svg" alt="D10" />
-                    <span class="dice-label">D10</span>
-                    </div>
-                </button>
-                <button class="dice-button" data-dice="12">
-                    <div class="dice-wrapper">
-                    <img src="images/d_12.svg" alt="D12" />
-                    <span class="dice-label">D12</span>
-                    </div>
-                </button>
-                <button class="dice-button" data-dice="20">
-                    <div class="dice-wrapper">
-                    <img src="images/d_20.svg" alt="D20" />
-                    <span class="dice-label">D20</span>
-                    </div>
-                </button>
+                        <div class="dice-wrapper">
+                            <img src="images/d_4.svg" alt="D4" />
+                            <span class="dice-label">D4</span>
+                        </div>
+                    </button>
+                    <button class="dice-button" data-dice="6">
+                        <div class="dice-wrapper">
+                            <img src="images/d_6.svg" alt="D6" />
+                            <span class="dice-label">D6</span>
+                        </div>
+                    </button>
+                    <button class="dice-button" data-dice="8">
+                        <div class="dice-wrapper">
+                            <img src="images/d_8.svg" alt="D8" />
+                            <span class="dice-label">D8</span>
+                        </div>
+                    </button>
+                    <button class="dice-button" data-dice="10">
+                        <div class="dice-wrapper">
+                            <img src="images/d_10.svg" alt="D10" />
+                            <span class="dice-label">D10</span>
+                        </div>
+                    </button>
+                    <button class="dice-button" data-dice="12">
+                        <div class="dice-wrapper">
+                            <img src="images/d_12.svg" alt="D12" />
+                            <span class="dice-label">D12</span>
+                        </div>
+                    </button>
+                    <button class="dice-button" data-dice="20">
+                        <div class="dice-wrapper">
+                            <img src="images/d_20.svg" alt="D20" />
+                            <span class="dice-label">D20</span>
+                        </div>
+                    </button>
                 </div>
-                
-                <!-- Selected Dice Container & Buttons -->
                 <div class="selected-dice-wrapper">
-                <button id="roll-button">Roll!</button>
-                <button id="clear-selected-button">Clear All</button>
-                <div class="selected-dice-container"></div>
+                    <button id="roll-button">Roll!</button>
+                    <button id="clear-selected-button">Clear All</button>
+                    <div class="selected-dice-container"></div>
                 </div>
             </div>
-        
-            <!-- Right Panel: Roll Results -->
             <div class="dice-right-panel">
                 <div class="roll-results">
                     <h3>Roll Results</h3>
-                <!-- Roll results go here -->
                 </div>
             </div>
         </div>
@@ -970,6 +874,12 @@
     <div class="add-block-overlay">
         <div class="add-block-form">
             <h2>Add Information Block</h2>
+            <div class="character-type-tags" id="character_type_tags_add">
+                <button class="tag-button tag-characterType" data-tag="Hazard">Hazard</button>
+                <button class="tag-button tag-characterType" data-tag="Crank">Crank</button>
+                <button class="tag-button tag-characterType" data-tag="Spell">Spell</button>
+                <button class="tag-button tag-characterType" data-tag="Magic Item">Magic Item</button>
+            </div>
             <div class="add_and_edit_inputs">
                 <input type="text" id="title_input_overlay" placeholder="Enter block title here..." />
                 <div id="uses_field_overlay" class="uses-field"></div>   
@@ -989,18 +899,23 @@
     <div class="edit-block-overlay">
         <div class="edit-block-form">
             <h2>Edit Information Block</h2>
+            <div class="character-type-tags" id="character_type_tags_edit">
+                <button class="tag-button tag-characterType" data-tag="Hazard">Hazard</button>
+                <button class="tag-button tag-characterType" data-tag="Crank">Crank</button>
+                <button class="tag-button tag-characterType" data-tag="Spell">Spell</button>
+                <button class="tag-button tag-characterType" data-tag="Magic Item">Magic Item</button>
+            </div>
             <div class="add_and_edit_inputs">
                 <input type="text" id="title_input_edit_overlay" placeholder="Edit title block" />
                 <div id="uses_field_edit_overlay" class="uses-field"></div>        
                 <div id="block_text_edit_overlay" class="auto-resize" contenteditable="true" data-placeholder="Enter block text here..." rows="1"></div>
                 <input type="text" id="tags_input_edit_overlay" placeholder="Edit tags (comma separated)" />
             </div>
-            <!-- Section where predefined tags should be displayed -->
+            <div class="character-type-tags" id="character_type_tags_edit">
+            </div>
             <div class="overlay-tags" id="dynamic_overlay_tags">
                 <div id="predefined_tags_edit"></div>
             </div>
-            
-            <!-- Save Edit Button -->
             <div class="overlay-controls">
                 <button id="save-edit-button" class="button green-button">Save Changes</button>
                 <button id="clear_edit-button" class="button orange-button">Clear</button>
@@ -1013,7 +928,7 @@
     <div class="cleardata-overlay">
         <div class="cleardata-form">
             <h2>Clear All Data</h2>
-            <p><br>Are you sure you want to clear all data?<br> </p> <p style = "text-transform: uppercase; font-weight: bold; letter-spacing: 1px;"><br> This action cannot be undone.</p><p> <br> If you want to retain any information in the character sheet first use the download function to save the data so that it can reuploaded later.</p>
+            <p><br>Are you sure you want to clear all data?<br> </p> <p style="text-transform: uppercase; font-weight: bold; letter-spacing: 1px;"><br> This action cannot be undone.</p><p> <br> If you want to retain any information in the character sheet first use the download function to save the data so that it can reuploaded later.</p>
             <div class="overlay-controls">
                 <button id="confirm_clear_button" class="button green-button">Yes</button>
                 <button id="cancel_clear_button" class="button red-button">No</button>
@@ -1036,51 +951,49 @@
     <!-- Overlay for Spell Slot Editing -->
     <div class="spell-slot-edit-overlay">
         <div class="spell-slot-edit-container">
-        <h2>Edit Spell Slots</h2>
-        <!-- Replicated spell-slot-section for editing -->
-        <div class="spell-slot-section edit-mode">
-            <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">1st Lvl</span></div>
-            <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">2nd Lvl</span></div>
-            <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">3rd Lvl</span></div>
-            <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">4th Lvl</span></div>
-            <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">5th Lvl</span></div>
-            <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">6th Lvl</span></div>
-            <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">7th Lvl</span></div>
-            <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">8th Lvl</span></div>
-            <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>
-        </div>
-        <div class="overlay-controls">
-            <button id="save_spell_slot_changes" class="button green-button">Save Changes</button>
-            <button id="close_spell_slot_edit" class="button red-button">Cancel</button>
-        </div>
-    </div>
-</div>
-
-<!-- Overlay for Deleting Block -->
-<div class="cleardata-overlay remove-block-overlay">
-    <div class="cleardata-form">
-      <h2>Delete Information Block</h2>
-      <p>Are you sure you want to delete this block?</p>
-      <div class="overlay-controls">
-        <button id="confirm_remove_button" class="button green-button">Yes</button>
-        <button id="cancel_remove_button" class="button red-button">No</button>
-      </div>
-    </div>
-</div>
-
-<!-- Overlay for Deleting Action Rows -->
-<div class="cleardata-overlay remove-action-overlay">
-    <div class="cleardata-form">
-        <h2>Delete Action</h2>
-        <p>Are you sure you want to delete this action?</p>
-        <div class="overlay-controls">
-            <button id="confirm_remove_action_button" class="button green-button">Yes</button>
-            <button id="cancel_remove_action_button" class="button red-button">No</button>
+            <h2>Edit Spell Slots</h2>
+            <div class="spell-slot-section edit-mode">
+                <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">1st Lvl</span></div>
+                <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">2nd Lvl</span></div>
+                <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">3rd Lvl</span></div>
+                <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">4th Lvl</span></div>
+                <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">5th Lvl</span></div>
+                <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">6th Lvl</span></div>
+                <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">7th Lvl</span></div>
+                <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">8th Lvl</span></div>
+                <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>
+            </div>
+            <div class="overlay-controls">
+                <button id="save_spell_slot_changes" class="button green-button">Save Changes</button>
+                <button id="close_spell_slot_edit" class="button red-button">Cancel</button>
+            </div>
         </div>
     </div>
-</div>
 
-  
+    <!-- Overlay for Deleting Block -->
+    <div class="cleardata-overlay remove-block-overlay">
+        <div class="cleardata-form">
+            <h2>Delete Information Block</h2>
+            <p>Are you sure you want to delete this block?</p>
+            <div class="overlay-controls">
+                <button id="confirm_remove_button" class="button green-button">Yes</button>
+                <button id="cancel_remove_button" class="button red-button">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay for Deleting Action Rows -->
+    <div class="cleardata-overlay remove-action-overlay">
+        <div class="cleardata-form">
+            <h2>Delete Action</h2>
+            <p>Are you sure you want to delete this action?</p>
+            <div class="overlay-controls">
+                <button id="confirm_remove_action_button" class="button green-button">Yes</button>
+                <button id="cancel_remove_action_button" class="button red-button">No</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="js/tagConfig.js"></script>
     <script type="module" src="js/appManager.js"></script>
     <script type="module" src="js/main.js"></script>
@@ -1092,8 +1005,6 @@
     <script type="module" src="js/diceRoller.js"></script>
     <script type="module" src="js/resizeHandle.js"></script>
     <script type="module" src="js/CharacterSheetCalulations.js"></script>
-
-
     <script src="js/upload_download.js"></script>
     <script src="js/page-title.js"></script>
 

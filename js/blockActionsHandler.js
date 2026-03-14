@@ -25,7 +25,8 @@ export const saveEditHandler = () => {
     // Extract the selected tag buttons from the overlay and normalize them
     const selectedPredefinedTags = Array.from(
         document.querySelectorAll(".edit-block-overlay .tag-button.selected")
-    ).map(tag => tag.dataset.tag.trim().toLowerCase());
+    ).filter(tag => !tag.closest('#character_type_tags_edit'))
+    .map(tag => tag.dataset.tag.trim().toLowerCase());
 
     // Get the currently active tab
     const activeTab = appManager.getActiveTab();
@@ -42,7 +43,7 @@ export const saveEditHandler = () => {
     const currentBlockTags = blocks[blockIndex].tags.map(tag => tag.trim().toLowerCase());
 
     // For Tab 3: filter out any typed tags that already exist in the dynamic overlay
-    const exceptionTabs = ["tab3", "tab6", "tab7"];
+    const exceptionTabs = ["tab3", "tab6", "tab7", "tab9"];
     if (exceptionTabs.includes(activeTab)) {
             const dynamicTagsContainer = document.getElementById("dynamic_overlay_tags");
         let existingUserDefinedTags = [];
@@ -76,10 +77,20 @@ export const saveEditHandler = () => {
         );
         return;
     }
+
+    if (activeTab === "tab9") {
+    const selectedTypeBtn = document.querySelector('#character_type_tags_edit .tag-button.selected');    if (!selectedTypeBtn) {
+        alert("Please select a block type: Hazard, Crank, Spell, or Magic Item.");
+        return;
+    }
+    }
   
     // Save the edited block
     const usesState = JSON.parse(localStorage.getItem("uses_field_edit_overlay_state") || "[]");
-    appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, currentEditingBlockId, blocks[blockIndex].timestamp);
+    const blockType = activeTab === "tab9"
+        ? Array.from(document.querySelectorAll('#character_type_tags_edit .tag-button.selected')).map(b => b.dataset.tag)
+        : null;
+    appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, blockType, currentEditingBlockId, blocks[blockIndex].timestamp);
     console.log(`✅ Block updated successfully in ${activeTab} with tags:`, allTags);
 
     document.querySelector(".edit-block-overlay").classList.remove("show");
@@ -202,7 +213,7 @@ document.addEventListener("DOMContentLoaded", initUndoLastDelete);
         
             const activeTab = appManager.getActiveTab(); // (you already have this)
 
-            const exceptionTabs = ["tab3", "tab6", "tab7"];
+            const exceptionTabs = ["tab3", "tab6", "tab7", "tab9"];
             if (exceptionTabs.includes(activeTab)) {
                 document.getElementById("tags_input_edit_overlay").value = "";
             } else {
@@ -226,6 +237,13 @@ document.addEventListener("DOMContentLoaded", initUndoLastDelete);
                         tagBtn.classList.remove("selected");
                     }
                 });
+
+                if (activeTab === "tab9") {
+                    const blockTypes = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+                    document.querySelectorAll('#character_type_tags_edit .tag-button').forEach(btn => {
+                        btn.classList.toggle('selected', blockTypes.includes(btn.dataset.tag));
+                    });
+                }
             }, 100);
         
             console.log("🟢 Edit Block Overlay Opened Successfully");
@@ -282,12 +300,20 @@ document.addEventListener("DOMContentLoaded", initUndoLastDelete);
     
         const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
     
-        if (selectedTags.length > 0) {
+        const characterTypes = ["Hazard", "Crank", "Spell", "Magic Item"];
+        const typeFilters = selectedTags.filter(t => characterTypes.includes(t));
+        const tagFilters = selectedTags.filter(t => !characterTypes.includes(t));
+
+        if (typeFilters.length > 0) {
+            filteredBlocks = filteredBlocks.filter(block => {
+                const types = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+                return typeFilters.every(t => types.includes(t));
+            });
+        }
+        if (tagFilters.length > 0) {
             filteredBlocks = filteredBlocks.filter(block =>
-                selectedTags.every(selectedTag =>
-                    block.tags.some(blockTag =>
-                        normalizeTag(blockTag) === normalizeTag(selectedTag)
-                    )
+                tagFilters.every(selectedTag =>
+                    block.tags.some(blockTag => normalizeTag(blockTag) === normalizeTag(selectedTag))
                 )
             );
         }

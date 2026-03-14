@@ -5,7 +5,7 @@ export const tagHandler = (() => {
 
     let selectedTagsByTab = {};
 
-    const getSelectedTags = (activeTab = "tab1") => {
+    const getSelectedTags = (activeTab = "tab4") => {
         return selectedTagsByTab[activeTab] ? [...selectedTagsByTab[activeTab]] : [];
     };
        
@@ -17,7 +17,7 @@ export const tagHandler = (() => {
                     
     // Reapply the "selected" class on tag buttons based on the active tab’s selection
     const applyFiltersAfterSave = () => {
-        const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+        const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab4";
         const selectedTags = getSelectedTags(activeTab);
         document.querySelectorAll(".tag-button").forEach(tagElement => {
         tagElement.classList.toggle("selected", selectedTags.includes(tagElement.dataset.tag));
@@ -48,8 +48,8 @@ export const tagHandler = (() => {
                 return;
             }
         
-            // Get the active tab (default to "tab1") and its numeric suffix
-            const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+            // Get the active tab (default to "tab4") and its numeric suffix
+            const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab4";
             const tabNumber = activeTab.replace("tab", "");
         
             // Retrieve and update the selected tags for this active tab
@@ -73,10 +73,20 @@ export const tagHandler = (() => {
             // Retrieve all blocks for the active tab
             let filteredBlocks = appManager.getBlocks(activeTab);
         
-            // Apply tag filtering using the updated tags for this tab
-            if (updatedTags.length > 0) {
+            // Separate character type filters from regular tag filters
+            const characterTypes = ["Hazard", "Crank", "Spell", "Magic Item"];
+            const typeFilters = updatedTags.filter(t => characterTypes.includes(t));
+            const tagFilters = updatedTags.filter(t => !characterTypes.includes(t));
+
+            if (typeFilters.length > 0) {
+                filteredBlocks = filteredBlocks.filter(block => {
+                    const types = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+                    return typeFilters.every(t => types.includes(t));
+                });
+            }
+            if (tagFilters.length > 0) {
                 filteredBlocks = filteredBlocks.filter(block =>
-                updatedTags.every(t => block.tags.includes(t))
+                    tagFilters.every(t => block.tags.includes(t))
                 );
             }
         

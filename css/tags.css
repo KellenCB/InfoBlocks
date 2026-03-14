@@ -7,8 +7,8 @@
     display: flex !important;
     flex-direction: column;
     justify-content: flex-start;
-    align-items: center; /* or flex-start if you prefer */
-    gap: 8px; /* adjust as needed */
+    align-items: center;
+    gap: 8px;
     max-width: 100%;
     padding: 15px 0;
 }
@@ -34,6 +34,7 @@
     justify-content: center;
     align-items: flex-start;
     max-width: 100%;
+    padding: 10px 0;
 }
 
 [id^="user_tags_list"],
@@ -44,6 +45,7 @@
 
 :root {
     --user-color: #e4e0e0;
+    --characterType-color: #00e5ff;
     --part-color: #CDF564;
     --action-color: #07f371;
     --ability-color: #bf5eff;
@@ -79,6 +81,7 @@
 
 .tag-button:hover { transform: scale(1.05); }
 
+.tag-characterType { border-color: var(--characterType-color); color: var(--characterType-color); }
 .tag-partType { border-color: var(--part-color); color: var(--part-color);}
 .tag-actionType { border-color: var(--action-color); color: var(--action-color);}
 .tag-abilityType { border-color: var(--ability-color); color: var(--ability-color);}
@@ -96,6 +99,7 @@
 
 .tag-button.selected { background-color: var(--user-color); color: #333; font-weight: bolder;}
 
+.tag-button.selected.tag-characterType { background-color: var(--characterType-color); color: #333; }
 .tag-button.selected.tag-partType { background-color: var(--part-color);}
 .tag-button.selected.tag-actionType { background-color: var(--action-color);}
 .tag-button.selected.tag-abilityType { background-color: var(--ability-color);}
@@ -110,3 +114,24 @@
 .tag-button.selected.tag-magicItemType { background-color: var(--magicItemType-color)}
 .tag-button.selected.tag-magicItemBonus { background-color: var(--magicItemBonus-color)}
 .tag-button.selected.tag-equippedCheck { background-color: var(--equippedCheck-color)}
+
+/* Character type tags sit above the dynamic tag section in tab9 filter */
+.character-type-tags {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    padding: 10px 0 10px 0;
+    border-bottom: 1px solid #444;
+}
+
+.add-block-overlay .character-type-tags,
+.edit-block-overlay .character-type-tags {
+    border-bottom: none;
+    border-top: 1px solid #444;
+    padding: 10px 0 0 0;
+}
+
+.add-block-overlay .character-type-tags,
+.edit-block-overlay .character-type-tags {
+    justify-content: center;
+}

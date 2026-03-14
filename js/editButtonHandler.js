@@ -1,11 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     function initSpellSlotSection() {
       // =======================================
-      // Tab 2: Spell Slot Section with 9 Groups
+      // Tab 9: Spell Slot Section with 9 Groups
       // =======================================
       const spellSlotSection = document.querySelector('.spell-slot-section');
         if (spellSlotSection) {
-            // Utility function to check and hide empty spell-slot-groups
             const updateGroupVisibility = (groupContainer) => {
             const circles = groupContainer.querySelectorAll('.circle:not(.circle-button)');
             if (circles.length === 0) {
@@ -15,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             };
     
-            // Process each of the nine spell slot groups
             const groups = spellSlotSection.querySelectorAll('.spell-slot-group');
             groups.forEach((groupContainer, idx) => {
             const groupId = groupContainer.dataset.group || (idx + 1);
@@ -47,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
     
-            // Initialize circles for the current group
             for (let i = 0; i < totalCircles; i++) {
                 createCircle(i, circleStates[i] ?? true, false);
             }
@@ -65,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
               spellSlotSection.appendChild(placeholder);
             }
             
-            // Save button for the spell slot edit overlay
             const saveButton = document.getElementById('save_spell_slot_changes');
             if (saveButton) {
             saveButton.addEventListener('click', () => {
@@ -84,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     mainGroup.appendChild(titleElement);
                 }
     
-                // Remove all circles (but keep the title)
                 mainGroup.querySelectorAll('.circle:not(.circle-button)').forEach(circle => circle.remove());
     
                 let circleStates = [];
@@ -124,14 +119,12 @@ document.addEventListener('DOMContentLoaded', () => {
     initSpellSlotSection();
     initializeActionRowToggles();
   
-    // Attach the event listener for opening the spell slot edit overlay
-    // to the existing edit_tab_button from the header.
     const editTabButton = document.getElementById('edit_tab_button');
     if (editTabButton) {
       editTabButton.addEventListener('click', () => {
         const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;
-        if (activeTab === 'tab2') {
-          console.log('✏️ Spell Slot Edit Button Clicked via edit_tab_button in Tab 2');
+        if (activeTab === 'tab9') {
+          console.log('✏️ Spell Slot Edit Button Clicked via edit_tab_button in Tab 9');
           const overlay = document.querySelector('.spell-slot-edit-overlay');
           console.log('Overlay element:', overlay);
           const mainSpellSlots = document.querySelectorAll('.spell-slot-group');
@@ -140,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
           if (overlay) {
             overlay.classList.add('show');
     
-            // Copy data from each main group to its overlay counterpart
             mainSpellSlots.forEach((mainGroup, index) => {
               const overlayGroup = overlaySpellSlots[index];
               if (!overlayGroup) return;
@@ -196,20 +188,17 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('🛠 Actions Edit Button Clicked via edit_tab_button in ' + activeTab);
             const actionsOverlay = document.querySelector('.actions-edit-overlay');
             if (actionsOverlay) {
-              // Store the current active tab in the overlay's dataset.
               actionsOverlay.dataset.activeTab = activeTab;
               const overlayContent = actionsOverlay.querySelector('.overlay-content') || actionsOverlay;
               const headerElem = overlayContent.querySelector('h2');
               const paraElem = overlayContent.querySelector('p');
               
-              // Query for the actions grid in the source tab (either tab4 or tab8)
               const sourceactionsGrid = document.querySelector('#' + activeTab + ' .actions-grid');
               if (sourceactionsGrid) {
                 const actionsGridClone = sourceactionsGrid.cloneNode(true);
                 actionsGridClone.querySelectorAll('.action-name, .action-label, .action-description')
                   .forEach(field => {
                     field.contentEditable = "true";
-                      // re-attach placeholder behavior on empty fields
                       const placeholder =
                         field.classList.contains('action-name')
                           ? 'Enter action name here...'
@@ -258,7 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
 const saveActionsButton = document.getElementById('save_action_changes');
 if (saveActionsButton) {
   saveActionsButton.addEventListener('click', () => {
-    // Retrieve the active tab from the overlay's dataset.
     const actionsOverlay = document.querySelector('.actions-edit-overlay');
     const currentTab = actionsOverlay ? actionsOverlay.dataset.activeTab : null;
     if (!currentTab) {
@@ -270,24 +258,19 @@ if (saveActionsButton) {
     if (container) {
       const newGrid = container.querySelector('.actions-grid');
       if (newGrid) {
-        // Remove all drag handle elements from each row.
         newGrid.querySelectorAll('.drag-handle').forEach(handle => handle.remove());
         newGrid.querySelectorAll('.remove-action-button').forEach(btn => btn.remove());
         
-        // Filter out completely empty rows.
         let rows = Array.from(newGrid.querySelectorAll('.action-row')).filter(row => !isactionRowCompletelyEmpty(row));
 
-        // Re-index each remaining row sequentially starting from 1 using currentTab as prefix.
         rows.forEach((row, index) => {
           const newIndex = index + 1;
           reNumberactionRow(row, newIndex, currentTab);
         });
 
-        // ─── Strip unwanted inline styles (e.g. text-wrap-mode: nowrap) ───
         rows.forEach(row => {
           row.querySelectorAll('[style]').forEach(el => {
             const style = el.getAttribute('style');
-            // remove any text-wrap-mode declarations
             const cleaned = style.replace(/text-wrap-mode\s*:\s*nowrap;?/gi, '');
             if (cleaned.trim()) {
               el.setAttribute('style', cleaned);
@@ -297,25 +280,20 @@ if (saveActionsButton) {
           });
         });
 
-        // Build new HTML content from the re-indexed rows.
         const newHTML = rows.map(row => {
-          // ensure full content is saved not the condensed first-line version
           row.querySelectorAll('.action-name, .action-label, .action-description').forEach(field => {
             if (field.dataset.fullContent) field.innerHTML = field.dataset.fullContent;
           });
           return row.outerHTML;
         }).join('');
         
-        // Update the actions grid in the source tab (currentTab) with the new content.
         const targetGrid = document.querySelector('#' + currentTab + ' .actions-grid');
         if (targetGrid) {
           targetGrid.innerHTML = newHTML;
-            // ─── CLEAN UP PLACEHOLDER FIELDS ───
             targetGrid
               .querySelectorAll('.action-name, .action-label, .action-description')
               .forEach(field => {
                 const txt = field.textContent.trim();
-                // If it's one of the placeholders, wipe it out
                 if (
                   txt === 'Enter action name here...' ||
                   txt === '+/-' ||
@@ -323,20 +301,16 @@ if (saveActionsButton) {
                 ) {
                   field.textContent = '';
                 }
-                // Remove any leftover inline style (opacity, etc)
                 field.removeAttribute('style');
-                // And lock it down
                 field.contentEditable = "false";
               });
 
           console.log('✅ actions grid updated in ' + currentTab + ' with re-indexed rows.');
           
-          // Set fields to be non-editable when saved.
           targetGrid.querySelectorAll('.action-name, .action-label, .action-description').forEach(field => {
             field.contentEditable = "false";
           });
           
-          // Update localStorage for every element with a data-storage-key.
           targetGrid.querySelectorAll('[data-storage-key]').forEach(el => {
             const key = el.getAttribute('data-storage-key');
             const value = el.textContent.trim();
@@ -363,7 +337,6 @@ if (saveActionsButton) {
   console.warn('Save button with id "save_action_changes" not found.');
 }
 
-// CANCEL BUTTON functionality for both the Spell Slot Edit Overlay and the Actions Edit Overlay
 const overlayCancelConfigs = [
     {
       cancelId: 'close_spell_slot_edit',
@@ -392,18 +365,13 @@ const overlayCancelConfigs = [
     }
 });
 
-// ---------------- Helper functions for dynamic action rows ----------------
-
-// Helper: Placeholder trext for empty rows.
 function attachPlaceholder(element, placeholderText) {
-    // Initialize the element with the placeholder if it's empty.
     if (!element.textContent.trim()) {
       element.textContent = placeholderText;
       element.style.opacity = "0.5";
     }
     
     element.addEventListener('focus', function () {
-      // Only clear if it’s still showing the placeholder
       if (this.textContent.trim() === placeholderText) {
         this.textContent = "";
         this.style.opacity = "1";
@@ -411,7 +379,6 @@ function attachPlaceholder(element, placeholderText) {
     });
     
     element.addEventListener('blur', function () {
-      // If the field is left empty on blur, reapply the placeholder text
       if (this.textContent.trim() === "") {
         this.textContent = placeholderText;
         this.style.opacity = "0.5";
@@ -419,7 +386,6 @@ function attachPlaceholder(element, placeholderText) {
     });
   }
   
-// Helper: Check if row is empty.
 function isactionRowCompletelyEmpty(row) {
     const nameField = row.querySelector('.action-name');
     const labelField = row.querySelector('.action-label');
@@ -432,17 +398,15 @@ function isactionRowCompletelyEmpty(row) {
     return nameEmpty && labelEmpty && descEmpty;
 }
 
-// Helper: Create empty rows.
 function createEmptyactionRow(nextIndex, tabPrefix) {
   if (!tabPrefix) {
     console.error("createEmptyactionRow: No tabPrefix provided.");
-    return document.createElement('div'); // Fallback: empty div
+    return document.createElement('div');
   }
   
   const row = document.createElement('div');
   row.classList.add('action-row');
 
-  // Create and append the drag-handle first.
   const dragHandle = document.createElement('span');
   dragHandle.classList.add('drag-handle');
   dragHandle.setAttribute('tabindex', '0');
@@ -450,42 +414,35 @@ function createEmptyactionRow(nextIndex, tabPrefix) {
   dragHandle.innerHTML = "&#9776;";
   row.appendChild(dragHandle);
 
-  // Create the toggle-action-view button and append it next to the drag handle.
   const toggleButton = document.createElement('button');
   toggleButton.classList.add('toggle-action-view', 'action-button');
-  toggleButton.innerHTML = "+";  // Set the default symbol
+  toggleButton.innerHTML = "+";
   row.appendChild(toggleButton);
 
-  // Create the action name field.
   const actionName = document.createElement('span');
   actionName.contentEditable = true;
   actionName.classList.add('action-name');
   actionName.setAttribute('data-storage-key', `${tabPrefix}_action_name_${nextIndex}`);
   attachPlaceholder(actionName, "Enter action name here...");
 
-  // Create the action label field.
   const actionLabel = document.createElement('span');
   actionLabel.contentEditable = true;
   actionLabel.classList.add('action-label');
   actionLabel.setAttribute('data-storage-key', `${tabPrefix}_action_label_${nextIndex}`);
   attachPlaceholder(actionLabel, "+/-");
 
-  // Create the action description field.
   const actionDescription = document.createElement('span');
   actionDescription.contentEditable = true;
   actionDescription.classList.add('action-description');
   actionDescription.setAttribute('data-storage-key', `${tabPrefix}_action_description_${nextIndex}`);
   attachPlaceholder(actionDescription, "Enter action description here...");
 
-  // Append the editable fields to the row.
   row.appendChild(actionName);
   row.appendChild(actionLabel);
   row.appendChild(actionDescription);
 
-  // Listen for input events so that a new empty row is appended as needed.
   row.addEventListener('input', () => {
     ensureExtraEmptyactionRow();
-    // add remove button once row has content
     if (!isactionRowCompletelyEmpty(row) && !row.querySelector('.remove-action-button')) {
       const removeButton = document.createElement('button');
       removeButton.classList.add('action-button', 'red-button', 'remove-action-button');
@@ -496,7 +453,6 @@ function createEmptyactionRow(nextIndex, tabPrefix) {
   return row;
 }
 
-// Helper: Drag to reorder rows.
 function addDragHandlesToOverlay() {
   const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
   if (!grid) return;
@@ -521,7 +477,6 @@ function addDragHandlesToOverlay() {
 function initializeActionRowToggles() {
   console.log("initializeActionRowToggles executing.");
 
-  // Set the initial state (condensed) for all existing .action-row elements.
   const actionRows = document.querySelectorAll('.action-row');
   actionRows.forEach(row => {
     if (!row.dataset.viewState) {
@@ -529,21 +484,16 @@ function initializeActionRowToggles() {
       row.classList.remove('expanded');
     }
 
-    // Find the toggle button within the row
     const toggleButton = row.querySelector('button');
     if (toggleButton) {
       toggleButton.innerHTML = "+";
       toggleButton.classList.add('toggle-action-view', 'action-button');
-      
-      // Ensure the button appears at the top by inserting it as the first child.
       row.insertBefore(toggleButton, row.firstChild);
     } else {
       console.warn("No toggle button found in action-row:", row);
     }
   });
 
-  // Use event delegation on the document to catch clicks on any .action-row button,
-  // ensuring that even dynamically added rows (e.g. in an edit overlay) have toggle functionality.
   document.addEventListener('click', function(e) {
     const toggleButton = e.target.closest('.action-row button');
     if (toggleButton) {
@@ -571,7 +521,6 @@ function initializeActionRowToggles() {
           if (field.dataset.fullContent) field.innerHTML = field.dataset.fullContent;
         });
       }
-      // save state after either toggle
       const actionsGrid = row.closest('.actions-grid');
       const tabContent = row.closest('.tab-content');
       if (actionsGrid && tabContent) {
@@ -581,7 +530,6 @@ function initializeActionRowToggles() {
           clone.querySelectorAll('.action-name, .action-label, .action-description').forEach(field => {
               if (field.dataset.fullContent) field.innerHTML = field.dataset.fullContent;
           });
-          // strip text-wrap-mode: nowrap from any inner elements
           clone.querySelectorAll('[style]').forEach(el => {
             const style = el.getAttribute('style');
             const cleaned = style.replace(/text-wrap-mode\s*:\s*nowrap;?/gi, '');
@@ -607,7 +555,6 @@ function initializeRowDragAndDrop() {
   if (!grid) return;
   let dragSrcEl = null;
 
-  // ─── Clean up previous listeners & draggable flags ───
   grid.querySelectorAll('.action-row').forEach(row => {
     row.removeAttribute('draggable');
     if (row._dragstart) {
@@ -620,7 +567,6 @@ function initializeRowDragAndDrop() {
     }
   });
 
-  // ─── Arm each row when its handle is pressed ───
   grid.querySelectorAll('.action-row').forEach(row => {
     const handle = row.querySelector('.drag-handle');
     if (!handle) return;
@@ -644,60 +590,50 @@ function initializeRowDragAndDrop() {
     const onDragEnd = () => {
       row.classList.remove('dragging');
       row.removeAttribute('draggable');
-      // clean up any leftover indicator
       document.querySelectorAll('.drop-indicator').forEach(d => d.remove());
     };
     row.addEventListener('dragend', onDragEnd);
     row._dragend = onDragEnd;
   });
 
-  // ─── One single between-row indicator ───
   const dropIndicator = document.createElement('div');
   dropIndicator.className = 'drop-indicator';
 
-  // ─── dragover: only show indicator if it would change position ───
-// ─── Delegate dragover to show indicator only when it would actually move the row ───
-grid.addEventListener('dragover', e => {
-  e.preventDefault();
-  const row = e.target.closest('.action-row');
-  if (!row) return;
+  grid.addEventListener('dragover', e => {
+    e.preventDefault();
+    const row = e.target.closest('.action-row');
+    if (!row) return;
 
-  // 1) get the full static ordering of rows (including the one being dragged)
-  const allRows      = Array.from(grid.querySelectorAll('.action-row'));
-  const originalIdx  = allRows.indexOf(dragSrcEl);
-  const targetIdx    = allRows.indexOf(row);
+    const allRows      = Array.from(grid.querySelectorAll('.action-row'));
+    const originalIdx  = allRows.indexOf(dragSrcEl);
+    const targetIdx    = allRows.indexOf(row);
 
-  // 2) if you're over the dragged row itself or an unknown element, hide indicator
-  if (targetIdx < 0 || targetIdx === originalIdx) {
-    if (dropIndicator.parentNode) dropIndicator.parentNode.removeChild(dropIndicator);
-    return;
-  }
+    if (targetIdx < 0 || targetIdx === originalIdx) {
+      if (dropIndicator.parentNode) dropIndicator.parentNode.removeChild(dropIndicator);
+      return;
+    }
 
-  // 3) calculate pointer offset within that row
-  const { top, height } = row.getBoundingClientRect();
-  const offset = e.clientY - top;
+    const { top, height } = row.getBoundingClientRect();
+    const offset = e.clientY - top;
 
-  // 4) suppress indicator on the “near” half of the adjacent row
-  const isAboveNeighbor = targetIdx === originalIdx - 1;
-  const isBelowNeighbor = targetIdx === originalIdx + 1;
-  if ((isAboveNeighbor && offset >= height/2) ||
-      (isBelowNeighbor && offset <  height/2)) {
-    if (dropIndicator.parentNode) dropIndicator.parentNode.removeChild(dropIndicator);
-    return;
-  }
+    const isAboveNeighbor = targetIdx === originalIdx - 1;
+    const isBelowNeighbor = targetIdx === originalIdx + 1;
+    if ((isAboveNeighbor && offset >= height/2) ||
+        (isBelowNeighbor && offset <  height/2)) {
+      if (dropIndicator.parentNode) dropIndicator.parentNode.removeChild(dropIndicator);
+      return;
+    }
 
-  // 5) otherwise place it in the proper gap
-  if (dropIndicator.parentNode) {
-    dropIndicator.parentNode.removeChild(dropIndicator);
-  }
-  if (offset < height/2) {
-    row.parentNode.insertBefore(dropIndicator, row);
-  } else {
-    row.parentNode.insertBefore(dropIndicator, row.nextSibling);
-  }
-});
+    if (dropIndicator.parentNode) {
+      dropIndicator.parentNode.removeChild(dropIndicator);
+    }
+    if (offset < height/2) {
+      row.parentNode.insertBefore(dropIndicator, row);
+    } else {
+      row.parentNode.insertBefore(dropIndicator, row.nextSibling);
+    }
+  });
 
-  // ─── drop: insert at the indicator, if present ───
   grid.addEventListener('drop', e => {
     e.preventDefault();
     if (!dropIndicator.parentNode) return;
@@ -711,7 +647,6 @@ grid.addEventListener('dragover', e => {
   });
 }
 
-// Helper: Re-number a given action row to use a new sequential index.
 function reNumberactionRow(row, newIndex, tabPrefix) {
   const nameField = row.querySelector('.action-name');
   if (nameField) {
@@ -727,12 +662,10 @@ function reNumberactionRow(row, newIndex, tabPrefix) {
   }
 }    
 
-// Ensures that the grid in the Actions Edit Overlay always has one extra empty row at the end.
 function ensureExtraEmptyactionRow() {
   const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
   if (!grid) return;
 
-  // Retrieve the current tab prefix from the overlay's dataset.
   const actionsOverlay = document.querySelector('.actions-edit-overlay');
   if (!actionsOverlay || !actionsOverlay.dataset.activeTab) {
       console.error("ensureExtraEmptyactionRow: Active tab is not defined in the overlay's dataset.");
@@ -742,15 +675,13 @@ function ensureExtraEmptyactionRow() {
 
   const rows = grid.querySelectorAll('.action-row');
   if (rows.length === 0) {
-      // If there are no rows, create the first empty row with index 1.
       const newRow = createEmptyactionRow(1, tabPrefix);
       grid.appendChild(newRow);
       return;
   }
   const lastRow = rows[rows.length - 1];
   if (!isactionRowCompletelyEmpty(lastRow)) {
-      // Retrieve the index number from the last row's action name field.
-      const key = lastRow.querySelector('.action-name').getAttribute('data-storage-key'); // e.g. "tab4_action_name_3"
+      const key = lastRow.querySelector('.action-name').getAttribute('data-storage-key');
       const parts = key.split('_');
       let index = parseInt(parts[parts.length - 1], 10);
       if (isNaN(index)) {
@@ -791,7 +722,6 @@ if (cancelRemoveAction) {
     };
 }
 
-// Call on initialization to add listeners to any existing rows and ensure an extra empty row.
 function initializeDynamicactionRows() {
   const grid = document.querySelector('.actions-edit-overlay .actions-edit-container .actions-grid');
   if (!grid) return;

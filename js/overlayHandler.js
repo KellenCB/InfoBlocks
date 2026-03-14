@@ -98,7 +98,7 @@ export const handleSaveBlock = () => {
         const textElement = document.getElementById("block_text_overlay");
         const titleInput = titleElement?.value.trim()  || "";
         const textInput = textElement?.innerHTML.trim()   || "";
-        const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+        const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab4";
 
         // on all tabs except "tab6", require both title and text
         if (
@@ -110,6 +110,16 @@ export const handleSaveBlock = () => {
             : "All fields (Title and Text) are required."
             );
             return;
+        }
+
+        if (activeTab === "tab9") {
+          console.log("activeTab is:", activeTab);
+          const selectedTypeBtn = document.querySelector('#character_type_tags_add .tag-button.selected');
+          console.log("selectedTypeBtn is:", selectedTypeBtn);
+          if (!selectedTypeBtn) {
+              alert("Please select a block type: Hazard, Crank, Spell, or Magic Item.");
+              return;
+          }
         }
   
         // --- Tag Processing Starts Here ---
@@ -124,12 +134,12 @@ export const handleSaveBlock = () => {
         // 2. Extract selected tags from the overlay's buttons and normalize them.
         const selectedPredefinedTags = Array.from(
             document.querySelectorAll(".add-block-overlay .tag-button.selected")
-        ).map(tag => tag.dataset.tag.trim().toLowerCase());
-
+        ).filter(tag => !tag.closest('#character_type_tags_add'))
+        .map(tag => tag.dataset.tag.trim().toLowerCase());
         // 3. Get the active tab.
 
         // 4. For Tab 3: filter out any typed tags that already exist in the dynamic overlay.
-        const exceptionTabs = ["tab3", "tab6", "tab7"];
+        const exceptionTabs = ["tab3", "tab6", "tab7", "tab9"];
         if (exceptionTabs.includes(activeTab)) {
             const dynamicTagsContainer = document.getElementById("add_block_overlay_tags");
             let existingUserDefinedTags = [];
@@ -154,7 +164,11 @@ export const handleSaveBlock = () => {
 
         // Save the new block using appManager.saveBlock (assumes this function handles adding a new block)
         const activeTabFromDOM = activeTab; // Use activeTab determined earlier.
-        const success = appManager.saveBlock(activeTabFromDOM, titleInput, textInput, allTags, usesState);
+        const blockType = activeTab === "tab9"
+          ? Array.from(document.querySelectorAll('#character_type_tags_add .tag-button.selected')).map(b => b.dataset.tag)
+          : null;
+
+        const success = appManager.saveBlock(activeTabFromDOM, titleInput, textInput, allTags, usesState, blockType);
 
         if (success) {
             console.log("✅ Block saved successfully with tags:", allTags);
@@ -309,7 +323,7 @@ export const overlayHandler = (() => {
     
         tagsContainer.innerHTML = "";
         const activeTab = appManager.getActiveTab();
-        const exceptionTabs = ["tab3", "tab6", "tab7"];
+        const exceptionTabs = ["tab3", "tab6", "tab7", "tab9"];
     
         // Get predefined and user-defined tags
         const predefinedTagList = Object.entries(categoryTags)

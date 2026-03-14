@@ -20,7 +20,7 @@ export let selectedFilterTagsBeforeAdd = [];
 /* ==================================================================*/
 
 const getActiveTab = () => {
-  return document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+  return document.querySelector(".tab-button.active")?.dataset.tab || "tab4";
 };
 
 
@@ -180,7 +180,7 @@ export const appManager = (() => {
     
   // Update tags (predefined & user-generated)
   const updateTags = () => {
-    // Get the active tab (e.g., "tab1") and its numeric suffix
+    // Get the active tab (e.g., "tab4") and its numeric suffix
     const activeTab = getActiveTab();
     const tabSuffix = activeTab.replace("tab", "");
   
@@ -306,7 +306,7 @@ export const appManager = (() => {
     
     if (typeof tab !== "string") {
       console.error("❌ Error: 'tab' should be a string but got:", tab);
-      tab = "tab1";
+      tab = "tab4";
     }
     
     const tabSuffix = tab.replace("tab", ""); // e.g., "1" or "2"
@@ -555,13 +555,24 @@ export const appManager = (() => {
           
           // Apply tag filters if any are selected
           const selectedTags = tagHandler.getSelectedTags(tab);
-          if (selectedTags.length > 0) {
-            filteredBlocks = filteredBlocks.filter(block =>
-              selectedTags.every(selectedTag =>
-                block.tags.some(blockTag => normalizeTag(blockTag) === normalizeTag(selectedTag))
-              )
-            );
-        }
+          const characterTypes = ["Hazard", "Crank", "Spell", "Magic Item"];
+          const typeFilters = selectedTags.filter(t => characterTypes.includes(t));
+          const tagFilters = selectedTags.filter(t => !characterTypes.includes(t));
+
+          if (typeFilters.length > 0) {
+              filteredBlocks = filteredBlocks.filter(block => {
+                  const types = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+                  return typeFilters.every(t => types.includes(t));
+              });
+          }
+
+          if (tagFilters.length > 0) {
+              filteredBlocks = filteredBlocks.filter(block =>
+                  tagFilters.every(selectedTag =>
+                      block.tags.some(blockTag => normalizeTag(blockTag) === normalizeTag(selectedTag))
+                  )
+              );
+          }
           
           // Re-render blocks using the filtered list
           renderBlocks(tab, filteredBlocks);
@@ -703,7 +714,7 @@ export const appManager = (() => {
 /* ======================== DATA MANAGEMENT ========================*/
 /* =================================================================*/
 
-  const saveBlock = (tab, blockTitle, text, tags, uses, blockId = null, timestamp = null) => {
+  const saveBlock = (tab, blockTitle, text, tags, uses, blockType = null, blockId = null, timestamp = null) => {
     console.log(`📥 Attempting to save block in ${tab}:`, { blockTitle, text, tags, uses, blockId, timestamp });
     
     if (
@@ -726,13 +737,14 @@ export const appManager = (() => {
         const blockIndex = userBlocks.findIndex(block => block.id === blockId);
     
         if (blockIndex !== -1) {
-            userBlocks[blockIndex] = {
-                ...userBlocks[blockIndex],
-                title: blockTitle,
-                text,
-                tags,
-                uses, // update the uses property here
-                timestamp: userBlocks[blockIndex].timestamp || Date.now()
+          userBlocks[blockIndex] = {
+              ...userBlocks[blockIndex],
+              title: blockTitle,
+              text,
+              tags,
+              uses,
+              blockType,
+              timestamp: userBlocks[blockIndex].timestamp || Date.now()
             };
             console.log("🛠 Updated Block Data:", userBlocks[blockIndex]);
         } else {
@@ -747,15 +759,16 @@ export const appManager = (() => {
         );
     
         const newBlock = {
-            id: crypto.randomUUID(),
-            title: blockTitle,
-            text: text,
-            tags: formattedTags,
-            uses, // include the uses state here
-            timestamp: timestamp || Date.now(),
-            viewState: "expanded"
+          id: crypto.randomUUID(),
+          title: blockTitle,
+          text: text,
+          tags: formattedTags,
+          uses,
+          blockType: blockType || null,
+          timestamp: timestamp || Date.now(),
+          viewState: "expanded"
         };
-                
+
         userBlocks.unshift(newBlock);
         console.log("✅ New Block Saved:", newBlock);
     }

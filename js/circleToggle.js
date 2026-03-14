@@ -13,7 +13,7 @@ export function toggleBlockUse(blockId, idx, event, element) {
   element.classList.toggle('unfilled');
   const newState = element.classList.contains('unfilled');
 
-  const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+  const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab4";
   const blocks = JSON.parse(localStorage.getItem(`userBlocks_${activeTab}`)) || [];
   const block = blocks.find(b => b.id === blockId);
   if (!block) return;
