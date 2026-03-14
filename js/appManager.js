@@ -201,20 +201,8 @@ export const appManager = (() => {
       .sort((a, b) => a.localeCompare(b));
       
     let html = "";
-  
-    // Render user-defined tags first
-    if (usedUserTags.length > 0) {
-      html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}">`;
-      html += usedUserTags.map(tag => {
-        const isSelected = selectedTags.includes(tag) ? "selected" : "";
-        return `<button class="tag-button tag-user ${isSelected}" data-tag="${tag}">${tag}</button>`;
-      }).join("");
-      html += `</div>`;
-    } else {
-      html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}"></div>`;
-    }
-  
-    // Then render predefined tags grouped by category that apply to the active tab
+
+    // Render predefined tags grouped by category that apply to the active tab
     Object.keys(categoryTags).forEach(category => {
       if (!categoryTags[category].tabs.includes(activeTab)) return;
       const usedPredefined = categoryTags[category].tags.filter(tag => usedTags.includes(tag));
@@ -227,6 +215,18 @@ export const appManager = (() => {
         html += `</div>`;
       }
     });
+
+    // Render user-defined tags last
+    if (usedUserTags.length > 0) {
+        html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}">`;
+        html += usedUserTags.map(tag => {
+            const isSelected = selectedTags.includes(tag) ? "selected" : "";
+            return `<button class="tag-button tag-user ${isSelected}" data-tag="${tag}">${tag}</button>`;
+        }).join("");
+        html += `</div>`;
+    } else {
+        html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}"></div>`;
+    }
   
     // Update the unified container for tags in the active tab
     const unifiedContainer = document.getElementById(`dynamic_tags_section_${tabSuffix}`);
