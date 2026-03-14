@@ -166,6 +166,10 @@
     pointer-events: auto;
 }
 
+.text-toolbar button:hover {
+    background-color: #777;
+}
+
 .text-toolbar button.selected {
     background-color: #666;
     border-color: #888;
@@ -241,9 +245,9 @@
 
 /* Find & Replace Panel */
 .find-replace-panel {
-    background-color: #3a3a3a;
+    background-color: #444;
     border-bottom: 1px solid #555;
-    padding: 8px 12px;
+    padding: 12px 12px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -277,10 +281,11 @@
 
 .fr-btn {
     padding: 6px 10px;
-    font-size: 13px;
+    font-size: 14px;
     background-color: #555;
     color: #fff;
-    border: none;
+    border: 1px solid #555;
+    opacity: 0.5;
     border-radius: 6px;
     cursor: pointer;
     white-space: nowrap;
@@ -288,21 +293,17 @@
 }
 
 .fr-btn:hover {
-    background-color: #666;
-}
-
-.fr-close {
-    background-color: #ff6b6b;
+    background-color: #777;
 }
 
 .fr-close:hover {
     background-color: #ff8e8e;
+    opacity: 1;
 }
 
 .fr-feedback {
     font-size: 12px;
     color: #aaa;
-    min-height: 16px;
 }
 
 .fr-highlight {

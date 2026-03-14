@@ -497,8 +497,6 @@ function addFormatToolbar() {
         <div class="find-replace-row">
             <input type="text" class="fr-find" placeholder="Find..." />
             <input type="text" class="fr-replace" placeholder="Replace..." />
-        </div>
-        <div class="find-replace-row">
             <button type="button" class="fr-btn fr-find-next">Find Next</button>
             <button type="button" class="fr-btn fr-replace-one">Replace One</button>
             <button type="button" class="fr-btn fr-replace-all">Replace All</button>
@@ -514,6 +512,7 @@ function addFormatToolbar() {
       const frFind = frPanel.querySelector('.fr-find');
       const frReplace = frPanel.querySelector('.fr-replace');
       const frFeedback = frPanel.querySelector('.fr-feedback');
+      frFeedback.style.display = 'none';
 
       // remove all highlights entirely
       const clearFrHighlights = () => {
@@ -589,10 +588,20 @@ function addFormatToolbar() {
       };
 
       frFind.addEventListener('input', () => {
+        if (!frFind.value) {
+          clearFrHighlights();
+          frMatches = [];
+          frIndex = -1;
+          frFeedback.textContent = '';
+          frFeedback.style.display = 'none';
+          return;
+        }
+        frFeedback.style.display = '';
         buildMatches();
       });
 
       frPanel.querySelector('.fr-find-next').addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
         e.preventDefault();
         // rebuild from clean DOM before advancing
         clearFrHighlights();
@@ -603,6 +612,7 @@ function addFormatToolbar() {
         }
         frIndex = (frIndex + 1) % frMatches.length;
         highlightAll(frIndex);
+        frFeedback.style.display = '';
         if (frIndex === frMatches.length - 1) {
           frFeedback.textContent = `Match ${frIndex + 1} of ${frMatches.length} — no more matches after this`;
         } else {
@@ -677,6 +687,7 @@ function addFormatToolbar() {
     });
 
       frPanel.querySelector('.fr-replace-all').addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
         e.preventDefault();
         clearFrHighlights();
         frMatches = findTextMatches();
@@ -704,12 +715,14 @@ function addFormatToolbar() {
       });
 
       frPanel.querySelector('.fr-close').addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
         e.preventDefault();
         clearFrHighlights();
         frPanel.classList.add('hidden');
         frMatches = [];
         frIndex = -1;
         frFeedback.textContent = '';
+        frFeedback.style.display = 'none';
         frFind.value = '';
         frReplace.value = '';
       });
@@ -768,6 +781,7 @@ function addFormatToolbar() {
         }
 
         btn.addEventListener('mousedown', e => {
+          if (e.button !== 0) return;
           e.preventDefault();
           if (activeTooltip) {
             activeTooltip.remove();
