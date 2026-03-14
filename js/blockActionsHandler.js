@@ -58,7 +58,8 @@ export const saveEditHandler = () => {
     tagsInput = tagsInput.filter(tag => !currentBlockTags.includes(tag));
 
     // Combine: include any remaining typed tags, selected tag buttons, and the block’s current tags
-    const combinedTagsLowercase = [...new Set([...currentBlockTags, ...tagsInput, ...selectedPredefinedTags])];
+    const combinedTagsLowercase = [...new Set([...tagsInput, ...selectedPredefinedTags])];
+
 
     // Re-capitalize each tag (first letter uppercase, rest lowercase) for display purposes
     const allTags = combinedTagsLowercase.map(tag => tag.charAt(0).toUpperCase() + tag.slice(1));

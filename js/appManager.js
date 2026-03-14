@@ -88,7 +88,7 @@ export const actionButtonHandlers = (() => {
         }
 
         // Initialize overlay predefined tags
-        overlayHandler.initializeOverlayTagHandlers("dynamic_overlay_tags");
+        overlayHandler.initializeOverlayTagHandlers("add_block_overlay_tags");
 
         // Open overlay and focus the title input after a short delay
         elements.addBlockOverlay.classList.add("show");
@@ -112,12 +112,12 @@ export const actionButtonHandlers = (() => {
 
     // Confirm Clear Data - Purge entire localStorage and reload
     if (elements.confirmClearButton && elements.clearDataOverlay) {
-      elements.confirmClearButton.addEventListener("click", () => {
+      elements.confirmClearButton.onclick = () => {
         console.log("✅ Confirm Clear Data button clicked");
         localStorage.clear();
         alert("All data has been cleared.");
         location.reload();
-      });
+    };
     } else {
       console.error("❌ Error: Confirm Clear button not found.");
     }
@@ -191,7 +191,10 @@ export const appManager = (() => {
     const selectedTags = tagHandler.getSelectedTags(activeTab);
   
     // Get all predefined tags from tagConfig.js
-    const allPredefined = Object.values(categoryTags).flatMap(cat => cat.tags);
+    const allPredefined = Object.entries(categoryTags)
+        .filter(([_, data]) => data.tabs.includes(activeTab))
+        .flatMap(([_, data]) => data.tags);
+
     // Determine user-defined tags (those not in the predefined list)
     const usedUserTags = usedTags
       .filter(tag => !allPredefined.includes(tag))
@@ -267,6 +270,8 @@ export const appManager = (() => {
   ToggleFilters.forEach(button => {
     button.addEventListener("click", () => {
       const container = button.closest(".filter-and-results");
+      const tabContent = button.closest(".tab-content");
+      const tabId = tabContent ? tabContent.id : null;
       const selectors = [
         ".filter-section",
         ".filter-section-wrapper",
@@ -279,13 +284,18 @@ export const appManager = (() => {
         .forEach(el => el.classList.toggle("hidden"));
 
       const filterSection = container.querySelector(".filter-section");
-      if (filterSection.classList.contains("hidden")) {
+      const isHidden = filterSection.classList.contains("hidden");
+
+      if (isHidden) {
         button.innerHTML = '<img src="./images/Filter_Open_Icon.svg" alt="Filter icon">';
       } else {
         button.innerHTML = '<img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">';
-      }  
+      }
+
+      if (tabId) localStorage.setItem(`filterVisible_${tabId}`, (!isHidden).toString());
     });
   });
+
 
 /* ==================================================================*/
 /* ============================= BLOCKS =============================*/
@@ -491,7 +501,7 @@ export const appManager = (() => {
         }
       }
       blocks.forEach(block => {
-        resultsSection.insertAdjacentHTML("beforeend", blockTemplate(block));
+          resultsSection.insertAdjacentHTML("beforeend", blockTemplate(block, tab));
       });
       console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
         
