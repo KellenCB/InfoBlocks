@@ -116,22 +116,22 @@
 .tag-button.selected.tag-equippedCheck { background-color: var(--equippedCheck-color)}
 
 /* Character type tags sit above the dynamic tag section in tab9 filter */
-.character-type-tags {
+.block-type-tags {
     display: flex;
     flex-wrap: wrap;
     width: 100%;
-    padding: 10px 0 10px 0;
+    padding: 15px 0 15px 0;
     border-bottom: 1px solid #444;
 }
 
-.add-block-overlay .character-type-tags,
-.edit-block-overlay .character-type-tags {
+.add-block-overlay .block-type-tags,
+.edit-block-overlay .block-type-tags {
     border-bottom: none;
     border-top: 1px solid #444;
     padding: 10px 0 0 0;
 }
 
-.add-block-overlay .character-type-tags,
-.edit-block-overlay .character-type-tags {
+.add-block-overlay .block-type-tags,
+.edit-block-overlay .block-type-tags {
     justify-content: center;
 }

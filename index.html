@@ -27,7 +27,8 @@
     
         <div class="hero-button-section">
     
-            <button id="edit_tab_button" class="hero-button orange-button">
+            <button id="edit_tab_button" class="hero-button orange-button" style="display:none;">
+
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M4 15.5V19h3.5l9.94-9.94-3.5-3.5L4 15.5zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.5 3.5 1.83-1.83z" />
                 </svg>
@@ -56,9 +57,8 @@
             <button class="tab-button" data-tab="tab8" draggable="true">Crank</button>
             <button class="tab-button" data-tab="tab9" draggable="true">Feats & Magic</button>
             <button class="tab-button" data-tab="tab6" draggable="true">Inventory</button>
-            <button class="tab-button" data-tab="tab3" draggable="true">Notes</button>
-            <button class="tab-button" data-tab="tab7" draggable="true">Session Notes</button>
-            <button class="tab-button" data-tab="tab5" draggable="true">Quest Log</button>
+            <button class="tab-button" data-tab="tab3" draggable="true">Quests & Notes</button>
+            <button class="tab-button" data-tab="tab7" draggable="true">Session Logs</button>
         </div>
     </div>
 
@@ -80,6 +80,10 @@
                             <input id="search_input_3" class="search_input" type="text" placeholder="Search by text" />
                             <button id="clear_search_button_3" class="clear-search">✖</button>
                         </div>
+
+                        <!-- Block type filter buttons for tab3 — populated dynamically from blockTypeConfig -->
+                        <div class="block-type-tags" id="character_type_tags_3"></div>
+
                         <div id="all_tags_container" class="tag-section">
                             <div id="dynamic_tags_section_3"></div>
                         </div>
@@ -351,38 +355,13 @@
         
                 <div class="actions-and-features">
                     <div class="actions-grid-wrapper">
+                        <div class="actions-grid-header">
+                            <button class="add-block-button orange-button edit-actions-button" title="Edit actions">✎</button>
+                        </div>
                         <div class="actions-grid"></div>
                         <div class="actions-overlay-top"></div>
                         <div class="actions-overlay-bottom"></div>
                     </div>
-                </div>
-            </div>
-        </div>
-                            
-        <!-- Tab 5: Quest Log -->
-        <div class="tab-content" id="tab5">
-            <div class="filter-and-results">
-
-                <button id="toggle_filter_5" class="toggle-filter-button">
-                    <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
-                </button>
-                
-                <div class="filter-section-wrapper">
-                    <div class="filter-section-overlay-top"></div>
-                    <div class="filter-section-overlay-bottom"></div>
-                    <div id="filter_section_5" class="filter-section">
-                        <div class="search-container">
-                            <input id="search_input_5" class="search_input" type="text" placeholder="Search by text" />
-                            <button id="clear_search_button_5" class="clear-search">✖</button>
-                        </div>
-                        <div id="all_tags_container" class="tag-section">
-                            <div id="dynamic_tags_section_5"></div>
-                        </div>
-                        <button id="clear_filters_button_5" class="clear_filters_button">Clear Filters</button>
-                    </div>
-                </div>
-
-                <div id="results_section_5" class="results-section">
                 </div>
             </div>
         </div>
@@ -704,6 +683,9 @@
 
                 <div class="actions-and-features">
                     <div class="actions-grid-wrapper">
+                        <div class="actions-grid-header">
+                            <button class="add-block-button orange-button edit-actions-button" title="Edit actions">✎</button>
+                        </div>
                         <div class="actions-grid"></div>
                         <div class="actions-overlay-top"></div>
                         <div class="actions-overlay-bottom"></div>
@@ -715,8 +697,12 @@
         <!-- Tab 9: Feats & Magic -->
         <div class="tab-content" id="tab9">
 
-            <div class="circle-section"></div>
-
+            <div class="circle-section">
+                <span class="spell-slot-title">Suit Uses</span>
+                <div id="suit_uses_circles"></div>
+                <button id="edit_suit_uses_button" title="Edit suit uses">✎</button>
+            </div>
+            
             <div class="spell-slot-section">
                 <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">1st Lvl</span></div>
                 <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">2nd Lvl</span></div>
@@ -727,6 +713,7 @@
                 <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">7th Lvl</span></div>
                 <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">8th Lvl</span></div>
                 <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>
+                <button id="edit_spell_slots_button" class="add-block-button orange-button" title="Edit spell slots">✎</button>
             </div>
 
             <div class="filter-and-results">
@@ -745,12 +732,8 @@
                             <button id="clear_search_button_9" class="clear-search">✖</button>
                         </div>
 
-                        <div class="character-type-tags" id="character_type_tags_9">
-                            <button class="tag-button tag-characterType" data-tag="Hazard">Hazard</button>
-                            <button class="tag-button tag-characterType" data-tag="Crank">Crank</button>
-                            <button class="tag-button tag-characterType" data-tag="Spell">Spell</button>
-                            <button class="tag-button tag-characterType" data-tag="Magic Item">Magic Item</button>
-                        </div>
+                        <!-- Block type filter buttons for tab9 — populated dynamically from blockTypeConfig -->
+                        <div class="block-type-tags" id="character_type_tags_9"></div>
 
                         <div id="all_tags_container" class="tag-section">
                             <div id="dynamic_tags_section_9"></div>
@@ -874,12 +857,8 @@
     <div class="add-block-overlay">
         <div class="add-block-form">
             <h2>Add Information Block</h2>
-            <div class="character-type-tags" id="character_type_tags_add">
-                <button class="tag-button tag-characterType" data-tag="Hazard">Hazard</button>
-                <button class="tag-button tag-characterType" data-tag="Crank">Crank</button>
-                <button class="tag-button tag-characterType" data-tag="Spell">Spell</button>
-                <button class="tag-button tag-characterType" data-tag="Magic Item">Magic Item</button>
-            </div>
+            <!-- Populated dynamically from blockTypeConfig based on active tab -->
+            <div class="block-type-tags" id="character_type_tags_add"></div>
             <div class="add_and_edit_inputs">
                 <input type="text" id="title_input_overlay" placeholder="Enter block title here..." />
                 <div id="uses_field_overlay" class="uses-field"></div>   
@@ -899,19 +878,13 @@
     <div class="edit-block-overlay">
         <div class="edit-block-form">
             <h2>Edit Information Block</h2>
-            <div class="character-type-tags" id="character_type_tags_edit">
-                <button class="tag-button tag-characterType" data-tag="Hazard">Hazard</button>
-                <button class="tag-button tag-characterType" data-tag="Crank">Crank</button>
-                <button class="tag-button tag-characterType" data-tag="Spell">Spell</button>
-                <button class="tag-button tag-characterType" data-tag="Magic Item">Magic Item</button>
-            </div>
+            <!-- Populated dynamically from blockTypeConfig based on active tab -->
+            <div class="block-type-tags" id="character_type_tags_edit"></div>
             <div class="add_and_edit_inputs">
                 <input type="text" id="title_input_edit_overlay" placeholder="Edit title block" />
                 <div id="uses_field_edit_overlay" class="uses-field"></div>        
                 <div id="block_text_edit_overlay" class="auto-resize" contenteditable="true" data-placeholder="Enter block text here..." rows="1"></div>
                 <input type="text" id="tags_input_edit_overlay" placeholder="Edit tags (comma separated)" />
-            </div>
-            <div class="character-type-tags" id="character_type_tags_edit">
             </div>
             <div class="overlay-tags" id="dynamic_overlay_tags">
                 <div id="predefined_tags_edit"></div>
@@ -947,7 +920,19 @@
             </div>
         </div>
     </div>
-      
+    
+    <!-- Overlay for Suit Uses Editing -->
+    <div class="suit-uses-edit-overlay">
+        <div class="spell-slot-edit-container">
+            <h2>Edit Suit Uses</h2>
+            <div class="spell-slot-group" id="suit_uses_edit_group"></div>
+            <div class="overlay-controls">
+                <button id="save_suit_uses" class="button green-button">Save Changes</button>
+                <button id="close_suit_uses_edit" class="button red-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Overlay for Spell Slot Editing -->
     <div class="spell-slot-edit-overlay">
         <div class="spell-slot-edit-container">

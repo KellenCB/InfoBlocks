@@ -78,3 +78,14 @@ export const categoryTags = {
     },
 
 };
+
+export const blockTypeConfig = {
+    tab3: {
+        types: ["Book", "Map", "Quest", "Other"],
+        className: "tag-characterType"
+    },
+    tab9: {
+        types: ["Hazard", "Crank", "Spell", "Magic Item"],
+        className: "tag-characterType"
+    }
+};

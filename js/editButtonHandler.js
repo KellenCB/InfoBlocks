@@ -120,10 +120,108 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeActionRowToggles();
   
     const editTabButton = document.getElementById('edit_tab_button');
+
+    // Contextual edit buttons — wire each to trigger the same logic
+    // as edit_tab_button would for its specific tab.
+    document.getElementById('edit_spell_slots_button')?.addEventListener('click', () => {
+        console.log('✏️ Spell Slot Edit Button clicked');
+        const overlay = document.querySelector('.spell-slot-edit-overlay');
+        const mainSpellSlots   = document.querySelectorAll('.spell-slot-group');
+        const overlaySpellSlots = document.querySelectorAll('.spell-slot-edit-overlay .spell-slot-group');
+        if (overlay) {
+            overlay.classList.add('show');
+            mainSpellSlots.forEach((mainGroup, index) => {
+                const overlayGroup = overlaySpellSlots[index];
+                if (!overlayGroup) return;
+                const titleElement = mainGroup.querySelector('.spell-slot-title');
+                const titleText = titleElement ? titleElement.textContent : `Level ${index + 1}`;
+                overlayGroup.innerHTML = `<span class="spell-slot-title">${titleText}</span>`;
+                mainGroup.querySelectorAll('.circle:not(.circle-button)').forEach(circle => {
+                    const newCircle = document.createElement('div');
+                    newCircle.classList.add('circle');
+                    if (circle.classList.contains('unfilled')) newCircle.classList.add('unfilled');
+                    newCircle.addEventListener('click', () => newCircle.classList.toggle('unfilled'));
+                    overlayGroup.appendChild(newCircle);
+                });
+                const addButton = document.createElement('div');
+                addButton.classList.add('circle', 'circle-button');
+                addButton.innerHTML = "+";
+                addButton.addEventListener('click', () => {
+                    const newCircle = document.createElement('div');
+                    newCircle.classList.add('circle');
+                    newCircle.addEventListener('click', () => newCircle.classList.toggle('unfilled'));
+                    overlayGroup.appendChild(newCircle);
+                });
+                const removeButton = document.createElement('div');
+                removeButton.classList.add('circle', 'circle-button');
+                removeButton.innerHTML = "−";
+                removeButton.addEventListener('click', () => {
+                    const circles = overlayGroup.querySelectorAll('.circle:not(.circle-button)');
+                    if (circles.length > 0) overlayGroup.removeChild(circles[circles.length - 1]);
+                });
+                overlayGroup.insertBefore(addButton, overlayGroup.children[1] || null);
+                overlayGroup.insertBefore(removeButton, addButton.nextSibling);
+            });
+            console.log('✅ Spell slot groups copied to overlay.');
+        } else {
+            console.warn('Spell slot edit overlay not found.');
+        }
+    });
+
+    document.querySelectorAll('.edit-actions-button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Determine which tab this button lives in
+            const activeTab = btn.closest('.tab-content')?.id;
+            if (!activeTab) return;
+            console.log('🛠 Actions Edit Button clicked in ' + activeTab);
+            const actionsOverlay = document.querySelector('.actions-edit-overlay');
+            if (actionsOverlay) {
+                actionsOverlay.dataset.activeTab = activeTab;
+                const overlayContent = actionsOverlay.querySelector('.overlay-content') || actionsOverlay;
+                const headerElem = overlayContent.querySelector('h2');
+                const paraElem   = overlayContent.querySelector('p');
+                const sourceactionsGrid = document.querySelector('#' + activeTab + ' .actions-grid');
+                if (sourceactionsGrid) {
+                    const actionsGridClone = sourceactionsGrid.cloneNode(true);
+                    actionsGridClone.querySelectorAll('.action-name, .action-label, .action-description')
+                        .forEach(field => {
+                            field.contentEditable = "true";
+                            const placeholder =
+                                field.classList.contains('action-name')        ? 'Enter action name here...' :
+                                field.classList.contains('action-label')       ? '+/-' :
+                                                                                  'Enter action description here...';
+                            attachPlaceholder(field, placeholder);
+                        });
+                    let container = overlayContent.querySelector('.actions-edit-container');
+                    if (!container) {
+                        container = document.createElement('div');
+                        container.classList.add('actions-edit-container');
+                    }
+                    container.innerHTML = "";
+                    container.appendChild(actionsGridClone);
+                    if (paraElem) {
+                        paraElem.parentNode.insertBefore(container, paraElem.nextSibling);
+                    } else if (headerElem) {
+                        headerElem.parentNode.insertBefore(container, headerElem.nextSibling);
+                    } else {
+                        overlayContent.insertBefore(container, overlayContent.firstChild);
+                    }
+                    addDragHandlesToOverlay();
+                    initializeDynamicactionRows();
+                    initializeRowDragAndDrop();
+                } else {
+                    console.warn('No actions grid found in ' + activeTab + '.');
+                }
+                actionsOverlay.classList.add('show');
+            } else {
+                console.warn('Actions edit overlay not found.');
+            }
+        });
+    });
+
     if (editTabButton) {
       editTabButton.addEventListener('click', () => {
-        const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;
-        if (activeTab === 'tab9') {
+        const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;        if (activeTab === 'tab9') {
           console.log('✏️ Spell Slot Edit Button Clicked via edit_tab_button in Tab 9');
           const overlay = document.querySelector('.spell-slot-edit-overlay');
           console.log('Overlay element:', overlay);

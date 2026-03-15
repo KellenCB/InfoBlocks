@@ -1,76 +1,83 @@
 import { appManager } from './appManager.js';
 import { tagHandler } from './tagHandler.js';
-import { categoryTags } from './tagConfig.js';
+import { categoryTags, blockTypeConfig } from './tagConfig.js';
+
+// ── Populate (or clear) the block-type-tags div inside an overlay ──
+// Call this every time an overlay opens so it reflects the current active tab.
+function populateBlockTypeOverlay(containerId, selectedTypes = []) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const activeTab = appManager.getActiveTab();
+    const config = blockTypeConfig[activeTab];
+
+    if (!config || !config.types.length) {
+        container.innerHTML = "";
+        return;
+    }
+
+    container.innerHTML = config.types.map(type => {
+        const isSelected = selectedTypes.includes(type) ? "selected" : "";
+        return `<button class="tag-button ${config.className} ${isSelected}" data-tag="${type}">${type}</button>`;
+    }).join("");
+}
 
 function initUsesField(overlayElement, storageKeyPrefix, defaultSlots = 5) {
     let usesState = JSON.parse(localStorage.getItem(storageKeyPrefix)) || [];
   
-    // Clear any existing content and add a header
     overlayElement.innerHTML = "";
   
-  // Create a new row container that will hold both controls and circles
-  const usesRow = document.createElement("div");
-  usesRow.classList.add("uses-row");
+    const usesRow = document.createElement("div");
+    usesRow.classList.add("uses-row");
 
-  // Create the container for the add/remove controls
-  const controlsContainer = document.createElement("div");
-  controlsContainer.classList.add("uses-controls-container");
+    const controlsContainer = document.createElement("div");
+    controlsContainer.classList.add("uses-controls-container");
 
-  // Add button (+)
-  const addButton = document.createElement("div");
-  addButton.classList.add("circle", "circle-button");
-  addButton.innerHTML = "+";
-  addButton.addEventListener("click", () => {
-    usesState.push(false);
-    localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
-    renderCircles();
-  });
-  controlsContainer.appendChild(addButton);
-
-  // Remove button (−)
-  const removeButton = document.createElement("div");
-  removeButton.classList.add("circle", "circle-button");
-  removeButton.innerHTML = "−";
-  removeButton.addEventListener("click", () => {
-    if (usesState.length > 0) {
-      usesState.pop();
-      localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
-      renderCircles();
-    }
-  });
-  controlsContainer.appendChild(removeButton);
-
-  // Create the container for the circles
-  const circlesContainer = document.createElement("div");
-  circlesContainer.classList.add("uses-circles-container");
-
-  // Function to render the circles based on the current state
-  function renderCircles() {
-    circlesContainer.innerHTML = "";
-    usesState.forEach((state, index) => {
-      const circle = document.createElement("div");
-      circle.classList.add("circle");
-      if (state) {
-        circle.classList.add("unfilled");
-      }
-      circle.addEventListener("click", () => {
-        circle.classList.toggle("unfilled");
-        usesState[index] = circle.classList.contains("unfilled");
+    const addButton = document.createElement("div");
+    addButton.classList.add("circle", "circle-button");
+    addButton.innerHTML = "+";
+    addButton.addEventListener("click", () => {
+        usesState.push(false);
         localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
-      });
-      circlesContainer.appendChild(circle);
+        renderCircles();
     });
-  }
+    controlsContainer.appendChild(addButton);
+
+    const removeButton = document.createElement("div");
+    removeButton.classList.add("circle", "circle-button");
+    removeButton.innerHTML = "−";
+    removeButton.addEventListener("click", () => {
+        if (usesState.length > 0) {
+            usesState.pop();
+            localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
+            renderCircles();
+        }
+    });
+    controlsContainer.appendChild(removeButton);
+
+    const circlesContainer = document.createElement("div");
+    circlesContainer.classList.add("uses-circles-container");
+
+    function renderCircles() {
+        circlesContainer.innerHTML = "";
+        usesState.forEach((state, index) => {
+            const circle = document.createElement("div");
+            circle.classList.add("circle");
+            if (state) circle.classList.add("unfilled");
+            circle.addEventListener("click", () => {
+                circle.classList.toggle("unfilled");
+                usesState[index] = circle.classList.contains("unfilled");
+                localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
+            });
+            circlesContainer.appendChild(circle);
+        });
+    }
   
-  // Initial render of circles
-  renderCircles();
+    renderCircles();
 
-  // Append controls and circles to the row container
-  usesRow.appendChild(controlsContainer);
-  usesRow.appendChild(circlesContainer);
-
-  // Append the row container to the overlay element
-  overlayElement.appendChild(usesRow);
+    usesRow.appendChild(controlsContainer);
+    usesRow.appendChild(circlesContainer);
+    overlayElement.appendChild(usesRow);
 }
 
 const addBlockOverlay = document.querySelector(".add-block-overlay");
@@ -86,59 +93,51 @@ export const handleSaveBlock = () => {
     const saveBlockButton = document.getElementById("save-block-button");
     if (!saveBlockButton) return;
 
-    // Remove any duplicate event listeners
     saveBlockButton.replaceWith(saveBlockButton.cloneNode(true));
     const newSaveBlockButton = document.getElementById("save-block-button");
 
     newSaveBlockButton.addEventListener("click", () => {
         console.log("✅ Save Block Button Clicked!");
 
-        // Retrieve and trim title and text inputs
         const titleElement = document.getElementById("title_input_overlay");
-        const textElement = document.getElementById("block_text_overlay");
-        const titleInput = titleElement?.value.trim()  || "";
-        const textInput = textElement?.innerHTML.trim()   || "";
-        const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab4";
+        const textElement  = document.getElementById("block_text_overlay");
+        const titleInput   = titleElement?.value.trim()  || "";
+        const textInput    = textElement?.innerHTML.trim() || "";
+        const activeTab    = document.querySelector(".tab-button.active")?.dataset.tab || "tab4";
 
-        // on all tabs except "tab6", require both title and text
         if (
             titleInput === "" ||
             (activeTab !== "tab6" && textInput === "")
         ) {
             alert(activeTab === "tab6"
-            ? "A title is required."
-            : "All fields (Title and Text) are required."
+                ? "A title is required."
+                : "All fields (Title and Text) are required."
             );
             return;
         }
 
-        if (activeTab === "tab9") {
-          console.log("activeTab is:", activeTab);
-          const selectedTypeBtn = document.querySelector('#character_type_tags_add .tag-button.selected');
-          console.log("selectedTypeBtn is:", selectedTypeBtn);
-          if (!selectedTypeBtn) {
-              alert("Please select a block type: Hazard, Crank, Spell, or Magic Item.");
-              return;
-          }
+        // Validate block type selection if this tab uses block types
+        const tabBTConfig = blockTypeConfig[activeTab];
+        if (tabBTConfig) {
+            const selectedTypeBtn = document.querySelector('#character_type_tags_add .tag-button.selected');
+            if (!selectedTypeBtn) {
+                alert(`Please select a block type: ${tabBTConfig.types.join(", ")}.`);
+                return;
+            }
         }
   
-        // --- Tag Processing Starts Here ---
-
-        // 1. Extract typed tags from the input field, trim and normalize to lowercase.
+        // Tag processing
         let tagsInput = document.getElementById("tags_input_overlay").value
             .split(",")
             .map(tag => tag.trim())
             .filter(tag => tag.length > 0)
             .map(tag => tag.toLowerCase());
 
-        // 2. Extract selected tags from the overlay's buttons and normalize them.
         const selectedPredefinedTags = Array.from(
             document.querySelectorAll(".add-block-overlay .tag-button.selected")
         ).filter(tag => !tag.closest('#character_type_tags_add'))
-        .map(tag => tag.dataset.tag.trim().toLowerCase());
-        // 3. Get the active tab.
+         .map(tag => tag.dataset.tag.trim().toLowerCase());
 
-        // 4. For Tab 3: filter out any typed tags that already exist in the dynamic overlay.
         const exceptionTabs = ["tab3", "tab5", "tab6", "tab7", "tab9"];
         if (exceptionTabs.includes(activeTab)) {
             const dynamicTagsContainer = document.getElementById("add_block_overlay_tags");
@@ -151,30 +150,22 @@ export const handleSaveBlock = () => {
             tagsInput = tagsInput.filter(tag => !existingUserDefinedTags.includes(tag));
         }
         
-        // 5. Combine typed and selected tags using a Set to remove duplicates.
         const combinedTagsLowercase = [...new Set([...tagsInput, ...selectedPredefinedTags])];
-
-        // 6. Re-capitalize tags for display (first letter uppercase, rest lowercase).
         const allTags = combinedTagsLowercase.map(tag => tag.charAt(0).toUpperCase() + tag.slice(1));
 
-        // --- Tag Processing Ends Here ---
-
-        // Retrieve the current uses state from localStorage.
         const usesState = JSON.parse(localStorage.getItem("uses_field_overlay_state") || "[]");
 
-        // Save the new block using appManager.saveBlock (assumes this function handles adding a new block)
-        const activeTabFromDOM = activeTab; // Use activeTab determined earlier.
-        const blockType = activeTab === "tab9"
-          ? Array.from(document.querySelectorAll('#character_type_tags_add .tag-button.selected')).map(b => b.dataset.tag)
-          : null;
+        // Block type: read from config-driven overlay buttons
+        const blockType = tabBTConfig
+            ? Array.from(document.querySelectorAll('#character_type_tags_add .tag-button.selected')).map(b => b.dataset.tag)
+            : null;
 
-        const success = appManager.saveBlock(activeTabFromDOM, titleInput, textInput, allTags, usesState, blockType);
+        const success = appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, blockType);
 
         if (success) {
             console.log("✅ Block saved successfully with tags:", allTags);
-            appManager.renderBlocks(activeTabFromDOM);
+            appManager.renderBlocks(activeTab);
 
-            // Clear inputs & close overlay.
             titleElement.value = "";
             textElement.innerHTML = "";
             textElement.dispatchEvent(new Event('input'));
@@ -196,30 +187,21 @@ export const overlayHandler = (() => {
     }, {});
     
     const attachKeyboardShortcuts = () => {
-        const addBlockOverlay = document.querySelector(".add-block-overlay");
+        const addBlockOverlay  = document.querySelector(".add-block-overlay");
         const clearDataOverlay = document.querySelector(".cleardata-overlay");
         const editBlockOverlay = document.querySelector(".edit-block-overlay");
-        const saveBlockButton = document.getElementById("save-block-button");
+        const saveBlockButton  = document.getElementById("save-block-button");
         const cancelAddBlockButton = document.getElementById("cancel_add_block");
-        const confirmClearButton = document.getElementById("confirm_clear_button");
-        const cancelClearButton = document.getElementById("cancel_clear_button");
-        const saveEditButton = document.getElementById("save-edit-button");
-        const cancelEditButton = document.getElementById("cancel_edit_block");
+        const confirmClearButton   = document.getElementById("confirm_clear_button");
+        const cancelClearButton    = document.getElementById("cancel_clear_button");
+        const saveEditButton       = document.getElementById("save-edit-button");
+        const cancelEditButton     = document.getElementById("cancel_edit_block");
 
-        console.log("Save Block Button:", saveBlockButton);
-        console.log("Cancel Add Block Button:", cancelAddBlockButton);
-                console.log({ addBlockOverlay, clearDataOverlay, editBlockOverlay, saveBlockButton, cancelAddBlockButton, confirmClearButton, cancelClearButton, saveEditButton, cancelEditButton });
-    
         keyboardShortcutsHandler.handleKeyboardShortcuts({
-            addBlockOverlay,
-            clearDataOverlay,
-            editBlockOverlay,
-            saveBlockButton,
-            cancelAddBlockButton,
-            confirmClearButton,
-            cancelClearButton,
-            saveEditButton,
-            cancelEditButton
+            addBlockOverlay, clearDataOverlay, editBlockOverlay,
+            saveBlockButton, cancelAddBlockButton,
+            confirmClearButton, cancelClearButton,
+            saveEditButton, cancelEditButton
         });
     };
                             
@@ -229,14 +211,13 @@ export const overlayHandler = (() => {
     
         clearBlockButton.addEventListener("click", () => {
             const titleInput = document.getElementById("title_input_overlay");
-            const textInput = document.getElementById("block_text_overlay");
-            const tagsInput = document.getElementById("tags_input_overlay");
+            const textInput  = document.getElementById("block_text_overlay");
+            const tagsInput  = document.getElementById("tags_input_overlay");
     
             titleInput.value = "";
-            textInput.value = "";
-            tagsInput.value = "";
+            textInput.value  = "";
+            tagsInput.value  = "";
     
-            // ✅ Ensure predefined tags are also deselected
             document.querySelectorAll(".add-block-overlay .tag-button.selected").forEach(tag => {
                 tag.classList.remove("selected");
             });
@@ -251,8 +232,7 @@ export const overlayHandler = (() => {
 
         cancelAddBlockButton.addEventListener("click", () => {
             console.log("Cancel button clicked");
-            const addBlockOverlay = document.querySelector(".add-block-overlay");
-            addBlockOverlay.classList.remove("show");
+            document.querySelector(".add-block-overlay").classList.remove("show");
         });
     };
 
@@ -262,13 +242,12 @@ export const overlayHandler = (() => {
     
         clearEditButton.addEventListener("click", () => {
             const titleInput = document.getElementById("title_input_edit_overlay");
-            const textInput = document.getElementById("block_text_edit_overlay").innerHTML.trim();
-            const tagsInput = document.getElementById("tags_input_edit_overlay");
+            const textInput  = document.getElementById("block_text_edit_overlay").innerHTML.trim();
+            const tagsInput  = document.getElementById("tags_input_edit_overlay");
     
-            // Clear all input fields
             titleInput.value = "";
-            textInput.value = "";
-            tagsInput.value = "";
+            textInput.value  = "";
+            tagsInput.value  = "";
     
             console.log("Edit overlay fields cleared.");
         });
@@ -279,40 +258,29 @@ export const overlayHandler = (() => {
         if (!cancelEditButton) return;
     
         cancelEditButton.addEventListener("click", () => {
-            const editBlockOverlay = document.querySelector(".edit-block-overlay");
-    
-            // Hide the Edit Overlay
-            editBlockOverlay.classList.remove("show");
-    
+            document.querySelector(".edit-block-overlay").classList.remove("show");
             console.log("Edit overlay canceled and closed.");
         });
     };
 
-    const handleTagSelection = (containerId, type) => { // FOR OVERLAYS
+    const handleTagSelection = (containerId, type) => {
         const container = document.getElementById(containerId);
         if (!container) return;
     
         container.addEventListener("click", (event) => {
             const target = event.target;
-    
-            // Stop propagation to prevent unintended bubbling
             event.stopPropagation();
     
             if (target.classList.contains("tag-button")) {
                 const tag = target.getAttribute("data-tag");
     
-                // Check if the tag is already selected
                 if (selectedOverlayTags[type].includes(tag)) {
-                    console.log(`Removing tag "${tag}" from ${type}`);
                     selectedOverlayTags[type] = selectedOverlayTags[type].filter(t => t !== tag);
                     target.classList.remove("selected");
                 } else {
-                    console.log(`Adding tag "${tag}" to ${type}`);
                     selectedOverlayTags[type].push(tag);
                     target.classList.add("selected");
                 }
-    
-                console.log(`Updated tags for ${type}:`, selectedOverlayTags[type]);
             }
         });
     };
@@ -322,10 +290,9 @@ export const overlayHandler = (() => {
         if (!tagsContainer) return;
     
         tagsContainer.innerHTML = "";
-        const activeTab = appManager.getActiveTab();
+        const activeTab    = appManager.getActiveTab();
         const exceptionTabs = ["tab3", "tab5", "tab6", "tab7", "tab9"];
     
-        // Get predefined and user-defined tags
         const predefinedTagList = Object.entries(categoryTags)
             .filter(([_, data]) => data.tabs.includes(activeTab))
             .flatMap(([_, data]) => data.tags);
@@ -342,44 +309,37 @@ export const overlayHandler = (() => {
         .sort((a, b) => a.localeCompare(b));
                     
         if (containerId === "dynamic_overlay_tags" || containerId === "add_block_overlay_tags") {
-          if (exceptionTabs.includes(activeTab)) {
-              let html = "";
-              // Predefined tags first:
-              Object.entries(categoryTags).forEach(([category, data]) => {
-                  if (!data.tabs.includes(activeTab)) return;
-                  html += data.tags.map(tag =>
-                      `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`
-                  ).join("");
-              });
-              // User-defined tags last:
-              if (userDefinedTags.length > 0) {
-                  html += userDefinedTags.map(tag =>
-                      `<button class="tag-button tag-user" data-tag="${tag}">${tag}</button>`
-                  ).join("");
-              }
-              tagsContainer.innerHTML = html;
-          } else {
+            if (exceptionTabs.includes(activeTab)) {
+                let html = "";
                 Object.entries(categoryTags).forEach(([category, data]) => {
                     if (!data.tabs.includes(activeTab)) return;
-        
+                    html += data.tags.map(tag =>
+                        `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`
+                    ).join("");
+                });
+                if (userDefinedTags.length > 0) {
+                    html += userDefinedTags.map(tag =>
+                        `<button class="tag-button tag-user" data-tag="${tag}">${tag}</button>`
+                    ).join("");
+                }
+                tagsContainer.innerHTML = html;
+            } else {
+                Object.entries(categoryTags).forEach(([category, data]) => {
+                    if (!data.tabs.includes(activeTab)) return;
                     const categoryDiv = document.createElement("div");
                     categoryDiv.classList.add("tag-category");
-        
                     categoryDiv.innerHTML = data.tags.map(tag =>
                         `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`
                     ).join("");
-        
                     tagsContainer.appendChild(categoryDiv);
                 });
             }        
         } else if (containerId === "predefined_tags_edit") {
-            // For non-exception tabs, filter out any user-defined tags from blockTags.
             const predefinedTagSet = new Set(predefinedTagList);
             if (!exceptionTabs.includes(activeTab)) {
                 blockTags = blockTags.filter(tag => predefinedTagSet.has(tag));
             }
     
-            // Populate predefined tags first
             Object.entries(categoryTags).forEach(([category, data]) => {
                 if (!data.tabs.includes(activeTab)) return;
                 const categoryDiv = document.createElement("div");
@@ -390,7 +350,6 @@ export const overlayHandler = (() => {
                 tagsContainer.appendChild(categoryDiv);
             });
 
-            // Then user-defined tags for exception tabs
             if (exceptionTabs.includes(activeTab)) {
                 if (userDefinedTags.length > 0) {
                     const userDiv = document.createElement("div");
@@ -400,8 +359,7 @@ export const overlayHandler = (() => {
                     ).join("");
                     tagsContainer.appendChild(userDiv);
                 }
-          }
-
+            }
         }
     
         tagsContainer.addEventListener("click", (event) => {
@@ -413,11 +371,10 @@ export const overlayHandler = (() => {
     };
                                             
     const autoResizeTextarea = (textarea) => {
-        textarea.style.height = "auto"; // Reset height
-        textarea.style.height = textarea.scrollHeight + "px"; // Expand based on content
+        textarea.style.height = "auto";
+        textarea.style.height = textarea.scrollHeight + "px";
     };
     
-    // Function to resize all textareas **before** the overlay appears
     const initializeTextareas = () => {
         document.querySelectorAll(".auto-resize").forEach(textarea => {
             autoResizeTextarea(textarea);
@@ -427,28 +384,47 @@ export const overlayHandler = (() => {
         });
     };
 
-    // Modify overlay listeners to **resize before showing**
     const addOverlayListeners = () => {
-        const addBlockOverlay = document.querySelector(".add-block-overlay");
+        const addBlockOverlay  = document.querySelector(".add-block-overlay");
         const editBlockOverlay = document.querySelector(".edit-block-overlay");
     
         const observeOverlay = (overlay) => {
             if (!overlay) return;
-    
-            // Observe when the "show" class is added **before** making the overlay visible
             const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                     if (mutation.attributeName === "class" && overlay.classList.contains("show")) {
-                        initializeTextareas(); // Resize BEFORE it appears
+                        initializeTextareas();
                     }
                 });
             });
-    
             observer.observe(overlay, { attributes: true, attributeFilter: ["class"] });
         };
     
         observeOverlay(addBlockOverlay);
         observeOverlay(editBlockOverlay);
+
+        // Populate block type buttons whenever the add overlay opens
+        if (addBlockOverlay) {
+            const addObserver = new MutationObserver(() => {
+                if (addBlockOverlay.classList.contains("show")) {
+                    populateBlockTypeOverlay("character_type_tags_add");
+                }
+            });
+            addObserver.observe(addBlockOverlay, { attributes: true, attributeFilter: ["class"] });
+        }
+
+        // Populate block type buttons whenever the edit overlay opens
+        // (selected types are applied later by blockActionsHandler after it knows the block)
+        if (editBlockOverlay) {
+            const editObserver = new MutationObserver(() => {
+                if (editBlockOverlay.classList.contains("show")) {
+                    // selectedTypes are set by blockActionsHandler — here we just ensure
+                    // the buttons exist with the right set for the active tab.
+                    // Do NOT reset selected state here; blockActionsHandler sets it.
+                }
+            });
+            editObserver.observe(editBlockOverlay, { attributes: true, attributeFilter: ["class"] });
+        }
     };
 
 
@@ -468,7 +444,6 @@ function addFormatToolbar() {
       const editor = form.querySelector(`#${textareaId}`);
       if (!editor) return;
   
-      // Build the toolbar element
       const toolbar = document.createElement('div');
       toolbar.className = 'text-toolbar';
       toolbar.innerHTML = `
@@ -500,7 +475,6 @@ function addFormatToolbar() {
       wrapper.appendChild(toolbar);
       wrapper.appendChild(editor);
 
-      // ── Find & Replace Panel — created BEFORE buttons forEach ──
       const frPanel = document.createElement('div');
       frPanel.className = 'find-replace-panel hidden';
       frPanel.innerHTML = `
@@ -519,12 +493,11 @@ function addFormatToolbar() {
       let frMatches = [];
       let frIndex = -1;
 
-      const frFind = frPanel.querySelector('.fr-find');
+      const frFind    = frPanel.querySelector('.fr-find');
       const frReplace = frPanel.querySelector('.fr-replace');
       const frFeedback = frPanel.querySelector('.fr-feedback');
       frFeedback.style.display = 'none';
 
-      // remove all highlights entirely
       const clearFrHighlights = () => {
         editor.querySelectorAll('span.fr-highlight, span.fr-highlight-active').forEach(span => {
           span.replaceWith(...span.childNodes);
@@ -532,7 +505,6 @@ function addFormatToolbar() {
         editor.normalize();
       };
 
-      // walk text nodes to find matches — does NOT touch the DOM
       const findTextMatches = () => {
         const results = [];
         const query = frFind.value;
@@ -546,7 +518,6 @@ function addFormatToolbar() {
               results.push({ node, index: match.index, length: match[0].length });
             }
           } else {
-            // skip highlight spans so we don't double-match
             if (node.nodeType === Node.ELEMENT_NODE &&
                 (node.classList.contains('fr-highlight') || node.classList.contains('fr-highlight-active'))) {
               results.push({ node: node.firstChild, index: 0, length: node.textContent.length });
@@ -559,11 +530,9 @@ function addFormatToolbar() {
         return results;
       };
 
-      // highlight all matches subtly, with optional active index highlighted more prominently
       const highlightAll = (activeIdx = -1) => {
         clearFrHighlights();
         if (frMatches.length === 0) return;
-        // wrap each match in a span — go in reverse to preserve text node indices
         [...frMatches].reverse().forEach(({ node, index, length }, reversedI) => {
           const actualI = frMatches.length - 1 - reversedI;
           if (!node || !node.parentNode) return;
@@ -574,16 +543,12 @@ function addFormatToolbar() {
           span.className = actualI === activeIdx ? 'fr-highlight-active' : 'fr-highlight';
           range.surroundContents(span);
         });
-        // scroll active match into view
         if (activeIdx >= 0) {
           const active = editor.querySelector('span.fr-highlight-active');
-          if (active) {
-            active.scrollIntoView({ block: 'nearest' });
-          }
+          if (active) active.scrollIntoView({ block: 'nearest' });
         }
-    };
+      };
 
-      // rebuild match list from current DOM state
       const buildMatches = () => {
         clearFrHighlights();
         frMatches = findTextMatches();
@@ -613,75 +578,39 @@ function addFormatToolbar() {
       frPanel.querySelector('.fr-find-next').addEventListener('mousedown', e => {
         if (e.button !== 0) return;
         e.preventDefault();
-        // rebuild from clean DOM before advancing
         clearFrHighlights();
         frMatches = findTextMatches();
-        if (frMatches.length === 0) {
-          frFeedback.textContent = 'No matches found';
-          return;
-        }
+        if (frMatches.length === 0) { frFeedback.textContent = 'No matches found'; return; }
         frIndex = (frIndex + 1) % frMatches.length;
         highlightAll(frIndex);
         frFeedback.style.display = '';
-        if (frIndex === frMatches.length - 1) {
-          frFeedback.textContent = `Match ${frIndex + 1} of ${frMatches.length} — no more matches after this`;
-        } else {
-          frFeedback.textContent = `Match ${frIndex + 1} of ${frMatches.length}`;
-        }
+        frFeedback.textContent = frIndex === frMatches.length - 1
+          ? `Match ${frIndex + 1} of ${frMatches.length} — no more matches after this`
+          : `Match ${frIndex + 1} of ${frMatches.length}`;
       });
 
       frPanel.querySelector('.fr-replace-one').addEventListener('mousedown', e => {
         e.preventDefault();
-        if (frIndex < 0 || frMatches.length === 0) {
-          frFeedback.textContent = 'Use Find Next to select a match first';
-          return;
-        }
+        if (frIndex < 0 || frMatches.length === 0) { frFeedback.textContent = 'Use Find Next to select a match first'; return; }
         const active = editor.querySelector('span.fr-highlight-active');
-        if (!active) {
-          frFeedback.textContent = 'Use Find Next to select a match first';
-          return;
-        }
-
-        // replace the active span's text with the replacement value
-        // keep a reference to where we are so we can highlight the replacement
+        if (!active) { frFeedback.textContent = 'Use Find Next to select a match first'; return; }
         const replacedIndex = frIndex;
         const replaceText = frReplace.value;
-
-        // swap content of active span to replacement text and change to fr-highlight
-        // so it stays visible after rebuild
         active.textContent = replaceText;
         active.className = 'fr-highlight-active';
-
-        // clear all other highlights, leaving only the replaced one
-        editor.querySelectorAll('span.fr-highlight').forEach(span => {
-          span.replaceWith(...span.childNodes);
-        });
+        editor.querySelectorAll('span.fr-highlight').forEach(span => span.replaceWith(...span.childNodes));
         editor.normalize();
-
-        // find fresh matches (excludes the replaced word since it's now different)
         frMatches = findTextMatches();
-
-        // frIndex should point to the next match after the replaced one
-        // since one match was removed, the next match is now at replacedIndex
-        // (or wrap to 0 if we were at the last one)
         if (frMatches.length === 0) {
           frIndex = -1;
           frFeedback.textContent = 'No more matches';
-          // clear the replacement highlight too since there's nothing left to find
-          editor.querySelectorAll('span.fr-highlight-active').forEach(span => {
-            span.replaceWith(...span.childNodes);
-          });
+          editor.querySelectorAll('span.fr-highlight-active').forEach(span => span.replaceWith(...span.childNodes));
           editor.normalize();
         } else {
-          // set frIndex to one before where we'll next click Find Next
           frIndex = replacedIndex - 1;
           if (frIndex < -1) frIndex = frMatches.length - 1;
           frFeedback.textContent = `${frMatches.length} match${frMatches.length !== 1 ? 'es' : ''} remaining — use Find Next to continue`;
-          // highlight all remaining matches subtly using highlightAll
-          // but only clear fr-highlight spans, leaving the fr-highlight-active replaced word intact
-          editor.querySelectorAll('span.fr-highlight').forEach(span => {
-            span.replaceWith(...span.childNodes);
-          });
+          editor.querySelectorAll('span.fr-highlight').forEach(span => span.replaceWith(...span.childNodes));
           editor.normalize();
           frMatches = findTextMatches();
           [...frMatches].reverse().forEach(({ node, index, length }) => {
@@ -694,20 +623,16 @@ function addFormatToolbar() {
             range.surroundContents(span);
           });
         }
-    });
+      });
 
       frPanel.querySelector('.fr-replace-all').addEventListener('mousedown', e => {
         if (e.button !== 0) return;
         e.preventDefault();
         clearFrHighlights();
         frMatches = findTextMatches();
-        if (frMatches.length === 0) {
-          frFeedback.textContent = 'No matches found';
-          return;
-        }
+        if (frMatches.length === 0) { frFeedback.textContent = 'No matches found'; return; }
         const count = frMatches.length;
         const replaceText = frReplace.value;
-        // replace from last to first to preserve indices, wrap in highlight span
         [...frMatches].reverse().forEach(({ node, index, length }) => {
           if (!node || !node.parentNode) return;
           const range = document.createRange();
@@ -740,14 +665,12 @@ function addFormatToolbar() {
       const buttons = toolbar.querySelectorAll('button');
       const sizeSelect = toolbar.querySelector('#font-size-select');
   
-      // Change handler for dropdown
       sizeSelect.addEventListener('change', () => {
         document.execCommand('styleWithCSS', false, true);
         document.execCommand('fontSize', false, sizeSelect.value);
         updateToolbarState();
       });
   
-      // Update UI state
       function updateToolbarState() {
         buttons.forEach(btn => {
           const action = btn.dataset.action;
@@ -763,7 +686,6 @@ function addFormatToolbar() {
         }
       }
   
-      // tooltip logic
       let activeTooltip = null;
       buttons.forEach(btn => {
         const tooltipText = btn.dataset.tooltip;
@@ -777,68 +699,49 @@ function addFormatToolbar() {
               document.body.appendChild(tip);
               const rect = btn.getBoundingClientRect();
               tip.style.left = `${rect.left}px`;
-              tip.style.top = `${rect.bottom + 5}px`;
+              tip.style.top  = `${rect.bottom + 5}px`;
               activeTooltip = tip;
             }, 750);
           });
           btn.addEventListener('mouseleave', () => {
             clearTimeout(btn._tooltipTimer);
-            if (activeTooltip) {
-              activeTooltip.remove();
-              activeTooltip = null;
-            }
+            if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
           });
         }
 
         btn.addEventListener('mousedown', e => {
           if (e.button !== 0) return;
           e.preventDefault();
-          if (activeTooltip) {
-            activeTooltip.remove();
-            activeTooltip = null;
-          }
+          if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
           const action = btn.dataset.action;
           if (action === 'link') {
             const url = prompt('Enter URL');
             if (url) document.execCommand('createLink', false, url.startsWith('http') ? url : `https://${url}`);
           } else if (action === 'increaseFont') {
             let idx = sizeSelect.selectedIndex;
-            if (idx < sizeSelect.options.length - 1) {
-              sizeSelect.selectedIndex = idx + 1;
-              sizeSelect.dispatchEvent(new Event('change'));
-            }
+            if (idx < sizeSelect.options.length - 1) { sizeSelect.selectedIndex = idx + 1; sizeSelect.dispatchEvent(new Event('change')); }
           } else if (action === 'decreaseFont') {
             let idx = sizeSelect.selectedIndex;
-            if (idx > 0) {
-              sizeSelect.selectedIndex = idx - 1;
-              sizeSelect.dispatchEvent(new Event('change'));
-            }
+            if (idx > 0) { sizeSelect.selectedIndex = idx - 1; sizeSelect.dispatchEvent(new Event('change')); }
           } else if (action === 'removeStyling') {
             const sel = window.getSelection();
             if (!sel.rangeCount) return;
             const range = sel.getRangeAt(0);
             const selectedText = range.toString();
             if (!selectedText) return;
-
             const frag = range.cloneContents();
             const tempDiv = document.createElement('div');
             tempDiv.appendChild(frag);
-
             tempDiv.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
-            tempDiv.querySelectorAll('p, div, li').forEach(el => {
-              el.insertAdjacentText('afterend', '\n');
-              el.replaceWith(el.textContent);
-            });
+            tempDiv.querySelectorAll('p, div, li').forEach(el => { el.insertAdjacentText('afterend', '\n'); el.replaceWith(el.textContent); });
             tempDiv.querySelectorAll('ul, ol').forEach(el => el.replaceWith(el.textContent));
             tempDiv.querySelectorAll('*').forEach(el => el.replaceWith(el.textContent));
-
             const newFrag = document.createDocumentFragment();
             const lines = tempDiv.textContent.split('\n');
             lines.forEach((line, i) => {
               newFrag.appendChild(document.createTextNode(line));
               if (i < lines.length - 1) newFrag.appendChild(document.createElement('br'));
             });
-
             range.deleteContents();
             range.insertNode(newFrag);
           } else if (action === 'findReplace') {
@@ -891,12 +794,10 @@ function addFormatToolbar() {
         e.preventDefault();
         const html = e.clipboardData.getData('text/html');
         const text = e.clipboardData.getData('text/plain');
-
         let cleaned = '';
         if (html) {
           const tempDiv = document.createElement('div');
           tempDiv.innerHTML = html;
-
           tempDiv.querySelectorAll('*').forEach(el => {
             el.removeAttribute('style');
             el.removeAttribute('color');
@@ -906,19 +807,9 @@ function addFormatToolbar() {
             el.removeAttribute('background');
             el.removeAttribute('class');
           });
-
-          tempDiv.querySelectorAll('span').forEach(span => {
-            span.replaceWith(...span.childNodes);
-          });
-
-          tempDiv.querySelectorAll('font').forEach(font => {
-            font.replaceWith(...font.childNodes);
-          });
-
-          tempDiv.querySelectorAll('a').forEach(a => {
-            a.replaceWith(...a.childNodes);
-          });
-
+          tempDiv.querySelectorAll('span').forEach(span => span.replaceWith(...span.childNodes));
+          tempDiv.querySelectorAll('font').forEach(font => font.replaceWith(...font.childNodes));
+          tempDiv.querySelectorAll('a').forEach(a => a.replaceWith(...a.childNodes));
           cleaned = tempDiv.innerHTML;
         } else {
           cleaned = text
@@ -927,26 +818,24 @@ function addFormatToolbar() {
             .replace(/>/g, '&gt;')
             .replace(/\n/g, '<br>');
         }
-
         document.execCommand('insertHTML', false, cleaned);
         updateToolbarState();
       });
     });
-  }
+}
     
-// Re-add this helper so initializeEventHandlers can call it
 function initCEPlaceholder(id) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const update = () => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const update = () => {
         const txt = el.textContent.replace(/\u200B/g, '').trim();
         el.classList.toggle('empty', txt === '');
-      };
-      el.addEventListener('input', update);
-      el.addEventListener('focus', update);
-      el.addEventListener('blur', update);
-      update();
-    }
+    };
+    el.addEventListener('input', update);
+    el.addEventListener('focus', update);
+    el.addEventListener('blur', update);
+    update();
+}
     
 
     const initializeEventHandlers = () => {
@@ -966,7 +855,9 @@ function initCEPlaceholder(id) {
     return { 
         attachKeyboardShortcuts, 
         initializeOverlayTagHandlers,
-        initializeEventHandlers};
+        initializeEventHandlers,
+        populateBlockTypeOverlay   // exported so blockActionsHandler can call it
+    };
 })();
 
 export { initUsesField };
