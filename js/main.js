@@ -1,8 +1,9 @@
+import { initSplitView } from './splitView.js';
 import { appManager, actionButtonHandlers } from './appManager.js';
 import { blockActionsHandler, saveEditHandler } from './blockActionsHandler.js';
 import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
 import { tagHandler } from './tagHandler.js';
-import { categoryTags } from './tagConfig.js';
+import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import './resizeHandle.js';
 import { stripHTML } from './appManager.js';
 
@@ -10,18 +11,32 @@ function filterAndRender(tabNumber) {
     const activeTab = `tab${tabNumber}`;
     let blocks = appManager.getBlocks(activeTab);
   
-    // 1) by tags
+    // 1) by block types (from blockTypeConfig)
+    const tabBTConfig = blockTypeConfig[activeTab];
+    if (tabBTConfig) {
+        const selectedTypes = [...document.querySelectorAll(`#character_type_tags_${tabNumber} .tag-button.selected`)]
+            .map(b => b.dataset.tag);
+        if (selectedTypes.length) {
+            blocks = blocks.filter(block => {
+                const types = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+                return selectedTypes.every(t => types.includes(t));
+            });
+        }
+    }
+
+    // 2) by tags
     const sel = tagHandler.getSelectedTags(activeTab);
     if (sel.length) {
-      blocks = blocks.filter(b => sel.every(t => b.tags.includes(t)));
+        const normalizeTag = t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+        blocks = blocks.filter(b =>
+            sel.every(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
+        );
     }
   
-    // 2) by search
+    // 3) by search
     const query = document
       .getElementById(`search_input_${tabNumber}`)
-      .value
-      .trim()
-      .toLowerCase();
+      ?.value.trim().toLowerCase() || "";
     if (query) {
       blocks = blocks.filter(b =>
         b.title.toLowerCase().includes(query) ||
@@ -30,21 +45,18 @@ function filterAndRender(tabNumber) {
     }
   
     appManager.renderBlocks(activeTab, blocks);
-  }  
+}
 
 // 📌 Attach event listeners efficiently
 const attachEventListeners = () => {
     console.log("Attaching event listeners");
 
-    // Attach core event handlers
     actionButtonHandlers.attachActionButtonListeners();
     overlayHandler.initializeEventHandlers();
     keyboardShortcutsHandler.handleKeyboardShortcuts();
 
-    // Block action buttons (Duplicate, Edit, Remove)
     blockActionsHandler.attachBlockActions();
 
-    // Tag selection for filtering
     document.getElementById("dynamic_tags_section")?.addEventListener("click", handleTagFilter);
 };
 
@@ -63,10 +75,9 @@ if (menuButton && menuOverlay) {
 }
 
 /* ===================================================================*/
-/* ========================== DICE ROLELR OVERLAY ============================*/
+/* ========================= DICE ROLLER OVERLAY =====================*/
 /* ===================================================================*/
 
-// AFTER: dice overlay open/close
 const diceMenuButton = document.getElementById("dice-menu-button");
 const diceOverlay    = document.getElementById("dice-overlay");
 const closeDiceBtn   = document.getElementById("close-dice-overlay");
@@ -86,7 +97,6 @@ if (closeDiceBtn && diceOverlay) {
   });
 }
 
-// Close when clicking the backdrop
 diceOverlay
   ?.querySelector('.overlay-backdrop')
   .addEventListener('click', () => diceOverlay.classList.remove('show'));
@@ -108,13 +118,117 @@ const fadeInElementsSequentially = (container = document) => {
 
 fadeInElementsSequentially();
 
-// Function to save the current tab order to localStorage
 function saveTabOrder() {
-    const tabButtons = document.querySelectorAll(".tab-nav .tab-button");
-    const order = Array.from(tabButtons).map(button => button.dataset.tab);
+    // Only read from the main nav, not split view navs
+    const mainNav = document.querySelector(".tab-nav:not(.split-tab-nav)");
+    if (!mainNav) return;
+    const order = Array.from(mainNav.querySelectorAll(".tab-button"))
+        .map(button => button.dataset.tab);
     localStorage.setItem("tabOrder", JSON.stringify(order));
     console.log("Tab order saved:", order);
 }
+
+/* ===================================================================*/
+/* ====================== DATA MIGRATION =============================*/
+/* ===================================================================*/
+
+function migrateToTab9() {
+    if (localStorage.getItem("migration_tab9_done")) return;
+
+    console.log("🔄 Running tab9 migration...");
+
+    const sources = [
+        { key: "userBlocks_tab1", blockType: "Magic Item" },
+        { key: "userBlocks_tab2", blockType: "Spell" },
+        { key: "userBlocks_tab4", blockType: "Hazard" },
+        { key: "userBlocks_tab8", blockType: "Crank" },
+    ];
+
+    let merged = JSON.parse(localStorage.getItem("userBlocks_tab9") || "[]");
+
+    sources.forEach(({ key, blockType }) => {
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        try {
+            const blocks = JSON.parse(raw);
+            if (!Array.isArray(blocks)) return;
+            blocks.forEach(block => { block.blockType = blockType; });
+            merged = merged.concat(blocks);
+            localStorage.removeItem(key);
+            console.log(`✅ Migrated ${blocks.length} blocks from ${key} with type "${blockType}"`);
+        } catch (e) {
+            console.error(`❌ Failed to migrate ${key}:`, e);
+        }
+    });
+
+    localStorage.setItem("userBlocks_tab9", JSON.stringify(merged));
+    localStorage.setItem("migration_tab9_done", "true");
+    console.log(`✅ Tab9 migration complete. ${merged.length} total blocks in tab9.`);
+}
+
+function migrateTab5ToTab3() {
+    if (localStorage.getItem("migration_tab5_to_tab3_done")) return;
+
+    console.log("🔄 Running tab5 → tab3 migration...");
+
+    const raw = localStorage.getItem("userBlocks_tab5");
+    if (raw) {
+        try {
+            const tab5Blocks = JSON.parse(raw);
+            if (Array.isArray(tab5Blocks)) {
+                tab5Blocks.forEach(block => {
+                    block.blockType = block.blockType || ["Quest"];
+                    // Ensure blockType is always an array
+                    if (!Array.isArray(block.blockType)) {
+                        block.blockType = [block.blockType];
+                    }
+                });
+                const existing = JSON.parse(localStorage.getItem("userBlocks_tab3") || "[]");
+                const merged = existing.concat(tab5Blocks);
+                localStorage.setItem("userBlocks_tab3", JSON.stringify(merged));
+                localStorage.removeItem("userBlocks_tab5");
+                console.log(`✅ Migrated ${tab5Blocks.length} blocks from tab5 to tab3 with type "Quest"`);
+            }
+        } catch (e) {
+            console.error("❌ Failed to migrate tab5 blocks:", e);
+        }
+    }
+
+    localStorage.setItem("migration_tab5_to_tab3_done", "true");
+    console.log("✅ Tab5→Tab3 migration complete.");
+}
+
+/* ===================================================================*/
+/* ============= BLOCK TYPE FILTER BUTTONS (from config) =============*/
+/* ===================================================================*/
+
+// Populate the block-type-tags filter divs in each tab's filter panel
+// and wire up their click handlers — driven entirely by blockTypeConfig.
+function initBlockTypeFilterButtons() {
+    Object.entries(blockTypeConfig).forEach(([tabId, config]) => {
+        const tabNum = tabId.replace("tab", "");
+        const container = document.getElementById(`character_type_tags_${tabNum}`);
+        if (!container) return;
+
+        // Render buttons
+        container.innerHTML = config.types.map(type =>
+            `<button class="tag-button ${config.className}" data-tag="${type}">${type}</button>`
+        ).join("");
+
+        // Wire click: toggle selected + re-filter
+        container.addEventListener("click", e => {
+            const btn = e.target.closest(".tag-button");
+            if (!btn) return;
+            btn.classList.toggle("selected");
+            filterAndRender(parseInt(tabNum));
+            appManager.updateTags();
+        });
+    });
+}
+
+/* ===================================================================*/
+/* ========================= DOM CONTENT LOADED ======================*/
+/* ===================================================================*/
 
 document.addEventListener("DOMContentLoaded", () => {
     // Restore tab order on page load if it exists
@@ -123,53 +237,51 @@ document.addEventListener("DOMContentLoaded", () => {
     if (savedOrder && tabNav) {
         savedOrder.forEach(tabId => {
             const button = tabNav.querySelector(`.tab-button[data-tab="${tabId}"]`);
-            if (button) {
-                tabNav.appendChild(button);
-            }
+            if (button) tabNav.appendChild(button);
         });
         console.log("Tab order restored:", savedOrder);
     }
 
     // Restore filter section visibility for each tab
-    [1, 2, 3, 4, 5, 6, 7, 8].forEach(num => {
-    const tabId = `tab${num}`;
-    const saved = localStorage.getItem(`filterVisible_${tabId}`);
-    if (saved === "false") {
-        const tab = document.getElementById(tabId);
-        if (!tab) return;
-        const button = tab.querySelector(".toggle-filter-button");
-        const container = tab.querySelector(".filter-and-results");
-        if (!button || !container) return;
+    [3, 4, 6, 7, 8, 9].forEach(num => {
+        const tabId = `tab${num}`;
+        const saved = localStorage.getItem(`filterVisible_${tabId}`);
+        if (saved === "false") {
+            const tab = document.getElementById(tabId);
+            if (!tab) return;
+            const button = tab.querySelector(".toggle-filter-button");
+            const container = tab.querySelector(".filter-and-results");
+            if (!button || !container) return;
 
-        const selectors = [
-            ".filter-section",
-            ".filter-section-wrapper",
-            ".filter-section-overlay-top",
-            ".filter-section-overlay-bottom"
-        ].join(", ");
+            const selectors = [
+                ".filter-section",
+                ".filter-section-wrapper",
+                ".filter-section-overlay-top",
+                ".filter-section-overlay-bottom"
+            ].join(", ");
 
-        container.querySelectorAll(selectors).forEach(el => el.classList.add("hidden"));
-        button.innerHTML = '<img src="./images/Filter_Open_Icon.svg" alt="Filter icon">';
+            container.querySelectorAll(selectors).forEach(el => el.classList.add("hidden"));
+            button.innerHTML = '<img src="./images/Filter_Open_Icon.svg" alt="Filter icon">';
         }
     });
 
     const tabButtons = document.querySelectorAll(".tab-button");
     tabButtons.forEach(button => {
-        button.addEventListener("dragstart", () => {
-            button.classList.add("dragging");
-        });
+        button.addEventListener("dragstart", () => button.classList.add("dragging"));
         button.addEventListener("dragend", () => {
             button.classList.remove("dragging");
-            // Save the new order when dragging ends
             saveTabOrder();
         });
     });
+
     const tabContents = document.querySelectorAll(".tab-content");
 
-    // Get stored active tab (if any) or default to the first tab's id.
     const storedActiveTab = localStorage.getItem("activeTab");
+    const validTabs = ["tab3", "tab4", "tab6", "tab7", "tab8", "tab9"];
     const defaultActiveTab = tabContents.length > 0 ? tabContents[0].id : null;
-    const activeTabId = storedActiveTab || defaultActiveTab;
+    const activeTabId = (storedActiveTab && validTabs.includes(storedActiveTab))
+        ? storedActiveTab
+        : defaultActiveTab;
 
     // Hide all tab contents
     tabContents.forEach(content => {
@@ -186,7 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Update the tab buttons accordingly: remove all active classes and then mark the one that matches
+    // Update tab buttons
     tabButtons.forEach(button => {
         if (button.dataset.tab === activeTabId) {
             button.classList.add("active");
@@ -204,14 +316,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
     
-            // Hide all tabs, remove active classes, etc.
             tabButtons.forEach(btn => btn.classList.remove("active"));
             tabContents.forEach(content => {
                 content.classList.remove("active");
                 content.style.display = "none";
             });
     
-            // Show the new active tab
             event.currentTarget.classList.add("active");
             targetContent.classList.add("active");
             targetContent.style.display = "flex";
@@ -220,13 +330,11 @@ document.addEventListener("DOMContentLoaded", () => {
             appManager.updateTags();
             actionButtonHandlers.attachActionButtonListeners();
 
-            // Re-apply search + tag filters 
             const tabSuffix = targetTab.replace("tab", "");
             const allBlocks = appManager.getBlocks(targetTab);
             const searchInput = document.getElementById(`search_input_${tabSuffix}`);
             const query = searchInput?.value.trim().toLowerCase() || "";
     
-            // Filter by text
             let filtered = query
               ? allBlocks.filter(block =>
                   block.title.toLowerCase().includes(query) ||
@@ -234,7 +342,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 )
               : allBlocks;
     
-            // Filter by selected tags
             const selectedTags = tagHandler.getSelectedTags(targetTab);
             if (selectedTags.length) {
               filtered = filtered.filter(block =>
@@ -242,19 +349,16 @@ document.addEventListener("DOMContentLoaded", () => {
               );
             }
     
-            //  3) Render the filtered set 
             appManager.renderBlocks(targetTab, filtered);
             appManager.updateViewToggleDropdown(tabSuffix);
             setTimeout(() => {
                 const cs = window.getComputedStyle(targetContent);
-                if (cs.display === "none") {
-                    targetContent.style.display = "flex";
-                }
+                if (cs.display === "none") targetContent.style.display = "flex";
             }, 100);
         });
     });
     
-    // Restore Tab4 actions grid from localStorage
+    // Restore tab4 and tab8 actions grids from localStorage
     ["tab4", "tab8"].forEach(tabId => {
         const savedactionsGridHTML = localStorage.getItem(tabId + "_actions_grid");
         if (savedactionsGridHTML) {
@@ -262,12 +366,9 @@ document.addEventListener("DOMContentLoaded", () => {
           if (actionsGrid) {
             actionsGrid.innerHTML = savedactionsGridHTML;
             console.log("✅ actions grid restored from localStorage for " + tabId);
-            // Lock the fields so they aren't editable on the main screen.
             actionsGrid.querySelectorAll('.action-name, .action-label, .action-description')
               .forEach(field => field.contentEditable = "false");
-            // restore condensed/expanded display state
             actionsGrid.querySelectorAll('.action-row').forEach(row => {
-              console.log('viewState:', row.dataset.viewState, '| classes:', row.className);
               const btn = row.querySelector('button');
               if (row.dataset.viewState === 'expanded') {
                 row.classList.remove('condensed');
@@ -277,7 +378,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 row.classList.remove('expanded');
                 row.classList.add('condensed');
                 if (btn) btn.textContent = "+";
-                // collapse to first line
                 row.querySelectorAll('.action-name, .action-label, .action-description').forEach(field => {
                   if (!field.dataset.fullContent) field.dataset.fullContent = field.innerHTML;
                   field.innerHTML = field.innerHTML.split('<br>')[0];
@@ -288,21 +388,20 @@ document.addEventListener("DOMContentLoaded", () => {
             console.warn("actions grid element not found in " + tabId);
           }
         }
-        // ─── PLACEHOLDER FOR EMPTY ACTIONS GRID ───
+        // Placeholder for empty actions grid
         const wrapper = document.querySelector("#" + tabId + " .actions-grid-wrapper");
         if (wrapper) {
-            // only add once
             if (!wrapper.querySelector('.actions-placeholder') &&
                 wrapper.querySelectorAll('.actions-grid .action-row').length === 0) {
-            const p = document.createElement('p');
-            p.classList.add('actions-placeholder');
-            p.textContent = 'Use the edit tab button to add actions here…';
-            p.style.position  = 'absolute';
-            p.style.top       = '50%';
-            p.style.left      = '50%';
-            p.style.transform = 'translate(-50%, -50%)';
-            p.style.opacity   = '0.25';
-            wrapper.appendChild(p);
+                const p = document.createElement('p');
+                p.classList.add('actions-placeholder');
+                p.textContent = 'Use the edit tab button to add actions here…';
+                p.style.position  = 'absolute';
+                p.style.top       = '50%';
+                p.style.left      = '50%';
+                p.style.transform = 'translate(-50%, -50%)';
+                p.style.opacity   = '0.25';
+                wrapper.appendChild(p);
             }
         }
     });    
@@ -329,7 +428,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
       
-    // Function to attach search and clear event listeners for a specific tab
     function setupTabSearchAndFilters(tabNumber) {
         const searchInput        = document.getElementById(`search_input_${tabNumber}`);
         const clearSearchButton  = document.getElementById(`clear_search_button_${tabNumber}`);
@@ -337,17 +435,14 @@ document.addEventListener("DOMContentLoaded", () => {
       
         if (!searchInput) return;
       
-        // escape user input for Regex
         const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       
-        // highlight inside plain text (for titles)
         const highlightInText = (text, query) => {
           if (!query) return text;
           const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
           return text.replace(re, `<span class="highlight">$1</span>`);
         };
       
-        // highlight inside an HTML snippet by walking its text nodes
         const highlightInHTML = (html, query) => {
           if (!query) return html;
           const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
@@ -363,22 +458,18 @@ document.addEventListener("DOMContentLoaded", () => {
             const frag = document.createDocumentFragment();
             const text = node.nodeValue;
             text.replace(re, (match, p1, offset) => {
-              // append preceding text
               if (offset > lastIndex) {
                 frag.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
               }
-              // append highlighted span
               const span = document.createElement('span');
               span.className = 'highlight';
               span.textContent = match;
               frag.appendChild(span);
               lastIndex = offset + match.length;
             });
-            // append any trailing text
             if (lastIndex < text.length) {
               frag.appendChild(document.createTextNode(text.slice(lastIndex)));
             }
-            // only replace if we actually matched
             if (frag.childNodes.length) parent.replaceChild(frag, node);
           });
       
@@ -389,13 +480,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const query = searchInput.value.trim();
             filterAndRender(tabNumber);
 
-            // apply highlighting to visible blocks
             const resultsSection = document.getElementById(`results_section_${tabNumber}`);
-            // highlight titles (plain text)
             resultsSection.querySelectorAll('.block-title').forEach(el => {
                 el.innerHTML = highlightInText(el.textContent, query);
             });
-            // highlight bodies (HTML)
             resultsSection.querySelectorAll('.block-body').forEach(el => {
                 el.innerHTML = highlightInHTML(el.innerHTML, query);
             });
@@ -404,7 +492,6 @@ document.addEventListener("DOMContentLoaded", () => {
         clearSearchButton?.addEventListener('click', () => {
             searchInput.value = '';
             filterAndRender(tabNumber);
-            // remove any leftover highlights
             const resultsSection = document.getElementById(`results_section_${tabNumber}`);
             resultsSection.querySelectorAll('.highlight').forEach(span => {
                 span.replaceWith(document.createTextNode(span.textContent));
@@ -412,6 +499,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
                   
         clearFiltersButton?.addEventListener('click', () => {
+            // Clear block type filter buttons for any tab that has them
+            const btContainer = document.getElementById(`character_type_tags_${tabNumber}`);
+            if (btContainer) {
+                btContainer.querySelectorAll('.tag-button.selected')
+                    .forEach(b => b.classList.remove('selected'));
+            }
             document
                 .querySelectorAll(`#tab${tabNumber} .tag-button.selected`)
                 .forEach(b => b.classList.remove('selected'));
@@ -421,29 +514,20 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
           
-    [1, 2, 3, 4, 5, 6, 7, 8].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
+    [3, 4, 6, 7, 8, 9].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
 
-    if (activeTabId === "tab5") {
-        import('./diceRoller.js').then(module => {
-            module.initDiceRoller();
-        });
-    } else {
-        appManager.renderBlocks(activeTabId);
-    }
+    appManager.renderBlocks(activeTabId);
 });
 
-// 📌 Make character sheet editable fields more user friendly 
+// 📌 Make character sheet editable fields more user friendly
 document.querySelectorAll("#tab4 .editable, #tab8 .editable").forEach(field => {
     field.addEventListener("focus", function () {
-        // Highlight all text
         const range = document.createRange();
         range.selectNodeContents(this);
         const selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
-        // Ensure full opacity while editing
         this.style.opacity = "1";
-        // Store the initial value
         this.dataset.initialValue = this.textContent;
     });
 
@@ -464,14 +548,12 @@ document.querySelectorAll("#tab4 .editable, #tab8 .editable").forEach(field => {
 });
 
 // 📌 Handle tag filtering
-// main.js
 const handleTagFilter = (event) => {
     const btn = event.target;
     if (!btn.classList.contains("tag-button")) return;
     btn.classList.toggle("selected");
   
     const tabNumber = appManager.getActiveTab().replace("tab", "");
-    // store tags in your handler
     const selected = [...document
       .getElementById(`dynamic_tags_section_${tabNumber}`)
       .querySelectorAll(".tag-button.selected")]
@@ -489,9 +571,7 @@ const clearFilters = (event) => {
         tag.classList.remove("selected")
     );
     const searchInput = document.getElementById(`search_input_${tabNumber}`);
-    if (searchInput) {
-        searchInput.value = "";
-    }
+    if (searchInput) searchInput.value = "";
     tagHandler.clearSelectedTags(`tab${tabNumber}`);
     const activeTab = `tab${tabNumber}`;
     appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
@@ -507,7 +587,7 @@ document.querySelectorAll(".clear_filters_button").forEach(button => {
 const initializeDynamicTags = () => {
     console.log("Initializing dynamic tags and overlays");
 
-    [1, 2, 3, 4, 5, 6, 7, 8].forEach(tabNumber => {
+    [3, 4, 6, 7, 8, 9].forEach(tabNumber => {
         const tagsSection = document.getElementById(`dynamic_tags_section_${tabNumber}`);
         if (!tagsSection) return;
     
@@ -515,7 +595,6 @@ const initializeDynamicTags = () => {
     
         Object.keys(categoryTags).forEach(category => {
             if (!categoryTags[category].tabs.includes(`tab${tabNumber}`)) return;
-    
             const tagContainer = document.createElement("div");
             tagContainer.classList.add("tag-section");
             tagContainer.id = `${category}_tags_list_${tabNumber}`;
@@ -539,7 +618,6 @@ const initializeDynamicTags = () => {
 const keyboardShortcutsHandler = (() => {
     const handleKeyboardShortcuts = () => {
         document.addEventListener("keydown", (event) => {
-            // grab all the overlays and buttons up front
             const addBlockOverlay        = document.querySelector(".add-block-overlay");
             const clearDataOverlay       = document.querySelector(".cleardata-overlay");
             const editBlockOverlay       = document.querySelector(".edit-block-overlay");
@@ -561,7 +639,6 @@ const keyboardShortcutsHandler = (() => {
             const menuOverlay            = document.getElementById("menu_overlay");
             const menuButton             = document.getElementById("Menu_button");
 
-            // ── 1) Ctrl+Enter = “Save” in Add-Block or Edit-Block, even inside lists
             if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
                 event.preventDefault();
                 if (addBlockOverlay?.classList.contains("show") && saveBlockButton) {
@@ -569,15 +646,10 @@ const keyboardShortcutsHandler = (() => {
                 } else if (editBlockOverlay?.classList.contains("show") && saveEditButton) {
                     saveEditButton.click();
                 }
-                return;  // don’t continue to the “ignore modifiers” bail
-            }
-
-            // ── 2) now bail on any remaining modifier combos
-            if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
                 return;
             }
 
-            // ── 3) original per-overlay Enter/Escape logic ──
+            if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
 
             if (addBlockOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && saveBlockButton) {
@@ -614,7 +686,6 @@ const keyboardShortcutsHandler = (() => {
                     if (!openFrPanel) cancelEditButton.click();
                 }
             }
-
 
             if (spellSlotEditOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && saveSpellSlotButton) {
@@ -654,11 +725,23 @@ const keyboardShortcutsHandler = (() => {
                 }
             }
 
+            const suitUsesOverlay   = document.querySelector('.suit-uses-edit-overlay');
+            const saveSuitUsesBtn   = document.getElementById('save_suit_uses');
+            const cancelSuitUsesBtn = document.getElementById('close_suit_uses_edit');
+
+            if (suitUsesOverlay?.classList.contains('show')) {
+                if (event.key === 'Enter' && saveSuitUsesBtn) {
+                    event.preventDefault();
+                    saveSuitUsesBtn.click();
+                } else if (event.key === 'Escape' && cancelSuitUsesBtn) {
+                    cancelSuitUsesBtn.click();
+                }
+            }
+
             if (event.key === "Escape" && menuOverlay?.classList.contains("active")) {
                 menuOverlay.classList.remove("active");
                 menuButton?.classList.remove("menu-button-open");
             }            
-                
         });
 
         console.log("Keyboard shortcuts attached.");
@@ -676,6 +759,10 @@ const keyboardShortcutsHandler = (() => {
 window.onload = async () => {
     console.log("🔄 Window Loaded - Initializing App");
 
+    // Run migrations before anything else
+    migrateToTab9();
+    migrateTab5ToTab3();
+
     attachEventListeners();
     blockActionsHandler.attachBlockActions();
 
@@ -690,6 +777,8 @@ window.onload = async () => {
     }
 
     initializeDynamicTags();
+    initBlockTypeFilterButtons();
+
     await appManager.loadBlocks();
     appManager.renderBlocks(appManager.getActiveTab());
     appManager.updateTags();
@@ -697,9 +786,7 @@ window.onload = async () => {
 
     function initializeEditableFields(tabId) {
         const container = document.getElementById(tabId);
-        if (!container) {
-            return;
-        }
+        if (!container) return;
         container.querySelectorAll('.editable').forEach(el => {
             const key = el.getAttribute('data-storage-key');
             if (key) {
@@ -734,20 +821,22 @@ window.onload = async () => {
         
         container.querySelectorAll('.toggle-circle').forEach((circle, index) => {
             const key = circle.getAttribute('data-storage-key') || `${tabId}_toggle_${index}`;
-            // If no value in storage, assume NOT filled → store false
             if (localStorage.getItem(key) === null) {
-            localStorage.setItem(key, 'false');
+                localStorage.setItem(key, 'false');
             }
-        
-            // Now read it as a boolean and add exactly one class
             const isFilled = localStorage.getItem(key) === 'true';
             circle.classList.add(isFilled ? 'filled' : 'unfilled');
             circle.classList.remove(isFilled ? 'unfilled' : 'filled');
         });
     }
                           
-    ["tab1", "tab2", "tab3", "tab4", "tab5", "tab6", "tab7", "tab8"].forEach(tabId => {
-        initializeEditableFields(tabId);
-        initializeToggleCircles(tabId);
+    [3, 4, 6, 7, 8, 9].forEach(tabId => {
+        initializeEditableFields(`tab${tabId}`);
+        initializeToggleCircles(`tab${tabId}`);
     });
+
+    initSplitView();
+    if (localStorage.getItem('splitViewActive') === 'true') {
+    document.getElementById('split-view-button')?.click();
+}
 };

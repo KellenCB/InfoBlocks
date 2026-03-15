@@ -1,26 +1,31 @@
 import { appManager, stripHTML } from './appManager.js';
-import { categoryTags } from './tagConfig.js';
+import { categoryTags, blockTypeConfig } from './tagConfig.js';
+
+// Returns a flat set of ALL block type labels across all tabs
+const getAllBlockTypes = () => {
+    return new Set(
+        Object.values(blockTypeConfig).flatMap(cfg => cfg.types)
+    );
+};
 
 export const tagHandler = (() => {
 
     let selectedTagsByTab = {};
 
-    const getSelectedTags = (activeTab = "tab1") => {
+    const getSelectedTags = (activeTab = "tab4") => {
         return selectedTagsByTab[activeTab] ? [...selectedTagsByTab[activeTab]] : [];
     };
        
-    // Sets the selected tags for the given tab
     const setSelectedTags = (activeTab, newTags) => {
         if (!Array.isArray(newTags)) return;
         selectedTagsByTab[activeTab] = [...newTags];
     };
                     
-    // Reapply the "selected" class on tag buttons based on the active tab’s selection
     const applyFiltersAfterSave = () => {
-        const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+        const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab4";
         const selectedTags = getSelectedTags(activeTab);
         document.querySelectorAll(".tag-button").forEach(tagElement => {
-        tagElement.classList.toggle("selected", selectedTags.includes(tagElement.dataset.tag));
+            tagElement.classList.toggle("selected", selectedTags.includes(tagElement.dataset.tag));
         });
     };
     
@@ -39,7 +44,6 @@ export const tagHandler = (() => {
     const handleTagClick = () => {
         document.addEventListener("click", (event) => {
             const target = event.target;
-            // Ignore clicks if the element is not a tag button or is within an overlay
             if (
                 !target.classList.contains("tag-button") ||
                 target.closest(".add-block-overlay") ||
@@ -48,11 +52,9 @@ export const tagHandler = (() => {
                 return;
             }
         
-            // Get the active tab (default to "tab1") and its numeric suffix
-            const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab1";
+            const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "tab4";
             const tabNumber = activeTab.replace("tab", "");
         
-            // Retrieve and update the selected tags for this active tab
             let updatedTags = [...tagHandler.getSelectedTags(activeTab)];
             const tag = target.dataset.tag.trim();
             if (updatedTags.includes(tag)) {
@@ -62,7 +64,6 @@ export const tagHandler = (() => {
             }
             tagHandler.setSelectedTags(activeTab, updatedTags);
         
-            // Get the search input specific to this tab and its current query
             const searchInput = document.getElementById(`search_input_${tabNumber}`);
             if (!searchInput) {
                 console.error(`❌ Error: search_input_${tabNumber} not found!`);
@@ -70,17 +71,27 @@ export const tagHandler = (() => {
             }
             const searchQuery = searchInput.value.trim().toLowerCase();
         
-            // Retrieve all blocks for the active tab
             let filteredBlocks = appManager.getBlocks(activeTab);
         
-            // Apply tag filtering using the updated tags for this tab
-            if (updatedTags.length > 0) {
+            // Use blockTypeConfig to determine which tags are block types for this tab
+            const tabBTConfig = blockTypeConfig[activeTab];
+            const tabBlockTypes = tabBTConfig ? new Set(tabBTConfig.types) : new Set();
+
+            const typeFilters = updatedTags.filter(t => tabBlockTypes.has(t));
+            const tagFilters  = updatedTags.filter(t => !tabBlockTypes.has(t));
+
+            if (typeFilters.length > 0) {
+                filteredBlocks = filteredBlocks.filter(block => {
+                    const types = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+                    return typeFilters.every(t => types.includes(t));
+                });
+            }
+            if (tagFilters.length > 0) {
                 filteredBlocks = filteredBlocks.filter(block =>
-                updatedTags.every(t => block.tags.includes(t))
+                    tagFilters.every(t => block.tags.includes(t))
                 );
             }
         
-            // Apply search filtering if a query is present
             if (searchQuery.length > 0) {
                 filteredBlocks = filteredBlocks.filter(block =>
                     block.title.toLowerCase().includes(searchQuery) ||
@@ -88,8 +99,6 @@ export const tagHandler = (() => {
                 );
             }
                       
-            // Re-render blocks for the active tab using the filtered list,
-            // then update the tag UI so that the selected tags remain highlighted.
             appManager.renderBlocks(activeTab, filteredBlocks);
             appManager.updateTags();
         
@@ -109,10 +118,8 @@ export const tagHandler = (() => {
     };
 
     const filterBlocksBySelectedTags = (blocks) => {
-        let selectedTags = getSelectedTags(); // Fetch currently selected tags
-        if (selectedTags.length === 0) return blocks; // If no tags selected, return all
-    
-        // ✅ Filter blocks based on selected tags
+        let selectedTags = getSelectedTags();
+        if (selectedTags.length === 0) return blocks;
         return blocks.filter(block => block.tags.some(tag => selectedTags.includes(tag)));
     };
         

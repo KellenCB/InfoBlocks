@@ -2,7 +2,7 @@ import { tagHandler } from './tagHandler.js';
 import { categoryTags } from './tagConfig.js';
 import { toggleBlockUse } from './circleToggle.js';
 
-export const blockTemplate = (block, tab = "tab1") => {
+export const blockTemplate = (block, tab = "tab4") => {
     const viewState = block.viewState || 'expanded';
     const selectedTags = tagHandler.getSelectedTags();
 
@@ -39,9 +39,14 @@ export const blockTemplate = (block, tab = "tab1") => {
     }).join("");
 
     // Only render block-tags if there are any tags
-    const hasAnyTags = predefinedTagsHTML.trim() !== "" || userTagsHTML.trim() !== "";
+    const blockTypes = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+    const blockTypeHTML = blockTypes.map(bt =>
+        `<span class="tag-button tag-characterType${selectedTags.includes(bt) ? ' selected' : ''}" data-tag="${bt}">${bt}</span>`
+    ).join("");
+    const hasAnyTags = blockTypeHTML !== "" || predefinedTagsHTML.trim() !== "" || userTagsHTML.trim() !== "";
     const tagSectionsHTML = hasAnyTags ? `
-        <div class=\"block-tags\">
+        <div class="block-tags">
+            ${blockTypeHTML}
             ${predefinedTagsHTML}
             ${userTagsHTML}
         </div>
