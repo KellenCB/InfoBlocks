@@ -34,6 +34,7 @@ export function initSplitView() {
 
 function toggleSplitView() {
     splitActive = !splitActive;
+    localStorage.setItem('splitViewActive', splitActive);
     const btn = document.getElementById('split-view-button');
     if (splitActive) {
         enterSplitView();
@@ -85,10 +86,17 @@ function enterSplitView() {
     wireNavButtons();
     wireSplitNavDragSync();
 
-    // Auto-mount the currently active tab in the left panel
+    // Auto-mount left panel
     const currentTab = localStorage.getItem('activeTab') || 'tab4';
     const leftNavBtn = document.querySelector(`.split-tab-nav[data-panel-nav="left"] .split-tab-button[data-tab="${currentTab}"]`);
     if (leftNavBtn) leftNavBtn.click();
+
+    // Auto-mount right panel
+    const savedRightTab = localStorage.getItem('splitRightTab');
+    const fallbackRightTab = TABS.find(t => t.id !== currentTab)?.id || 'tab3';
+    const rightTabToLoad = savedRightTab || fallbackRightTab;
+    const rightNavBtn = document.querySelector(`.split-tab-nav[data-panel-nav="right"] .split-tab-button[data-tab="${rightTabToLoad}"]`);
+    if (rightNavBtn) rightNavBtn.click();
 
     console.log('✅ Split view entered');
 }
@@ -247,6 +255,9 @@ function onNavButtonClick(e) {
     btn.classList.add('active');
 
     panelState[panelSide].activeTab = tabId;
+
+    if (panelSide === 'right') localStorage.setItem('splitRightTab', tabId);
+    if (panelSide === 'left') localStorage.setItem('splitLeftTab', tabId);
 
     mountTabInPanel(tabId, panelSide);
     updateSingletonStates();
