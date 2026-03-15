@@ -1,4 +1,3 @@
-
 .character-sheet-stats {
   display: flex;
   flex-direction: column;
@@ -362,6 +361,11 @@
 
 .actions-and-features .results-section { height: 50%; }
 
+/* Hide results section when empty, let actions grid fill the space */
+.actions-and-features .results-section:not(:has(.block)) {
+    display: none !important;
+}
+
 .actions-overlay-top {
   position: absolute;
   left: 0;
@@ -411,6 +415,12 @@
   max-width: 100%;
   box-sizing: border-box;
   overflow-y: auto;
+}
+
+/* When results section is hidden, actions grid fills full height */
+.actions-and-features:not(:has(.results-section .block)) .actions-grid-wrapper {
+  height: 100%;
+  max-height: 100%;
 }
 
 .actions-grid {
@@ -468,9 +478,6 @@
   pointer-events: none;
   z-index: 5;
 }
-
-
-
 
 /* Default button styling for the toggle */
 .toggle-action-view {
@@ -591,7 +598,6 @@
   transition: transform 0.2s ease;
 }
 
-
 .actions-edit-container .action-row > * {
   margin-right: 20px;
 }
@@ -677,7 +683,7 @@
     box-sizing: border-box;
     width: 100%;
     align-items: center;
-    gap: 20px
+    gap: 20px;
   }
 
   .actions-grid-wrapper {
@@ -686,8 +692,15 @@
     color: #fff;
     border-radius: 20px;
     width: 50%;
+    flex: 1;
+    min-width: 0;
     box-sizing: border-box;
     overflow-y: auto;
+  }
+
+  /* When results section is hidden in landscape, actions grid takes full width */
+  .actions-and-features:not(:has(.results-section .block)) .actions-grid-wrapper {
+    width: 100%;
   }
 
   .actions-grid {
@@ -695,7 +708,7 @@
     display: flex;
     flex-direction: column;
     padding: 0px 20px 20px 20px;
-    gap: 20px;
+    gap: 10px;
     color: #fff;
     width: 100%;
     box-sizing: border-box;

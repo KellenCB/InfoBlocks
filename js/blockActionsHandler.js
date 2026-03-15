@@ -4,16 +4,21 @@ let currentEditingBlockId = null;
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { tagHandler } from './tagHandler.js';
 import { appManager } from './appManager.js';
-import { overlayHandler } from './overlayHandler.js';
+import { overlayHandler, getOverlayTargetTab } from './overlayHandler.js';
 import { initUsesField } from './overlayHandler.js';
 import { stripHTML } from './appManager.js';
 
 export const saveEditHandler = () => {
     console.log("✅ Save Edit Button Clicked!");
 
+    const editOverlay = document.querySelector(".edit-block-overlay");
+
+    // Resolve the correct tab — split view carries data-active-tab on the overlay
+    const activeTab = getOverlayTargetTab(editOverlay);
+
     const titleInput = document.getElementById("title_input_edit_overlay").value.trim();
     const textInput  = document.getElementById("block_text_edit_overlay").innerHTML.trim();
-    
+
     let tagsInput = document.getElementById("tags_input_edit_overlay").value
         .split(",")
         .map(tag => tag.trim())
@@ -25,12 +30,14 @@ export const saveEditHandler = () => {
     ).filter(tag => !tag.closest('#character_type_tags_edit'))
      .map(tag => tag.dataset.tag.trim().toLowerCase());
 
-    const activeTab = appManager.getActiveTab();
-
     let blocks = appManager.getBlocks(activeTab);
-    const blockIndex = blocks.findIndex(block => block.id === currentEditingBlockId);
+
+    // In split view the block id is on the overlay; otherwise use the module-level var
+    const blockId = editOverlay?.dataset?.blockId || currentEditingBlockId;
+    const blockIndex = blocks.findIndex(block => block.id === blockId);
+
     if (blockIndex === -1) {
-        console.error(`❌ Block with ID ${currentEditingBlockId} not found in active tab ${activeTab}.`);
+        console.error(`❌ Block with ID ${blockId} not found in ${activeTab}.`);
         return;
     }
 
@@ -65,7 +72,6 @@ export const saveEditHandler = () => {
         return;
     }
 
-    // Validate block type if this tab uses block types
     const tabBTConfig = blockTypeConfig[activeTab];
     if (tabBTConfig) {
         const selectedTypeBtn = document.querySelector('#character_type_tags_edit .tag-button.selected');
@@ -74,48 +80,62 @@ export const saveEditHandler = () => {
             return;
         }
     }
-  
+
     const usesState = JSON.parse(localStorage.getItem("uses_field_edit_overlay_state") || "[]");
 
-    // Read block type from config-driven overlay buttons
     const blockType = tabBTConfig
         ? Array.from(document.querySelectorAll('#character_type_tags_edit .tag-button.selected')).map(b => b.dataset.tag)
         : null;
 
-    appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, blockType, currentEditingBlockId, blocks[blockIndex].timestamp);
-    console.log(`✅ Block updated successfully in ${activeTab} with tags:`, allTags);
+    appManager.saveBlock(
+        activeTab, titleInput, textInput, allTags,
+        usesState, blockType, blockId, blocks[blockIndex].timestamp
+    );
+    console.log(`✅ Block updated in ${activeTab} with tags:`, allTags);
 
-    document.querySelector(".edit-block-overlay").classList.remove("show");
+    editOverlay.classList.remove("show");
 
-    const tabSuffix = activeTab.replace("tab", "");
-    const selectedTags = tagHandler.getSelectedTags(activeTab);
-    const searchInput  = document.getElementById(`search_input_${tabSuffix}`);
-    const searchQuery  = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    // Clear panel context from overlay
+    delete editOverlay.dataset.activePanel;
+    delete editOverlay.dataset.activeTab;
+    delete editOverlay.dataset.blockId;
 
-    let filteredBlocks = appManager.getBlocks(activeTab);
+    // ── Refresh the correct view ──────────────────────────────────────────────
+    import('./splitView.js').then(({ isSplitActive, refreshPanelsShowingTab }) => {
+        if (isSplitActive()) {
+            refreshPanelsShowingTab(activeTab);
+        } else {
+            // Original behaviour — reapply search and filters in main view
+            const tabSuffix    = activeTab.replace("tab", "");
+            const selectedTags = tagHandler.getSelectedTags(activeTab);
+            const searchInput  = document.getElementById(`search_input_${tabSuffix}`);
+            const searchQuery  = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
-    if (searchQuery) {
-        filteredBlocks = filteredBlocks.filter(block => {
-            const titleMatch = block.title.toLowerCase().includes(searchQuery);
-            const textMatch  = stripHTML(block.text).toLowerCase().includes(searchQuery);
-            const tagMatch   = block.tags.some(tag => tag.toLowerCase().includes(searchQuery));
-            return titleMatch || textMatch || tagMatch;
-        });
-    }
-      
-    if (selectedTags.length > 0) {
-        filteredBlocks = filteredBlocks.filter(block =>
-            selectedTags.every(tag =>
-                block.tags.some(blockTag =>
-                    blockTag.charAt(0).toUpperCase() + blockTag.slice(1).toLowerCase() ===
-                    tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
-                )
-            )
-        );
-    }
+            let filteredBlocks = appManager.getBlocks(activeTab);
 
-    appManager.renderBlocks(activeTab, filteredBlocks);
-    appManager.updateTags();
+            if (searchQuery) {
+                filteredBlocks = filteredBlocks.filter(block => {
+                    return block.title.toLowerCase().includes(searchQuery) ||
+                           stripHTML(block.text).toLowerCase().includes(searchQuery) ||
+                           block.tags.some(tag => tag.toLowerCase().includes(searchQuery));
+                });
+            }
+
+            if (selectedTags.length > 0) {
+                filteredBlocks = filteredBlocks.filter(block =>
+                    selectedTags.every(tag =>
+                        block.tags.some(blockTag =>
+                            blockTag.charAt(0).toUpperCase() + blockTag.slice(1).toLowerCase() ===
+                            tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
+                        )
+                    )
+                );
+            }
+
+            appManager.renderBlocks(activeTab, filteredBlocks);
+            appManager.updateTags();
+        }
+    });
 };
 
 export let selectedFilterTags = [];

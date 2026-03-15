@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./css/type.css">
     <link rel="icon" type="image/svg+xml" href="favicon.svg" sizes="any">
     <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
+    <link rel="stylesheet" href="css/splitView.css">
     <link rel="stylesheet" href="./css/base-layout.css">
     <link rel="stylesheet" href="./css/buttons.css">
     <link rel="stylesheet" href="./css/forms.css">
@@ -31,6 +32,13 @@
 
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M4 15.5V19h3.5l9.94-9.94-3.5-3.5L4 15.5zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.5 3.5 1.83-1.83z" />
+                </svg>
+            </button>
+
+            <button id="split-view-button" class="hero-button clear-button" title="Split View">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="18" rx="2"/>
+                    <line x1="12" y1="3" x2="12" y2="21"/>
                 </svg>
             </button>
 
@@ -702,7 +710,7 @@
                 <div id="suit_uses_circles"></div>
                 <button id="edit_suit_uses_button" title="Edit suit uses">✎</button>
             </div>
-            
+
             <div class="spell-slot-section">
                 <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">1st Lvl</span></div>
                 <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">2nd Lvl</span></div>
@@ -747,6 +755,7 @@
                 </div>
             </div>
         </div>
+    </div> <!-- end .tabs-content -->
 
     <!-- Menu Overlay Container -->
     <div id="menu_overlay" class="menu-overlay">

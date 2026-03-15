@@ -1,0 +1,103 @@
+/* splitView.css */
+
+/* ── Split view button active state ── */
+#split-view-button.active {
+    background-color: #4CAF50;
+    opacity: 1;
+}
+
+/* ── Outer wrapper ── */
+#split-view-wrapper {
+    display: flex;
+    flex-direction: row;
+    flex: 1;                        /* fill remaining space in body's flex column */
+    align-self: stretch;            /* override body's align-items: center */
+    min-height: 0;                  /* allow shrinking inside flex column */
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 0;     /* match body padding used by .tab-content */
+    gap: 0;
+    overflow: hidden;
+}
+
+/* ── Each panel ── */
+.split-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;                   /* prevent flex children blowing out */
+    gap: 10px;
+    overflow: hidden;
+}
+
+/* ── Divider between panels ── */
+.split-divider {
+    width: 2px;
+    background-color: #444;
+    margin: 0 15px;
+    flex-shrink: 0;
+    border-radius: 2px;
+}
+
+/* Collapse the main tab-nav container in split view */
+body:has(#split-view-wrapper) .container:has(.tab-nav:not(.split-tab-nav)) {
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Split navs are created dynamically so bypass the fade-in opacity */
+.split-tab-nav {
+    opacity: 1 !important;
+    margin-bottom: 10px;
+}
+.split-tab-nav .tab-button.disabled,
+.split-tab-nav .tab-button:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+}
+
+/* ── Content area inside each panel ── */
+.split-content-area {
+    flex: 1;
+    min-height: 0;                  /* allow shrinking inside flex column */
+    overflow: hidden;
+    position: relative;
+    border-radius: 15px;
+}
+
+/* Override .tab-content's 100vw when inside split view */
+#split-view-wrapper .tab-content {
+    width: 100% !important;
+    height: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    min-width: 0;
+}
+
+[id^="split-tags-"] {
+    display: flex !important;
+    flex-wrap: wrap;
+    padding: 15px 0;
+}
+
+/* Ensure overlays always appear above split view wrapper */
+.add-block-overlay,
+.edit-block-overlay,
+.cleardata-overlay,
+.remove-block-overlay,
+.remove-action-overlay,
+.actions-edit-overlay,
+.spell-slot-edit-overlay,
+.suit-uses-edit-overlay,
+.dice-overlay,
+#dice-overlay,
+#menu_overlay {
+    z-index: 10001 !important;
+}
+@media screen and (orientation: portrait) {
+    #split-view-button { display: none; }
+    #split-view-wrapper { display: none; }
+}

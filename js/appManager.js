@@ -705,9 +705,9 @@ export const appManager = (() => {
     return true;
   };
                     
-  const removeBlock = (blockId) => {
+  const removeBlock = (blockId, tabOverride = null) => {
     if (!blockId) return null;
-    const activeTab = getActiveTab();
+    const activeTab = tabOverride || getActiveTab();
     const userBlocks = getBlocks(activeTab);
     const idx = userBlocks.findIndex(b => b.id === blockId);
     if (idx === -1) return null;

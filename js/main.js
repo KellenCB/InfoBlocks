@@ -1,3 +1,4 @@
+import { initSplitView } from './splitView.js';
 import { appManager, actionButtonHandlers } from './appManager.js';
 import { blockActionsHandler, saveEditHandler } from './blockActionsHandler.js';
 import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
@@ -118,8 +119,11 @@ const fadeInElementsSequentially = (container = document) => {
 fadeInElementsSequentially();
 
 function saveTabOrder() {
-    const tabButtons = document.querySelectorAll(".tab-nav .tab-button");
-    const order = Array.from(tabButtons).map(button => button.dataset.tab);
+    // Only read from the main nav, not split view navs
+    const mainNav = document.querySelector(".tab-nav:not(.split-tab-nav)");
+    if (!mainNav) return;
+    const order = Array.from(mainNav.querySelectorAll(".tab-button"))
+        .map(button => button.dataset.tab);
     localStorage.setItem("tabOrder", JSON.stringify(order));
     console.log("Tab order saved:", order);
 }
@@ -830,4 +834,6 @@ window.onload = async () => {
         initializeEditableFields(`tab${tabId}`);
         initializeToggleCircles(`tab${tabId}`);
     });
+
+    initSplitView();
 };

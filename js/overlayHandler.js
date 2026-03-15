@@ -2,13 +2,22 @@ import { appManager } from './appManager.js';
 import { tagHandler } from './tagHandler.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 
+// Returns the correct tab for an overlay save operation.
+// In split view the overlay carries data-active-tab; otherwise fall back to
+// the globally active tab.
+export function getOverlayTargetTab(overlayEl) {
+    const splitTab = overlayEl?.dataset?.activeTab;
+    if (splitTab) return splitTab;
+    return appManager.getActiveTab();
+}
+
 // ── Populate (or clear) the block-type-tags div inside an overlay ──
 // Call this every time an overlay opens so it reflects the current active tab.
-function populateBlockTypeOverlay(containerId, selectedTypes = []) {
+function populateBlockTypeOverlay(containerId, selectedTypes = [], tabOverride = null) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    const activeTab = appManager.getActiveTab();
+    const activeTab = tabOverride || appManager.getActiveTab();
     const config = blockTypeConfig[activeTab];
 
     if (!config || !config.types.length) {
@@ -99,11 +108,13 @@ export const handleSaveBlock = () => {
     newSaveBlockButton.addEventListener("click", () => {
         console.log("✅ Save Block Button Clicked!");
 
+        const addBlockOverlay  = document.querySelector(".add-block-overlay");
+        const activeTab        = getOverlayTargetTab(addBlockOverlay);
+
         const titleElement = document.getElementById("title_input_overlay");
         const textElement  = document.getElementById("block_text_overlay");
         const titleInput   = titleElement?.value.trim()  || "";
         const textInput    = textElement?.innerHTML.trim() || "";
-        const activeTab    = document.querySelector(".tab-button.active")?.dataset.tab || "tab4";
 
         if (
             titleInput === "" ||
@@ -125,7 +136,7 @@ export const handleSaveBlock = () => {
                 return;
             }
         }
-  
+
         // Tag processing
         let tagsInput = document.getElementById("tags_input_overlay").value
             .split(",")
@@ -149,13 +160,12 @@ export const handleSaveBlock = () => {
             }
             tagsInput = tagsInput.filter(tag => !existingUserDefinedTags.includes(tag));
         }
-        
+
         const combinedTagsLowercase = [...new Set([...tagsInput, ...selectedPredefinedTags])];
         const allTags = combinedTagsLowercase.map(tag => tag.charAt(0).toUpperCase() + tag.slice(1));
 
         const usesState = JSON.parse(localStorage.getItem("uses_field_overlay_state") || "[]");
 
-        // Block type: read from config-driven overlay buttons
         const blockType = tabBTConfig
             ? Array.from(document.querySelectorAll('#character_type_tags_add .tag-button.selected')).map(b => b.dataset.tag)
             : null;
@@ -164,16 +174,31 @@ export const handleSaveBlock = () => {
 
         if (success) {
             console.log("✅ Block saved successfully with tags:", allTags);
-            appManager.renderBlocks(activeTab);
 
+            // Capture panel context BEFORE clearing the overlay
+            const savedPanelSide = addBlockOverlay?.dataset?.activePanel;
+            const savedActiveTab = activeTab;
+
+            // Reset overlay
             titleElement.value = "";
             textElement.innerHTML = "";
             textElement.dispatchEvent(new Event('input'));
             document.getElementById("tags_input_overlay").value = "";
-            document.querySelectorAll(".add-block-overlay .tag-button.selected").forEach(tag => {
-                tag.classList.remove("selected");
+            document.querySelectorAll(".add-block-overlay .tag-button.selected")
+                .forEach(tag => tag.classList.remove("selected"));
+            addBlockOverlay.classList.remove("show");
+            // Clear panel context
+            delete addBlockOverlay.dataset.activePanel;
+            delete addBlockOverlay.dataset.activeTab;
+
+            // ── Refresh the correct view ──────────────────────────────────────
+            import('./splitView.js').then(({ isSplitActive, refreshPanelsShowingTab }) => {
+                if (isSplitActive()) {
+                    if (savedPanelSide) refreshPanelsShowingTab(savedActiveTab);
+                } else {
+                    appManager.renderBlocks(savedActiveTab);
+                }
             });
-            document.querySelector(".add-block-overlay").classList.remove("show");
         } else {
             console.error("❌ Failed to save the block.");
         }
@@ -285,12 +310,12 @@ export const overlayHandler = (() => {
         });
     };
 
-    const initializeOverlayTagHandlers = (containerId = "predefined_tags_edit", blockTags = []) => {
+    const initializeOverlayTagHandlers = (containerId = "predefined_tags_edit", blockTags = [], tabOverride = null) => {
         const tagsContainer = document.getElementById(containerId);
         if (!tagsContainer) return;
-    
+
         tagsContainer.innerHTML = "";
-        const activeTab    = appManager.getActiveTab();
+        const activeTab = tabOverride || appManager.getActiveTab();
         const exceptionTabs = ["tab3", "tab5", "tab6", "tab7", "tab9"];
     
         const predefinedTagList = Object.entries(categoryTags)
