@@ -319,3 +319,55 @@
   font-size: 16px;
   pointer-events: none;
 }
+
+/* ── Overlay size increase ─────────────────────────────────────────────────── */
+/* Replace the existing max-height: 510px (or 700px) on this selector:        */
+.dice-roller-overlay-content {
+  max-height: 765px;
+}
+
+/* ── Selected dice wrapper — now also the 3D stage ───────────────────────── */
+/* These override the existing .selected-dice-wrapper rules                   */
+.selected-dice-wrapper {
+  width: 615px;
+  min-height: 525px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Three.js canvas fills the wrapper as background ─────────────────────── */
+.selected-dice-wrapper canvas.dice-3d-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: none;
+  border-radius: 20px;
+}
+
+.selected-dice-wrapper.rolling canvas.dice-3d-canvas {
+  display: block;
+}
+
+/* ── Hide SVG icons while 3D scene is active ─────────────────────────────── */
+.selected-dice-wrapper.rolling .selected-dice-container {
+  display: none;
+}
+
+/* ── Buttons always on top ───────────────────────────────────────────────── */
+.selected-dice-wrapper #roll-button,
+.selected-dice-wrapper #clear-selected-button {
+  z-index: 10;
+}
+
+.selected-dice-wrapper.rolling .selected-dice-container {
+  display: none;
+}
+
+.selected-dice-wrapper canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 20px;
+}

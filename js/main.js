@@ -6,6 +6,7 @@ import { tagHandler } from './tagHandler.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import './resizeHandle.js';
 import { stripHTML } from './appManager.js';
+import { initDiceRoller } from './diceRoller.js';
 
 function filterAndRender(tabNumber) {
     const activeTab = `tab${tabNumber}`;
@@ -85,11 +86,9 @@ const closeDiceBtn   = document.getElementById("close-dice-overlay");
 if (diceMenuButton && diceOverlay) {
   diceMenuButton.addEventListener("click", () => {
     diceOverlay.classList.toggle("show");
-    if (diceOverlay.classList.contains("show")) {
-      import('./diceRoller.js').then(mod => mod.initDiceRoller());
-    }
   });
 }
+initDiceRoller();
 
 if (closeDiceBtn && diceOverlay) {
   closeDiceBtn.addEventListener("click", () => {
