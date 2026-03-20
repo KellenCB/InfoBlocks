@@ -1,11 +1,10 @@
 // diceRoller.js
 
 let diceRollerInitialized = false;
-let diceBox          = null;
-let diceBoxReady     = false;
-let diceContainer    = null;
-let fadeTimer        = null;
-let isRolling        = false;
+let diceBox      = null;
+let diceBoxReady = false;
+let fadeTimer    = null;
+let isRolling    = false;
 
 const diceImages = {
   4:  "images/d_4.svg",
@@ -16,18 +15,63 @@ const diceImages = {
   20: "images/d_20.svg"
 };
 
+const diceColors = {
+  4:  '#f4a261',
+  6:  '#06ade4',
+  8:  '#f0c040',
+  10: '#4CAF50',
+  12: '#bf5eff',
+  20: '#ff6b6b',
+};
+
 let selectedDice = [];
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SVG PRELOAD
+   Fetch raw SVG markup at module load time. Inline SVG is used in the
+   selected-dice-wrapper so icon and label paint in the same frame with no
+   image pipeline delay. svgsReady is a Promise — awaited before first use.
+───────────────────────────────────────────────────────────────────────────── */
+
+const svgCache = {};
+const svgsReady = Promise.all(
+  Object.entries(diceImages).map(async ([sides, src]) => {
+    try {
+      const res  = await fetch(src);
+      let markup = await res.text();
+      // Namespace all CSS class names with the die type so inline <style>
+      // blocks from multiple SVGs don't collide in the global document scope.
+      // e.g. .cls-1 → .d4-cls-1 in both the <style> block and class attributes
+      const prefix = `d${sides}-`;
+      markup = markup.replace(
+        /\.([a-zA-Z][\w-]*)\s*\{/g,
+        (_, cls) => `.${prefix}${cls}{`
+      );
+      markup = markup.replace(
+        /class="([^"]+)"/g,
+        (_, classes) => `class="${classes.split(/\s+/).map(c => `${prefix}${c}`).join(' ')}"`
+      );
+      svgCache[sides] = markup;
+    } catch {
+      svgCache[sides] = `<img src="${src}" alt="D${sides}">`;
+    }
+  })
+);
+
+function getSvg(sides) {
+  return svgCache[sides] ?? `<img src="${diceImages[sides]}" alt="D${sides}">`;
+}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    HELPERS
 ───────────────────────────────────────────────────────────────────────────── */
 
 function getCanvasDimensions() {
-  const s       = window.getComputedStyle(document.body);
-  const pT      = parseFloat(s.paddingTop);
-  const pR      = parseFloat(s.paddingRight);
-  const pB      = parseFloat(s.paddingBottom);
-  const pL      = parseFloat(s.paddingLeft);
+  const s  = window.getComputedStyle(document.body);
+  const pT = parseFloat(s.paddingTop);
+  const pR = parseFloat(s.paddingRight);
+  const pB = parseFloat(s.paddingBottom);
+  const pL = parseFloat(s.paddingLeft);
   const BLEED = { top: 50, right: 20, bottom: 50, left: 20 };
   return {
     W:       window.innerWidth  - pL - pR + BLEED.left + BLEED.right,
@@ -37,7 +81,6 @@ function getCanvasDimensions() {
   };
 }
 
-// Always query the canvas through the container so we never hit the wrong one
 function getDiceCanvas() {
   return document.querySelector('.dice-box-canvas') ?? null;
 }
@@ -57,9 +100,9 @@ function clearDiceBox() {
 ───────────────────────────────────────────────────────────────────────────── */
 
 function tearDown() {
-  diceBox       = null;
-  diceBoxReady  = false;
-  isRolling     = false;
+  diceBox      = null;
+  diceBoxReady = false;
+  isRolling    = false;
   document.querySelectorAll('.dice-box-canvas, #dice-canvas').forEach(el => el.remove());
   document.getElementById('dice-canvas-presize')?.remove();
 }
@@ -90,8 +133,6 @@ async function loadDiceBox() {
 
   const { W, H, offsetX, offsetY } = getCanvasDimensions();
 
-  // Pre-inject CSS so BabylonJS reads correct clientWidth/clientHeight
-  // the instant it creates and appends its canvas to body.
   const preStyle = document.createElement('style');
   preStyle.id = 'dice-canvas-presize';
   preStyle.textContent = `
@@ -114,11 +155,11 @@ async function loadDiceBox() {
     offscreen:      false,
     width:          W,
     height:         H,
-    scale:          3.5,
+    scale:          3,
     gravity:        1,
     mass:           1,
     friction:       0.6,
-    restitution:    0.1,
+    restitution:    0.3,
     angularDamping: 0.4,
     linearDamping:  0.4,
     spinForce:      4,
@@ -133,14 +174,9 @@ async function loadDiceBox() {
 
   await box.init();
 
-  // Remove preStyle — replace with inline styles that include the opacity transition
   preStyle.remove();
 
   const canvas = getDiceCanvas();
-  console.log('🎲 Canvas after init:', canvas);
-  console.log(`🎲 Canvas buffer:  ${canvas?.width} × ${canvas?.height}`);
-  console.log(`🎲 Canvas display: ${canvas?.clientWidth} × ${canvas?.clientHeight}`);
-
   if (canvas) {
     Object.assign(canvas.style, {
       position:      'fixed',
@@ -152,7 +188,6 @@ async function loadDiceBox() {
       pointerEvents: 'none',
       opacity:       '1',
       transition:    'opacity 1.5s ease',
-      outline:       '0px solid red',   // DEBUG — remove when done
     });
   }
 
@@ -162,7 +197,6 @@ async function loadDiceBox() {
   return diceBox;
 }
 
-// ── Eager load at module import time ──────────────────────────────────────────
 loadDiceBox().catch(err => console.warn('Dice-box eager init failed:', err));
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -178,7 +212,6 @@ window.addEventListener('resize', () => {
     if (wasActive) {
       try {
         await loadDiceBox();
-        console.log('🎲 Dice canvas reinitialised after resize');
       } catch (err) {
         console.warn('Dice canvas reinit failed:', err);
       }
@@ -220,10 +253,39 @@ export function initDiceRoller() {
   const clearButton           = container.querySelector("#clear-selected-button");
   const rollResult            = container.parentElement.querySelector(".roll-results");
 
+  // Refresh onclick closures after any mutation so indices stay correct.
+  // Only sets a property — no DOM mutations, no repaints.
+  function refreshOnclicks() {
+    Array.from(selectedDiceContainer.children).forEach((el, i) => {
+      el.onclick = () => {
+        selectedDice.splice(i, 1);
+        el.remove();
+        refreshOnclicks();
+      };
+    });
+  }
+
+  // Build a single selected-die element with inline SVG
+  function makeDieElement(sides) {
+    const el = document.createElement("div");
+    el.classList.add("selected-die");
+    el.innerHTML = `
+      <div class="selected-die-wrapper" data-dice="${sides}">
+        ${getSvg(sides)}
+        <span class="dice-label">D${sides}</span>
+      </div>`;
+    return el;
+  }
+
   diceButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      selectedDice.push(parseInt(btn.dataset.dice, 10));
-      renderSelectedDice(selectedDiceContainer);
+    btn.addEventListener("click", async () => {
+      const sides = parseInt(btn.dataset.dice, 10);
+      selectedDice.push(sides);
+      // Ensure SVG cache is ready before injecting — resolves instantly
+      // after the first load since svgsReady is already settled
+      await svgsReady;
+      selectedDiceContainer.appendChild(makeDieElement(sides));
+      refreshOnclicks();
     });
   });
 
@@ -241,9 +303,12 @@ export function initDiceRoller() {
 
       const counts = {};
       selectedDice.forEach(s => { counts[s] = (counts[s] || 0) + 1; });
-      const notation = Object.entries(counts)
-        .map(([sides, count]) => `${count}d${sides}`)
-        .join('+');
+
+      const notation = Object.entries(counts).map(([sides, count]) => ({
+        qty:        count,
+        sides:      parseInt(sides),
+        themeColor: diceColors[sides] ?? '#ffffff',
+      }));
 
       try {
         const box = await loadDiceBox();
@@ -277,31 +342,15 @@ export function initDiceRoller() {
   if (clearButton) {
     clearButton.addEventListener("click", () => {
       selectedDice = [];
-      clearDiceBox();
+      selectedDiceContainer.replaceChildren();
+      // Don't call clearDiceBox() here — clearDice() is async and calling it
+      // outside the roll flow breaks dice-box internal state. The roll
+      // handler's own clearDiceBox() cleans up before the next roll.
       const canvas = getDiceCanvas();
       if (canvas) {
         if (fadeTimer) clearTimeout(fadeTimer);
         canvas.style.opacity = '0';
       }
-      renderSelectedDice(selectedDiceContainer);
-    });
-  }
-
-  function renderSelectedDice(container) {
-    container.innerHTML = "";
-    selectedDice.forEach((sides, index) => {
-      const el = document.createElement("div");
-      el.classList.add("selected-die");
-      el.innerHTML = `
-        <div class="selected-die-wrapper" data-dice="${sides}">
-          <img src="${diceImages[sides]}" alt="D${sides}" />
-          <span class="dice-label">D${sides}</span>
-        </div>`;
-      el.addEventListener("click", () => {
-        selectedDice.splice(index, 1);
-        renderSelectedDice(container);
-      });
-      container.appendChild(el);
     });
   }
 
@@ -376,7 +425,7 @@ document.addEventListener('keydown', (e) => {
     document.activeElement.blur();
   } else if (e.key === 'Enter') {
     e.preventDefault();
-    document.getElementById('roll-button')?.click();
+    if (!isRolling) document.getElementById('roll-button')?.click();
     document.activeElement.blur();
   }
 });
