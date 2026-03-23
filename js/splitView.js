@@ -459,6 +459,34 @@ export function renderPanelBlocks(tabId, panelSide, ids, filteredBlocks = null, 
     import('./blockTemplate.js').then(({ blockTemplate }) => {
         resultsSection.innerHTML = buildResultsHeader(tabId, panelSide, ids);
 
+        // Permanent items always rendered first, before blocks
+        if (tabId === 'tab6') {
+            const permanentItems = [
+                { id: 'perm1', defaultValue: '00', colorClass: 'gold-bg' },
+                { id: 'perm2', defaultValue: '00', colorClass: 'silver-bg' },
+                { id: 'perm3', defaultValue: '00', colorClass: 'copper-bg' },
+            ];
+
+            const permanentHTML = permanentItems.map(({ id, defaultValue, colorClass }) => {
+                const savedValue = localStorage.getItem(`permanentItem_${id}`) || defaultValue;
+                return `<div class="block minimized permanent-block ${colorClass}" data-id="${id}">
+                            <h4 class="permanent-title" contenteditable="true">${savedValue}</h4>
+                        </div>`;
+            }).join('');
+
+            resultsSection.insertAdjacentHTML('beforeend', `
+                <div class="permanent-items-container">${permanentHTML}</div>
+            `);
+
+            resultsSection.querySelectorAll('.permanent-title').forEach(titleEl => {
+                titleEl.addEventListener('blur', () => {
+                    const blockId = titleEl.parentElement.getAttribute('data-id');
+                    localStorage.setItem(`permanentItem_${blockId}`, titleEl.textContent.trim());
+                });
+            });
+        }
+
+        // Blocks rendered after permanent items
         if (blocks.length === 0) {
             const p = document.createElement('p');
             p.className = 'results-placeholder';
