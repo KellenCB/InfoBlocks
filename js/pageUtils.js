@@ -1,3 +1,7 @@
+/* ==================================================================*/
+/* ==================== UPLOAD / DOWNLOAD ===========================*/
+/* ==================================================================*/
+
 document.addEventListener('DOMContentLoaded', () => {
     const upload_button = document.getElementById('upload_button');
     const download_button = document.getElementById('download_button');
@@ -37,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const circles = circleSection.querySelectorAll(".circle:not(.circle-button)");
             let circleData = [];
             circles.forEach(circle => {
-              // 0 means unfilled, 1 means filled (you can adjust if you prefer the inverse)
               circleData.push(circle.classList.contains("unfilled") ? 0 : 1);
             });
             storedData["circleData"] = { totalCircles: circles.length, states: circleData };
@@ -114,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   else if (key === "circleData" && typeof value === 'object') {
                     const circleContainer = document.querySelector(".circle-section");
                     if (circleContainer) {
-                      circleContainer.innerHTML = ""; // Clear existing circles
+                      circleContainer.innerHTML = "";
                       const totalCircles = value.totalCircles;
                       const states = value.states || [];
                       for (let i = 0; i < totalCircles; i++) {
@@ -123,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (states[i] === 0) {
                           circle.classList.add("unfilled");
                         }
-                        // Allow toggling the state on click
                         circle.addEventListener("click", () => {
                           circle.classList.toggle("unfilled");
                         });
@@ -142,7 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
   
                 alert('✅ Data uploaded successfully.');
-                // Reload the page to reflect all changes
                 location.reload();
               } catch (err) {
                 console.error('❌ Error uploading data:', err);
@@ -156,5 +157,53 @@ document.addEventListener('DOMContentLoaded', () => {
         input.click();
       });
     }
-  });
-  
+});
+
+
+/* ==================================================================*/
+/* ========================= PAGE TITLE =============================*/
+/* ==================================================================*/
+
+document.addEventListener('DOMContentLoaded', () => {
+    const pageTitle = document.getElementById("page_title");
+
+    if (!pageTitle) {
+        console.error("❌ Page title element not found.");
+        return;
+    }
+
+    const defaultPageTitle = "Enter Custom Title Here...";
+
+    pageTitle.textContent = localStorage.getItem("pageTitle") || "";
+
+    const saveTitle = (element, storageKey, defaultText) => {
+        element.addEventListener("focus", () => {
+            if (element.textContent === defaultText) {
+                element.textContent = "";
+            }
+        });
+
+        element.addEventListener("blur", () => {
+            const newTitle = element.textContent.trim();
+            if (newTitle) {
+                localStorage.setItem(storageKey, newTitle);
+            } else {
+                if (storageKey === "pageTitle") {
+                    element.textContent = "";
+                }
+                localStorage.removeItem(storageKey);
+            }
+        });
+
+        element.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                element.blur();
+            }
+        });
+    };
+
+    saveTitle(pageTitle, "pageTitle", defaultPageTitle);
+
+    console.log("✅ Page title initialized.");
+});

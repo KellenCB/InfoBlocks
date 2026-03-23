@@ -3,7 +3,6 @@ import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { blockTemplate } from './blockTemplate.js';
 import { tagHandler } from './tagHandler.js';
 import { overlayHandler, initUsesField } from './overlayHandler.js';
-import { attachDynamicTooltips } from './tooltips.js';
 
 const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
 
@@ -724,7 +723,71 @@ export const appManager = (() => {
     localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(userBlocks));
     return true;
   };
-    
+
+/* ==================================================================*/
+/* =========================== TOOLTIPS =============================*/
+/* ==================================================================*/
+
+let activeTooltip = null;
+
+function tooltipMouseEnter(e) {
+  const el = e.currentTarget;
+  if (el.scrollWidth <= el.clientWidth) return;
+
+  clearTimeout(el._tooltipTimer);
+  if (activeTooltip) {
+    activeTooltip.remove();
+    activeTooltip = null;
+  }
+
+  el._tooltipTimer = setTimeout(() => {
+    const tip = document.createElement('div');
+    tip.classList.add('text-tooltip');
+    tip.textContent = el.textContent;
+    document.body.appendChild(tip);
+
+    const rect = el.getBoundingClientRect();
+    tip.style.left = `${rect.left}px`;
+    tip.style.top  = `${rect.bottom + 5}px`;
+
+    activeTooltip = tip;
+  }, 750);
+}
+
+function tooltipMouseLeave(e) {
+  const el = e.currentTarget;
+  clearTimeout(el._tooltipTimer);
+  if (activeTooltip) {
+    activeTooltip.remove();
+    activeTooltip = null;
+  }
+}
+
+function attachTooltipHandlers(nodes) {
+  nodes.forEach(el => {
+    el.removeEventListener('mouseenter', tooltipMouseEnter);
+    el.removeEventListener('mouseleave', tooltipMouseLeave);
+    el.addEventListener('mouseenter', tooltipMouseEnter);
+    el.addEventListener('mouseleave', tooltipMouseLeave);
+  });
+}
+
+['scroll', 'resize', 'blur'].forEach(evt =>
+  window.addEventListener(evt, () => {
+    if (activeTooltip) {
+      activeTooltip.remove();
+      activeTooltip = null;
+    }
+  })
+);
+
+function attachDynamicTooltips() {
+  const targets = document.querySelectorAll(
+    '.block-title h4, .action-name, .action-description'
+  );
+  attachTooltipHandlers(targets);
+}
+
 /* ==================================================================*/
 /* ======================== HELPER FUNCTIONS ========================*/
 /* ==================================================================*/
