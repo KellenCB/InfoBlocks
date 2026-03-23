@@ -42,52 +42,7 @@ export const actionButtonHandlers = (() => {
       cancelClearButton: document.getElementById("cancel_clear_button"),
     };
 
-    // Add Block Button
-    const headerEl = document.getElementById(`results_header_${tabSuffix}`);
-    elements.addBlockButton = headerEl
-      ? headerEl.querySelector("#add_block_button")
-      : null;
-    
-    if (elements.addBlockButton && elements.addBlockOverlay) {
-      elements.addBlockButton.addEventListener("click", () => {
-        console.log("➕ Add Block Button Clicked - Resetting Overlay");
 
-        selectedFilterTagsBeforeAdd = tagHandler.getSelectedTags();
-        console.log("✅ Stored search & filter tags BEFORE adding a block:", selectedFilterTagsBeforeAdd);
-
-        document.querySelectorAll(".add-block-overlay .tag-button.selected").forEach(tag => {
-          tag.classList.remove("selected");
-        });
-
-        const titleInput = document.getElementById("title_input_overlay");
-        const textInput = document.getElementById("block_text_overlay");
-        const tagInputField = document.getElementById("tags_input_overlay");
-        if (titleInput) titleInput.value = "";
-        if (textInput) textInput.value = "";
-        if (tagInputField) tagInputField.value = "";
-
-        localStorage.removeItem("uses_field_overlay_state");
-
-        const usesFieldContainer = document.getElementById("uses_field_overlay");
-        if (usesFieldContainer) {
-            initUsesField(usesFieldContainer, "uses_field_overlay_state");
-        }
-
-        if (window.selectedOverlayTags && typeof selectedOverlayTags === "object") {
-          Object.keys(selectedOverlayTags).forEach(category => {
-            selectedOverlayTags[category] = [];
-          });
-          console.log("✅ Cleared stored selectedOverlayTags.");
-        }
-
-        overlayHandler.initializeOverlayTagHandlers("add_block_overlay_tags");
-
-        elements.addBlockOverlay.classList.add("show");
-        if (titleInput) setTimeout(() => titleInput.focus(), 50);
-      });
-    } else {
-      console.error("❌ Error: Add Block button or overlay not found.");
-    }
 
     // Bin Buttons (Clear Local Storage)
     if (elements.binButtons.length > 0 && elements.clearDataOverlay) {

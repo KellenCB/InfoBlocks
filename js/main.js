@@ -905,7 +905,8 @@ window.onload = async () => {
     });
 
     initSplitView();
-    if (localStorage.getItem('splitViewActive') === 'true') {
-    document.getElementById('split-view-button')?.click();
-}
+    const isPortraitOnLoad = window.innerHeight > window.innerWidth;
+    if (localStorage.getItem('splitViewActive') === 'true' && !isPortraitOnLoad) {
+        document.getElementById('split-view-button')?.click();
+    }
 };

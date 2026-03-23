@@ -30,6 +30,27 @@ export function initSplitView() {
     const btn = document.getElementById('split-view-button');
     if (!btn) return;
     btn.addEventListener('click', toggleSplitView);
+
+    // ── Orientation handling ──────────────────────────────────────────────────
+    let wasActiveBeforePortrait = false;
+
+    const handleOrientationChange = () => {
+        const isPortrait = window.innerHeight > window.innerWidth;
+
+        if (isPortrait && splitActive) {
+            wasActiveBeforePortrait = true;
+            splitActive = false;
+            exitSplitView();
+            btn.classList.remove('active');
+        } else if (!isPortrait && wasActiveBeforePortrait && !splitActive) {
+            wasActiveBeforePortrait = false;
+            splitActive = true;
+            enterSplitView();
+            btn.classList.add('active');
+        }
+    };
+
+    window.addEventListener('resize', handleOrientationChange);
 }
 
 function toggleSplitView() {
