@@ -275,13 +275,18 @@ export const appManager = (() => {
     });
   });
 
+let renderAbortController = null;
 
 /* ==================================================================*/
 /* ============================= BLOCKS =============================*/
 /* ==================================================================*/
 
-  const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
+const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
     console.log("🔍 Checking tab value:", tab, typeof tab);
+    
+    if (renderAbortController) renderAbortController.abort();
+    renderAbortController = new AbortController();
+    const signal = renderAbortController.signal;
     
     if (typeof tab !== "string") {
       console.error("❌ Error: 'tab' should be a string but got:", tab);
@@ -348,8 +353,8 @@ export const appManager = (() => {
       if (!wasOpen) viewDropdown.classList.remove("hidden");
     });
 
-    document.addEventListener("click", () => viewDropdown.classList.add("hidden"));
-    document.addEventListener("click", closeDropdowns);
+    document.addEventListener("click", () => viewDropdown.classList.add("hidden"), { signal });
+    document.addEventListener("click", closeDropdowns, { signal });
 
     viewDropdown.querySelectorAll(".view-toggle-item").forEach(item => {
       const state = item.dataset.state;
@@ -376,8 +381,8 @@ export const appManager = (() => {
       if (!wasOpen) sortDropdown.classList.remove("hidden");
     });
     
-    document.addEventListener("click", () => sortDropdown.classList.add("hidden"));
-    
+    document.addEventListener("click", () => sortDropdown.classList.add("hidden"), { signal });
+
     sortDropdown.querySelectorAll(".sort-item").forEach(item => {
       const mode = item.dataset.sort;
       item.classList.toggle("selected", mode === savedSortMode);
@@ -519,7 +524,6 @@ export const appManager = (() => {
       });
     
     updateTags();
-    initializeTitles();
     attachDynamicTooltips();
   };
 
