@@ -17,6 +17,11 @@ html {
     flex-direction: column;
 }
 
+#header-row {
+    position: relative;
+    z-index: 9999;
+}
+
 .hidden {
     display: none;
 }
@@ -36,7 +41,6 @@ html {
 .tab-content {
     position: relative;
     width: 100vw;
-    padding-left: 20px;
     padding-right: 20px;
     gap: 20px;
     height: calc(100vh - 213px);  /* Adjust for correct height */
@@ -496,6 +500,19 @@ a:hover {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    position: relative;
+}
+
+.menu-panel-close {
+    position: absolute;
+    top: 35px;
+    right: 40px;
+    background-color: #444;
+    z-index: 1;
+}
+
+.menu-panel-close:hover {
+    background-color: #555;
 }
 
 .overlay-buttons {
@@ -682,6 +699,7 @@ a:hover {
   
 .spell-slot-edit-overlay.show {
     display: flex;
+    z-index: 10001;
 }
   
 .spell-slot-edit-container {
@@ -719,6 +737,7 @@ a:hover {
 
 .suit-uses-edit-overlay.show {
     display: flex;
+    z-index: 10001;
 }
 
 /* ==================================================================*/

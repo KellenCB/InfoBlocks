@@ -66,21 +66,24 @@ const attachEventListeners = () => {
 
 const menuButton = document.getElementById("Menu_button");
 const menuOverlay = document.getElementById("menu_overlay");
+const menuCloseButton = document.getElementById("menu_close_button");
 
 function closeMenu() {
-  menuOverlay.classList.remove("active");
-  menuButton.classList.remove("menu-button-open");
+    menuOverlay.classList.remove("active");
+    menuButton.classList.remove("menu-button-open");
 }
 
 if (menuButton && menuOverlay) {
-  menuButton.addEventListener("click", () => {
+    menuButton.addEventListener("click", () => {
     menuOverlay.classList.toggle("active");
     menuButton.classList.toggle("menu-button-open");
-  });
+    });
 
-  menuOverlay.addEventListener("click", (e) => {
+    menuOverlay.addEventListener("click", (e) => {
     if (!e.target.closest(".menu-content")) closeMenu();
-  });
+    });
+
+    menuCloseButton?.addEventListener("click", closeMenu);
 }
 
 /* ===================================================================*/
