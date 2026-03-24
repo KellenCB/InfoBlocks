@@ -182,6 +182,17 @@ export const blockActionsHandler = (() => {
             const blockTags = Array.isArray(block.tags) ? [...block.tags] : [];
             appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.blockType || null);
             reapplySearchAndFilters();
+
+        if (target.classList.contains('pin-button')) {
+            const blocks = appManager.getBlocks(activeTab);
+            const idx    = blocks.findIndex(b => b.id === blockId);
+            if (idx !== -1) {
+                blocks[idx].pinned = !blocks[idx].pinned;
+                localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
+                reapplySearchAndFilters();
+            }
+            return;
+        }
                                 
         } else if (target.classList.contains("edit-button")) {
             console.log("📝 Editing block:", blockId);

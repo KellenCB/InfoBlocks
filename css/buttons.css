@@ -190,7 +190,9 @@
         opacity: 0.5;
     }
 
-/*CIRCLES*/
+/* ==================================================================*/
+/* ============================= CIRCLES ============================*/
+/* ==================================================================*/
 
     :root { --circle-color: #e4e0e0; }
 
@@ -312,4 +314,28 @@
 
 .results-settings.selected {
     opacity: 1;
+}
+
+/* ==================================================================*/
+/* ============================= PIN ================================*/
+/* ==================================================================*/
+
+
+.pin-button {
+    background-color: #2d81ff;
+    border: 1px solid #2d81ff;
+    color: #fff;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.pin-button:hover {
+    background-color: #1a6be0;
+    border-color: #1a6be0;
+    color: #fff;
+}
+
+.pin-button.pin-active {
+    background-color: #2d81ff;
+    border-color: #2d81ff;
+    color: #fff;
 }

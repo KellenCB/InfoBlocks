@@ -77,11 +77,12 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class=\"block-title\"><h4>${block.title}</h4></div>
                     ${ usesHTML ? `<div class=\"block-uses\">${usesHTML}</div>` : "" }
                 </div>
-                <div class=\"block-actions\">
-                    <button class=\"action-button duplicate-button green-button\" data-id=\"${block.id}\" title=\"Copy\">❐</button>
-                    <button class=\"action-button edit-button orange-button\" data-id=\"${block.id}\" title=\"Edit\">✎</button>
-                    <button class=\"action-button remove-button red-button\" data-id=\"${block.id}\" title=\"Remove\">×</button>
-                </div>
+            <div class=\"block-actions\">
+                <button class=\"action-button pin-button${block.pinned ? ' pin-active' : ''}\" data-id=\"${block.id}\" title=\"${block.pinned ? 'Unpin' : 'Pin'}\">⊕</button>
+                <button class=\"action-button duplicate-button green-button\" data-id=\"${block.id}\" title=\"Copy\">❐</button>
+                <button class=\"action-button edit-button orange-button\" data-id=\"${block.id}\" title=\"Edit\">✎</button>
+                <button class=\"action-button remove-button red-button\" data-id=\"${block.id}\" title=\"Remove\">×</button>
+            </div>
             </div>
             ${tagSectionsHTML}
             ${ hasBody ? `
@@ -98,11 +99,12 @@ export const blockTemplate = (block, tab = "tab4") => {
             <div class=\"block-header\">
                 <div class=\"block-title\"><h4>${block.title}</h4></div>
                 ${ usesHTML ? `<div class=\"block-uses\">${usesHTML}</div>` : "" }
-                <div class=\"block-actions\">
-                    <button class=\"action-button duplicate-button green-button\" data-id=\"${block.id}\" title=\"Copy\">❐</button>
-                    <button class=\"action-button edit-button orange-button\" data-id=\"${block.id}\" title=\"Edit\">✎</button>
-                    <button class=\"action-button remove-button red-button\" data-id=\"${block.id}\" title=\"Remove\">×</button>
-                </div>
+            <div class=\"block-actions\">
+                <button class=\"action-button pin-button${block.pinned ? ' pin-active' : ''}\" data-id=\"${block.id}\" title=\"${block.pinned ? 'Unpin' : 'Pin'}\">⊕</button>
+                <button class=\"action-button duplicate-button green-button\" data-id=\"${block.id}\" title=\"Copy\">❐</button>
+                <button class=\"action-button edit-button orange-button\" data-id=\"${block.id}\" title=\"Edit\">✎</button>
+                <button class=\"action-button remove-button red-button\" data-id=\"${block.id}\" title=\"Remove\">×</button>
+            </div>
             </div>
         `;
     } else if (viewState === 'minimized') {
@@ -119,7 +121,7 @@ export const blockTemplate = (block, tab = "tab4") => {
 
     // Wrap and return
     return `
-        <div class=\"block ${viewState}\" data-id=\"${block.id}\">
+        <div class="block ${viewState}${block.pinned ? ' pinned' : ''}" data-id="${block.id}">
             ${content}
         </div>
     `;

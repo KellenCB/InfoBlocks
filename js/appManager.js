@@ -398,27 +398,44 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
         `);
       }
               
-    const blocks = filteredBlocks || getBlocks(tab);
-    console.log(`📦 Blocks to render for ${tab}:`, blocks);
-    if (blocks.length === 0) {
-      console.warn(`⚠️ No blocks found for ${tab}`);
-      const placeholderClass = 'results-placeholder';
-      if (!resultsSection.querySelector(`.${placeholderClass}`)) {
-        const p = document.createElement('p');
-        p.classList.add(placeholderClass);
-        p.textContent = 'Use the + button to add items here…';
-        p.style.position  = 'absolute';
-        p.style.top       = '50%';
-        p.style.left      = '50%';
-        p.style.transform = 'translate(-50%, -50%)';
-        p.style.textAlign = 'center';
-        p.style.opacity = '0.25';
-        resultsSection.appendChild(p);
-      }
+    const allBlocks     = getBlocks(tab);
+    const pinnedBlocks  = allBlocks.filter(b => b.pinned);
+    const displayBlocks = (filteredBlocks || allBlocks).filter(b => !b.pinned);
+
+    console.log(`📦 Blocks to render for ${tab}:`, displayBlocks);
+
+    // ── Pinned zone ──────────────────────────────────────────────────────────
+    if (pinnedBlocks.length > 0) {
+        const pinnedHTML = pinnedBlocks.map(b => blockTemplate(b, tab)).join('');
+        resultsSection.insertAdjacentHTML('beforeend', `
+            <div class="pinned-blocks-zone">
+                <span class="pinned-zone-label">Pinned</span>
+                ${pinnedHTML}
+            </div>
+        `);
     }
-    blocks.forEach(block => {
-        resultsSection.insertAdjacentHTML("beforeend", blockTemplate(block, tab));
+
+    // ── Normal blocks ────────────────────────────────────────────────────────
+    if (displayBlocks.length === 0 && pinnedBlocks.length === 0) {
+        const placeholderClass = 'results-placeholder';
+        if (!resultsSection.querySelector(`.${placeholderClass}`)) {
+            const p = document.createElement('p');
+            p.classList.add(placeholderClass);
+            p.textContent = 'Use the + button to add items here…';
+            p.style.position  = 'absolute';
+            p.style.top       = '50%';
+            p.style.left      = '50%';
+            p.style.transform = 'translate(-50%, -50%)';
+            p.style.textAlign = 'center';
+            p.style.opacity   = '0.25';
+            resultsSection.appendChild(p);
+        }
+    }
+
+    displayBlocks.forEach(block => {
+        resultsSection.insertAdjacentHTML('beforeend', blockTemplate(block, tab));
     });
+
     console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
       
     if (tab === "tab6") {

@@ -527,14 +527,28 @@ export function renderPanelBlocks(tabId, panelSide, ids, filteredBlocks = null, 
         }
 
         // Blocks rendered after permanent items
-        if (blocks.length === 0) {
+        const allBlocks     = appManager.getBlocks(tabId);
+        const pinnedBlocks  = allBlocks.filter(b => b.pinned);
+        const displayBlocks = blocks.filter(b => !b.pinned);
+
+        if (pinnedBlocks.length > 0) {
+            const pinnedHTML = pinnedBlocks.map(b => blockTemplate(b, tabId)).join('');
+            resultsSection.insertAdjacentHTML('beforeend', `
+                <div class="pinned-blocks-zone">
+                    <span class="pinned-zone-label">Pinned</span>
+                    ${pinnedHTML}
+                </div>
+            `);
+        }
+
+        if (displayBlocks.length === 0 && pinnedBlocks.length === 0) {
             const p = document.createElement('p');
-            p.className = 'results-placeholder';
+            p.className  = 'results-placeholder';
             p.textContent = 'Use the + button to add items here…';
             p.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0.25;';
             resultsSection.appendChild(p);
         } else {
-            blocks.forEach(block => {
+            displayBlocks.forEach(block => {
                 resultsSection.insertAdjacentHTML('beforeend', blockTemplate(block, tabId));
             });
         }
@@ -605,6 +619,17 @@ function wirePanelBlockActions(tabId, panelSide, ids, contentArea) {
         const blocks = appManager.getBlocks(tabId);
         const block  = blocks.find(b => b.id === blockId);
         if (!block) return;
+
+        if (target.classList.contains('pin-button')) {
+            const allBlocks = appManager.getBlocks(tabId);
+            const idx       = allBlocks.findIndex(b => b.id === blockId);
+            if (idx !== -1) {
+                allBlocks[idx].pinned = !allBlocks[idx].pinned;
+                localStorage.setItem(`userBlocks_${tabId}`, JSON.stringify(allBlocks));
+                refreshPanelsShowingTab(tabId);
+            }
+            return;
+        }
 
         if (target.classList.contains('duplicate-button')) {
             appManager.saveBlock(tabId, `${block.title} (Copy)`, block.text,
@@ -885,7 +910,7 @@ let html = '';
         const label       = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
         const hasSelected = used.some(t => selectedTags.includes(t));
         const openClass = (hasSelected || currentlyOpen.has(category)) ? ' open' : '';
-        
+
         html += `<div class="tag-accordion-group">`;
         html += `<button class="tag-accordion-header${openClass}" data-category="${category}">`;
         html += `<span>${label}</span><span class="accordion-chevron"></span>`;
