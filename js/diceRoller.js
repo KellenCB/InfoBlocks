@@ -26,6 +26,13 @@ const diceColors = {
 
 let selectedDice = [];
 
+let _rollDiceFn = null;
+
+export async function rollDice(groups, modifier = 0, label = null) {
+    if (!_rollDiceFn) throw new Error('Dice roller not initialized yet');
+    return _rollDiceFn(groups, modifier, label);
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    SVG PRELOAD
    Fetch raw SVG markup at module load time. Inline SVG is used in the
@@ -339,6 +346,39 @@ export function initDiceRoller() {
     });
   }
 
+  _rollDiceFn = async (groups, modifier = 0, label = null) => {
+      if (isRolling) return;
+      isRolling = true;
+
+      const notation = groups.map(({ qty, sides }) => ({
+          qty,
+          sides,
+          themeColor: diceColors[sides] ?? '#ffffff',
+      }));
+
+      try {
+          const box = await loadDiceBox();
+          const canvas = getDiceCanvas();
+          if (canvas) {
+              if (fadeTimer) clearTimeout(fadeTimer);
+              canvas.style.opacity = '1';
+          }
+          clearDiceBox();
+          const results = await box.roll(notation);
+          const rolls   = results.map(r => r.value);
+          const sides   = results.map(r => r.sides);
+          const total   = rolls.reduce((a, b) => a + b, 0);
+          appendHistoryEntry(rolls, sides, total, modifier, label);
+          fadeOutDice();
+      } catch (err) {
+          console.error('Dice-box error:', err);
+          appendResult('Error rolling dice — check console.');
+      } finally {
+          isRolling = false;
+      }
+  };
+
+
   if (clearButton) {
     clearButton.addEventListener("click", () => {
       selectedDice = [];
@@ -361,7 +401,7 @@ export function initDiceRoller() {
     insertHistoryEntry(entry);
   }
 
-  function appendHistoryEntry(rolls, sides, total) {
+  function appendHistoryEntry(rolls, sides, total, modifier = 0, label = null) {
     const entry = document.createElement("div");
     entry.classList.add("roll-history-entry", "new-entry");
 
@@ -381,7 +421,14 @@ export function initDiceRoller() {
 
     const totalDiv = document.createElement("div");
     totalDiv.classList.add("total");
-    totalDiv.textContent = `Total: ${total}`;
+    const prefix = label || 'Total';
+    if (modifier !== 0) {
+        const sign       = modifier > 0 ? '+' : '';
+        const finalTotal = total + modifier;
+        totalDiv.innerHTML = `<span style="opacity:0.3">${prefix}:</span> (${total} ${sign}${modifier}) = ${finalTotal}`;
+    } else {
+        totalDiv.innerHTML = `<span style="opacity:0.3">${prefix}:</span> ${total}`;
+    }
 
     entry.appendChild(rollsContainer);
     entry.appendChild(totalDiv);
@@ -389,7 +436,7 @@ export function initDiceRoller() {
 
     entry.addEventListener("animationend", () => entry.classList.remove("new-entry"));
   }
-
+  
   function insertHistoryEntry(entry) {
     entry.style.position   = 'absolute';
     entry.style.visibility = 'hidden';
@@ -429,4 +476,87 @@ document.addEventListener('keydown', (e) => {
     if (!isRolling) document.getElementById('roll-button')?.click();
     document.activeElement.blur();
   }
+});
+
+
+// ── Inline dice roll pattern & applier ───────────────────────────────────────
+
+const DICE_PATTERN = /(\d+)d(\d+)(?:\s*([+-])\s*(\d+))?/gi;
+
+export function applyInlineDiceRolls(container) {
+    const walker = document.createTreeWalker(
+        container,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode(node) {
+                if (node.parentElement?.closest('.inline-dice-roll')) return NodeFilter.FILTER_REJECT;
+                if (!node.parentElement?.closest('.block-body'))       return NodeFilter.FILTER_REJECT;
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        }
+    );
+
+    const textNodes = [];
+    let node;
+    while ((node = walker.nextNode())) textNodes.push(node);
+
+    textNodes.forEach(textNode => {
+        const text = textNode.textContent;
+        DICE_PATTERN.lastIndex = 0;
+        if (!DICE_PATTERN.test(text)) return;
+        DICE_PATTERN.lastIndex = 0;
+
+        const frag = document.createDocumentFragment();
+        let lastIdx = 0;
+        let match;
+
+        while ((match = DICE_PATTERN.exec(text)) !== null) {
+            const [full, qty, sides, sign, modStr] = match;
+            const modifier = modStr
+                ? (sign === '-' ? -parseInt(modStr, 10) : parseInt(modStr, 10))
+                : 0;
+
+            if (match.index > lastIdx) {
+                frag.appendChild(document.createTextNode(text.slice(lastIdx, match.index)));
+            }
+
+            const btn = document.createElement('button');
+            btn.className        = 'inline-dice-roll';
+            btn.textContent      = full.trim();
+            btn.dataset.qty      = qty;
+            btn.dataset.sides    = sides;
+            btn.dataset.modifier = modifier;
+            btn.title            = `Roll ${qty}d${sides}${modifier !== 0 ? (modifier > 0 ? `+${modifier}` : modifier) : ''}`;
+            frag.appendChild(btn);
+
+            lastIdx = match.index + full.length;
+        }
+
+        if (lastIdx < text.length) {
+            frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+        }
+
+        textNode.parentNode.replaceChild(frag, textNode);
+    });
+}
+
+document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.inline-dice-roll');
+    if (!btn) return;
+
+    const qty      = parseInt(btn.dataset.qty,      10);
+    const sides    = parseInt(btn.dataset.sides,    10);
+    const modifier = parseInt(btn.dataset.modifier, 10) || 0;
+    const label    = btn.closest('.block')?.querySelector('h4')?.textContent?.trim() || null;
+
+    const dicePanel = document.getElementById('dice-panel');
+    if (dicePanel && !dicePanel.classList.contains('open')) {
+        document.getElementById('dice-menu-button')?.click();
+    }
+
+    try {
+        await rollDice([{ qty, sides }], modifier, label);
+    } catch (err) {
+        console.error('Inline dice roll failed:', err);
+    }
 });

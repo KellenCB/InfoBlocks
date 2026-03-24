@@ -3,6 +3,7 @@ import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { blockTemplate } from './blockTemplate.js';
 import { tagHandler } from './tagHandler.js';
 import { overlayHandler, initUsesField } from './overlayHandler.js';
+import { applyInlineDiceRolls } from './diceRoller.js';
 
 const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
 
@@ -409,7 +410,6 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
         const pinnedHTML = pinnedBlocks.map(b => blockTemplate(b, tab)).join('');
         resultsSection.insertAdjacentHTML('beforeend', `
             <div class="pinned-blocks-zone">
-                <span class="pinned-zone-label">Pinned</span>
                 ${pinnedHTML}
             </div>
         `);
@@ -434,6 +434,7 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
 
     displayBlocks.forEach(block => {
         resultsSection.insertAdjacentHTML('beforeend', blockTemplate(block, tab));
+        applyInlineDiceRolls(resultsSection);
     });
 
     console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);

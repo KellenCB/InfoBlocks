@@ -3,6 +3,7 @@ import { appManager } from './appManager.js';
 import { tagHandler } from './tagHandler.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { stripHTML } from './appManager.js';
+import { applyInlineDiceRolls } from './diceRoller.js';
 
 let splitActive = false;
 
@@ -397,7 +398,6 @@ function buildFreeTabHTML(tabId, tabNum, panelSide, ids) {
                         </div>
                         ${hasTypeFilter ? `<div class="block-type-tags" id="${ids.typeTagsSection}"></div>` : ''}
                         <div id="${ids.tagsSection}" class="tag-section"></div>
-                        <button id="${ids.clearFilters}" class="clear_filters_button">Clear Filters</button>
                     </div>
                 </div>
                 <div id="${ids.resultsSection}" class="results-section"></div>
@@ -535,7 +535,6 @@ export function renderPanelBlocks(tabId, panelSide, ids, filteredBlocks = null, 
             const pinnedHTML = pinnedBlocks.map(b => blockTemplate(b, tabId)).join('');
             resultsSection.insertAdjacentHTML('beforeend', `
                 <div class="pinned-blocks-zone">
-                    <span class="pinned-zone-label">Pinned</span>
                     ${pinnedHTML}
                 </div>
             `);
@@ -550,6 +549,7 @@ export function renderPanelBlocks(tabId, panelSide, ids, filteredBlocks = null, 
         } else {
             displayBlocks.forEach(block => {
                 resultsSection.insertAdjacentHTML('beforeend', blockTemplate(block, tabId));
+                applyInlineDiceRolls(resultsSection);
             });
         }
 
@@ -597,7 +597,8 @@ function wirePanelBlockActions(tabId, panelSide, ids, contentArea) {
         if (blockEl &&
             !e.target.closest('.action-button') &&
             !e.target.closest('.circle') &&
-            !e.target.closest('.tag-button')) {
+            !e.target.closest('.tag-button') &&
+            !e.target.closest('.inline-dice-roll')) {
 
             const bId       = blockEl.getAttribute('data-id');
             const blocksArr = appManager.getBlocks(tabId);

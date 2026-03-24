@@ -78,7 +78,9 @@ export const blockTemplate = (block, tab = "tab4") => {
                     ${ usesHTML ? `<div class=\"block-uses\">${usesHTML}</div>` : "" }
                 </div>
             <div class=\"block-actions\">
-                <button class=\"action-button pin-button${block.pinned ? ' pin-active' : ''}\" data-id=\"${block.id}\" title=\"${block.pinned ? 'Unpin' : 'Pin'}\">⊕</button>
+                <button class=\"action-button pin-button${block.pinned ? ' pin-active' : ''}\" data-id=\"${block.id}\" title=\"${block.pinned ? 'Unpin' : 'Pin'}\">
+                    <img src=\"images/${block.pinned ? 'Pin_Icon_Blue' : 'Pin_Icon'}.svg\" alt=\"Pin\" />
+                </button>
                 <button class=\"action-button duplicate-button green-button\" data-id=\"${block.id}\" title=\"Copy\">❐</button>
                 <button class=\"action-button edit-button orange-button\" data-id=\"${block.id}\" title=\"Edit\">✎</button>
                 <button class=\"action-button remove-button red-button\" data-id=\"${block.id}\" title=\"Remove\">×</button>
@@ -100,7 +102,9 @@ export const blockTemplate = (block, tab = "tab4") => {
                 <div class=\"block-title\"><h4>${block.title}</h4></div>
                 ${ usesHTML ? `<div class=\"block-uses\">${usesHTML}</div>` : "" }
             <div class=\"block-actions\">
-                <button class=\"action-button pin-button${block.pinned ? ' pin-active' : ''}\" data-id=\"${block.id}\" title=\"${block.pinned ? 'Unpin' : 'Pin'}\">⊕</button>
+                <button class=\"action-button pin-button${block.pinned ? ' pin-active' : ''}\" data-id=\"${block.id}\" title=\"${block.pinned ? 'Unpin' : 'Pin'}\">
+                    <img src=\"images/${block.pinned ? 'Pin_Icon_Blue' : 'Pin_Icon'}.svg\" alt=\"Pin\" />
+                </button>
                 <button class=\"action-button duplicate-button green-button\" data-id=\"${block.id}\" title=\"Copy\">❐</button>
                 <button class=\"action-button edit-button orange-button\" data-id=\"${block.id}\" title=\"Edit\">✎</button>
                 <button class=\"action-button remove-button red-button\" data-id=\"${block.id}\" title=\"Remove\">×</button>
