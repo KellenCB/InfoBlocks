@@ -179,6 +179,7 @@ html {
     position: relative;
     display: flex;  
     width: 33%;
+    min-width: 290px;
 }
 
 .filter-section-wrapper.hidden {
@@ -194,7 +195,6 @@ html {
     background-color: #2a2a2a;
     overflow-y: auto;
     padding: 20px;
-
     padding-top: 70px;
     border-radius: 20px;
     overflow-y: auto;
@@ -250,7 +250,12 @@ html {
 }
 
 .block-tags {
-    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    column-gap: 7px;
+    row-gap: 8px;
 }
 
 .block {
@@ -372,6 +377,7 @@ html {
     margin: 0; 
     padding: 0;
     box-sizing: border-box;
+    letter-spacing: 0.03em;
 }
 
 h1 {
@@ -399,6 +405,14 @@ h4 {
 
 p {
     line-height: 1.5em;
+}
+
+.block-body {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #ccc;
+    font-weight: 400;
+    letter-spacing: 0.01em;
 }
 
 u {

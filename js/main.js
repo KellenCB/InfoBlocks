@@ -601,27 +601,49 @@ const initializeDynamicTags = () => {
     [3, 4, 6, 7, 8, 9].forEach(tabNumber => {
         const tagsSection = document.getElementById(`dynamic_tags_section_${tabNumber}`);
         if (!tagsSection) return;
-    
+
         tagsSection.innerHTML = "";
-    
+
         Object.keys(categoryTags).forEach(category => {
             if (!categoryTags[category].tabs.includes(`tab${tabNumber}`)) return;
-            const tagContainer = document.createElement("div");
-            tagContainer.classList.add("tag-section");
-            tagContainer.id = `${category}_tags_list_${tabNumber}`;
-    
+
+            const label = categoryTags[category].label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+            const group = document.createElement("div");
+            group.classList.add("tag-accordion-group");
+
+            const header = document.createElement("button");
+            header.classList.add("tag-accordion-header");
+            header.dataset.category = category;
+            header.innerHTML = `<span>${label}</span><span class="accordion-chevron"></span>`;
+
+            const body = document.createElement("div");
+            body.classList.add("tag-accordion-body");
+            body.id = `${category}_tags_list_${tabNumber}`;
+
             categoryTags[category].tags.forEach(tag => {
                 const button = document.createElement("button");
                 button.classList.add("tag-button", categoryTags[category].className);
                 button.dataset.tag = tag;
                 button.textContent = tag;
-                tagContainer.appendChild(button);
+                body.appendChild(button);
             });
-    
-            tagsSection.appendChild(tagContainer);
+
+            group.appendChild(header);
+            group.appendChild(body);
+            tagsSection.appendChild(group);
         });
     });
 };
+
+document.addEventListener("click", (e) => {
+    const header = e.target.closest(".tag-accordion-header");
+    if (!header) return;
+    const body = header.nextElementSibling;
+    if (!body?.classList.contains("tag-accordion-body")) return;
+    const isOpen = body.classList.toggle("open");
+    header.classList.toggle("open", isOpen);
+});
 
 /* ==================================================================*/
 /* ======================= KEYBOARD SHORTCUTS =======================*/

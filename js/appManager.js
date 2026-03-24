@@ -137,20 +137,34 @@ export const appManager = (() => {
     const usedUserTags = usedTags
       .filter(tag => !allPredefined.includes(tag))
       .sort((a, b) => a.localeCompare(b));
-      
+
+    const currentlyOpen = new Set(
+        [...(document.getElementById(`dynamic_tags_section_${tabSuffix}`)
+            ?.querySelectorAll('.tag-accordion-header.open') || [])]
+            .map(h => h.dataset.category)
+    );
+
     let html = "";
 
     Object.keys(categoryTags).forEach(category => {
-      if (!categoryTags[category].tabs.includes(activeTab)) return;
-      const usedPredefined = categoryTags[category].tags.filter(tag => usedTags.includes(tag));
-      if (usedPredefined.length > 0) {
-        html += `<div class="tag-category" id="${category}_tags_list_${tabSuffix}">`;
+        if (!categoryTags[category].tabs.includes(activeTab)) return;
+        const usedPredefined = categoryTags[category].tags.filter(tag => usedTags.includes(tag));
+        if (usedPredefined.length === 0) return;
+
+        const label      = categoryTags[category].label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const hasSelected = usedPredefined.some(tag => selectedTags.includes(tag));
+        const openClass = (hasSelected || currentlyOpen.has(category)) ? ' open' : '';
+
+        html += `<div class="tag-accordion-group">`;
+        html += `<button class="tag-accordion-header${openClass}" data-category="${category}">`;
+        html += `<span>${label}</span><span class="accordion-chevron"></span>`;
+        html += `</button>`;
+        html += `<div class="tag-accordion-body${openClass}" id="${category}_tags_list_${tabSuffix}">`;
         html += usedPredefined.map(tag => {
-          const isSelected = selectedTags.includes(tag) ? "selected" : "";
-          return `<button class="tag-button ${categoryTags[category].className} ${isSelected}" data-tag="${tag}">${tag}</button>`;
+            const isSelected = selectedTags.includes(tag) ? "selected" : "";
+            return `<button class="tag-button ${categoryTags[category].className} ${isSelected}" data-tag="${tag}">${tag}</button>`;
         }).join("");
-        html += `</div>`;
-      }
+        html += `</div></div>`;
     });
 
     if (usedUserTags.length > 0) {

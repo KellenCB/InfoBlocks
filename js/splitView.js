@@ -871,25 +871,45 @@ function renderPanelTags(tabId, panelSide, ids) {
     const usedTags     = new Set(blocks.flatMap(b => b.tags));
     const selectedTags = panelState[panelSide].selectedTags?.[tabId] || [];
 
-    let html = '';
-    Object.entries(categoryTags).forEach(([_, data]) => {
+    const currentlyOpen = new Set(
+    [...(tagsSection.querySelectorAll('.tag-accordion-header.open') || [])]
+        .map(h => h.dataset.category)
+    );
+
+let html = '';
+    Object.entries(categoryTags).forEach(([category, data]) => {
         if (!data.tabs.includes(tabId)) return;
         const used = data.tags.filter(t => usedTags.has(t));
         if (!used.length) return;
+
+        const label       = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const hasSelected = used.some(t => selectedTags.includes(t));
+        const openClass = (hasSelected || currentlyOpen.has(category)) ? ' open' : '';
+        
+        html += `<div class="tag-accordion-group">`;
+        html += `<button class="tag-accordion-header${openClass}" data-category="${category}">`;
+        html += `<span>${label}</span><span class="accordion-chevron"></span>`;
+        html += `</button>`;
+        html += `<div class="tag-accordion-body${openClass}">`;
         html += used.map(tag => {
             const sel = selectedTags.includes(tag) ? 'selected' : '';
             return `<button class="tag-button ${data.className} ${sel}" data-tag="${tag}">${tag}</button>`;
         }).join('');
+        html += `</div></div>`;
     });
 
     const userTags = [...usedTags]
         .filter(t => !allPredefined.includes(t))
         .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
         .sort();
-    userTags.forEach(tag => {
-        const sel = selectedTags.includes(tag) ? 'selected' : '';
-        html += `<button class="tag-button tag-user ${sel}" data-tag="${tag}">${tag}</button>`;
-    });
+    if (userTags.length) {
+        html += `<div class="tag-category user-tags">`;
+        userTags.forEach(tag => {
+            const sel = selectedTags.includes(tag) ? 'selected' : '';
+            html += `<button class="tag-button tag-user ${sel}" data-tag="${tag}">${tag}</button>`;
+        });
+        html += `</div>`;
+    }
 
     tagsSection.innerHTML = html;
 }

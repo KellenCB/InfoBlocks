@@ -334,57 +334,64 @@ export const overlayHandler = (() => {
         .sort((a, b) => a.localeCompare(b));
                     
         if (containerId === "dynamic_overlay_tags" || containerId === "add_block_overlay_tags") {
-            if (exceptionTabs.includes(activeTab)) {
-                let html = "";
-                Object.entries(categoryTags).forEach(([category, data]) => {
-                    if (!data.tabs.includes(activeTab)) return;
-                    html += data.tags.map(tag =>
-                        `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`
-                    ).join("");
-                });
-                if (userDefinedTags.length > 0) {
-                    html += userDefinedTags.map(tag =>
-                        `<button class="tag-button tag-user" data-tag="${tag}">${tag}</button>`
-                    ).join("");
-                }
-                tagsContainer.innerHTML = html;
-            } else {
-                Object.entries(categoryTags).forEach(([category, data]) => {
-                    if (!data.tabs.includes(activeTab)) return;
-                    const categoryDiv = document.createElement("div");
-                    categoryDiv.classList.add("tag-category");
-                    categoryDiv.innerHTML = data.tags.map(tag =>
-                        `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`
-                    ).join("");
-                    tagsContainer.appendChild(categoryDiv);
-                });
-            }        
+            // Add overlay — all groups collapsed by default, no pre-selected tags
+            let html = "";
+            Object.entries(categoryTags).forEach(([category, data]) => {
+                if (!data.tabs.includes(activeTab)) return;
+                const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                html += `<div class="tag-accordion-group">`;
+                html += `<button class="tag-accordion-header" data-category="${category}">`;
+                html += `<span>${label}</span><span class="accordion-chevron"></span>`;
+                html += `</button>`;
+                html += `<div class="tag-accordion-body">`;
+                html += data.tags.map(tag =>
+                    `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`
+                ).join("");
+                html += `</div></div>`;
+            });
+            if (userDefinedTags.length > 0) {
+                html += `<div class="tag-category user-tags">`;
+                html += userDefinedTags.map(tag =>
+                    `<button class="tag-button tag-user" data-tag="${tag}">${tag}</button>`
+                ).join("");
+                html += `</div>`;
+            }
+            tagsContainer.innerHTML = html;
+
         } else if (containerId === "predefined_tags_edit") {
+            // Edit overlay — open groups that have a tag already on the block
             const predefinedTagSet = new Set(predefinedTagList);
             if (!exceptionTabs.includes(activeTab)) {
                 blockTags = blockTags.filter(tag => predefinedTagSet.has(tag));
             }
-    
+
+            let html = "";
             Object.entries(categoryTags).forEach(([category, data]) => {
                 if (!data.tabs.includes(activeTab)) return;
-                const categoryDiv = document.createElement("div");
-                categoryDiv.classList.add("tag-category");
-                categoryDiv.innerHTML = data.tags.map(tag =>
-                    `<button class="tag-button ${data.className}${blockTags.includes(tag) ? " selected" : ""}" data-tag="${tag}">${tag}</button>`
-                ).join("");
-                tagsContainer.appendChild(categoryDiv);
+                const label       = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                const hasSelected = data.tags.some(tag => blockTags.includes(tag));
+                const openClass   = hasSelected ? ' open' : '';
+                html += `<div class="tag-accordion-group">`;
+                html += `<button class="tag-accordion-header${openClass}" data-category="${category}">`;
+                html += `<span>${label}</span><span class="accordion-chevron"></span>`;
+                html += `</button>`;
+                html += `<div class="tag-accordion-body${openClass}">`;
+                html += data.tags.map(tag => {
+                    const isSelected = blockTags.includes(tag) ? " selected" : "";
+                    return `<button class="tag-button ${data.className}${isSelected}" data-tag="${tag}">${tag}</button>`;
+                }).join("");
+                html += `</div></div>`;
             });
 
-            if (exceptionTabs.includes(activeTab)) {
-                if (userDefinedTags.length > 0) {
-                    const userDiv = document.createElement("div");
-                    userDiv.classList.add("tag-category", "user-tags-edit");
-                    userDiv.innerHTML = userDefinedTags.map(tag =>
-                        `<button class="tag-button tag-user${blockTags.includes(tag) ? " selected" : ""}" data-tag="${tag}">${tag}</button>`
-                    ).join("");
-                    tagsContainer.appendChild(userDiv);
-                }
+            if (exceptionTabs.includes(activeTab) && userDefinedTags.length > 0) {
+                html += `<div class="tag-category user-tags-edit">`;
+                html += userDefinedTags.map(tag =>
+                    `<button class="tag-button tag-user${blockTags.includes(tag) ? " selected" : ""}" data-tag="${tag}">${tag}</button>`
+                ).join("");
+                html += `</div>`;
             }
+
+            tagsContainer.innerHTML = html;
         }
     
         tagsContainer.addEventListener("click", (event) => {
