@@ -67,37 +67,45 @@ const attachEventListeners = () => {
 const menuButton = document.getElementById("Menu_button");
 const menuOverlay = document.getElementById("menu_overlay");
 
+function closeMenu() {
+  menuOverlay.classList.remove("active");
+  menuButton.classList.remove("menu-button-open");
+}
+
 if (menuButton && menuOverlay) {
   menuButton.addEventListener("click", () => {
     menuOverlay.classList.toggle("active");
     menuButton.classList.toggle("menu-button-open");
   });
+
+  menuOverlay.addEventListener("click", (e) => {
+    if (!e.target.closest(".menu-content")) closeMenu();
+  });
 }
 
 /* ===================================================================*/
-/* ========================= DICE ROLLER OVERLAY =====================*/
+/* ========================= DICE ROLLER PANEL =======================*/
 /* ===================================================================*/
 
 const diceMenuButton = document.getElementById("dice-menu-button");
-const diceOverlay    = document.getElementById("dice-overlay");
-const closeDiceBtn   = document.getElementById("close-dice-overlay");
+const dicePanel      = document.getElementById("dice-panel");
+const diceMenuImg    = diceMenuButton?.querySelector("img");
 
-if (diceMenuButton && diceOverlay) {
+function setDicePanelState(open) {
+  dicePanel.classList.toggle("open", open);
+  diceMenuButton.classList.toggle("active", open);
+  if (diceMenuImg) {
+    diceMenuImg.src = open ? "images/Dice_button_v2_Green.svg" : "images/Dice_button_v2.svg";
+  }
+  localStorage.setItem("dicePanelOpen", open);
+}
+
+if (diceMenuButton && dicePanel) {
   diceMenuButton.addEventListener("click", () => {
-    diceOverlay.classList.toggle("show");
+    setDicePanelState(!dicePanel.classList.contains("open"));
   });
 }
 initDiceRoller();
-
-if (closeDiceBtn && diceOverlay) {
-  closeDiceBtn.addEventListener("click", () => {
-    diceOverlay.classList.remove("show");
-  });
-}
-
-diceOverlay
-  ?.querySelector('.overlay-backdrop')
-  .addEventListener('click', () => diceOverlay.classList.remove('show'));
 
 /* ===================================================================*/
 /* ===================== SEQUENTIAL FADE IN ==========================*/
@@ -114,7 +122,9 @@ const fadeInElementsSequentially = (container = document) => {
     });
 };
 
-fadeInElementsSequentially();
+/* ===================================================================*/
+/* ========================= TAB ORDER ===============================*/
+/* ===================================================================*/
 
 function saveTabOrder() {
     // Only read from the main nav, not split view navs
@@ -905,8 +915,16 @@ window.onload = async () => {
     });
 
     initSplitView();
+
     const isPortraitOnLoad = window.innerHeight > window.innerWidth;
     if (localStorage.getItem('splitViewActive') === 'true' && !isPortraitOnLoad) {
         document.getElementById('split-view-button')?.click();
     }
+
+    if (localStorage.getItem("dicePanelOpen") === "true" && diceMenuButton && dicePanel) {
+        setDicePanelState(true);
+    }
+
+    fadeInElementsSequentially();
+
 };

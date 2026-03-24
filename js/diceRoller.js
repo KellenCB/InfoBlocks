@@ -244,8 +244,8 @@ export function initDiceRoller() {
   if (diceRollerInitialized) return;
   diceRollerInitialized = true;
 
-  const container = document.querySelector("#dice-overlay .dice-roller-container");
-  if (!container) { console.warn("Dice overlay container not found."); return; }
+  const container = document.querySelector("#dice-panel .dice-roller-container");
+  if (!container) { console.warn("Dice panel container not found."); return; }
 
   const diceButtons           = container.querySelectorAll(".dice-button");
   const selectedDiceContainer = container.querySelector(".selected-dice-container");
@@ -417,11 +417,12 @@ export function initDiceRoller() {
 
 /* ── Keyboard shortcuts ─────────────────────────────────────────────────────── */
 document.addEventListener('keydown', (e) => {
-  const overlay = document.getElementById('dice-overlay');
-  if (!overlay?.classList.contains('show')) return;
+  const panel = document.getElementById('dice-panel');
+  if (!panel?.classList.contains('open')) return;
   if (e.key === 'Escape') {
     e.preventDefault();
-    overlay.classList.remove('show');
+    panel.classList.remove('open');
+    document.getElementById('dice-menu-button')?.classList.remove('active');
     document.activeElement.blur();
   } else if (e.key === 'Enter') {
     e.preventDefault();

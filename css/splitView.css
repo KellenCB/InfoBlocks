@@ -83,6 +83,35 @@ body:has(#split-view-wrapper) .container:has(.tab-nav:not(.split-tab-nav)) {
     padding: 15px 0;
 }
 
+/* ── App Row: main content area + dice panel ── */
+#app-row {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    align-self: stretch;
+    min-height: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* tabs-content inside #app-row must not force 100vw */
+#app-row .tabs-content {
+    flex: 1;
+    min-width: 0;
+}
+
+#app-row .tab-content {
+    width: 100% !important;
+}
+
+/* Inside #app-row flex row, let flex: 1 control the width */
+#app-row > #split-view-wrapper {
+    width: auto;
+    max-width: none;
+}
+
 /* Ensure overlays always appear above split view wrapper */
 .add-block-overlay,
 .edit-block-overlay,
@@ -92,11 +121,10 @@ body:has(#split-view-wrapper) .container:has(.tab-nav:not(.split-tab-nav)) {
 .actions-edit-overlay,
 .spell-slot-edit-overlay,
 .suit-uses-edit-overlay,
-.dice-overlay,
-#dice-overlay,
 #menu_overlay {
-    z-index: 10001 !important;
+    z-index: 99999 !important;
 }
+
 @media screen and (orientation: portrait) {
     #split-view-button { display: none; }
     #split-view-wrapper { display: none; }
