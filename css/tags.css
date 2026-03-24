@@ -38,7 +38,7 @@
     align-items: flex-start;
     max-width: 100%;
     padding: 10px 0;
-    gap: 6pxtag-section;
+    gap: 6px;
 }
 
 [id^="user_tags_list"],
