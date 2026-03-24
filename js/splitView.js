@@ -31,10 +31,16 @@ export function initSplitView() {
     if (!btn) return;
     btn.addEventListener('click', toggleSplitView);
 
-    // ── Orientation handling ──────────────────────────────────────────────────
-    let wasActiveBeforePortrait = false;
+    let wasActiveBeforePortrait = localStorage.getItem('splitViewActive') === 'true'
+        && window.innerHeight > window.innerWidth;
+    let ready = false;
+
+    // Short delay before the resize listener becomes active, so it
+    // doesn't fire during page initialisation and tear down the layout
+    setTimeout(() => { ready = true; }, 500);
 
     const handleOrientationChange = () => {
+        if (!ready) return;
         const isPortrait = window.innerHeight > window.innerWidth;
 
         if (isPortrait && splitActive) {
@@ -144,28 +150,41 @@ function exitSplitView() {
     if (tabNav)      tabNav.style.display      = '';
     if (wrapper)     wrapper.remove();
 
-    const leftTab = panelState.left.activeTab;
+    // Ensure any fade-in elements that were hidden during load get made visible
+    document.querySelectorAll('.fade-in:not(.visible)').forEach(el => {
+        el.classList.add('visible');
+    });
+
+    const leftTab = panelState.left.activeTab
+        || localStorage.getItem('activeTab')
+        || localStorage.getItem('splitLeftTab')
+        || 'tab4';
+
     panelState.left.activeTab  = null;
     panelState.right.activeTab = null;
 
-    if (leftTab) {
-        document.querySelectorAll('.tab-content').forEach(c => {
-            c.classList.remove('active');
-            c.style.display = 'none';
-        });
-        const targetContent = document.getElementById(leftTab);
-        if (targetContent) {
-            targetContent.classList.add('active');
-            targetContent.style.display = 'flex';
+    document.querySelectorAll('.tab-content').forEach(c => {
+        c.classList.remove('active');
+        c.style.display = 'none';
+    });
+    const targetContent = document.getElementById(leftTab);
+    if (targetContent) {
+        targetContent.classList.add('active');
+        targetContent.style.display = 'flex';
+    } else {
+        // Fallback: show whichever tab-content is first if target not found
+        const firstTab = document.querySelector('.tab-content');
+        if (firstTab) {
+            firstTab.classList.add('active');
+            firstTab.style.display = 'flex';
         }
-        document.querySelectorAll('.tab-nav .tab-button').forEach(b => {
-            b.classList.toggle('active', b.dataset.tab === leftTab);
-        });
-        appManager.renderBlocks(leftTab);
-        appManager.updateTags();
-        localStorage.setItem('activeTab', leftTab);
     }
-
+    document.querySelectorAll('.tab-nav .tab-button').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === leftTab);
+    });
+    appManager.renderBlocks(leftTab);
+    appManager.updateTags();
+    localStorage.setItem('activeTab', leftTab);
     console.log('✅ Split view exited');
 }
 
