@@ -193,8 +193,8 @@ export const handleSaveBlock = () => {
 
             // ── Refresh the correct view ──────────────────────────────────────
             import('./splitView.js').then(({ isSplitActive, refreshPanelsShowingTab }) => {
-                if (isSplitActive()) {
-                    if (savedPanelSide) refreshPanelsShowingTab(savedActiveTab);
+                if (isSplitActive() && savedPanelSide) {
+                    refreshPanelsShowingTab(savedActiveTab);
                 } else {
                     appManager.renderBlocks(savedActiveTab);
                 }

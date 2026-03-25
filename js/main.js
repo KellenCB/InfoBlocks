@@ -369,54 +369,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
     
-    // Restore tab4 and tab8 actions grids from localStorage
-    ["tab4", "tab8"].forEach(tabId => {
-        const savedactionsGridHTML = localStorage.getItem(tabId + "_actions_grid");
-        if (savedactionsGridHTML) {
-          const actionsGrid = document.querySelector("#" + tabId + " .actions-grid");
-          if (actionsGrid) {
-            actionsGrid.innerHTML = savedactionsGridHTML;
-            console.log("✅ actions grid restored from localStorage for " + tabId);
-            actionsGrid.querySelectorAll('.action-name, .action-label, .action-description')
-              .forEach(field => field.contentEditable = "false");
-            actionsGrid.querySelectorAll('.action-row').forEach(row => {
-              const btn = row.querySelector('button');
-              if (row.dataset.viewState === 'expanded') {
-                row.classList.remove('condensed');
-                row.classList.add('expanded');
-                if (btn) btn.textContent = "-";
-              } else {
-                row.classList.remove('expanded');
-                row.classList.add('condensed');
-                if (btn) btn.textContent = "+";
-                row.querySelectorAll('.action-name, .action-label, .action-description').forEach(field => {
-                  if (!field.dataset.fullContent) field.dataset.fullContent = field.innerHTML;
-                  field.innerHTML = field.innerHTML.split('<br>')[0];
-                });
-              }
-            });
-          } else {
-            console.warn("actions grid element not found in " + tabId);
-          }
-        }
-        // Placeholder for empty actions grid
-        const wrapper = document.querySelector("#" + tabId + " .actions-grid-wrapper");
-        if (wrapper) {
-            if (!wrapper.querySelector('.actions-placeholder') &&
-                wrapper.querySelectorAll('.actions-grid .action-row').length === 0) {
-                const p = document.createElement('p');
-                p.classList.add('actions-placeholder');
-                p.textContent = 'Use the edit tab button to add actions here…';
-                p.style.position  = 'absolute';
-                p.style.top       = '50%';
-                p.style.left      = '50%';
-                p.style.transform = 'translate(-50%, -50%)';
-                p.style.opacity   = '0.25';
-                wrapper.appendChild(p);
-            }
-        }
-    });    
-
     // Handle tab reordering
     document.querySelector(".tab-nav").addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -655,7 +607,6 @@ const keyboardShortcutsHandler = (() => {
             const clearDataOverlay       = document.querySelector(".cleardata-overlay");
             const editBlockOverlay       = document.querySelector(".edit-block-overlay");
             const spellSlotEditOverlay   = document.querySelector(".spell-slot-edit-overlay");
-            const actionsEditOverlay     = document.querySelector(".actions-edit-overlay");
             const saveBlockButton        = document.getElementById("save-block-button");
             const cancelAddBlockButton   = document.getElementById("cancel_add_block");
             const confirmClearButton     = document.getElementById("confirm_clear_button");
@@ -664,8 +615,6 @@ const keyboardShortcutsHandler = (() => {
             const cancelEditButton       = document.getElementById("cancel_edit_block");
             const saveSpellSlotButton    = document.getElementById("save_spell_slot_changes");
             const cancelSpellSlotButton  = document.getElementById("close_spell_slot_edit");
-            const saveActionButton       = document.getElementById("save_action_changes");
-            const cancelActionButton     = document.getElementById("close_action_edit");
             const removeBlockOverlay     = document.querySelector(".remove-block-overlay");
             const cancelRemoveButton     = document.getElementById("cancel_remove_button");
             const confirmRemoveButton    = document.getElementById("confirm_remove_button");
@@ -728,33 +677,12 @@ const keyboardShortcutsHandler = (() => {
                 }
             }
 
-            if (actionsEditOverlay?.classList.contains("show")) {
-                if (event.key === "Enter" && saveActionButton) {
-                    saveActionButton.click();
-                } else if (event.key === "Escape" && cancelActionButton) {
-                    cancelActionButton.click();
-                }
-            }
-
             if (removeBlockOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && confirmRemoveButton) {
                     event.preventDefault();
                     confirmRemoveButton.click();
                 } else if (event.key === "Escape" && cancelRemoveButton) {
                     cancelRemoveButton.click();
-                }
-            }
-
-            const removeActionOverlay = document.querySelector('.remove-action-overlay');
-            const confirmRemoveActionButton = document.getElementById('confirm_remove_action_button');
-            const cancelRemoveActionButton = document.getElementById('cancel_remove_action_button');
-
-            if (removeActionOverlay?.classList.contains('show')) {
-                if (event.key === 'Enter' && confirmRemoveActionButton) {
-                    event.preventDefault();
-                    confirmRemoveActionButton.click();
-                } else if (event.key === 'Escape' && cancelRemoveActionButton) {
-                    cancelRemoveActionButton.click();
                 }
             }
 

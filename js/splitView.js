@@ -16,7 +16,7 @@ const TABS = [
     { id: 'tab9', label: 'Feats & Magic' },
 ];
 
-export const SINGLETON_TABS = new Set(['tab4', 'tab8']);
+export const SINGLETON_TABS = new Set();
 
 const panelAbortControllers = { left: null, right: null };
 
@@ -135,17 +135,6 @@ function exitSplitView() {
     const wrapper     = document.getElementById('split-view-wrapper');
     const tabsContent = document.querySelector('.tabs-content');
     const tabNav      = document.querySelector('.tab-nav');
-
-    if (wrapper) {
-        ['tab4', 'tab8'].forEach(tabId => {
-            const node = document.getElementById(tabId);
-            if (node && wrapper.contains(node)) {
-                node.style.display = 'none';
-                node.classList.remove('active');
-                if (tabsContent) tabsContent.appendChild(node);
-            }
-        });
-    }
 
     if (tabsContent) tabsContent.style.display = '';
     if (tabNav)      tabNav.style.display      = '';
@@ -278,18 +267,6 @@ function onNavButtonClick(e) {
     const panelSide = btn.dataset.panel;
     if (btn.disabled) return;
 
-    // If switching away from a singleton, return it to .tabs-content
-    const prevTab = panelState[panelSide].activeTab;
-    if (prevTab && SINGLETON_TABS.has(prevTab) && prevTab !== tabId) {
-        const node = document.getElementById(prevTab);
-        const tabsContent = document.querySelector('.tabs-content');
-        if (node && tabsContent) {
-            node.style.display = 'none';
-            node.classList.remove('active');
-            tabsContent.appendChild(node);
-        }
-    }
-
     document
         .querySelectorAll(`.split-tab-nav[data-panel-nav="${panelSide}"] .split-tab-button`)
         .forEach(b => b.classList.remove('active'));
@@ -309,27 +286,8 @@ function onNavButtonClick(e) {
 function mountTabInPanel(tabId, panelSide) {
     const contentArea = document.querySelector(`.split-content-area[data-panel-content="${panelSide}"]`);
     if (!contentArea) return;
-
-    if (SINGLETON_TABS.has(tabId)) {
-        mountSingletonTab(tabId, panelSide, contentArea);
-    } else {
-        mountFreeTab(tabId, panelSide, contentArea);
-    }
+    mountFreeTab(tabId, panelSide, contentArea);
 }
-
-// ── Singleton tabs (4, 8) ─────────────────────────────────────────────────────
-
-function mountSingletonTab(tabId, panelSide, contentArea) {
-    const node = document.getElementById(tabId);
-    if (!node) return;
-    contentArea.innerHTML = '';
-    contentArea.appendChild(node);
-    node.style.display = 'flex';
-    node.classList.add('active');
-    console.log(`✅ Singleton ${tabId} mounted in ${panelSide} panel`);
-}
-
-// ── Free tabs (3, 6, 7, 9) ───────────────────────────────────────────────────
 
 function mountFreeTab(tabId, panelSide, contentArea) {
     if (panelAbortControllers[panelSide]) {
@@ -344,9 +302,13 @@ function mountFreeTab(tabId, panelSide, contentArea) {
 
     if (tabId === 'tab9') initTab9PanelCircles(contentArea, panelSide);
 
-    initPanelSearch(tabId, panelSide, tabNum, ids);
-    initPanelFilters(tabId, panelSide, tabNum, ids);
-    initPanelToggleFilter(tabId, panelSide, ids);
+    if (tabId === 'tab4' || tabId === 'tab8') {
+        initCharacterSheetPanel(contentArea, tabId);
+    } else {
+        initPanelSearch(tabId, panelSide, tabNum, ids);
+        initPanelFilters(tabId, panelSide, tabNum, ids);
+        initPanelToggleFilter(tabId, panelSide, ids);
+    }
     wirePanelBlockActions(tabId, panelSide, ids, contentArea);
 
     renderPanelBlocks(tabId, panelSide, ids, null, panelAbortControllers[panelSide].signal);
@@ -377,6 +339,9 @@ function getScopedIds(panelSide, tabNum) {
 // ── Build HTML for a free tab inside a panel ─────────────────────────────────
 
 function buildFreeTabHTML(tabId, tabNum, panelSide, ids) {
+    if (tabId === 'tab4' || tabId === 'tab8') {
+        return buildCharSheetTabHTML(tabId, ids);
+    }
     const hasTypeFilter = !!blockTypeConfig[tabId];
     const tab9Extras    = tabId === 'tab9' ? buildTab9Extras(panelSide) : '';
 
@@ -482,6 +447,190 @@ function buildTab9Extras(panelSide) {
         </div>
         ${slotsHTML ? `<div class="spell-slot-section" style="flex-shrink:0;">${slotsHTML}</div>` : ''}
     `;
+}
+
+// ── Character sheet tab HTML builder ─────────────────────────────────────────
+
+function buildCharSheetTabHTML(tabId, ids) {
+    const t = tabId; // e.g. 'tab4' or 'tab8'
+
+    const abilityRows = ['str','dex','con','int','wis','cha'].map(ab => `
+        <div class="main-stat-box">
+            <span class="stat-label">${ab.toUpperCase()}</span>
+            <span class="stat-value calculated" data-storage-key="${t}_${ab}_bonus"></span>
+            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="${t}_${ab}_score"></span>
+        </div>`).join('');
+
+    const saveRows = [
+        ['str','Strength'],['dex','Dexterity'],['con','Constitution'],
+        ['int','Intelligence'],['wis','Wisdom'],['cha','Charisma']
+    ].map(([ab, label]) => `
+        <div class="save-row">
+            <span class="circle toggle-circle" data-storage-key="${t}_save_${ab}_toggle"></span>
+            <span class="save-label">${label}</span>
+            <span class="skill-plus calculated" data-storage-key="${t}_save_${ab}"></span>
+        </div>`).join('');
+
+    const skillRows = [
+        ['acrobatics','dex','Acrobatics'],['animal_handling','wis','Animal Handling'],
+        ['arcana','int','Arcana'],['athletics','str','Athletics'],
+        ['deception','cha','Deception'],['history','int','History'],
+        ['insight','wis','Insight'],['intimidation','cha','Intimidation'],
+        ['investigation','int','Investigation'],['medicine','wis','Medicine'],
+        ['nature','int','Nature'],['perception','wis','Perception'],
+        ['performance','cha','Performance'],['persuasion','cha','Persuasion'],
+        ['religion','int','Religion'],['sleight_of_hand','dex','Sleight of Hand'],
+        ['stealth','dex','Stealth'],['survival','wis','Survival']
+    ].map(([key, ab, label]) => `
+        <div class="skill-row">
+            <span class="circle toggle-circle" data-storage-key="${t}_skill_${key}_toggle"></span>
+            <span class="skill-label">${label} (${ab})</span>
+            <span class="skill-plus calculated" data-storage-key="${t}_skill_${key}"></span>
+        </div>`).join('');
+
+    return `
+        <div style="display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden;">
+            <div class="character-sheet-stats">
+                <div class="descriptor-grid">
+                    ${['level','class','alignment','background','species'].map(f => `
+                    <div class="descriptor-box">
+                        <span class="descriptor-label">${f.charAt(0).toUpperCase() + f.slice(1)}</span>
+                        <span class="descriptor-value editable" contenteditable="true" data-storage-key="${t}_${f}"></span>
+                    </div>`).join('')}
+                </div>
+                <div class="stats-container-row">
+                    <div class="hp-container-row">
+                        <div class="main-hp-stat-box">
+                            <span class="stat-label">HP</span>
+                            <div class="current-hp-stat-box" style="display:flex;gap:10px;">
+                                <span class="large-value editable" contenteditable="true" data-storage-key="${t}_hp"></span>
+                                <span class="large-value" style="font-weight:100;">/</span>
+                                <span class="large-value editable" contenteditable="true" data-storage-key="${t}_maxhp"></span>
+                            </div>
+                        </div>
+                        <div class="vertical-break"></div>
+                        <div class="hp-stat-box">
+                            <span class="stat-label">Temp HP</span>
+                            <span class="large-value editable" contenteditable="true" data-storage-key="${t}_temp_hp"></span>
+                        </div>
+                        <div class="vertical-break"></div>
+                        <div class="hp-stat-box">
+                            <span class="stat-label">Hit Die</span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="${t}_hit_die"></span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="${t}_hit_die_ratio"></span>
+                        </div>
+                    </div>
+                    ${[['ac','AC'],['initiative','Initiative'],['prof','Prof'],['speed','Speed']].map(([k,l]) => `
+                    <div class="stat-box">
+                        <span class="stat-label">${l}</span>
+                        <span class="large-value editable" contenteditable="true" data-storage-key="${t}_${k}"></span>
+                    </div>`).join('')}
+                </div>
+                <div class="stats-container-row">
+                    <div class="main-stats-container-row">${abilityRows}</div>
+                    <div class="stat-box">
+                        <span class="stat-label">Spell Save</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="${t}_spell_save"></span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Spell attack</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="${t}_spell_attack"></span>
+                    </div>
+                    <div class="death-saves-box">
+                        <span class="stat-label">Death Saves</span>
+                        <div class="death-saves-row">
+                            <span class="circle deathSaveGreen toggle-circle" data-storage-key="${t}_deathSave_1"></span>
+                            <span class="circle deathSaveGreen toggle-circle" data-storage-key="${t}_deathSave_2"></span>
+                            <span class="circle deathSaveGreen toggle-circle" data-storage-key="${t}_deathSave_3"></span>
+                        </div>
+                        <div class="death-saves-row">
+                            <span class="circle deathSaveRed toggle-circle" data-storage-key="${t}_deathSave_4"></span>
+                            <span class="circle deathSaveRed toggle-circle" data-storage-key="${t}_deathSave_5"></span>
+                            <span class="circle deathSaveRed toggle-circle" data-storage-key="${t}_deathSave_6"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="character-sheet-row" style="flex:1;min-height:0;">
+                <div class="saving-throws-and-skills-column">
+                    <div class="saving-throws">
+                        <h3>Saving Throws</h3>
+                        ${saveRows}
+                    </div>
+                    <div class="horizontal-break"></div>
+                    <div class="skills">
+                        <h3>Skills</h3>
+                        ${skillRows}
+                    </div>
+                </div>
+                <div id="${ids.resultsSection}" class="results-section character-sheet-results"></div>
+            </div>
+        </div>
+    `;
+}
+
+
+// ── Character sheet panel initialiser ────────────────────────────────────────
+
+function initCharacterSheetPanel(container, tabId) {
+    // Populate all fields (editable and calculated) from localStorage
+    container.querySelectorAll('[data-storage-key]').forEach(el => {
+        const key   = el.getAttribute('data-storage-key');
+        const saved = localStorage.getItem(key);
+        if (saved !== null && saved !== '') el.textContent = saved;
+    });
+
+    // Wire editable fields
+    container.querySelectorAll('.editable').forEach(field => {
+        const key = field.getAttribute('data-storage-key');
+        if (!key) return;
+
+        field.addEventListener('focus', function () {
+            const range = document.createRange();
+            range.selectNodeContents(this);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            this.style.opacity = '1';
+            this.dataset.initialValue = this.textContent;
+        });
+
+        field.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.blur();
+                window.getSelection().removeAllRanges();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                if (this.dataset.initialValue !== undefined) {
+                    this.textContent = this.dataset.initialValue;
+                }
+                this.blur();
+            }
+        });
+
+        field.addEventListener('blur', function () {
+            const val = this.textContent.trim();
+            if (val) localStorage.setItem(key, val);
+        });
+    });
+
+    // Wire toggle circles
+    container.querySelectorAll('.toggle-circle').forEach(circle => {
+        const key = circle.getAttribute('data-storage-key');
+        if (!key) return;
+
+        const isFilled = localStorage.getItem(key) === 'true';
+        circle.classList.toggle('filled',   isFilled);
+        circle.classList.toggle('unfilled', !isFilled);
+
+        circle.addEventListener('click', function () {
+            const nowFilled = this.classList.contains('unfilled');
+            this.classList.toggle('filled',   nowFilled);
+            this.classList.toggle('unfilled', !nowFilled);
+            localStorage.setItem(key, nowFilled.toString());
+        });
+    });
 }
 
 // ── Render blocks ─────────────────────────────────────────────────────────────

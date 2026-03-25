@@ -1,9 +1,17 @@
 .character-sheet-stats {
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  width: 100%;
-  }
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.character-sheet-results {
+    flex: 1;
+    min-height: 150px;
+    width: 100%;
+    overflow-y: auto;
+    border-radius: 20px;
+}
 
 .character-sheet-column {
   display: flex;
@@ -54,7 +62,7 @@
 
 .descriptor-grid {
     display: flex;
-    flex: 1;
+    flex: 0 0 auto;
     width: 100%;
     justify-content: space-between;
     align-items: center;
@@ -349,136 +357,6 @@
     color: #fff;
 }
 
-.actions-and-features {
-  display: flex;
-  flex-direction: column;
-  overflow-y: hidden;
-  overflow-x: auto;
-  box-sizing: border-box;
-  width: 100%;
-  align-items: center;
-}
-
-.actions-and-features .results-section { height: 50%; }
-
-/* Hide results section when empty, let actions grid fill the space */
-.actions-and-features .results-section:not(:has(.block)) {
-    display: none !important;
-}
-
-.actions-overlay-top {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 20px;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  background: linear-gradient(
-    rgba(42, 42, 42, 1) 0%,
-    rgba(42, 42, 42, 0.6) 65%,
-    rgba(42, 42, 42, 0) 100%
-    );
-  pointer-events: none;
-  z-index: 10;
-}
-
-.actions-overlay-bottom {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 20px;
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
-  background: linear-gradient(
-    rgba(42, 42, 42, 0) 0%,
-    rgba(42, 42, 42, 0.5) 35%,
-    rgba(42, 42, 42, 1) 100%
-    );
-  pointer-events: none;
-  z-index: 10;
-}
-
-.actions-grid-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  height: 50%; 
-  min-height: 80px;
-  max-height: calc(100% - 120px - 32px);
-  flex-shrink: 0;
-  background-color: #2a2a2a;
-  color: #fff;
-  border-radius: 20px;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow-y: auto;
-}
-
-/* When results section is hidden, actions grid fills full height */
-.actions-and-features:not(:has(.results-section .block)) .actions-grid-wrapper {
-  height: 100%;
-  max-height: 100%;
-}
-
-.actions-grid {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  padding: 0px 20px 20px 20px;
-  gap: 10px;
-  color: #fff;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow-y: visible;
-}
-
-.action-row {
-  display: flex;
-  justify-content: left;
-  background-color: #444; 
-  padding: 11px 15px;
-  border-radius: 10px;
-  gap: 15px;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  min-width: 0;
-}
-
-.action-row .expended {
-  align-items: start;
-}
-
-.action-row .condensed {
-  align-items: center;
-}
-
-.actions-edit-container {
-  position: relative; 
-  padding-top: 0;
-}
-
-.actions-gradient-overlay {
-  position: absolute;
-  top: -20;
-  left: 0;
-  width: 100%;
-  height: 20px;
-  background: linear-gradient(
-    to bottom,
-    rgba(42, 42, 42, 1) 0%,
-    rgba(42, 42, 42, 1) 50%,
-    rgba(42, 42, 42, 0.75) 75%,
-    rgba(42, 42, 42, 0) 100%
-  );
-  pointer-events: none;
-  z-index: 5;
-}
-
 /* Default button styling for the toggle */
 .toggle-action-view {
   width: 20px;
@@ -491,40 +369,6 @@
   color: white;
   cursor: pointer;
   font-size: 15px;
-}
-
-.action-name {
-  flex: 2;
-  min-width: 20px;
-}
-
-.action-label {
-  flex: 0.5;
-  min-width: 20px;
-}
-
-.action-description {
-  flex: 5;
-  min-width: 20px;
-}
-
-.action-row.condensed .action-name,
-.action-row.condensed .action-label,
-.action-row.condensed .action-description {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.action-row.expanded .action-name,
-.action-row.expanded .action-label {
-  white-space: wrap;
-}
-
-.action-row.expanded .action-description {
-  white-space: normal;
-  overflow-wrap: break-word;
-  text-wrap: pretty;
 }
 
 .toggle-circle {
@@ -548,176 +392,10 @@
   gap: 0px;
 }
 
-/* =================================================================*/
-/* ==================== ACTION OVERLAY STYLING ====================*/
-/* =================================================================*/
-
-.actions-edit-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.4s;
-  z-index: 1000;
-}
-
-.actions-edit-overlay.show {
-  display: flex;
-  opacity: 1;
-  z-index: 10001;
-}
-
-.actions-edit-overlay-content {
-  background-color: #333;
-  padding: 20px;
-  border-radius: 12px;
-  width: 80%;
-  text-align: center;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-  transform: translateY(-20px);
-  transition: transform 0.4s;
-  gap: 20px;
-}
-
-.actions-edit-container {
-  margin-top: 20px;
-  margin-bottom: 10px;
-}
-
-.actions-edit-container .actions-grid {
-  margin-bottom: 0px;
-  text-align: left;
-}
-
-.actions-edit-container .action-row {
-  transition: transform 0.2s ease;
-}
-
-.actions-edit-container .action-row > * {
-  margin-right: 20px;
-}
-
-.actions-edit-container .action-row > *:first-child {
-  margin-right: 10px;
-}
-
-.actions-edit-container .action-description {
-  flex: 5;
-  overflow: auto;
-  text-overflow: ellipsis;
-  white-space: wrap;
-  line-height: 1.25rem;    
-}
-
-.actions-edit-container .action-name {
-  flex: 2;
-  overflow: auto;
-  text-overflow: ellipsis;
-  white-space: wrap;
-  line-height: 1.25rem;
-}
-
-.actions-edit-overlay p {
-  margin-top: 20px;
-}
-
-.actions-edit-overlay .drag-handle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  margin-right: 8px;
-  cursor: grab;                    
-  user-select: none;
-  -webkit-user-drag: none;
-  background: rgba(255,255,255,0.05);
-  transition: background .2s;
-  border-radius: 4px;
-}
-
-.actions-edit-overlay .drag-handle:hover {
-  background: rgba(255,255,255,0.15);
-}
-
-.drag-handle:active {
-  cursor: grabbing;
-  background: rgba(255,255,255,0.25);
-}
-
-.actions-edit-overlay .action-button {
-  transform: translateY(1px);
-}
-
-.actions-edit-overlay .action-row.dragging {
-  opacity: 0.2;
-}
-
-.actions-edit-container .drag-image {
-  opacity: 1;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  transform: scale(1.03);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* ─── Drop indicators ─── */
-.actions-edit-container .drop-indicator {
-  height: 4px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 2px;
-  transition: height 0.2s ease, margin 0.2s ease, background 0.2s ease;
-}
-
-@media screen and (orientation: landscape) {
-
-  .actions-and-features {
-    display: flex;
-    flex-direction: row;
-    overflow-y: hidden;
-    overflow-x: auto;
-    box-sizing: border-box;
-    width: 100%;
-    align-items: center;
-    gap: 20px;
-  }
-
-  .actions-grid-wrapper {
-    height: 100%; 
-    max-height: 100%;
-    color: #fff;
-    border-radius: 20px;
-    width: 50%;
+.character-sheet-results {
     flex: 1;
-    min-width: 0;
-    box-sizing: border-box;
+    min-height: 150px;
+    width: 100%;
     overflow-y: auto;
-  }
-
-  /* When results section is hidden in landscape, actions grid takes full width */
-  .actions-and-features:not(:has(.results-section .block)) .actions-grid-wrapper {
-    width: 100%;
-  }
-
-  .actions-grid {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    padding: 0px 20px 20px 20px;
-    gap: 10px;
-    color: #fff;
-    width: 100%;
-    box-sizing: border-box;
-    overflow-y: visible;
-  }
-
-  .actions-and-features .results-section { height: 100%; }
-
-  .resizable-handle { display: none; }
-
+    border-radius: 20px;
 }
