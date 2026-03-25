@@ -594,11 +594,12 @@ function wirePanelBlockActions(tabId, panelSide, ids, contentArea) {
         if (panelState[panelSide].activeTab !== tabId) return;
 
         const blockEl = e.target.closest('.block:not(.permanent-block)');
-        if (blockEl &&
-            !e.target.closest('.action-button') &&
-            !e.target.closest('.circle') &&
-            !e.target.closest('.tag-button') &&
-            !e.target.closest('.inline-dice-roll')) {
+        const validTargets = ['.block', '.block-header', '.block-header-left'];
+        const isEmptySpace = validTargets.some(sel => {
+            const el = blockEl.querySelector(sel);
+            return e.target === el || e.target === blockEl;
+        });
+        if (blockEl && isEmptySpace) {
 
             const bId       = blockEl.getAttribute('data-id');
             const blocksArr = appManager.getBlocks(tabId);

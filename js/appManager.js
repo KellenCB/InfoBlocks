@@ -452,11 +452,9 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
     document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`)
       .forEach(blockEl => {
         blockEl.addEventListener("click", function (e) {
-          if (e.target.closest(".action-button") ||
-              e.target.closest(".tag-button") ||
-              e.target.closest(".block-title") ||
-              e.target.closest(".block-body") ||
-              e.target.closest(".circle")) return;
+          const validTargets = ['.block', '.block-header', '.block-header-left'];
+          const isEmptySpace = validTargets.some(sel => e.target === blockEl.querySelector(sel) || e.target === blockEl);
+          if (!isEmptySpace) return;
 
           const blockId = blockEl.getAttribute("data-id");
           const blocksArr = getBlocks(tab);
