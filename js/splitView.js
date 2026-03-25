@@ -115,10 +115,11 @@ function enterSplitView() {
     wireSplitNavDragSync();
 
     // Auto-mount left panel
-    const currentTab = localStorage.getItem('activeTab') || 'tab4';
-    const leftNavBtn = document.querySelector(`.split-tab-nav[data-panel-nav="left"] .split-tab-button[data-tab="${currentTab}"]`);
+    const savedLeftTab = localStorage.getItem('splitLeftTab');
+    const currentTab   = savedLeftTab || localStorage.getItem('activeTab') || 'tab4';
+    const leftNavBtn   = document.querySelector(`.split-tab-nav[data-panel-nav="left"] .split-tab-button[data-tab="${currentTab}"]`);
     if (leftNavBtn) leftNavBtn.click();
-
+    
     // Auto-mount right panel
     const savedRightTab = localStorage.getItem('splitRightTab');
     const fallbackRightTab = TABS.find(t => t.id !== currentTab)?.id || 'tab3';
@@ -357,9 +358,12 @@ function buildFreeTabHTML(tabId, tabNum, panelSide, ids) {
                     <div class="filter-section-overlay-top" id="${ids.filterOverlayTop}"></div>
                     <div class="filter-section-overlay-bottom" id="${ids.filterOverlayBot}"></div>
                     <div id="${ids.filterSection}" class="filter-section">
-                        <div class="search-container">
-                            <input id="${ids.searchInput}" class="search_input" type="text" placeholder="Search by text" />
-                            <button id="${ids.clearSearch}" class="clear-search">✖</button>
+                        <div class="filter-sticky-top">
+                            <button id="${ids.clearFilters}" class="clear_filters_button">Clear Filters</button>
+                            <div class="search-container">
+                                <input id="${ids.searchInput}" class="search_input" type="text" placeholder="Search by text" />
+                                <button id="${ids.clearSearch}" class="clear-search">✖</button>
+                            </div>
                         </div>
                         ${hasTypeFilter ? `<div class="block-type-tags" id="${ids.typeTagsSection}"></div>` : ''}
                         <div id="${ids.tagsSection}" class="tag-section"></div>
@@ -575,11 +579,11 @@ function buildCharSheetTabHTML(tabId, ids) {
 function initCharacterSheetPanel(container, tabId) {
     // Populate all fields (editable and calculated) from localStorage
     container.querySelectorAll('[data-storage-key]').forEach(el => {
+        if (el.classList.contains('toggle-circle')) return;
         const key   = el.getAttribute('data-storage-key');
         const saved = localStorage.getItem(key);
         if (saved !== null && saved !== '') el.textContent = saved;
     });
-
     // Wire editable fields
     container.querySelectorAll('.editable').forEach(field => {
         const key = field.getAttribute('data-storage-key');

@@ -472,12 +472,25 @@ document.addEventListener('keydown', (e) => {
     document.getElementById('dice-menu-button')?.classList.remove('active');
     document.activeElement.blur();
   } else if (e.key === 'Enter') {
+    // Don't roll if any overlay is open
+    const overlayOpen = document.querySelector(
+      '.add-block-overlay.show, .edit-block-overlay.show, .cleardata-overlay.show, ' +
+      '.remove-block-overlay.show, .spell-slot-edit-overlay.show, ' +
+      '.suit-uses-edit-overlay.show, #menu_overlay.active'
+    );
+    if (overlayOpen) return;
+    // Don't roll if focus is inside an input, textarea, or contenteditable
+    const active = document.activeElement;
+    if (
+      active.tagName === 'INPUT' ||
+      active.tagName === 'TEXTAREA' ||
+      active.isContentEditable
+    ) return;
     e.preventDefault();
     if (!isRolling) document.getElementById('roll-button')?.click();
     document.activeElement.blur();
   }
 });
-
 
 // ── Inline dice roll pattern & applier ───────────────────────────────────────
 
