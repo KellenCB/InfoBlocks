@@ -73,7 +73,8 @@ export const saveEditHandler = () => {
     }
 
     const tabBTConfig = blockTypeConfig[activeTab];
-    if (tabBTConfig) {
+    const blockTypeRequiredTabs = ['tab3', 'tab6', 'tab7', 'tab9'];
+    if (tabBTConfig && blockTypeRequiredTabs.includes(activeTab)) {
         const selectedTypeBtn = document.querySelector('#character_type_tags_edit .tag-button.selected');
         if (!selectedTypeBtn) {
             alert(`Please select a block type: ${tabBTConfig.types.join(", ")}.`);

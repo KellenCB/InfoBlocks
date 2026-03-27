@@ -462,7 +462,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
                   
         clearFiltersButton?.addEventListener('click', () => {
-            // Clear block type filter buttons for any tab that has them
             const btContainer = document.getElementById(`character_type_tags_${tabNumber}`);
             if (btContainer) {
                 btContainer.querySelectorAll('.tag-button.selected')
@@ -471,6 +470,9 @@ document.addEventListener("DOMContentLoaded", () => {
             document
                 .querySelectorAll(`#tab${tabNumber} .tag-button.selected`)
                 .forEach(b => b.classList.remove('selected'));
+            document
+                .querySelectorAll(`#tab${tabNumber} .tag-accordion-chip`)
+                .forEach(c => c.remove());
             tagHandler.clearSelectedTags(`tab${tabNumber}`);
             searchInput.value = '';
             filterAndRender(tabNumber);
@@ -562,16 +564,22 @@ const initializeDynamicTags = () => {
             const label = categoryTags[category].label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
             const group = document.createElement("div");
-            group.classList.add("tag-accordion-group");
+            group.classList.add("tag-accordion-group", categoryTags[category].className);
+            group.dataset.category = category;
 
-            const header = document.createElement("button");
-            header.classList.add("tag-accordion-header");
-            header.dataset.category = category;
-            header.innerHTML = `<span>${label}</span><span class="accordion-chevron"></span>`;
+            const pill = document.createElement("button");
+            pill.classList.add("tag-accordion-pill");
+            pill.dataset.category = category;
+            pill.textContent = label;
 
             const body = document.createElement("div");
             body.classList.add("tag-accordion-body");
             body.id = `${category}_tags_list_${tabNumber}`;
+
+            const labelEl = document.createElement("span");
+            labelEl.classList.add("tag-accordion-label");
+            labelEl.textContent = label;
+            body.appendChild(labelEl);
 
             categoryTags[category].tags.forEach(tag => {
                 const button = document.createElement("button");
@@ -581,21 +589,95 @@ const initializeDynamicTags = () => {
                 body.appendChild(button);
             });
 
-            group.appendChild(header);
+            group.appendChild(pill);
             group.appendChild(body);
             tagsSection.appendChild(group);
         });
     });
 };
 
+// Toggle group open/closed.
+// On collapse: read selected tags from the body and build chips dynamically.
+// On expand: remove any existing chips.
 document.addEventListener("click", (e) => {
-    const header = e.target.closest(".tag-accordion-header");
-    if (!header) return;
-    const body = header.nextElementSibling;
-    if (!body?.classList.contains("tag-accordion-body")) return;
-    const isOpen = body.classList.toggle("open");
-    header.classList.toggle("open", isOpen);
+    const group = e.target.closest(".tag-accordion-group");
+    if (!group) return;
+    if (e.target.closest(".tag-button")) return;
+    if (e.target.closest(".tag-accordion-chip")) return;
+
+    const wasOpen = group.classList.contains("open");
+    group.classList.toggle("open");
+
+    const container = group.closest('[id^="dynamic_tags_section"]')
+        || group.closest('[id^="split-tags"]');
+    if (container) {
+        let tabId = null;
+        if (container.id.startsWith('dynamic_tags_section_')) {
+            tabId = `tab${container.id.replace('dynamic_tags_section_', '')}`;
+        } else if (container.id.startsWith('split-tags-')) {
+            const parts = container.id.split('-');
+            tabId = `tab${parts[parts.length - 1]}`;
+        }
+        if (tabId) {
+            const openCats = [...container.querySelectorAll('.tag-accordion-group.open')]
+                .map(g => g.dataset.category);
+            localStorage.setItem(`accordionOpen_${tabId}`, JSON.stringify(openCats));
+        }
+    }
+
+    // Remove stale chips from inside the pill either way before possibly re-adding
+    group.querySelector(".tag-accordion-pill")
+        ?.querySelectorAll(".tag-accordion-chip").forEach(c => c.remove());
+
+    if (wasOpen) {
+        // Just collapsed — add a chip inside the pill for every selected tag in the body
+        const pill = group.querySelector(".tag-accordion-pill");
+        const body = group.querySelector(".tag-accordion-body");
+        if (!pill || !body) return;
+        const tagClass = [...group.classList]
+            .find(c => c !== "tag-accordion-group" && c !== "open") || "";
+        body.querySelectorAll(".tag-button.selected").forEach(btn => {
+            const chip = document.createElement("button");
+            chip.classList.add("tag-accordion-chip");
+            if (tagClass) chip.classList.add(tagClass);
+            chip.dataset.tag = btn.dataset.tag;
+            chip.textContent = btn.dataset.tag;
+            pill.appendChild(chip);
+        });
+    }
 });
+
+// Chip click — deselect the tag without opening the group.
+// Runs in capture phase so it intercepts before any tag-button handler fires.
+document.addEventListener("click", (e) => {
+    const chip = e.target.closest(".tag-accordion-chip");
+    if (!chip) return;
+    e.stopPropagation();
+    const group = chip.closest(".tag-accordion-group");
+    if (!group) return;
+    const tag = chip.dataset.tag;
+    const bodyBtn = group.querySelector(`.tag-accordion-body .tag-button[data-tag="${tag}"]`);
+    if (bodyBtn) {
+        chip.remove();   // remove immediately (overlays won't re-render themselves)
+        bodyBtn.click(); // fire existing filter / toggle logic as normal
+    }
+}, true);
+
+// Chip click — deselect the tag without opening the group.
+// Runs in capture phase so it intercepts before any tag-button handler fires.
+document.addEventListener("click", (e) => {
+    const chip = e.target.closest(".tag-accordion-chip");
+    if (!chip) return;
+    e.stopPropagation();
+    const group = chip.closest(".tag-accordion-group");
+    if (!group) return;
+    const tag = chip.dataset.tag;
+    const bodyBtn = group.querySelector(`.tag-accordion-body .tag-button[data-tag="${tag}"]`);
+    if (bodyBtn) {
+        chip.remove();   // remove immediately (overlays won't re-render themselves)
+        bodyBtn.click(); // fire existing filter / toggle logic as normal
+    }
+}, true);
 
 /* ==================================================================*/
 /* ======================= KEYBOARD SHORTCUTS =======================*/

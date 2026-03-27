@@ -185,7 +185,7 @@
 .block-body ul,
 .block-body ol {
     margin-right: 0.5em 0;
-    padding-left: 1.5em;   /* indent the bullets/numbers */
+    padding-left: 1.5em;
 }
 
 #block_text_overlay li,
@@ -236,12 +236,6 @@
     text-align: center;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
 }
-
-.add-block-form.show, .cleardata-form.show, .edit-block-overlay.show {
-    z-index: 1000;
-}
-
-
 
 /* Find & Replace Panel */
 .find-replace-panel {

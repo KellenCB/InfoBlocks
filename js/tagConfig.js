@@ -20,16 +20,17 @@ export const categoryTags = {
         tabs: ["tab9"]
     },
 
-    spell_type: {
-        label: "Spell Type",
-        tags: ["Abjuration", "Conjuration", "Divination", "Enchantment", "Evocation", "Illusion", "Necromancy", "Transmutation", "Concerntration", "Ritual"], 
-        className: "tag-spellType",
-        tabs: ["tab9"]
-    },
+    
+    //.spell_type: {
+    //    label: "Spell Type",
+    //    tags: ["Abjuration", "Conjuration", "Divination", "Enchantment", "Evocation", "Illusion", "Necromancy", "Transmutation", "Concerntration", "Ritual"], 
+    //    className: "tag-spellType",
+    //    tabs: ["tab9"]
+    //},
 
     action_type: {
         label: "Action Type",
-        tags: ["Action", "Reaction", "Bonus action", "Free action"], 
+        tags: ["Action", "Reaction", "Bonus action", "Free action", "Check", "Save"], 
         className: "tag-actionType",
         tabs: ["tab9"]
     },
@@ -55,10 +56,10 @@ export const categoryTags = {
         tabs: ["tab9"]
     },
 
-    modifier_type: {
-        label: "Modifier",
-        tags: ["STR", "DEX", "CON", "INT", "WIS", "CHA", "Check", "Save"], 
-        className: "tag-modifierType",
+    attribute_type: {
+        label: "Attribute",
+        tags: ["STR", "DEX", "CON", "INT", "WIS", "CHA"],
+        className: "tag-attributeType",
         tabs: ["tab9"]
     },
 
