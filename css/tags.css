@@ -47,32 +47,24 @@
     flex-wrap: wrap;
 }
 
-:root {
-    --user-color: #e4e0e0;
-    --characterType-color: #00e5ff;
-    --part-color: #CDF564;
-    --action-color: #07f371;
-    --ability-color: #bf5eff;
-    --damage-color: #F037A5;
-    --condition-color: #ffa927;
-    --spell-color: #2b7bf1;
-    --spellLevel-color: #49c1e6;
-    --infusion-color: #49c1e6;
-    --modifier-color: #FF4632;
-    --charges-color: #43ffef; 
-    --itemType-color: #ff7f00;
-    --magicItemType-color: #07f371;
-    --magicItemBonus-color: #F037A5;
-    --equippedCheck-color: #FF4632;
+/* Character type tags sit above the dynamic tag section in tab9 filter */
+.block-type-tags {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    padding: 15px 0 15px 0;
+    border-bottom: 1px solid #444;
+    column-gap: 7px;
+    row-gap: 9px;
 }
 
 .tag-button {
     padding: 14px;
-    height: 35px;
+    height: 40px;
     color: var(--user-color);
     background-color: transparent;
     border: 1px solid var(--user-color);
-    border-radius: 30px;
+    border-radius: 20px;
     cursor: pointer;
     font-size: 16px;
     letter-spacing: 0.3px;
@@ -84,6 +76,29 @@
 
 .tag-button:hover { transform: scale(1.05); }
 
+/* ==================================================================*/
+/* ========================== COLOURING =============================*/
+/* ==================================================================*/
+
+:root {
+    --user-color: #e4e0e0;
+    --characterType-color: #00e5ff;
+    --part-color: #CDF564;
+    --action-color: #07f371;
+    --ability-color: #bf5eff;
+    --damage-color: #F037A5;
+    --condition-color: #ffa927;
+    --spell-color: #2b7bf1;
+    --spellLevel-color: #49c1e6;
+    --infusion-color: #49c1e6;
+    --attribute-color: #FF4632;
+    --charges-color: #43ffef; 
+    --itemType-color: #ff7f00;
+    --magicItemType-color: #07f371;
+    --magicItemBonus-color: #F037A5;
+    --equippedCheck-color: #FF4632;
+}
+
 .tag-characterType { border-color: var(--characterType-color); color: var(--characterType-color); }
 .tag-partType { border-color: var(--part-color); color: var(--part-color);}
 .tag-actionType { border-color: var(--action-color); color: var(--action-color);}
@@ -93,7 +108,7 @@
 .tag-spellType { border-color: var(--spell-color); color: var(--spell-color);}
 .tag-spellLevel { border-color: var(--spellLevel-color); color: var(--spellLevel-color);}
 .tag-infusion { border-color: var(--infusion-color); color: var(--infusion-color);}
-.tag-modifierType { border-color: var(--modifier-color); color: var(--modifier-color);}
+.tag-attributeType { border-color: var(--attribute-color); color: var(--attribute-color);}
 .tag-Charges { border-color: var(--charges-color); color: var(--charges-color);}
 .tag-button.tag-itemType { border-color: var(--itemType-color); color: var(--itemType-color);}
 .tag-button.tag-magicItemType { border-color: var(--magicItemType-color); color: var(--magicItemType-color);}
@@ -111,23 +126,128 @@
 .tag-button.selected.tag-spellType { background-color: var(--spell-color);}
 .tag-button.selected.tag-spellLevel { background-color: var(--spellLevel-color);}
 .tag-button.selected.tag-infusion { background-color: var(--infusion-color);}
-.tag-button.selected.tag-modifierType { background-color: var(--modifier-color);}
+.tag-button.selected.tag-attributeType { background-color: var(--attribute-color);}
 .tag-button.selected.tag-Charges { background-color: var(--charges-color);}
 .tag-button.selected.tag-itemType { background-color: var(--itemType-color);}
 .tag-button.selected.tag-magicItemType { background-color: var(--magicItemType-color)}
 .tag-button.selected.tag-magicItemBonus { background-color: var(--magicItemBonus-color)}
 .tag-button.selected.tag-equippedCheck { background-color: var(--equippedCheck-color)}
 
-/* Character type tags sit above the dynamic tag section in tab9 filter */
-.block-type-tags {
-    display: flex;
+.tag-accordion-group                    { --accordion-color: #aaa; }
+.tag-accordion-group.tag-characterType  { --accordion-color: var(--characterType-color); }
+.tag-accordion-group.tag-partType       { --accordion-color: var(--part-color); }
+.tag-accordion-group.tag-actionType     { --accordion-color: var(--action-color); }
+.tag-accordion-group.tag-abilityType    { --accordion-color: var(--ability-color); }
+.tag-accordion-group.tag-damageType     { --accordion-color: var(--damage-color); }
+.tag-accordion-group.tag-conditionType  { --accordion-color: var(--condition-color); }
+.tag-accordion-group.tag-spellType      { --accordion-color: var(--spell-color); }
+.tag-accordion-group.tag-spellLevel     { --accordion-color: var(--spellLevel-color); }
+.tag-accordion-group.tag-infusion       { --accordion-color: var(--infusion-color); }
+.tag-accordion-group.tag-attributeType      { --accordion-color: var(--attribute-color); }
+.tag-accordion-group.tag-Charges        { --accordion-color: var(--charges-color); }
+.tag-accordion-group.tag-itemType       { --accordion-color: var(--itemType-color); }
+.tag-accordion-group.tag-magicItemType  { --accordion-color: var(--magicItemType-color); }
+.tag-accordion-group.tag-magicItemBonus { --accordion-color: var(--magicItemBonus-color); }
+.tag-accordion-group.tag-equippedCheck  { --accordion-color: var(--equippedCheck-color); }
+
+/* ==================================================================*/
+/* ======================= TAG ACCORDION ============================*/
+/* ==================================================================*/
+
+.tag-accordion-group {
+    display: inline-flex;
     flex-wrap: wrap;
-    width: 100%;
-    padding: 15px 0 15px 0;
-    border-bottom: 1px solid #444;
-    column-gap: 7px;
-    row-gap: 9px;
+    align-items: center;
+    width: auto;
 }
+
+.tag-accordion-pill:has(.tag-accordion-chip) {
+    width: 100%;
+    box-sizing: border-box;
+    grid-gap: 10px;
+}
+
+.tag-accordion-pill {
+    display: inline-flex;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    align-items: center;
+    min-height: 40px;
+    padding: 10px 12px;
+    background-color: transparent;
+    border: 1px solid var(--accordion-color);
+    border-radius: 20px;
+    color: var(--accordion-color);
+    font-size: 16px;
+    transition: background-color 0.2s ease;
+    text-align: left;
+}
+
+.tag-accordion-pill:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+.tag-accordion-body {
+    display: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    max-width: 100%;
+    border: 1px solid var(--accordion-color);
+    border-radius: 20px;
+    box-sizing: border-box;
+    background-color: transparent;
+}
+
+.tag-accordion-group.open .tag-accordion-body {
+    display: flex;
+}
+
+.tag-accordion-chip {
+    min-height: 40px;
+    padding: 10px 15px;
+    background-color: var(--accordion-color);
+    border: none;
+    border-radius: 20px;
+    color: #333;
+    font-weight: bolder;
+    cursor: pointer;
+    font-size: 16px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    transition: transform 0.5s;
+}
+
+.tag-accordion-chip:hover {
+    transform: scale(1.05);
+}
+
+.tag-accordion-group.open .tag-accordion-pill {
+    display: none;
+}
+
+.tag-accordion-group.open .tag-accordion-chip {
+    display: none;
+}
+
+.tag-accordion-label {
+    font-size: 16px;
+    color: var(--accordion-color);
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.filter-section .tag-accordion-label {
+        width: 100%;
+}
+
+/* ==================================================================*/
+/* ========================= BLOCK TAGS =============================*/
+/* ==================================================================*/
 
 .add-block-overlay .block-type-tags,
 .edit-block-overlay .block-type-tags {
@@ -141,67 +261,10 @@
     justify-content: center;
 }
 
-/* ==================================================================*/
-/* ======================= TAG ACCORDION ============================*/
-/* ==================================================================*/
-
-.tag-accordion-group {
-    width: 100%;
-    margin-bottom: 5px;
-}
-
-.tag-accordion-header {
-    width: 100%;
+#predefined_tags_edit {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #333;
-    border: none;
-    border-left: 3px solid transparent;
-    color: #ddd;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    text-align: left;
-    transition: background-color 0.2s ease, border-left-color 0.2s ease, border-radius 0.15s ease;
-}
-
-.tag-accordion-header:hover {
-    background-color: #3a3a3a;
-}
-
-.tag-accordion-header.open {
-    background-color: #3a3a3a;
-    border-left-color: #4CAF50;
-    border-radius: 8px 8px 0 0;
-}
-
-/* Chevron — pure CSS triangle */
-.accordion-chevron {
-    width: 0;
-    height: 0;
-    border-top: 5px solid transparent;
-    border-bottom: 5px solid transparent;
-    border-left: 7px solid #aaa;
-    flex-shrink: 0;
-    transition: transform 0.2s ease;
-}
-
-.tag-accordion-header.open .accordion-chevron {
-    transform: rotate(90deg);
-}
-
-/* Tag body — hidden by default, flex when open */
-.tag-accordion-body {
-    display: none;
     flex-wrap: wrap;
-    gap: 6px;
-    padding: 8px 8px 6px 8px;
-    background-color: #2e2e2e;
-    border-radius: 0 0 8px 8px;
-}
-
-.tag-accordion-body.open {
-    display: flex;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
 }

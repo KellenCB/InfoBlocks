@@ -117,6 +117,10 @@ function enterSplitView() {
     // Auto-mount left panel
     const savedLeftTab = localStorage.getItem('splitLeftTab');
     const currentTab   = savedLeftTab || localStorage.getItem('activeTab') || 'tab4';
+    const singleViewTags = tagHandler.getSelectedTags(currentTab);
+    if (singleViewTags.length) {
+        panelState.left.selectedTags[currentTab] = singleViewTags;
+    }
     const leftNavBtn   = document.querySelector(`.split-tab-nav[data-panel-nav="left"] .split-tab-button[data-tab="${currentTab}"]`);
     if (leftNavBtn) leftNavBtn.click();
     
@@ -150,6 +154,9 @@ function exitSplitView() {
         || localStorage.getItem('activeTab')
         || localStorage.getItem('splitLeftTab')
         || 'tab4';
+
+    const splitTags = panelState.left.selectedTags?.[leftTab] || [];
+    tagHandler.setSelectedTags(leftTab, splitTags);
 
     panelState.left.activeTab  = null;
     panelState.right.activeTab = null;
@@ -833,6 +840,8 @@ function wirePanelHeaderButtons(tabId, panelSide, ids, signal = null) {
         if (tagsEl)  tagsEl.value = '';
         document.querySelectorAll('.add-block-overlay .tag-button.selected')
             .forEach(t => t.classList.remove('selected'));
+        document.querySelectorAll(`#${ids.tagsSection} .tag-accordion-chip`)
+            .forEach(c => c.remove());
 
         import('./overlayHandler.js').then(({ overlayHandler, initUsesField }) => {
             overlayHandler.initializeOverlayTagHandlers('add_block_overlay_tags', [], tabId);
@@ -1013,6 +1022,7 @@ function initPanelFilters(tabId, panelSide, tabNum, ids) {
         if (searchInput) searchInput.value = '';
         if (panelState[panelSide].searchQuery) panelState[panelSide].searchQuery[tabId] = '';
         renderPanelBlocks(tabId, panelSide, ids);
+        renderPanelTags(tabId, panelSide, ids);
     });
 }
 
@@ -1039,6 +1049,24 @@ function initPanelToggleFilter(tabId, panelSide, ids) {
 
 // ── Render tags ───────────────────────────────────────────────────────────────
 
+function injectChipsForCollapsedGroups(container) {
+    container.querySelectorAll('.tag-accordion-group:not(.open)').forEach(group => {
+        const pill = group.querySelector('.tag-accordion-pill');
+        const body = group.querySelector('.tag-accordion-body');
+        if (!pill || !body) return;
+        pill.querySelectorAll('.tag-accordion-chip').forEach(c => c.remove());
+        const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group') || '';
+        body.querySelectorAll('.tag-button.selected').forEach(btn => {
+            const chip = document.createElement('button');
+            chip.classList.add('tag-accordion-chip');
+            if (tagClass) chip.classList.add(tagClass);
+            chip.dataset.tag = btn.dataset.tag;
+            chip.textContent = btn.dataset.tag;
+            pill.appendChild(chip);
+        });
+    });
+}
+
 function renderPanelTags(tabId, panelSide, ids) {
     const tagsSection = document.getElementById(ids.tagsSection);
     if (!tagsSection) return;
@@ -1051,29 +1079,29 @@ function renderPanelTags(tabId, panelSide, ids) {
     const usedTags     = new Set(blocks.flatMap(b => b.tags));
     const selectedTags = panelState[panelSide].selectedTags?.[tabId] || [];
 
-    const currentlyOpen = new Set(
-    [...(tagsSection.querySelectorAll('.tag-accordion-header.open') || [])]
-        .map(h => h.dataset.category)
-    );
+    const fromDOM = [...(tagsSection.querySelectorAll('.tag-accordion-group.open') || [])]
+        .map(g => g.dataset.category);
+    const fromStorage = JSON.parse(localStorage.getItem(`accordionOpen_${tabId}`) || '[]');
+    const currentlyOpen = new Set(fromDOM.length ? fromDOM : fromStorage);
 
-let html = '';
+    let html = '';
     Object.entries(categoryTags).forEach(([category, data]) => {
         if (!data.tabs.includes(tabId)) return;
         const used = data.tags.filter(t => usedTags.has(t));
         if (!used.length) return;
 
-        const label       = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        const hasSelected = used.some(t => selectedTags.includes(t));
-        const openClass = (hasSelected || currentlyOpen.has(category)) ? ' open' : '';
 
-        html += `<div class="tag-accordion-group">`;
-        html += `<button class="tag-accordion-header${openClass}" data-category="${category}">`;
-        html += `<span>${label}</span><span class="accordion-chevron"></span>`;
-        html += `</button>`;
-        html += `<div class="tag-accordion-body${openClass}">`;
+        const label   = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const isOpen  = currentlyOpen.has(category);
+        const openClass = isOpen ? ' open' : '';
+
+        html += `<div class="tag-accordion-group ${data.className}${openClass}" data-category="${category}">`;
+        html += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
+        html += `<div class="tag-accordion-body">`;
+        html += `<span class="tag-accordion-label">${label}</span>`;
         html += used.map(tag => {
-            const sel = selectedTags.includes(tag) ? 'selected' : '';
-            return `<button class="tag-button ${data.className} ${sel}" data-tag="${tag}">${tag}</button>`;
+            const sel = selectedTags.includes(tag) ? ' selected' : '';
+            return `<button class="tag-button ${data.className}${sel}" data-tag="${tag}">${tag}</button>`;
         }).join('');
         html += `</div></div>`;
     });
@@ -1092,6 +1120,8 @@ let html = '';
     }
 
     tagsSection.innerHTML = html;
+    injectChipsForCollapsedGroups(tagsSection);
+    localStorage.setItem(`accordionOpen_${tabId}`, JSON.stringify([...currentlyOpen]));
 }
 
 // ── Get filtered blocks ───────────────────────────────────────────────────────

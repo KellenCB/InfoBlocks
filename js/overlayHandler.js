@@ -339,16 +339,16 @@ export const overlayHandler = (() => {
             Object.entries(categoryTags).forEach(([category, data]) => {
                 if (!data.tabs.includes(activeTab)) return;
                 const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                html += `<div class="tag-accordion-group">`;
-                html += `<button class="tag-accordion-header" data-category="${category}">`;
-                html += `<span>${label}</span><span class="accordion-chevron"></span>`;
-                html += `</button>`;
+                html += `<div class="tag-accordion-group ${data.className}" data-category="${category}">`;
+                html += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
                 html += `<div class="tag-accordion-body">`;
+                html += `<span class="tag-accordion-label">${label}</span>`;
                 html += data.tags.map(tag =>
                     `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`
                 ).join("");
                 html += `</div></div>`;
             });
+
             if (userDefinedTags.length > 0) {
                 html += `<div class="tag-category user-tags">`;
                 html += userDefinedTags.map(tag =>
@@ -368,21 +368,18 @@ export const overlayHandler = (() => {
             let html = "";
             Object.entries(categoryTags).forEach(([category, data]) => {
                 if (!data.tabs.includes(activeTab)) return;
-                const label       = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                const hasSelected = data.tags.some(tag => blockTags.includes(tag));
-                const openClass   = hasSelected ? ' open' : '';
-                html += `<div class="tag-accordion-group">`;
-                html += `<button class="tag-accordion-header${openClass}" data-category="${category}">`;
-                html += `<span>${label}</span><span class="accordion-chevron"></span>`;
-                html += `</button>`;
-                html += `<div class="tag-accordion-body${openClass}">`;
+                const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                html += `<div class="tag-accordion-group ${data.className}" data-category="${category}">`;
+                html += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
+                html += `<div class="tag-accordion-body">`;
+                html += `<span class="tag-accordion-label">${label}</span>`;
                 html += data.tags.map(tag => {
                     const isSelected = blockTags.includes(tag) ? " selected" : "";
                     return `<button class="tag-button ${data.className}${isSelected}" data-tag="${tag}">${tag}</button>`;
                 }).join("");
                 html += `</div></div>`;
             });
-
+            
             if (exceptionTabs.includes(activeTab) && userDefinedTags.length > 0) {
                 html += `<div class="tag-category user-tags-edit">`;
                 html += userDefinedTags.map(tag =>

@@ -123,10 +123,29 @@ export const appManager = (() => {
 
     console.log("✅ Final Rendered Tags");
   };
-    
+  
+  
   const updateTags = () => {
     const activeTab = getActiveTab();
     const tabSuffix = activeTab.replace("tab", "");
+
+    function injectChipsForCollapsedGroups(container) {
+    container.querySelectorAll('.tag-accordion-group:not(.open)').forEach(group => {
+        const pill = group.querySelector('.tag-accordion-pill');
+        const body = group.querySelector('.tag-accordion-body');
+        if (!pill || !body) return;
+        pill.querySelectorAll('.tag-accordion-chip').forEach(c => c.remove());
+        const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group') || '';
+        body.querySelectorAll('.tag-button.selected').forEach(btn => {
+            const chip = document.createElement('button');
+            chip.classList.add('tag-accordion-chip');
+            if (tagClass) chip.classList.add(tagClass);
+            chip.dataset.tag = btn.dataset.tag;
+            chip.textContent = btn.dataset.tag;
+            pill.appendChild(chip);
+        });
+      });
+    }
   
     const usedTags = getTags(activeTab);
     const selectedTags = tagHandler.getSelectedTags(activeTab);
@@ -139,11 +158,11 @@ export const appManager = (() => {
       .filter(tag => !allPredefined.includes(tag))
       .sort((a, b) => a.localeCompare(b));
 
-    const currentlyOpen = new Set(
-        [...(document.getElementById(`dynamic_tags_section_${tabSuffix}`)
-            ?.querySelectorAll('.tag-accordion-header.open') || [])]
-            .map(h => h.dataset.category)
-    );
+    const fromDOM = [...(document.getElementById(`dynamic_tags_section_${tabSuffix}`)
+        ?.querySelectorAll('.tag-accordion-group.open') || [])]
+        .map(g => g.dataset.category);
+    const fromStorage = JSON.parse(localStorage.getItem(`accordionOpen_${activeTab}`) || '[]');
+    const currentlyOpen = new Set(fromDOM.length ? fromDOM : fromStorage);
 
     let html = "";
 
@@ -152,18 +171,18 @@ export const appManager = (() => {
         const usedPredefined = categoryTags[category].tags.filter(tag => usedTags.includes(tag));
         if (usedPredefined.length === 0) return;
 
-        const label      = categoryTags[category].label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        const hasSelected = usedPredefined.some(tag => selectedTags.includes(tag));
-        const openClass = (hasSelected || currentlyOpen.has(category)) ? ' open' : '';
+        const label     = categoryTags[category].label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const className = categoryTags[category].className;
+        const isOpen    = currentlyOpen.has(category);
+        const openClass = isOpen ? ' open' : '';
 
-        html += `<div class="tag-accordion-group">`;
-        html += `<button class="tag-accordion-header${openClass}" data-category="${category}">`;
-        html += `<span>${label}</span><span class="accordion-chevron"></span>`;
-        html += `</button>`;
-        html += `<div class="tag-accordion-body${openClass}" id="${category}_tags_list_${tabSuffix}">`;
+        html += `<div class="tag-accordion-group ${className}${openClass}" data-category="${category}">`;
+        html += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
+        html += `<div class="tag-accordion-body" id="${category}_tags_list_${tabSuffix}">`;
+        html += `<span class="tag-accordion-label">${label}</span>`;
         html += usedPredefined.map(tag => {
-            const isSelected = selectedTags.includes(tag) ? "selected" : "";
-            return `<button class="tag-button ${categoryTags[category].className} ${isSelected}" data-tag="${tag}">${tag}</button>`;
+            const isSelected = selectedTags.includes(tag) ? " selected" : "";
+            return `<button class="tag-button ${className}${isSelected}" data-tag="${tag}">${tag}</button>`;
         }).join("");
         html += `</div></div>`;
     });
@@ -182,6 +201,8 @@ export const appManager = (() => {
     const unifiedContainer = document.getElementById(`dynamic_tags_section_${tabSuffix}`);
     if (unifiedContainer) {
       unifiedContainer.innerHTML = html;
+      injectChipsForCollapsedGroups(unifiedContainer);
+      localStorage.setItem(`accordionOpen_${activeTab}`, JSON.stringify([...currentlyOpen]));
     }
   
     const activeTabElement = document.getElementById(activeTab);
