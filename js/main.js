@@ -4,8 +4,8 @@ import { blockActionsHandler, saveEditHandler } from './blockActionsHandler.js';
 import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
 import { tagHandler } from './tagHandler.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
-import './resizeHandle.js';
 import { stripHTML } from './appManager.js';
+import { initDiceRoller } from './diceRoller.js';
 
 function filterAndRender(tabNumber) {
     const activeTab = `tab${tabNumber}`;
@@ -66,40 +66,49 @@ const attachEventListeners = () => {
 
 const menuButton = document.getElementById("Menu_button");
 const menuOverlay = document.getElementById("menu_overlay");
+const menuCloseButton = document.getElementById("menu_close_button");
+
+function closeMenu() {
+    menuOverlay.classList.remove("active");
+    menuButton.classList.remove("menu-button-open");
+}
 
 if (menuButton && menuOverlay) {
-  menuButton.addEventListener("click", () => {
+    menuButton.addEventListener("click", () => {
     menuOverlay.classList.toggle("active");
     menuButton.classList.toggle("menu-button-open");
-  });
+    });
+
+    menuOverlay.addEventListener("click", (e) => {
+    if (!e.target.closest(".menu-content")) closeMenu();
+    });
+
+    menuCloseButton?.addEventListener("click", closeMenu);
 }
 
 /* ===================================================================*/
-/* ========================= DICE ROLLER OVERLAY =====================*/
+/* ========================= DICE ROLLER PANEL =======================*/
 /* ===================================================================*/
 
 const diceMenuButton = document.getElementById("dice-menu-button");
-const diceOverlay    = document.getElementById("dice-overlay");
-const closeDiceBtn   = document.getElementById("close-dice-overlay");
+const dicePanel      = document.getElementById("dice-panel");
+const diceMenuImg    = diceMenuButton?.querySelector("img");
 
-if (diceMenuButton && diceOverlay) {
+function setDicePanelState(open) {
+  dicePanel.classList.toggle("open", open);
+  diceMenuButton.classList.toggle("active", open);
+  if (diceMenuImg) {
+    diceMenuImg.src = open ? "images/Dice_button_v2_Green.svg" : "images/Dice_button_v2.svg";
+  }
+  localStorage.setItem("dicePanelOpen", open);
+}
+
+if (diceMenuButton && dicePanel) {
   diceMenuButton.addEventListener("click", () => {
-    diceOverlay.classList.toggle("show");
-    if (diceOverlay.classList.contains("show")) {
-      import('./diceRoller.js').then(mod => mod.initDiceRoller());
-    }
+    setDicePanelState(!dicePanel.classList.contains("open"));
   });
 }
-
-if (closeDiceBtn && diceOverlay) {
-  closeDiceBtn.addEventListener("click", () => {
-    diceOverlay.classList.remove("show");
-  });
-}
-
-diceOverlay
-  ?.querySelector('.overlay-backdrop')
-  .addEventListener('click', () => diceOverlay.classList.remove('show'));
+initDiceRoller();
 
 /* ===================================================================*/
 /* ===================== SEQUENTIAL FADE IN ==========================*/
@@ -116,7 +125,9 @@ const fadeInElementsSequentially = (container = document) => {
     });
 };
 
-fadeInElementsSequentially();
+/* ===================================================================*/
+/* ========================= TAB ORDER ===============================*/
+/* ===================================================================*/
 
 function saveTabOrder() {
     // Only read from the main nav, not split view navs
@@ -358,54 +369,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
     
-    // Restore tab4 and tab8 actions grids from localStorage
-    ["tab4", "tab8"].forEach(tabId => {
-        const savedactionsGridHTML = localStorage.getItem(tabId + "_actions_grid");
-        if (savedactionsGridHTML) {
-          const actionsGrid = document.querySelector("#" + tabId + " .actions-grid");
-          if (actionsGrid) {
-            actionsGrid.innerHTML = savedactionsGridHTML;
-            console.log("✅ actions grid restored from localStorage for " + tabId);
-            actionsGrid.querySelectorAll('.action-name, .action-label, .action-description')
-              .forEach(field => field.contentEditable = "false");
-            actionsGrid.querySelectorAll('.action-row').forEach(row => {
-              const btn = row.querySelector('button');
-              if (row.dataset.viewState === 'expanded') {
-                row.classList.remove('condensed');
-                row.classList.add('expanded');
-                if (btn) btn.textContent = "-";
-              } else {
-                row.classList.remove('expanded');
-                row.classList.add('condensed');
-                if (btn) btn.textContent = "+";
-                row.querySelectorAll('.action-name, .action-label, .action-description').forEach(field => {
-                  if (!field.dataset.fullContent) field.dataset.fullContent = field.innerHTML;
-                  field.innerHTML = field.innerHTML.split('<br>')[0];
-                });
-              }
-            });
-          } else {
-            console.warn("actions grid element not found in " + tabId);
-          }
-        }
-        // Placeholder for empty actions grid
-        const wrapper = document.querySelector("#" + tabId + " .actions-grid-wrapper");
-        if (wrapper) {
-            if (!wrapper.querySelector('.actions-placeholder') &&
-                wrapper.querySelectorAll('.actions-grid .action-row').length === 0) {
-                const p = document.createElement('p');
-                p.classList.add('actions-placeholder');
-                p.textContent = 'Use the edit tab button to add actions here…';
-                p.style.position  = 'absolute';
-                p.style.top       = '50%';
-                p.style.left      = '50%';
-                p.style.transform = 'translate(-50%, -50%)';
-                p.style.opacity   = '0.25';
-                wrapper.appendChild(p);
-            }
-        }
-    });    
-
     // Handle tab reordering
     document.querySelector(".tab-nav").addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -590,27 +553,49 @@ const initializeDynamicTags = () => {
     [3, 4, 6, 7, 8, 9].forEach(tabNumber => {
         const tagsSection = document.getElementById(`dynamic_tags_section_${tabNumber}`);
         if (!tagsSection) return;
-    
+
         tagsSection.innerHTML = "";
-    
+
         Object.keys(categoryTags).forEach(category => {
             if (!categoryTags[category].tabs.includes(`tab${tabNumber}`)) return;
-            const tagContainer = document.createElement("div");
-            tagContainer.classList.add("tag-section");
-            tagContainer.id = `${category}_tags_list_${tabNumber}`;
-    
+
+            const label = categoryTags[category].label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+            const group = document.createElement("div");
+            group.classList.add("tag-accordion-group");
+
+            const header = document.createElement("button");
+            header.classList.add("tag-accordion-header");
+            header.dataset.category = category;
+            header.innerHTML = `<span>${label}</span><span class="accordion-chevron"></span>`;
+
+            const body = document.createElement("div");
+            body.classList.add("tag-accordion-body");
+            body.id = `${category}_tags_list_${tabNumber}`;
+
             categoryTags[category].tags.forEach(tag => {
                 const button = document.createElement("button");
                 button.classList.add("tag-button", categoryTags[category].className);
                 button.dataset.tag = tag;
                 button.textContent = tag;
-                tagContainer.appendChild(button);
+                body.appendChild(button);
             });
-    
-            tagsSection.appendChild(tagContainer);
+
+            group.appendChild(header);
+            group.appendChild(body);
+            tagsSection.appendChild(group);
         });
     });
 };
+
+document.addEventListener("click", (e) => {
+    const header = e.target.closest(".tag-accordion-header");
+    if (!header) return;
+    const body = header.nextElementSibling;
+    if (!body?.classList.contains("tag-accordion-body")) return;
+    const isOpen = body.classList.toggle("open");
+    header.classList.toggle("open", isOpen);
+});
 
 /* ==================================================================*/
 /* ======================= KEYBOARD SHORTCUTS =======================*/
@@ -622,7 +607,6 @@ const keyboardShortcutsHandler = (() => {
             const clearDataOverlay       = document.querySelector(".cleardata-overlay");
             const editBlockOverlay       = document.querySelector(".edit-block-overlay");
             const spellSlotEditOverlay   = document.querySelector(".spell-slot-edit-overlay");
-            const actionsEditOverlay     = document.querySelector(".actions-edit-overlay");
             const saveBlockButton        = document.getElementById("save-block-button");
             const cancelAddBlockButton   = document.getElementById("cancel_add_block");
             const confirmClearButton     = document.getElementById("confirm_clear_button");
@@ -631,8 +615,6 @@ const keyboardShortcutsHandler = (() => {
             const cancelEditButton       = document.getElementById("cancel_edit_block");
             const saveSpellSlotButton    = document.getElementById("save_spell_slot_changes");
             const cancelSpellSlotButton  = document.getElementById("close_spell_slot_edit");
-            const saveActionButton       = document.getElementById("save_action_changes");
-            const cancelActionButton     = document.getElementById("close_action_edit");
             const removeBlockOverlay     = document.querySelector(".remove-block-overlay");
             const cancelRemoveButton     = document.getElementById("cancel_remove_button");
             const confirmRemoveButton    = document.getElementById("confirm_remove_button");
@@ -695,33 +677,12 @@ const keyboardShortcutsHandler = (() => {
                 }
             }
 
-            if (actionsEditOverlay?.classList.contains("show")) {
-                if (event.key === "Enter" && saveActionButton) {
-                    saveActionButton.click();
-                } else if (event.key === "Escape" && cancelActionButton) {
-                    cancelActionButton.click();
-                }
-            }
-
             if (removeBlockOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && confirmRemoveButton) {
                     event.preventDefault();
                     confirmRemoveButton.click();
                 } else if (event.key === "Escape" && cancelRemoveButton) {
                     cancelRemoveButton.click();
-                }
-            }
-
-            const removeActionOverlay = document.querySelector('.remove-action-overlay');
-            const confirmRemoveActionButton = document.getElementById('confirm_remove_action_button');
-            const cancelRemoveActionButton = document.getElementById('cancel_remove_action_button');
-
-            if (removeActionOverlay?.classList.contains('show')) {
-                if (event.key === 'Enter' && confirmRemoveActionButton) {
-                    event.preventDefault();
-                    confirmRemoveActionButton.click();
-                } else if (event.key === 'Escape' && cancelRemoveActionButton) {
-                    cancelRemoveActionButton.click();
                 }
             }
 
@@ -750,6 +711,77 @@ const keyboardShortcutsHandler = (() => {
     return { handleKeyboardShortcuts };
 })();
 
+/* ==================================================================*/
+/* ====================== RESIZE HANDLE =============================*/
+/* ==================================================================*/
+
+/*
+document.addEventListener("DOMContentLoaded", function() {
+  const resizableTabs = ["tab4", "tab8"];
+  const isLandscape = () => window.innerWidth > window.innerHeight;
+
+  resizableTabs.forEach(function(tabId) {
+    const tab = document.getElementById(tabId);
+    if (!tab) return;
+
+    const tabNum      = tabId.replace("tab", "");
+    const wrapper     = tab.querySelector(".actions-grid-wrapper");
+    const resultsGrid = document.getElementById(`results_section_${tabNum}`);
+    const handle      = tab.querySelector(".resizable-handle");
+    if (!wrapper || !resultsGrid || !handle) return;
+
+    let isDragging   = false;
+    let startY, initActionsH, initResultsH;
+
+    handle.addEventListener("mousedown", function(e) {
+      if (isLandscape()) return;
+
+      isDragging      = true;
+      startY          = e.clientY;
+      initActionsH    = wrapper.getBoundingClientRect().height;
+      initResultsH    = resultsGrid.getBoundingClientRect().height;
+      document.body.style.cursor     = "row-resize";
+      document.body.style.userSelect = "none";
+    });
+
+    document.addEventListener("mousemove", function(e) {
+      if (!isDragging) return;
+      if (isLandscape()) {
+        isDragging = false;
+        cleanup();
+        return;
+      }
+
+      const delta       = e.clientY - startY;
+      const containerH  = tab.getBoundingClientRect().height;
+      const minH        = 50;
+      let newActionsH   = Math.max(minH, Math.min(initActionsH + delta, containerH - handle.offsetHeight - minH));
+      let newResultsH   = containerH - newActionsH - handle.offsetHeight;
+
+      wrapper.style.height     = newActionsH + "px";
+      resultsGrid.style.height = newResultsH + "px";
+    });
+
+    document.addEventListener("mouseup", function() {
+      if (!isDragging) return;
+      isDragging = false;
+      cleanup();
+    });
+
+    window.addEventListener("resize", () => {
+      if (isLandscape()) {
+        wrapper.style.height     = "";
+        resultsGrid.style.height = "";
+      }
+    });
+
+    function cleanup() {
+      document.body.style.cursor     = "";
+      document.body.style.userSelect = "";
+    }
+  });
+});
+*/
 
 /* ==================================================================*/
 /* ============================== FIN ================================*/
@@ -836,7 +868,16 @@ window.onload = async () => {
     });
 
     initSplitView();
-    if (localStorage.getItem('splitViewActive') === 'true') {
-    document.getElementById('split-view-button')?.click();
-}
+
+    const isPortraitOnLoad = window.innerHeight > window.innerWidth;
+    if (localStorage.getItem('splitViewActive') === 'true' && !isPortraitOnLoad) {
+        document.getElementById('split-view-button')?.click();
+    }
+
+    if (localStorage.getItem("dicePanelOpen") === "true" && diceMenuButton && dicePanel) {
+        setDicePanelState(true);
+    }
+
+    fadeInElementsSequentially();
+
 };

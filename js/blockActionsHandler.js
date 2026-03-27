@@ -166,7 +166,7 @@ export const blockActionsHandler = (() => {
     document.addEventListener("DOMContentLoaded", initUndoLastDelete);
 
     const handleBlockActions = (event) => {
-        const target  = event.target;
+        const target  = event.target.closest('.action-button') || event.target;
         const blockId = target.getAttribute("data-id");
         if (!blockId) return;
 
@@ -177,14 +177,25 @@ export const blockActionsHandler = (() => {
             return;
         }
 
+        if (target.classList.contains('pin-button')) {
+            const blocks = appManager.getBlocks(activeTab);
+            const idx    = blocks.findIndex(b => b.id === blockId);
+            if (idx !== -1) {
+                blocks[idx].pinned = !blocks[idx].pinned;
+                localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
+                reapplySearchAndFilters();
+            }
+            return;
+        }
+
         if (target.classList.contains("duplicate-button")) {
             console.log("📄 Duplicating block:", blockId);
             const blockTags = Array.isArray(block.tags) ? [...block.tags] : [];
             appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.blockType || null);
             reapplySearchAndFilters();
-                                
+
         } else if (target.classList.contains("edit-button")) {
-            console.log("📝 Editing block:", blockId);
+
             isEditing = true;
             currentEditingBlockId = blockId;
         

@@ -1,0 +1,9 @@
+# Dice-box assets — large binary files, copy manually to server
+/assets/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/

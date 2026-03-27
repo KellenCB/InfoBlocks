@@ -4,24 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Information Blocks</title>
-    <link rel="stylesheet" href="./css/type.css">
     <link rel="icon" type="image/svg+xml" href="favicon.svg" sizes="any">
     <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
-    <link rel="stylesheet" href="css/splitView.css">
     <link rel="stylesheet" href="./css/base-layout.css">
     <link rel="stylesheet" href="./css/buttons.css">
     <link rel="stylesheet" href="./css/forms.css">
-    <link rel="stylesheet" href="./css/scrollbar.css">
     <link rel="stylesheet" href="./css/tags.css">
-    <link rel="stylesheet" href="./css/sortControlls.css">
-    <link rel="stylesheet" href="css/diceRoller.css">
-    <link rel="stylesheet" href="css/CharacterSheet.css">
+    <link rel="stylesheet" href="./css/splitView.css">
+    <link rel="stylesheet" href="./css/diceRoller.css">
+    <link rel="stylesheet" href="./css/CharacterSheet.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
 
 <body>
-    <div class="container fade-in">
+    <div id="header-row" class="container fade-in">
         <header class="title-section">
             <h1 id="page_title" contenteditable="true"></h1>
         </header>
@@ -59,6 +56,8 @@
         </div>
     </div>
 
+    <div id="main-row">
+    <div id="main-column">
     <div class="container fade-in">
         <div class="tab-nav fade-in">
             <button class="tab-button active" data-tab="tab4" draggable="true">Hazard</button>
@@ -70,6 +69,7 @@
         </div>
     </div>
 
+    <div id="app-row">
     <div class="tabs-content fade-in">
 
         <!-- Tab 3: Notes -->
@@ -84,18 +84,17 @@
                     <div class="filter-section-overlay-top"></div>
                     <div class="filter-section-overlay-bottom"></div>
                     <div id="filter_section_3" class="filter-section">
-                        <div class="search-container">
-                            <input id="search_input_3" class="search_input" type="text" placeholder="Search by text" />
-                            <button id="clear_search_button_3" class="clear-search">✖</button>
+                        <div class="filter-sticky-top">
+                            <button id="clear_filters_button_3" class="clear_filters_button">Clear Filters</button>
+                            <div class="search-container">
+                                <input id="search_input_3" class="search_input" type="text" placeholder="Search by text" />
+                                <button id="clear_search_button_3" class="clear-search">✖</button>
+                            </div>
                         </div>
-
-                        <!-- Block type filter buttons for tab3 — populated dynamically from blockTypeConfig -->
                         <div class="block-type-tags" id="character_type_tags_3"></div>
-
-                        <div id="all_tags_container" class="tag-section">
-                            <div id="dynamic_tags_section_3"></div>
+                        <div id="all_tags_container">
+                            <div id="dynamic_tags_section_3" class="tag-section"></div>
                         </div>
-                        <button id="clear_filters_button_3" class="clear_filters_button">Clear Filters</button>
                     </div>
                 </div>
 
@@ -360,17 +359,7 @@
                         </div>
                     </div>
                 </div>
-        
-                <div class="actions-and-features">
-                    <div class="actions-grid-wrapper">
-                        <div class="actions-grid-header">
-                            <button class="add-block-button orange-button edit-actions-button" title="Edit actions">✎</button>
-                        </div>
-                        <div class="actions-grid"></div>
-                        <div class="actions-overlay-top"></div>
-                        <div class="actions-overlay-bottom"></div>
-                    </div>
-                </div>
+            <div id="results_section_4" class="results-section character-sheet-results"></div>
             </div>
         </div>
 
@@ -386,14 +375,16 @@
                     <div class="filter-section-overlay-top"></div>
                     <div class="filter-section-overlay-bottom"></div>
                     <div id="filter_section_6" class="filter-section">
-                        <div class="search-container">
-                            <input id="search_input_6" class="search_input" type="text" placeholder="Search by text" />
-                            <button id="clear_search_button_6" class="clear-search">✖</button>
+                        <div class="filter-sticky-top">
+                            <button id="clear_filters_button_6" class="clear_filters_button">Clear Filters</button>
+                            <div class="search-container">
+                                <input id="search_input_6" class="search_input" type="text" placeholder="Search by text" />
+                                <button id="clear_search_button_6" class="clear-search">✖</button>
+                            </div>
                         </div>
-                        <div id="all_tags_container" class="tag-section">
-                            <div id="dynamic_tags_section_6"></div>
+                        <div id="all_tags_container">
+                            <div id="dynamic_tags_section_6"  class="tag-section"></div>
                         </div>
-                        <button id="clear_filters_button_6" class="clear_filters_button">Clear Filters</button>
                     </div>
                 </div>
 
@@ -416,14 +407,16 @@
                     <div class="filter-section-overlay-top"></div>
                     <div class="filter-section-overlay-bottom"></div>
                     <div id="filter_section_7" class="filter-section">
-                        <div class="search-container">
-                            <input id="search_input_7" class="search_input" type="text" placeholder="Search by text" />
-                            <button id="clear_search_button_7" class="clear-search">✖</button>
+                        <div class="filter-sticky-top">
+                            <button id="clear_filters_button_7" class="clear_filters_button">Clear Filters</button>
+                            <div class="search-container">
+                                <input id="search_input_7" class="search_input" type="text" placeholder="Search by text" />
+                                <button id="clear_search_button_7" class="clear-search">✖</button>
+                            </div>
                         </div>
-                        <div id="all_tags_container" class="tag-section">
-                            <div id="dynamic_tags_section_7"></div>
+                        <div id="all_tags_container">
+                            <div id="dynamic_tags_section_7" class="tag-section"></div>
                         </div>
-                        <button id="clear_filters_button_7" class="clear_filters_button">Clear Filters</button>
                     </div>
                 </div>
 
@@ -688,17 +681,7 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="actions-and-features">
-                    <div class="actions-grid-wrapper">
-                        <div class="actions-grid-header">
-                            <button class="add-block-button orange-button edit-actions-button" title="Edit actions">✎</button>
-                        </div>
-                        <div class="actions-grid"></div>
-                        <div class="actions-overlay-top"></div>
-                        <div class="actions-overlay-bottom"></div>
-                    </div>
-                </div>
+            <div id="results_section_8" class="results-section character-sheet-results"></div>
             </div>
         </div>
 
@@ -734,20 +717,17 @@
                     <div class="filter-section-overlay-top"></div>
                     <div class="filter-section-overlay-bottom"></div>
                     <div id="filter_section_9" class="filter-section">
-
-                        <div class="search-container">
-                            <input id="search_input_9" class="search_input" type="text" placeholder="Search by text" />
-                            <button id="clear_search_button_9" class="clear-search">✖</button>
+                        <div class="filter-sticky-top">
+                            <button id="clear_filters_button_9" class="clear_filters_button">Clear Filters</button>
+                            <div class="search-container">
+                                <input id="search_input_9" class="search_input" type="text" placeholder="Search by text" />
+                                <button id="clear_search_button_9" class="clear-search">✖</button>
+                            </div>
                         </div>
-
-                        <!-- Block type filter buttons for tab9 — populated dynamically from blockTypeConfig -->
                         <div class="block-type-tags" id="character_type_tags_9"></div>
-
-                        <div id="all_tags_container" class="tag-section">
-                            <div id="dynamic_tags_section_9"></div>
+                        <div id="all_tags_container">
+                            <div id="dynamic_tags_section_9" class="tag-section"></div>
                         </div>
-
-                        <button id="clear_filters_button_9" class="clear_filters_button">Clear Filters</button>
                     </div>
                 </div>
 
@@ -756,10 +736,75 @@
             </div>
         </div>
     </div> <!-- end .tabs-content -->
+    </div>
+    </div>
+
+        <!-- Dice Panel -->
+        <div id="dice-panel">
+            <div id="dice-panel-inner">
+                <div class="dice-roller-container">
+                    <div class="dice-selection">
+                        <button class="dice-button" data-dice="4">
+                            <div class="dice-wrapper">
+                                <img src="images/d_4.svg" alt="D4" />
+                                <span class="dice-label">D4</span>
+                            </div>
+                        </button>
+                        <button class="dice-button" data-dice="6">
+                            <div class="dice-wrapper">
+                                <img src="images/d_6.svg" alt="D6" />
+                                <span class="dice-label">D6</span>
+                            </div>
+                        </button>
+                        <button class="dice-button" data-dice="8">
+                            <div class="dice-wrapper">
+                                <img src="images/d_8.svg" alt="D8" />
+                                <span class="dice-label">D8</span>
+                            </div>
+                        </button>
+                        <button class="dice-button" data-dice="10">
+                            <div class="dice-wrapper">
+                                <img src="images/d_10.svg" alt="D10" />
+                                <span class="dice-label">D10</span>
+                            </div>
+                        </button>
+                        <button class="dice-button" data-dice="12">
+                            <div class="dice-wrapper">
+                                <img src="images/d_12.svg" alt="D12" />
+                                <span class="dice-label">D12</span>
+                            </div>
+                        </button>
+                        <button class="dice-button" data-dice="20">
+                            <div class="dice-wrapper">
+                                <img src="images/d_20.svg" alt="D20" />
+                                <span class="dice-label">D20</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="dice-panel-actions">
+                        <button id="roll-button">Roll!</button>
+                        <button id="clear-selected-button">Clear All</button>
+                    </div>
+                    <div class="selected-dice-wrapper">
+                        <div class="selected-dice-container"></div>
+                    </div>
+                </div>
+                <div class="roll-results">
+                    <h3>Roll Results</h3>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- end #app-row -->
 
     <!-- Menu Overlay Container -->
     <div id="menu_overlay" class="menu-overlay">
         <div class="menu-content">
+            <button id="menu_close_button" class="hero-button clear-button menu-panel-close">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 6l12 12M6 18L18 6" />
+                </svg>
+            </button>
           <div class="overlay-buttons">
             <button id="upload_button" class="menu-item-button">
               Upload 
@@ -802,63 +847,6 @@
             </ul>
             </nav>
         </div>
-        </div>
-    </div>
-
-    <!-- Dice Roller Overlay -->
-    <div id="dice-overlay" class="overlay">
-        <div class="overlay-backdrop"></div>
-        <div class="dice-roller-overlay-content">
-            <div class="dice-roller-container">
-                <div class="dice-selection">
-                    <button class="dice-button" data-dice="4">
-                        <div class="dice-wrapper">
-                            <img src="images/d_4.svg" alt="D4" />
-                            <span class="dice-label">D4</span>
-                        </div>
-                    </button>
-                    <button class="dice-button" data-dice="6">
-                        <div class="dice-wrapper">
-                            <img src="images/d_6.svg" alt="D6" />
-                            <span class="dice-label">D6</span>
-                        </div>
-                    </button>
-                    <button class="dice-button" data-dice="8">
-                        <div class="dice-wrapper">
-                            <img src="images/d_8.svg" alt="D8" />
-                            <span class="dice-label">D8</span>
-                        </div>
-                    </button>
-                    <button class="dice-button" data-dice="10">
-                        <div class="dice-wrapper">
-                            <img src="images/d_10.svg" alt="D10" />
-                            <span class="dice-label">D10</span>
-                        </div>
-                    </button>
-                    <button class="dice-button" data-dice="12">
-                        <div class="dice-wrapper">
-                            <img src="images/d_12.svg" alt="D12" />
-                            <span class="dice-label">D12</span>
-                        </div>
-                    </button>
-                    <button class="dice-button" data-dice="20">
-                        <div class="dice-wrapper">
-                            <img src="images/d_20.svg" alt="D20" />
-                            <span class="dice-label">D20</span>
-                        </div>
-                    </button>
-                </div>
-                <div class="selected-dice-wrapper">
-                    <button id="roll-button">Roll!</button>
-                    <button id="clear-selected-button">Clear All</button>
-                    <div class="selected-dice-container"></div>
-                </div>
-            </div>
-            <div class="dice-right-panel">
-                <div class="roll-results">
-                    <h3>Roll Results</h3>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -914,18 +902,6 @@
             <div class="overlay-controls">
                 <button id="confirm_clear_button" class="button green-button">Yes</button>
                 <button id="cancel_clear_button" class="button red-button">No</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Overlay for Action Editing -->
-    <div class="actions-edit-overlay overlay">
-        <div class="actions-edit-overlay-content">
-            <h2>Actions Edit Overlay</h2>
-            <p>Edit your actions here...</p>
-            <div class="overlay-controls">
-                <button id="save_action_changes" class="button green-button">Save Changes</button>
-                <button id="close_action_edit" class="button red-button">Cancel</button>
             </div>
         </div>
     </div>
@@ -997,10 +973,8 @@
     <script type="module" src="js/circleToggle.js"></script>
     <script type="module" src="js/editButtonHandler.js"></script>
     <script type="module" src="js/diceRoller.js"></script>
-    <script type="module" src="js/resizeHandle.js"></script>
     <script type="module" src="js/CharacterSheetCalulations.js"></script>
-    <script src="js/upload_download.js"></script>
-    <script src="js/page-title.js"></script>
+    <script src="js/pageUtils.js"></script>
 
 </body>
 </html>

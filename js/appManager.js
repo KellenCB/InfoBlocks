@@ -3,7 +3,7 @@ import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { blockTemplate } from './blockTemplate.js';
 import { tagHandler } from './tagHandler.js';
 import { overlayHandler, initUsesField } from './overlayHandler.js';
-import { attachDynamicTooltips } from './tooltips.js';
+import { applyInlineDiceRolls } from './diceRoller.js';
 
 const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
 
@@ -43,52 +43,7 @@ export const actionButtonHandlers = (() => {
       cancelClearButton: document.getElementById("cancel_clear_button"),
     };
 
-    // Add Block Button
-    const headerEl = document.getElementById(`results_header_${tabSuffix}`);
-    elements.addBlockButton = headerEl
-      ? headerEl.querySelector("#add_block_button")
-      : null;
-    
-    if (elements.addBlockButton && elements.addBlockOverlay) {
-      elements.addBlockButton.addEventListener("click", () => {
-        console.log("➕ Add Block Button Clicked - Resetting Overlay");
 
-        selectedFilterTagsBeforeAdd = tagHandler.getSelectedTags();
-        console.log("✅ Stored search & filter tags BEFORE adding a block:", selectedFilterTagsBeforeAdd);
-
-        document.querySelectorAll(".add-block-overlay .tag-button.selected").forEach(tag => {
-          tag.classList.remove("selected");
-        });
-
-        const titleInput = document.getElementById("title_input_overlay");
-        const textInput = document.getElementById("block_text_overlay");
-        const tagInputField = document.getElementById("tags_input_overlay");
-        if (titleInput) titleInput.value = "";
-        if (textInput) textInput.value = "";
-        if (tagInputField) tagInputField.value = "";
-
-        localStorage.removeItem("uses_field_overlay_state");
-
-        const usesFieldContainer = document.getElementById("uses_field_overlay");
-        if (usesFieldContainer) {
-            initUsesField(usesFieldContainer, "uses_field_overlay_state");
-        }
-
-        if (window.selectedOverlayTags && typeof selectedOverlayTags === "object") {
-          Object.keys(selectedOverlayTags).forEach(category => {
-            selectedOverlayTags[category] = [];
-          });
-          console.log("✅ Cleared stored selectedOverlayTags.");
-        }
-
-        overlayHandler.initializeOverlayTagHandlers("add_block_overlay_tags");
-
-        elements.addBlockOverlay.classList.add("show");
-        if (titleInput) setTimeout(() => titleInput.focus(), 50);
-      });
-    } else {
-      console.error("❌ Error: Add Block button or overlay not found.");
-    }
 
     // Bin Buttons (Clear Local Storage)
     if (elements.binButtons.length > 0 && elements.clearDataOverlay) {
@@ -183,20 +138,34 @@ export const appManager = (() => {
     const usedUserTags = usedTags
       .filter(tag => !allPredefined.includes(tag))
       .sort((a, b) => a.localeCompare(b));
-      
+
+    const currentlyOpen = new Set(
+        [...(document.getElementById(`dynamic_tags_section_${tabSuffix}`)
+            ?.querySelectorAll('.tag-accordion-header.open') || [])]
+            .map(h => h.dataset.category)
+    );
+
     let html = "";
 
     Object.keys(categoryTags).forEach(category => {
-      if (!categoryTags[category].tabs.includes(activeTab)) return;
-      const usedPredefined = categoryTags[category].tags.filter(tag => usedTags.includes(tag));
-      if (usedPredefined.length > 0) {
-        html += `<div class="tag-category" id="${category}_tags_list_${tabSuffix}">`;
+        if (!categoryTags[category].tabs.includes(activeTab)) return;
+        const usedPredefined = categoryTags[category].tags.filter(tag => usedTags.includes(tag));
+        if (usedPredefined.length === 0) return;
+
+        const label      = categoryTags[category].label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const hasSelected = usedPredefined.some(tag => selectedTags.includes(tag));
+        const openClass = (hasSelected || currentlyOpen.has(category)) ? ' open' : '';
+
+        html += `<div class="tag-accordion-group">`;
+        html += `<button class="tag-accordion-header${openClass}" data-category="${category}">`;
+        html += `<span>${label}</span><span class="accordion-chevron"></span>`;
+        html += `</button>`;
+        html += `<div class="tag-accordion-body${openClass}" id="${category}_tags_list_${tabSuffix}">`;
         html += usedPredefined.map(tag => {
-          const isSelected = selectedTags.includes(tag) ? "selected" : "";
-          return `<button class="tag-button ${categoryTags[category].className} ${isSelected}" data-tag="${tag}">${tag}</button>`;
+            const isSelected = selectedTags.includes(tag) ? "selected" : "";
+            return `<button class="tag-button ${categoryTags[category].className} ${isSelected}" data-tag="${tag}">${tag}</button>`;
         }).join("");
-        html += `</div>`;
-      }
+        html += `</div></div>`;
     });
 
     if (usedUserTags.length > 0) {
@@ -276,13 +245,18 @@ export const appManager = (() => {
     });
   });
 
+let renderAbortController = null;
 
 /* ==================================================================*/
 /* ============================= BLOCKS =============================*/
 /* ==================================================================*/
 
-  const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
+const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
     console.log("🔍 Checking tab value:", tab, typeof tab);
+    
+    if (renderAbortController) renderAbortController.abort();
+    renderAbortController = new AbortController();
+    const signal = renderAbortController.signal;
     
     if (typeof tab !== "string") {
       console.error("❌ Error: 'tab' should be a string but got:", tab);
@@ -349,8 +323,8 @@ export const appManager = (() => {
       if (!wasOpen) viewDropdown.classList.remove("hidden");
     });
 
-    document.addEventListener("click", () => viewDropdown.classList.add("hidden"));
-    document.addEventListener("click", closeDropdowns);
+    document.addEventListener("click", () => viewDropdown.classList.add("hidden"), { signal });
+    document.addEventListener("click", closeDropdowns, { signal });
 
     viewDropdown.querySelectorAll(".view-toggle-item").forEach(item => {
       const state = item.dataset.state;
@@ -377,8 +351,8 @@ export const appManager = (() => {
       if (!wasOpen) sortDropdown.classList.remove("hidden");
     });
     
-    document.addEventListener("click", () => sortDropdown.classList.add("hidden"));
-    
+    document.addEventListener("click", () => sortDropdown.classList.add("hidden"), { signal });
+
     sortDropdown.querySelectorAll(".sort-item").forEach(item => {
       const mode = item.dataset.sort;
       item.classList.toggle("selected", mode === savedSortMode);
@@ -425,27 +399,44 @@ export const appManager = (() => {
         `);
       }
               
-    const blocks = filteredBlocks || getBlocks(tab);
-    console.log(`📦 Blocks to render for ${tab}:`, blocks);
-    if (blocks.length === 0) {
-      console.warn(`⚠️ No blocks found for ${tab}`);
-      const placeholderClass = 'results-placeholder';
-      if (!resultsSection.querySelector(`.${placeholderClass}`)) {
-        const p = document.createElement('p');
-        p.classList.add(placeholderClass);
-        p.textContent = 'Use the + button to add items here…';
-        p.style.position  = 'absolute';
-        p.style.top       = '50%';
-        p.style.left      = '50%';
-        p.style.transform = 'translate(-50%, -50%)';
-        p.style.textAlign = 'center';
-        p.style.opacity = '0.25';
-        resultsSection.appendChild(p);
-      }
+    const allBlocks     = getBlocks(tab);
+    const pinnedBlocks  = allBlocks.filter(b => b.pinned);
+    const displayBlocks = (filteredBlocks || allBlocks).filter(b => !b.pinned);
+
+    console.log(`📦 Blocks to render for ${tab}:`, displayBlocks);
+
+    // ── Pinned zone ──────────────────────────────────────────────────────────
+    if (pinnedBlocks.length > 0) {
+        const pinnedHTML = pinnedBlocks.map(b => blockTemplate(b, tab)).join('');
+        resultsSection.insertAdjacentHTML('beforeend', `
+            <div class="pinned-blocks-zone">
+                ${pinnedHTML}
+            </div>
+        `);
     }
-    blocks.forEach(block => {
-        resultsSection.insertAdjacentHTML("beforeend", blockTemplate(block, tab));
+
+    // ── Normal blocks ────────────────────────────────────────────────────────
+    if (displayBlocks.length === 0 && pinnedBlocks.length === 0) {
+        const placeholderClass = 'results-placeholder';
+        if (!resultsSection.querySelector(`.${placeholderClass}`)) {
+            const p = document.createElement('p');
+            p.classList.add(placeholderClass);
+            p.textContent = 'Use the + button to add items here…';
+            p.style.position  = 'absolute';
+            p.style.top       = '50%';
+            p.style.left      = '50%';
+            p.style.transform = 'translate(-50%, -50%)';
+            p.style.textAlign = 'center';
+            p.style.opacity   = '0.25';
+            resultsSection.appendChild(p);
+        }
+    }
+
+    displayBlocks.forEach(block => {
+        resultsSection.insertAdjacentHTML('beforeend', blockTemplate(block, tab));
+        applyInlineDiceRolls(resultsSection);
     });
+
     console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
       
     if (tab === "tab6") {
@@ -461,11 +452,9 @@ export const appManager = (() => {
     document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`)
       .forEach(blockEl => {
         blockEl.addEventListener("click", function (e) {
-          if (e.target.closest(".action-button") ||
-              e.target.closest(".tag-button") ||
-              e.target.closest(".block-title") ||
-              e.target.closest(".block-body") ||
-              e.target.closest(".circle")) return;
+          const validTargets = ['.block', '.block-header', '.block-header-left'];
+          const isEmptySpace = validTargets.some(sel => e.target === blockEl.querySelector(sel) || e.target === blockEl);
+          if (!isEmptySpace) return;
 
           const blockId = blockEl.getAttribute("data-id");
           const blocksArr = getBlocks(tab);
@@ -520,7 +509,6 @@ export const appManager = (() => {
       });
     
     updateTags();
-    initializeTitles();
     attachDynamicTooltips();
   };
 
@@ -724,7 +712,71 @@ export const appManager = (() => {
     localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(userBlocks));
     return true;
   };
-    
+
+/* ==================================================================*/
+/* =========================== TOOLTIPS =============================*/
+/* ==================================================================*/
+
+let activeTooltip = null;
+
+function tooltipMouseEnter(e) {
+  const el = e.currentTarget;
+  if (el.scrollWidth <= el.clientWidth) return;
+
+  clearTimeout(el._tooltipTimer);
+  if (activeTooltip) {
+    activeTooltip.remove();
+    activeTooltip = null;
+  }
+
+  el._tooltipTimer = setTimeout(() => {
+    const tip = document.createElement('div');
+    tip.classList.add('text-tooltip');
+    tip.textContent = el.textContent;
+    document.body.appendChild(tip);
+
+    const rect = el.getBoundingClientRect();
+    tip.style.left = `${rect.left}px`;
+    tip.style.top  = `${rect.bottom + 5}px`;
+
+    activeTooltip = tip;
+  }, 750);
+}
+
+function tooltipMouseLeave(e) {
+  const el = e.currentTarget;
+  clearTimeout(el._tooltipTimer);
+  if (activeTooltip) {
+    activeTooltip.remove();
+    activeTooltip = null;
+  }
+}
+
+function attachTooltipHandlers(nodes) {
+  nodes.forEach(el => {
+    el.removeEventListener('mouseenter', tooltipMouseEnter);
+    el.removeEventListener('mouseleave', tooltipMouseLeave);
+    el.addEventListener('mouseenter', tooltipMouseEnter);
+    el.addEventListener('mouseleave', tooltipMouseLeave);
+  });
+}
+
+['scroll', 'resize', 'blur'].forEach(evt =>
+  window.addEventListener(evt, () => {
+    if (activeTooltip) {
+      activeTooltip.remove();
+      activeTooltip = null;
+    }
+  })
+);
+
+function attachDynamicTooltips() {
+  const targets = document.querySelectorAll(
+    '.block-title h4, .action-name, .action-description'
+  );
+  attachTooltipHandlers(targets);
+}
+
 /* ==================================================================*/
 /* ======================== HELPER FUNCTIONS ========================*/
 /* ==================================================================*/

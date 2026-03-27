@@ -3,6 +3,7 @@ import { appManager } from './appManager.js';
 import { tagHandler } from './tagHandler.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { stripHTML } from './appManager.js';
+import { applyInlineDiceRolls } from './diceRoller.js';
 
 let splitActive = false;
 
@@ -15,7 +16,7 @@ const TABS = [
     { id: 'tab9', label: 'Feats & Magic' },
 ];
 
-export const SINGLETON_TABS = new Set(['tab4', 'tab8']);
+export const SINGLETON_TABS = new Set();
 
 const panelAbortControllers = { left: null, right: null };
 
@@ -30,6 +31,33 @@ export function initSplitView() {
     const btn = document.getElementById('split-view-button');
     if (!btn) return;
     btn.addEventListener('click', toggleSplitView);
+
+    let wasActiveBeforePortrait = localStorage.getItem('splitViewActive') === 'true'
+        && window.innerHeight > window.innerWidth;
+    let ready = false;
+
+    // Short delay before the resize listener becomes active, so it
+    // doesn't fire during page initialisation and tear down the layout
+    setTimeout(() => { ready = true; }, 500);
+
+    const handleOrientationChange = () => {
+        if (!ready) return;
+        const isPortrait = window.innerHeight > window.innerWidth;
+
+        if (isPortrait && splitActive) {
+            wasActiveBeforePortrait = true;
+            splitActive = false;
+            exitSplitView();
+            btn.classList.remove('active');
+        } else if (!isPortrait && wasActiveBeforePortrait && !splitActive) {
+            wasActiveBeforePortrait = false;
+            splitActive = true;
+            enterSplitView();
+            btn.classList.add('active');
+        }
+    };
+
+    window.addEventListener('resize', handleOrientationChange);
 }
 
 function toggleSplitView() {
@@ -87,10 +115,11 @@ function enterSplitView() {
     wireSplitNavDragSync();
 
     // Auto-mount left panel
-    const currentTab = localStorage.getItem('activeTab') || 'tab4';
-    const leftNavBtn = document.querySelector(`.split-tab-nav[data-panel-nav="left"] .split-tab-button[data-tab="${currentTab}"]`);
+    const savedLeftTab = localStorage.getItem('splitLeftTab');
+    const currentTab   = savedLeftTab || localStorage.getItem('activeTab') || 'tab4';
+    const leftNavBtn   = document.querySelector(`.split-tab-nav[data-panel-nav="left"] .split-tab-button[data-tab="${currentTab}"]`);
     if (leftNavBtn) leftNavBtn.click();
-
+    
     // Auto-mount right panel
     const savedRightTab = localStorage.getItem('splitRightTab');
     const fallbackRightTab = TABS.find(t => t.id !== currentTab)?.id || 'tab3';
@@ -108,43 +137,45 @@ function exitSplitView() {
     const tabsContent = document.querySelector('.tabs-content');
     const tabNav      = document.querySelector('.tab-nav');
 
-    if (wrapper) {
-        ['tab4', 'tab8'].forEach(tabId => {
-            const node = document.getElementById(tabId);
-            if (node && wrapper.contains(node)) {
-                node.style.display = 'none';
-                node.classList.remove('active');
-                if (tabsContent) tabsContent.appendChild(node);
-            }
-        });
-    }
-
     if (tabsContent) tabsContent.style.display = '';
     if (tabNav)      tabNav.style.display      = '';
     if (wrapper)     wrapper.remove();
 
-    const leftTab = panelState.left.activeTab;
+    // Ensure any fade-in elements that were hidden during load get made visible
+    document.querySelectorAll('.fade-in:not(.visible)').forEach(el => {
+        el.classList.add('visible');
+    });
+
+    const leftTab = panelState.left.activeTab
+        || localStorage.getItem('activeTab')
+        || localStorage.getItem('splitLeftTab')
+        || 'tab4';
+
     panelState.left.activeTab  = null;
     panelState.right.activeTab = null;
 
-    if (leftTab) {
-        document.querySelectorAll('.tab-content').forEach(c => {
-            c.classList.remove('active');
-            c.style.display = 'none';
-        });
-        const targetContent = document.getElementById(leftTab);
-        if (targetContent) {
-            targetContent.classList.add('active');
-            targetContent.style.display = 'flex';
+    document.querySelectorAll('.tab-content').forEach(c => {
+        c.classList.remove('active');
+        c.style.display = 'none';
+    });
+    const targetContent = document.getElementById(leftTab);
+    if (targetContent) {
+        targetContent.classList.add('active');
+        targetContent.style.display = 'flex';
+    } else {
+        // Fallback: show whichever tab-content is first if target not found
+        const firstTab = document.querySelector('.tab-content');
+        if (firstTab) {
+            firstTab.classList.add('active');
+            firstTab.style.display = 'flex';
         }
-        document.querySelectorAll('.tab-nav .tab-button').forEach(b => {
-            b.classList.toggle('active', b.dataset.tab === leftTab);
-        });
-        appManager.renderBlocks(leftTab);
-        appManager.updateTags();
-        localStorage.setItem('activeTab', leftTab);
     }
-
+    document.querySelectorAll('.tab-nav .tab-button').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === leftTab);
+    });
+    appManager.renderBlocks(leftTab);
+    appManager.updateTags();
+    localStorage.setItem('activeTab', leftTab);
     console.log('✅ Split view exited');
 }
 
@@ -237,18 +268,6 @@ function onNavButtonClick(e) {
     const panelSide = btn.dataset.panel;
     if (btn.disabled) return;
 
-    // If switching away from a singleton, return it to .tabs-content
-    const prevTab = panelState[panelSide].activeTab;
-    if (prevTab && SINGLETON_TABS.has(prevTab) && prevTab !== tabId) {
-        const node = document.getElementById(prevTab);
-        const tabsContent = document.querySelector('.tabs-content');
-        if (node && tabsContent) {
-            node.style.display = 'none';
-            node.classList.remove('active');
-            tabsContent.appendChild(node);
-        }
-    }
-
     document
         .querySelectorAll(`.split-tab-nav[data-panel-nav="${panelSide}"] .split-tab-button`)
         .forEach(b => b.classList.remove('active'));
@@ -268,27 +287,8 @@ function onNavButtonClick(e) {
 function mountTabInPanel(tabId, panelSide) {
     const contentArea = document.querySelector(`.split-content-area[data-panel-content="${panelSide}"]`);
     if (!contentArea) return;
-
-    if (SINGLETON_TABS.has(tabId)) {
-        mountSingletonTab(tabId, panelSide, contentArea);
-    } else {
-        mountFreeTab(tabId, panelSide, contentArea);
-    }
+    mountFreeTab(tabId, panelSide, contentArea);
 }
-
-// ── Singleton tabs (4, 8) ─────────────────────────────────────────────────────
-
-function mountSingletonTab(tabId, panelSide, contentArea) {
-    const node = document.getElementById(tabId);
-    if (!node) return;
-    contentArea.innerHTML = '';
-    contentArea.appendChild(node);
-    node.style.display = 'flex';
-    node.classList.add('active');
-    console.log(`✅ Singleton ${tabId} mounted in ${panelSide} panel`);
-}
-
-// ── Free tabs (3, 6, 7, 9) ───────────────────────────────────────────────────
 
 function mountFreeTab(tabId, panelSide, contentArea) {
     if (panelAbortControllers[panelSide]) {
@@ -303,9 +303,13 @@ function mountFreeTab(tabId, panelSide, contentArea) {
 
     if (tabId === 'tab9') initTab9PanelCircles(contentArea, panelSide);
 
-    initPanelSearch(tabId, panelSide, tabNum, ids);
-    initPanelFilters(tabId, panelSide, tabNum, ids);
-    initPanelToggleFilter(tabId, panelSide, ids);
+    if (tabId === 'tab4' || tabId === 'tab8') {
+        initCharacterSheetPanel(contentArea, tabId);
+    } else {
+        initPanelSearch(tabId, panelSide, tabNum, ids);
+        initPanelFilters(tabId, panelSide, tabNum, ids);
+        initPanelToggleFilter(tabId, panelSide, ids);
+    }
     wirePanelBlockActions(tabId, panelSide, ids, contentArea);
 
     renderPanelBlocks(tabId, panelSide, ids, null, panelAbortControllers[panelSide].signal);
@@ -336,6 +340,9 @@ function getScopedIds(panelSide, tabNum) {
 // ── Build HTML for a free tab inside a panel ─────────────────────────────────
 
 function buildFreeTabHTML(tabId, tabNum, panelSide, ids) {
+    if (tabId === 'tab4' || tabId === 'tab8') {
+        return buildCharSheetTabHTML(tabId, ids);
+    }
     const hasTypeFilter = !!blockTypeConfig[tabId];
     const tab9Extras    = tabId === 'tab9' ? buildTab9Extras(panelSide) : '';
 
@@ -351,13 +358,15 @@ function buildFreeTabHTML(tabId, tabNum, panelSide, ids) {
                     <div class="filter-section-overlay-top" id="${ids.filterOverlayTop}"></div>
                     <div class="filter-section-overlay-bottom" id="${ids.filterOverlayBot}"></div>
                     <div id="${ids.filterSection}" class="filter-section">
-                        <div class="search-container">
-                            <input id="${ids.searchInput}" class="search_input" type="text" placeholder="Search by text" />
-                            <button id="${ids.clearSearch}" class="clear-search">✖</button>
+                        <div class="filter-sticky-top">
+                            <button id="${ids.clearFilters}" class="clear_filters_button">Clear Filters</button>
+                            <div class="search-container">
+                                <input id="${ids.searchInput}" class="search_input" type="text" placeholder="Search by text" />
+                                <button id="${ids.clearSearch}" class="clear-search">✖</button>
+                            </div>
                         </div>
                         ${hasTypeFilter ? `<div class="block-type-tags" id="${ids.typeTagsSection}"></div>` : ''}
                         <div id="${ids.tagsSection}" class="tag-section"></div>
-                        <button id="${ids.clearFilters}" class="clear_filters_button">Clear Filters</button>
                     </div>
                 </div>
                 <div id="${ids.resultsSection}" class="results-section"></div>
@@ -444,6 +453,190 @@ function buildTab9Extras(panelSide) {
     `;
 }
 
+// ── Character sheet tab HTML builder ─────────────────────────────────────────
+
+function buildCharSheetTabHTML(tabId, ids) {
+    const t = tabId; // e.g. 'tab4' or 'tab8'
+
+    const abilityRows = ['str','dex','con','int','wis','cha'].map(ab => `
+        <div class="main-stat-box">
+            <span class="stat-label">${ab.toUpperCase()}</span>
+            <span class="stat-value calculated" data-storage-key="${t}_${ab}_bonus"></span>
+            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="${t}_${ab}_score"></span>
+        </div>`).join('');
+
+    const saveRows = [
+        ['str','Strength'],['dex','Dexterity'],['con','Constitution'],
+        ['int','Intelligence'],['wis','Wisdom'],['cha','Charisma']
+    ].map(([ab, label]) => `
+        <div class="save-row">
+            <span class="circle toggle-circle" data-storage-key="${t}_save_${ab}_toggle"></span>
+            <span class="save-label">${label}</span>
+            <span class="skill-plus calculated" data-storage-key="${t}_save_${ab}"></span>
+        </div>`).join('');
+
+    const skillRows = [
+        ['acrobatics','dex','Acrobatics'],['animal_handling','wis','Animal Handling'],
+        ['arcana','int','Arcana'],['athletics','str','Athletics'],
+        ['deception','cha','Deception'],['history','int','History'],
+        ['insight','wis','Insight'],['intimidation','cha','Intimidation'],
+        ['investigation','int','Investigation'],['medicine','wis','Medicine'],
+        ['nature','int','Nature'],['perception','wis','Perception'],
+        ['performance','cha','Performance'],['persuasion','cha','Persuasion'],
+        ['religion','int','Religion'],['sleight_of_hand','dex','Sleight of Hand'],
+        ['stealth','dex','Stealth'],['survival','wis','Survival']
+    ].map(([key, ab, label]) => `
+        <div class="skill-row">
+            <span class="circle toggle-circle" data-storage-key="${t}_skill_${key}_toggle"></span>
+            <span class="skill-label">${label} (${ab})</span>
+            <span class="skill-plus calculated" data-storage-key="${t}_skill_${key}"></span>
+        </div>`).join('');
+
+    return `
+        <div style="display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden;">
+            <div class="character-sheet-stats">
+                <div class="descriptor-grid">
+                    ${['level','class','alignment','background','species'].map(f => `
+                    <div class="descriptor-box">
+                        <span class="descriptor-label">${f.charAt(0).toUpperCase() + f.slice(1)}</span>
+                        <span class="descriptor-value editable" contenteditable="true" data-storage-key="${t}_${f}"></span>
+                    </div>`).join('')}
+                </div>
+                <div class="stats-container-row">
+                    <div class="hp-container-row">
+                        <div class="main-hp-stat-box">
+                            <span class="stat-label">HP</span>
+                            <div class="current-hp-stat-box" style="display:flex;gap:10px;">
+                                <span class="large-value editable" contenteditable="true" data-storage-key="${t}_hp"></span>
+                                <span class="large-value" style="font-weight:100;">/</span>
+                                <span class="large-value editable" contenteditable="true" data-storage-key="${t}_maxhp"></span>
+                            </div>
+                        </div>
+                        <div class="vertical-break"></div>
+                        <div class="hp-stat-box">
+                            <span class="stat-label">Temp HP</span>
+                            <span class="large-value editable" contenteditable="true" data-storage-key="${t}_temp_hp"></span>
+                        </div>
+                        <div class="vertical-break"></div>
+                        <div class="hp-stat-box">
+                            <span class="stat-label">Hit Die</span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="${t}_hit_die"></span>
+                            <span class="stat-value editable" contenteditable="true" data-storage-key="${t}_hit_die_ratio"></span>
+                        </div>
+                    </div>
+                    ${[['ac','AC'],['initiative','Initiative'],['prof','Prof'],['speed','Speed']].map(([k,l]) => `
+                    <div class="stat-box">
+                        <span class="stat-label">${l}</span>
+                        <span class="large-value editable" contenteditable="true" data-storage-key="${t}_${k}"></span>
+                    </div>`).join('')}
+                </div>
+                <div class="stats-container-row">
+                    <div class="main-stats-container-row">${abilityRows}</div>
+                    <div class="stat-box">
+                        <span class="stat-label">Spell Save</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="${t}_spell_save"></span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Spell attack</span>
+                        <span class="stat-value editable" contenteditable="true" data-storage-key="${t}_spell_attack"></span>
+                    </div>
+                    <div class="death-saves-box">
+                        <span class="stat-label">Death Saves</span>
+                        <div class="death-saves-row">
+                            <span class="circle deathSaveGreen toggle-circle" data-storage-key="${t}_deathSave_1"></span>
+                            <span class="circle deathSaveGreen toggle-circle" data-storage-key="${t}_deathSave_2"></span>
+                            <span class="circle deathSaveGreen toggle-circle" data-storage-key="${t}_deathSave_3"></span>
+                        </div>
+                        <div class="death-saves-row">
+                            <span class="circle deathSaveRed toggle-circle" data-storage-key="${t}_deathSave_4"></span>
+                            <span class="circle deathSaveRed toggle-circle" data-storage-key="${t}_deathSave_5"></span>
+                            <span class="circle deathSaveRed toggle-circle" data-storage-key="${t}_deathSave_6"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="character-sheet-row" style="flex:1;min-height:0;">
+                <div class="saving-throws-and-skills-column">
+                    <div class="saving-throws">
+                        <h3>Saving Throws</h3>
+                        ${saveRows}
+                    </div>
+                    <div class="horizontal-break"></div>
+                    <div class="skills">
+                        <h3>Skills</h3>
+                        ${skillRows}
+                    </div>
+                </div>
+                <div id="${ids.resultsSection}" class="results-section character-sheet-results"></div>
+            </div>
+        </div>
+    `;
+}
+
+
+// ── Character sheet panel initialiser ────────────────────────────────────────
+
+function initCharacterSheetPanel(container, tabId) {
+    // Populate all fields (editable and calculated) from localStorage
+    container.querySelectorAll('[data-storage-key]').forEach(el => {
+        if (el.classList.contains('toggle-circle')) return;
+        const key   = el.getAttribute('data-storage-key');
+        const saved = localStorage.getItem(key);
+        if (saved !== null && saved !== '') el.textContent = saved;
+    });
+    // Wire editable fields
+    container.querySelectorAll('.editable').forEach(field => {
+        const key = field.getAttribute('data-storage-key');
+        if (!key) return;
+
+        field.addEventListener('focus', function () {
+            const range = document.createRange();
+            range.selectNodeContents(this);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            this.style.opacity = '1';
+            this.dataset.initialValue = this.textContent;
+        });
+
+        field.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.blur();
+                window.getSelection().removeAllRanges();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                if (this.dataset.initialValue !== undefined) {
+                    this.textContent = this.dataset.initialValue;
+                }
+                this.blur();
+            }
+        });
+
+        field.addEventListener('blur', function () {
+            const val = this.textContent.trim();
+            if (val) localStorage.setItem(key, val);
+        });
+    });
+
+    // Wire toggle circles
+    container.querySelectorAll('.toggle-circle').forEach(circle => {
+        const key = circle.getAttribute('data-storage-key');
+        if (!key) return;
+
+        const isFilled = localStorage.getItem(key) === 'true';
+        circle.classList.toggle('filled',   isFilled);
+        circle.classList.toggle('unfilled', !isFilled);
+
+        circle.addEventListener('click', function () {
+            const nowFilled = this.classList.contains('unfilled');
+            this.classList.toggle('filled',   nowFilled);
+            this.classList.toggle('unfilled', !nowFilled);
+            localStorage.setItem(key, nowFilled.toString());
+        });
+    });
+}
+
 // ── Render blocks ─────────────────────────────────────────────────────────────
 
 export function renderPanelBlocks(tabId, panelSide, ids, filteredBlocks = null, signal = null) {
@@ -459,15 +652,57 @@ export function renderPanelBlocks(tabId, panelSide, ids, filteredBlocks = null, 
     import('./blockTemplate.js').then(({ blockTemplate }) => {
         resultsSection.innerHTML = buildResultsHeader(tabId, panelSide, ids);
 
-        if (blocks.length === 0) {
+        // Permanent items always rendered first, before blocks
+        if (tabId === 'tab6') {
+            const permanentItems = [
+                { id: 'perm1', defaultValue: '00', colorClass: 'gold-bg' },
+                { id: 'perm2', defaultValue: '00', colorClass: 'silver-bg' },
+                { id: 'perm3', defaultValue: '00', colorClass: 'copper-bg' },
+            ];
+
+            const permanentHTML = permanentItems.map(({ id, defaultValue, colorClass }) => {
+                const savedValue = localStorage.getItem(`permanentItem_${id}`) || defaultValue;
+                return `<div class="block minimized permanent-block ${colorClass}" data-id="${id}">
+                            <h4 class="permanent-title" contenteditable="true">${savedValue}</h4>
+                        </div>`;
+            }).join('');
+
+            resultsSection.insertAdjacentHTML('beforeend', `
+                <div class="permanent-items-container">${permanentHTML}</div>
+            `);
+
+            resultsSection.querySelectorAll('.permanent-title').forEach(titleEl => {
+                titleEl.addEventListener('blur', () => {
+                    const blockId = titleEl.parentElement.getAttribute('data-id');
+                    localStorage.setItem(`permanentItem_${blockId}`, titleEl.textContent.trim());
+                });
+            });
+        }
+
+        // Blocks rendered after permanent items
+        const allBlocks     = appManager.getBlocks(tabId);
+        const pinnedBlocks  = allBlocks.filter(b => b.pinned);
+        const displayBlocks = blocks.filter(b => !b.pinned);
+
+        if (pinnedBlocks.length > 0) {
+            const pinnedHTML = pinnedBlocks.map(b => blockTemplate(b, tabId)).join('');
+            resultsSection.insertAdjacentHTML('beforeend', `
+                <div class="pinned-blocks-zone">
+                    ${pinnedHTML}
+                </div>
+            `);
+        }
+
+        if (displayBlocks.length === 0 && pinnedBlocks.length === 0) {
             const p = document.createElement('p');
-            p.className = 'results-placeholder';
+            p.className  = 'results-placeholder';
             p.textContent = 'Use the + button to add items here…';
             p.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0.25;';
             resultsSection.appendChild(p);
         } else {
-            blocks.forEach(block => {
+            displayBlocks.forEach(block => {
                 resultsSection.insertAdjacentHTML('beforeend', blockTemplate(block, tabId));
+                applyInlineDiceRolls(resultsSection);
             });
         }
 
@@ -512,10 +747,12 @@ function wirePanelBlockActions(tabId, panelSide, ids, contentArea) {
         if (panelState[panelSide].activeTab !== tabId) return;
 
         const blockEl = e.target.closest('.block:not(.permanent-block)');
-        if (blockEl &&
-            !e.target.closest('.action-button') &&
-            !e.target.closest('.circle') &&
-            !e.target.closest('.tag-button')) {
+        const validTargets = ['.block', '.block-header', '.block-header-left'];
+        const isEmptySpace = validTargets.some(sel => {
+            const el = blockEl.querySelector(sel);
+            return e.target === el || e.target === blockEl;
+        });
+        if (blockEl && isEmptySpace) {
 
             const bId       = blockEl.getAttribute('data-id');
             const blocksArr = appManager.getBlocks(tabId);
@@ -537,6 +774,17 @@ function wirePanelBlockActions(tabId, panelSide, ids, contentArea) {
         const blocks = appManager.getBlocks(tabId);
         const block  = blocks.find(b => b.id === blockId);
         if (!block) return;
+
+        if (target.classList.contains('pin-button')) {
+            const allBlocks = appManager.getBlocks(tabId);
+            const idx       = allBlocks.findIndex(b => b.id === blockId);
+            if (idx !== -1) {
+                allBlocks[idx].pinned = !allBlocks[idx].pinned;
+                localStorage.setItem(`userBlocks_${tabId}`, JSON.stringify(allBlocks));
+                refreshPanelsShowingTab(tabId);
+            }
+            return;
+        }
 
         if (target.classList.contains('duplicate-button')) {
             appManager.saveBlock(tabId, `${block.title} (Copy)`, block.text,
@@ -803,25 +1051,45 @@ function renderPanelTags(tabId, panelSide, ids) {
     const usedTags     = new Set(blocks.flatMap(b => b.tags));
     const selectedTags = panelState[panelSide].selectedTags?.[tabId] || [];
 
-    let html = '';
-    Object.entries(categoryTags).forEach(([_, data]) => {
+    const currentlyOpen = new Set(
+    [...(tagsSection.querySelectorAll('.tag-accordion-header.open') || [])]
+        .map(h => h.dataset.category)
+    );
+
+let html = '';
+    Object.entries(categoryTags).forEach(([category, data]) => {
         if (!data.tabs.includes(tabId)) return;
         const used = data.tags.filter(t => usedTags.has(t));
         if (!used.length) return;
+
+        const label       = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const hasSelected = used.some(t => selectedTags.includes(t));
+        const openClass = (hasSelected || currentlyOpen.has(category)) ? ' open' : '';
+
+        html += `<div class="tag-accordion-group">`;
+        html += `<button class="tag-accordion-header${openClass}" data-category="${category}">`;
+        html += `<span>${label}</span><span class="accordion-chevron"></span>`;
+        html += `</button>`;
+        html += `<div class="tag-accordion-body${openClass}">`;
         html += used.map(tag => {
             const sel = selectedTags.includes(tag) ? 'selected' : '';
             return `<button class="tag-button ${data.className} ${sel}" data-tag="${tag}">${tag}</button>`;
         }).join('');
+        html += `</div></div>`;
     });
 
     const userTags = [...usedTags]
         .filter(t => !allPredefined.includes(t))
         .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
         .sort();
-    userTags.forEach(tag => {
-        const sel = selectedTags.includes(tag) ? 'selected' : '';
-        html += `<button class="tag-button tag-user ${sel}" data-tag="${tag}">${tag}</button>`;
-    });
+    if (userTags.length) {
+        html += `<div class="tag-category user-tags">`;
+        userTags.forEach(tag => {
+            const sel = selectedTags.includes(tag) ? 'selected' : '';
+            html += `<button class="tag-button tag-user ${sel}" data-tag="${tag}">${tag}</button>`;
+        });
+        html += `</div>`;
+    }
 
     tagsSection.innerHTML = html;
 }

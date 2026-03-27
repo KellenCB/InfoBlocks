@@ -1,6 +1,8 @@
 .tag-section{
     display: contents;
     flex-wrap: wrap;
+    column-gap: 7px;
+    row-gap: 8px;
 }
 
 .all-tags-container {
@@ -28,13 +30,15 @@
     display: contents;
 }
 
-.overlay-tags, #dynamic_overlay_tags {
+.overlay-tags,
+#dynamic_overlay_tags {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     align-items: flex-start;
     max-width: 100%;
     padding: 10px 0;
+    gap: 6px;
 }
 
 [id^="user_tags_list"],
@@ -65,7 +69,6 @@
 .tag-button {
     padding: 14px;
     height: 35px;
-    margin: 6px;
     color: var(--user-color);
     background-color: transparent;
     border: 1px solid var(--user-color);
@@ -122,6 +125,8 @@
     width: 100%;
     padding: 15px 0 15px 0;
     border-bottom: 1px solid #444;
+    column-gap: 7px;
+    row-gap: 9px;
 }
 
 .add-block-overlay .block-type-tags,
@@ -134,4 +139,69 @@
 .add-block-overlay .block-type-tags,
 .edit-block-overlay .block-type-tags {
     justify-content: center;
+}
+
+/* ==================================================================*/
+/* ======================= TAG ACCORDION ============================*/
+/* ==================================================================*/
+
+.tag-accordion-group {
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.tag-accordion-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    border: none;
+    border-left: 3px solid transparent;
+    color: #ddd;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+    transition: background-color 0.2s ease, border-left-color 0.2s ease, border-radius 0.15s ease;
+}
+
+.tag-accordion-header:hover {
+    background-color: #3a3a3a;
+}
+
+.tag-accordion-header.open {
+    background-color: #3a3a3a;
+    border-left-color: #4CAF50;
+    border-radius: 8px 8px 0 0;
+}
+
+/* Chevron — pure CSS triangle */
+.accordion-chevron {
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 7px solid #aaa;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.tag-accordion-header.open .accordion-chevron {
+    transform: rotate(90deg);
+}
+
+/* Tag body — hidden by default, flex when open */
+.tag-accordion-body {
+    display: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 8px 6px 8px;
+    background-color: #2e2e2e;
+    border-radius: 0 0 8px 8px;
+}
+
+.tag-accordion-body.open {
+    display: flex;
 }
