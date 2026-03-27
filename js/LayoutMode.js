@@ -130,7 +130,7 @@ function onExitLandscape() {
  * (hidden containers on landscape load), so we force-show them here.
  */
 function ensureNavsVisible() {
-    document.querySelectorAll('.tab-nav').forEach(nav => {sd
+    document.querySelectorAll('.tab-nav').forEach(nav => {
         nav.classList.add('visible');
         // Walk up and make any fade-in ancestor containers visible too.
         let el = nav.parentElement;
