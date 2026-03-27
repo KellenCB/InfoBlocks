@@ -6,6 +6,7 @@ import { tagHandler } from './tagHandler.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { stripHTML } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
+import { initLayoutMode, activateCharTab } from './layoutMode.js';
 
 function filterAndRender(tabNumber) {
     const activeTab = `tab${tabNumber}`;
@@ -242,6 +243,11 @@ function initBlockTypeFilterButtons() {
 /* ===================================================================*/
 
 document.addEventListener("DOMContentLoaded", () => {
+
+    const CHAR_TABS  = new Set(['tab4', 'tab8']);
+    const charPanel  = document.getElementById('char-sheet-panel');
+    const tabsContent = document.querySelector('.tabs-content');
+
     // Restore tab order on page load if it exists
     const savedOrder = JSON.parse(localStorage.getItem("tabOrder"));
     const tabNav = document.querySelector(".tab-nav");
@@ -294,18 +300,30 @@ document.addEventListener("DOMContentLoaded", () => {
         ? storedActiveTab
         : defaultActiveTab;
 
-    // Hide all tab contents
+    // Hide all tab contents initially.
+    // In landscape the CSS media query will override these inline styles for
+    // the char-panel tabs, so it's safe to set them all to none here.
     tabContents.forEach(content => {
         content.classList.remove("active");
         content.style.display = "none";
     });
 
-    // Activate the stored (or default) tab content
     if (activeTabId) {
         const activeContent = document.getElementById(activeTabId);
         if (activeContent) {
             activeContent.classList.add("active");
             activeContent.style.display = "flex";
+        }
+
+        // Portrait panel routing: show the right top-level container.
+        // In landscape the CSS media query keeps both containers visible
+        // regardless of these inline styles.
+        if (CHAR_TABS.has(activeTabId)) {
+            if (charPanel)   charPanel.style.display   = 'flex';
+            if (tabsContent) tabsContent.style.display = 'none';
+        } else {
+            if (charPanel) charPanel.style.display = 'none';
+            // tabsContent defaults to visible — nothing to set.
         }
     }
 
@@ -320,22 +338,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
     tabButtons.forEach(button => {
         button.addEventListener("click", (event) => {
-            const targetTab = event.currentTarget.dataset.tab;
+            const targetTab     = event.currentTarget.dataset.tab;
             const targetContent = document.getElementById(targetTab);
             if (!targetTab) {
                 console.error("❌ Error: targetTab is undefined.");
                 return;
             }
-    
-            tabButtons.forEach(btn => btn.classList.remove("active"));
+
+            // Char-sheet-nav buttons are handled by layoutMode.js — don't
+            // interfere with them here.
+            if (event.currentTarget.closest('#char-sheet-nav')) return;
+
+            const inLandscape = document.body.classList.contains('landscape-mode');
+
+            // Remove active class from ALL tab buttons (both navs).
+            tabButtons.forEach(btn => {
+                if (inLandscape && btn.closest('#char-sheet-nav')) return;
+                btn.classList.remove("active");
+            });
+
+            // Hide all tab-contents — but in landscape don't touch the char-panel
+            // tabs because the CSS media query controls their visibility there.
             tabContents.forEach(content => {
+                if (inLandscape && CHAR_TABS.has(content.id)) return;
                 content.classList.remove("active");
                 content.style.display = "none";
             });
-    
+
+            // Show the target tab.
             event.currentTarget.classList.add("active");
-            targetContent.classList.add("active");
-            targetContent.style.display = "flex";
+            if (targetContent) {
+                targetContent.classList.add("active");
+                targetContent.style.display = "flex";
+            }
+
+            // Portrait panel routing.
+            // In landscape both containers are always visible (CSS !important),
+            // so these inline styles are harmlessly overridden.
+            if (!inLandscape) {
+                if (CHAR_TABS.has(targetTab)) {
+                    if (charPanel)    charPanel.style.display   = 'flex';
+                    if (tabsContent)  tabsContent.style.display = 'none';
+                } else {
+                    if (charPanel)    charPanel.style.display   = 'none';
+                    if (tabsContent)  tabsContent.style.display = '';
+                }
+            }
+
             localStorage.setItem("activeTab", targetTab);
         
             appManager.updateTags();
@@ -872,6 +921,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
 window.onload = async () => {
     console.log("🔄 Window Loaded - Initializing App");
+
+    initLayoutMode();
 
     // Run migrations before anything else
     migrateToTab9();
