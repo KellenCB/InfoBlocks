@@ -455,9 +455,9 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
 
     displayBlocks.forEach(block => {
         resultsSection.insertAdjacentHTML('beforeend', blockTemplate(block, tab));
-        applyInlineDiceRolls(resultsSection);
+        applyInlineDiceRolls(resultsSection, tab);
     });
-
+    
     console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
       
     if (tab === "tab6") {

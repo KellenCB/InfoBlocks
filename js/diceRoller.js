@@ -494,9 +494,90 @@ document.addEventListener('keydown', (e) => {
 
 // ── Inline dice roll pattern & applier ───────────────────────────────────────
 
-const DICE_PATTERN = /(\d+)d(\d+)(?:\s*([+-])\s*(\d+))?/gi;
+const STAT_NAMES = 'STR|DEX|CON|INT|WIS|CHA|PROF|INIT';
+const DICE_PATTERN = new RegExp(
+    `(\\d+)d(\\d+)((?:\\s*[+\\-]\\s*(?:\\d+|${STAT_NAMES}))*)`,
+    'gi'
+);
 
-export function applyInlineDiceRolls(container) {
+/** Parse a stored value that may have a leading '+' sign (e.g. "+4" → 4). */
+function safeInt(val) {
+    if (val === null || val === undefined) return 0;
+    return parseInt(String(val).replace(/^\+/, ''), 10) || 0;
+}
+
+/**
+ * Resolve a stat abbreviation to its current numeric value.
+ * PROF and INIT are stored under tab4 keys regardless of tabPrefix
+ * because the tab8 HTML shares those editable fields.
+ */
+function resolveStatValue(statName, tabPrefix) {
+    const statMap = {
+        STR:  `${tabPrefix}_str_bonus`,
+        DEX:  `${tabPrefix}_dex_bonus`,
+        CON:  `${tabPrefix}_con_bonus`,
+        INT:  `${tabPrefix}_int_bonus`,
+        WIS:  `${tabPrefix}_wis_bonus`,
+        CHA:  `${tabPrefix}_cha_bonus`,
+        PROF: 'tab4_prof',
+        INIT: 'tab4_initiative',
+    };
+    const key = statMap[statName.toUpperCase()];
+    return key ? safeInt(localStorage.getItem(key)) : 0;
+}
+
+/**
+ * Parse a modifier string like "+2+INT+PROF-1" into a resolved numeric total
+ * and a display string like "+5" (or "" if zero).
+ */
+function parseModifierString(modStr, tabPrefix) {
+    if (!modStr) return { total: 0, display: '' };
+    const termRe = /([+\-])\s*(\d+|STR|DEX|CON|INT|WIS|CHA|PROF|INIT)/gi;
+    let total = 0, m;
+    while ((m = termRe.exec(modStr)) !== null) {
+        const sign = m[1] === '+' ? 1 : -1;
+        total += /^\d+$/.test(m[2])
+            ? sign * parseInt(m[2], 10)
+            : sign * resolveStatValue(m[2], tabPrefix);
+    }
+    const display = total === 0 ? '' : (total > 0 ? '+' : '') + total;
+    return { total, display };
+}
+
+/** Look up blockType array for a block by id from localStorage. */
+function getBlockTypes(blockId, tab) {
+    if (!blockId || !tab) return [];
+    const blocks = JSON.parse(localStorage.getItem(`userBlocks_${tab}`) || '[]');
+    const block  = blocks.find(b => b.id === blockId);
+    if (!block) return [];
+    return Array.isArray(block.blockType)
+        ? block.blockType
+        : (block.blockType ? [block.blockType] : []);
+}
+
+/**
+ * Build one inline-dice-roll button.
+ * @param {string} qty          - number of dice
+ * @param {string} sides        - die faces
+ * @param {string} modStr       - raw modifier string from regex (e.g. "+INT+PROF")
+ * @param {string} tabPrefix    - "tab4" or "tab8"
+ * @param {string} colorClass   - "hazard" (green) or "crank" (red)
+ * @param {string} originalText - original matched text shown in tooltip
+ */
+function makeInlineButton(qty, sides, modStr, tabPrefix, colorClass, originalText) {
+    const { total, display } = parseModifierString(modStr, tabPrefix);
+    const btn = document.createElement('button');
+    btn.className        = `inline-dice-roll ${colorClass}`;
+    btn.textContent      = `${qty}d${sides}${display}`;
+    btn.dataset.qty      = qty;
+    btn.dataset.sides    = sides;
+    btn.dataset.modifier = total;
+    btn.dataset.tab      = tabPrefix;
+    btn.title            = originalText; // native tooltip shows original formula
+    return btn;
+}
+
+export function applyInlineDiceRolls(container, tab = null) {
     const walker = document.createTreeWalker(
         container,
         NodeFilter.SHOW_TEXT,
@@ -513,34 +594,48 @@ export function applyInlineDiceRolls(container) {
     let node;
     while ((node = walker.nextNode())) textNodes.push(node);
 
+    // Cache blockType lookups so we only hit localStorage once per block
+    const blockTypeCache = {};
+
     textNodes.forEach(textNode => {
         const text = textNode.textContent;
         DICE_PATTERN.lastIndex = 0;
         if (!DICE_PATTERN.test(text)) return;
         DICE_PATTERN.lastIndex = 0;
 
+        // Determine block type for this node's containing block
+        const blockEl  = textNode.parentElement?.closest('.block[data-id]');
+        const blockId  = blockEl?.dataset.id;
+        if (blockId && !(blockId in blockTypeCache)) {
+            blockTypeCache[blockId] = getBlockTypes(blockId, tab);
+        }
+        const blockTypes = blockId ? (blockTypeCache[blockId] || []) : [];
+        const hasHazard  = blockTypes.includes('Hazard');
+        const hasCrank   = blockTypes.includes('Crank');
+
         const frag = document.createDocumentFragment();
         let lastIdx = 0;
         let match;
 
         while ((match = DICE_PATTERN.exec(text)) !== null) {
-            const [full, qty, sides, sign, modStr] = match;
-            const modifier = modStr
-                ? (sign === '-' ? -parseInt(modStr, 10) : parseInt(modStr, 10))
-                : 0;
+            const [full, qty, sides, modStr] = match;
+            const originalText = full.trim();
 
             if (match.index > lastIdx) {
                 frag.appendChild(document.createTextNode(text.slice(lastIdx, match.index)));
             }
 
-            const btn = document.createElement('button');
-            btn.className        = 'inline-dice-roll';
-            btn.textContent      = full.trim();
-            btn.dataset.qty      = qty;
-            btn.dataset.sides    = sides;
-            btn.dataset.modifier = modifier;
-            btn.title            = `Roll ${qty}d${sides}${modifier !== 0 ? (modifier > 0 ? `+${modifier}` : modifier) : ''}`;
-            frag.appendChild(btn);
+            if (hasCrank && !hasHazard) {
+                // Crank-only block — one red button using tab8 stats
+                frag.appendChild(makeInlineButton(qty, sides, modStr, 'tab8', 'crank', originalText));
+            } else if (hasHazard && hasCrank) {
+                // Both — green (tab4) then red (tab8)
+                frag.appendChild(makeInlineButton(qty, sides, modStr, 'tab4', 'hazard', originalText));
+                frag.appendChild(makeInlineButton(qty, sides, modStr, 'tab8', 'crank', originalText));
+            } else {
+                // Hazard-only or no block type — default green, tab4
+                frag.appendChild(makeInlineButton(qty, sides, modStr, 'tab4', 'hazard', originalText));
+            }
 
             lastIdx = match.index + full.length;
         }

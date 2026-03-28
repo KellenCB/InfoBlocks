@@ -390,3 +390,14 @@
     background-color: #4CAF50;
     color: #fff;
 }
+
+/* Crank (tab8) variant — red */
+.inline-dice-roll.crank {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+.inline-dice-roll.crank:hover {
+    background-color: #ff6b6b;
+    color: #fff;
+}
