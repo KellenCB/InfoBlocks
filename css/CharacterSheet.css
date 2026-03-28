@@ -2,6 +2,10 @@
 /* ===================== SAVING THROWS & SKILLS =====================*/
 /* ==================================================================*/
 
+#tab4, #tab8 {
+    container-type: inline-size;
+}
+
 .character-sheet-stats {
     display: flex;
     flex-direction: column;
@@ -12,7 +16,6 @@
     background-color: #2a2a2a;
     margin-bottom: 20px;
     row-gap: 10px;
-    overflow-y: hidden;
     min-height: min-content;
     min-width: 820px;
 }
@@ -32,6 +35,21 @@
     flex-direction: row;
     gap: 10px;
     width: 100%;
+}
+
+.topLine {
+    justify-content: space-between;
+    row-gap: 0px;
+    gap: 0px;
+}
+
+.ModifiersRow {
+   min-width: 400px;
+   padding: 15px 25px
+}
+
+.SpellSaveandAttackRow {
+    min-width: 150px;
 }
 
 .stat-panel-row {
@@ -107,7 +125,7 @@
 }
 
 .descriptor-box {
-    padding: 10px;
+    padding: 5px 10px;
     border-radius: 20px;
     text-align: left;
     justify-items: center;
@@ -124,7 +142,7 @@
 }
 
 .death-saves-box {
-    flex: 2;
+    width: 20%;
     flex-direction: column;
     text-align: center;
     gap: 5px;
@@ -213,6 +231,85 @@
     display: inline-block;
     white-space: nowrap;
 }
+
+
+@container (max-width: 820px) {
+    .cs-panel {
+        row-gap: 0px;
+    }
+    .character-sheet-stats {
+        min-width: 0;
+    }
+    .stats-container-row {
+        flex-wrap: wrap;
+        align-items: stretch;
+        min-width: 470px;
+    }
+    .stats-container-row > * {
+        flex: 1 1 auto;
+    }
+    .stat-panel-row:not(.ModifiersRow):not(.SpellSaveandAttackRow) {
+        flex-basis: 100%;
+        width: 100%;
+    }
+    .descriptor-box {
+        width: 48%;
+        white-space: nowrap;
+    }
+    .death-saves-box {
+        min-width: min-content;
+    }
+    .character-sheet-results {
+        display: none;
+    }
+    .saving-throws-and-skills-column {
+        width: 100%;
+    }
+}
+@container (max-width: 500px) {
+  .stats-container-row {
+    flex-wrap: wrap;
+    align-items: stretch;
+    min-width: 0px;
+    width: 100%;
+    max-height: fit-content;
+  }
+  .character-sheet-stats {
+      height: 100%;
+      margin-bottom: 0px;
+      min-height: 0;
+      overflow-x: hidden;
+      max-height: fit-content;
+  }
+  .ModifiersRow {
+      padding: 15px 0px;
+      gap: 0px ;
+      width: 300px;
+      min-width: 0px;
+  }
+  .stat-panel-box {
+    width: min-content;
+    flex-direction: column;
+    text-align: center;
+  }
+  .saving-throws-and-skills-column {
+      display: none;
+  }
+
+  .stats-container-row.TopLine {
+      flex-direction: column;
+      min-height: min-content;
+      flex-shrink: 0;
+      max-height: fit-content;
+  }
+}
+
+@container (max-width: 380px) {
+    .large-value {
+      font-size: 18px;
+      min-width: 10px;
+    }
+  }
 
 /* =================================================================*/
 /* ======================== ACTIONS STYLING ========================*/
