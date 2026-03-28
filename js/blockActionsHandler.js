@@ -171,7 +171,8 @@ export const blockActionsHandler = (() => {
         const blockId = target.getAttribute("data-id");
         if (!blockId) return;
 
-        const activeTab = appManager.getActiveTab();
+        const tabContent = target.closest('.tab-content');
+        const activeTab  = tabContent?.id || appManager.getActiveTab();
         const block = appManager.getBlocks(activeTab).find(b => b.id === blockId);
         if (!block) {
             console.error(`❌ Block with ID ${blockId} not found.`);
@@ -225,6 +226,12 @@ export const blockActionsHandler = (() => {
                 document.getElementById("tags_input_edit_overlay").value = userDefinedTags.join(", ");
             }
                                 
+            const editOverlay = document.querySelector(".edit-block-overlay");
+            if (editOverlay) {
+                editOverlay.dataset.activeTab = activeTab;
+                editOverlay.dataset.blockId   = blockId;
+            }
+
             overlayHandler.initializeOverlayTagHandlers("predefined_tags_edit", block.tags);
 
             // Populate block type buttons for this tab from config, then open overlay

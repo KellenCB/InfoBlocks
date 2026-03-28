@@ -1,50 +1,78 @@
+/* ==================================================================*/
+/* ===================== SAVING THROWS & SKILLS =====================*/
+/* ==================================================================*/
+
+#tab4, #tab8 {
+    container-type: inline-size;
+}
+
 .character-sheet-stats {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
     width: 100%;
-}
-
-.character-sheet-results {
-    flex: 1;
-    min-height: 150px;
-    width: 100%;
-    overflow-y: auto;
+    padding: 15px;
     border-radius: 20px;
+    background-color: #2a2a2a;
+    margin-bottom: 20px;
+    row-gap: 10px;
+    min-height: min-content;
+    min-width: 820px;
 }
 
-.character-sheet-column {
-  display: flex;
-  flex-direction: column;
-  overflow-y: hidden;
-  overflow-x: auto;
-  box-sizing: border-box;
-  width: 100%;
-  align-items: center;
+.cs-panel {
+    border-radius: 15px;
+    padding: 10px;
+    color: #fff;
+    display: flex;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
 }
 
-.character-sheet-row {
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
-  margin-bottom: 20px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+.stats-container-row {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    gap: 10px;
+    width: 100%;
 }
 
-.character-sheet-row:last-of-type {
-  margin-bottom: 0px;
+.topLine {
+    justify-content: space-between;
+    row-gap: 0px;
+    gap: 0px;
+}
+
+.ModifiersRow {
+   min-width: 400px;
+   padding: 15px 25px
+}
+
+.SpellSaveandAttackRow {
+    min-width: 150px;
+}
+
+.stat-panel-row {
+    width: 50%;
+    flex-direction: row;
+    text-align: center;
+    gap: 10px;
+    justify-content: space-evenly;
+}
+
+.stat-panel-box {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .vertical-break {
-  height: auto;
-  width:2px;
-  min-width: 2px;
-  background-color: white;
-  opacity: 50%;
+    height: auto;
+    width: 2px;
+    min-width: 2px;
+    background-color: white;
+    opacity: 50%;
 }
 
 .horizontal-break {
@@ -53,260 +81,249 @@
   width: 100%;
   background-color: white;
   opacity: 50%;
+  margin: 10px 0px 15px 0px;
 }
 
-
-/* ==================================================================*/
-/* ============================== ROW 1 =============================*/
-/* ==================================================================*/
-
-.descriptor-grid {
-    display: flex;
-    flex: 0 0 auto;
-    width: 100%;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 20px;
-    border-radius: 20px;
-    margin-bottom: 20px;
-    background-color: #2a2a2a;
-    color: #fff;
-  }
-
-  .descriptor-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    background-color: #2a2a2a;
-    padding: 10px 40px 10px 20px;
-    border-radius: 20px;
-    color: #fff;
-  }
-
-  .descriptor-box {
-    padding: 10px;
-    border-radius: 20px;
-    text-align: left;
-    justify-items: center;
-  }
-
-  .descriptor-label {
-    margin-right: 5px;
-    opacity: 50%;
-  }
-
-/* ==================================================================*/
-/* ============================== ROW 2 =============================*/
-/* ==================================================================*/
-
-  .hp-container-row {
-    display: flex;
-    width: 50%;
-    flex-direction: row;
-    background-color: #2a2a2a;
-    padding: 10px;
-    border-radius: 20px;
-    text-align: center;
-    gap: 10px;
-  }
-
-  .hp-stat-box {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .main-hp-stat-box{
-    display: flex;
-    flex-direction: column;
-    flex: 1.5;
-    text-align: center;
-    gap: 5px;
-  }
-
-  .current-hp-stat-box {
+.current-stat-display {
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-content: center;
     margin: 0px 10px 0px 10px;
-    gap: 15px;
-  }
+}
 
-  .stats-container-column {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    justify-content: space-between;
-    border-radius: 20px;
-    margin-bottom: 20px;
-  }
+.stat-label {
+    margin-bottom: 3px;
+}
 
-  .stats-container-row {
-    display: flex;
-    flex: 1;
-    flex-direction: row;
-    gap: 15px;
-    border-radius: 20px;
-    margin-bottom: 20px;
-    width: 100%;
-  }
-
-  .stats-grid {
-    display: flex;
-    flex: 1;
-    justify-content: space-between;
-    gap: 20px;
-    background-color: #2a2a2a;
-    padding: 20px;
-    border-radius: 20px;
-    color: #fff;
-  }
-  
-  .stat-value {
+.stat-value {
     font-size: 18px;
     font-weight: bold;
     min-width: 10px;
     width: fit-content;
     margin-left: auto;
     margin-right: auto;
-    text-align: center;  
-  }
+    text-align: center;
+}
 
-  .large-value {
+.large-value {
     font-size: 40px;
     font-weight: bold;
     min-width: 10px;
     width: auto;
-    margin: 0px 5px;
-    text-align: center;  
-  }
-
-  .stat-box {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    background-color: #2a2a2a;
-    padding: 10px;
-    border-radius: 20px;
     text-align: center;
-    gap: 5px;
-  }
+}
 
-  .stat-label {
-    margin-bottom: 3px;
-  }
-
-/* ==================================================================*/
-/* ============================== ROW 3 =============================*/
-/* ==================================================================*/
-
-  .main-stats-container-row {
-    display: flex;
-    width: 55%;
-    padding: 10px 10px;
-    flex-direction: row;
-    justify-content: center;
-    border-radius: 20px;
-    background-color: #2a2a2a;
-  }
-
-  .main-stat-box {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    flex: 1;
-    background-color: #2a2a2a;
-    border-radius: 20px;
-    text-align: center;
-  }
-
-  .stat-subvalue {
+.stat-subvalue {
     font-size: 14px;
     opacity: 0.8;
     min-width: 10px;
     width: fit-content;
     margin-left: auto;
     margin-right: auto;
-    text-align: center;  
-  }
+    text-align: center;
+}
 
-  .death-saves-box {
-    display: flex;
-    flex: 2;
-    flex-direction: column;
-    background-color: #2a2a2a;
-    padding: 10px;
+.descriptor-box {
+    padding: 5px 10px;
     border-radius: 20px;
+    text-align: left;
+    justify-items: center;
+    min-width: min-content;
+}
+
+.descriptor-label {
+    margin-right: 5px;
+    opacity: 50%;
+}
+
+.descriptor-value {
+    white-space: nowrap;
+}
+
+.death-saves-box {
+    width: 20%;
+    flex-direction: column;
     text-align: center;
     gap: 5px;
-  }
+    min-width: 120px;
+}
 
-  .death-saves-row {
+.death-saves-row {
     display: flex;
     flex-direction: row;
     gap: 10px;
     justify-content: center;
     margin: 3px;
-  }
-  
+}
+
 /* ==================================================================*/
 /* ===================== SAVING THROWS & SKILLS =====================*/
 /* ==================================================================*/
 
+.character-sheet-row {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
 
-  .saving-throws-and-skills-column {
+.saving-throws-and-skills-column {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
     width: fit-content;
     flex: 0 0 auto;
-    gap: 20px;
+    gap: 5px;
     background-color: #2a2a2a;
     padding: 20px;
     border-radius: 20px;
     color: #fff;
-  }
+}
 
-  .saving-throws,
-  .skills {
-    gap: 20px;
-  }
-  
-  .save-row,
-  .skill-row {
+.saving-throws,
+.skills {
+}
+
+.save-row,
+.skill-row {
+    margin-top: 15px;
+}
+
+.save-row,
+.skill-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-top: 15px;
-  }
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-left: -10px;
+    margin-right: -10px;
+    transition: background-color 0.2s;
+    margin-top: 0px;
+}
 
-  .save-label,
-  .skill-label {
+.save-row:hover,
+.skill-row:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+.save-label,
+.skill-label {
     flex: 1;
     letter-spacing: 0.05em;
     text-align: left;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  } 
+}
 
-  .skill-plus {
+.skill-plus {
     letter-spacing: 0.1em;
     text-align: right;
     min-width: 3ch;
     display: inline-block;
     white-space: nowrap;
+}
+
+
+@container (max-width: 820px) {
+    .cs-panel {
+        row-gap: 0px;
+    }
+    .character-sheet-stats {
+        min-width: 0;
+    }
+    .stats-container-row {
+        flex-wrap: wrap;
+        align-items: stretch;
+        min-width: 470px;
+    }
+    .stats-container-row > * {
+        flex: 1 1 auto;
+    }
+    .stat-panel-row:not(.ModifiersRow):not(.SpellSaveandAttackRow) {
+        flex-basis: 100%;
+        width: 100%;
+    }
+    .descriptor-box {
+        width: 48%;
+        white-space: nowrap;
+    }
+    .death-saves-box {
+        min-width: min-content;
+    }
+}
+
+@container (max-width: 750px) {
+    .character-sheet-results {
+        display: none;
+    }
+    .saving-throws-and-skills-column {
+        width: 100%;
+    }
+}
+
+
+@container (max-width: 500px) {
+    .stats-container-row {
+        flex-wrap: wrap;
+        align-items: stretch;
+        min-width: 0px;
+        width: 100%;
+        max-height: fit-content;
+    }
+    .character-sheet-stats {
+        height: 200%;
+        max-height: fit-content;
+        margin-bottom: 0px;
+        min-height: 0;
+        overflow-x: hidden;
+        display: flex;
+        flex-flow: column;  
+        margin-bottom: 20px;      
+    }
+    .ModifiersRow {
+        padding: 15px 0px;
+        gap: 0px ;
+        width: 300px;
+        min-width: 0px;
+    }
+    .stat-panel-box {
+        width: min-content;
+        flex-direction: column;
+        text-align: center;
+    }
+    .stats-container-row.TopLine {
+        flex-direction: column;
+        min-height: min-content;
+        flex-shrink: 0;
+        max-height: fit-content;
+    }
+    .saving-throws-and-skills-column {
+        display: flex;
+        flex-flow: column;
+    }
+
+}
+
+@container (max-width: 380px) {
+    .large-value {
+      font-size: 18px;
+      min-width: 10px;
+    }
   }
 
 /* =================================================================*/
 /* ======================== ACTIONS STYLING ========================*/
 /* =================================================================*/
 
-/* Edit button inside the actions grid wrapper */
 .actions-grid-header {
     position: sticky;
     top: 0;
@@ -330,7 +347,6 @@
     pointer-events: auto;
 }
 
-/* Edit button inside the spell slot section */
 #edit_spell_slots_button,
 #edit_suit_uses_button {
     flex-shrink: 0;
@@ -357,39 +373,37 @@
     color: #fff;
 }
 
-/* Default button styling for the toggle */
 .toggle-action-view {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  background-color: #666;
-  transition: background-color 0.2s ease;
-  color: white;
-  cursor: pointer;
-  font-size: 15px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background-color: #666;
+    transition: background-color 0.2s ease;
+    color: white;
+    font-size: 15px;
 }
 
 .toggle-circle {
-  width: 16px;
-  height: 16px;
-  border: 1px solid #fff;
-  border-radius: 50%;
-  cursor: pointer;
-  background-color: #fff;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    background-color: #fff;
 }
 
 .toggle-circle.filled {
-  background-color: #fff;
+    background-color: #fff;
 }
 
 .toggle-circle.unfilled {
-  background-color: transparent;
+    background-color: transparent;
 }
 
 .no-gap {
-  gap: 0px;
+    gap: 0px;
 }
 
 .character-sheet-results {

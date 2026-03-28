@@ -88,6 +88,10 @@
     opacity: 1;
 }
 
+#split-view-button.active {
+    background-color: #4CAF50;
+}
+
 /* Action Button Styles */
 
 .action-button {
@@ -177,6 +181,7 @@
         font-weight: bold;
         border-radius: 10px;
         transition: background 0.3s, color 0.3s, border 0.3s;
+        white-space: nowrap;
     }
 
     .tab-button:hover {
@@ -384,5 +389,16 @@
 
 .inline-dice-roll:hover {
     background-color: #4CAF50;
+    color: #fff;
+}
+
+/* Crank (tab8) variant — red */
+.inline-dice-roll.crank {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+.inline-dice-roll.crank:hover {
+    background-color: #ff6b6b;
     color: #fff;
 }
