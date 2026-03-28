@@ -1,6 +1,8 @@
 // layoutMode.js
 // Handles the automatic landscape / portrait layout.
 // Uses body.landscape-mode class to drive CSS — keeps JS and CSS in sync.
+// Landscape mode only activates when BOTH the screen is wide (≥1220px)
+// AND the user has toggled split view on via the split-view-button.
 
 import { appManager } from './appManager.js';
 
@@ -11,10 +13,30 @@ const LIST_TABS = ['tab9', 'tab3', 'tab6', 'tab7']; // priority order for defaul
 
 export function initLayoutMode() {
     updateBodyClass();
-
-    // Always make all tab navs visible — fixes the case where fade-in
-    // skipped navs that were inside a CSS-hidden container on page load.
     ensureNavsVisible();
+
+    // ── Wire the split-view button ──────────────────────────────────────────
+    const splitBtn = document.getElementById('split-view-button');
+    if (splitBtn) {
+        // Apply saved state to button appearance on load
+        const savedEnabled = localStorage.getItem('splitViewActive') === 'true';
+        splitBtn.classList.toggle('active', savedEnabled);
+
+        splitBtn.addEventListener('click', () => {
+            const nowEnabled = localStorage.getItem('splitViewActive') === 'true';
+            const next = !nowEnabled;
+            localStorage.setItem('splitViewActive', String(next));
+            splitBtn.classList.toggle('active', next);
+
+            // Re-evaluate landscape state after the toggle
+            const wasLandscape = prevLandscape;
+            updateBodyClass();
+            const nowLandscape = isLandscape();
+            if (!wasLandscape && nowLandscape) onEnterLandscape();
+            if (wasLandscape && !nowLandscape) onExitLandscape();
+            prevLandscape = nowLandscape;
+        });
+    }
 
     let prevLandscape = isLandscape();
 
@@ -54,7 +76,7 @@ export function initLayoutMode() {
 // ── Public helpers ─────────────────────────────────────────────────────────
 
 export function isLandscape() {
-    return window.innerWidth >= 1220;
+    return window.innerWidth >= 1220 && localStorage.getItem('splitViewActive') === 'true';
 }
 
 /** Show one char-sheet tab, hide the other; update nav active states. */
@@ -96,7 +118,7 @@ function onEnterLandscape() {
     });
 }
 
-/** Called when rotating / resizing into portrait. */
+/** Called when rotating / resizing out of landscape. */
 function onExitLandscape() {
     ensureNavsVisible();
 
@@ -114,7 +136,6 @@ function onExitLandscape() {
     }
 
     // Re-apply active class to the correct main nav button.
-    // In landscape the main nav was hidden so active state may have drifted.
     document.querySelectorAll('.tab-nav .tab-button').forEach(btn => {
         const isActive = btn.dataset.tab === currentTab
             && !btn.closest('#char-sheet-nav')
@@ -126,13 +147,10 @@ function onExitLandscape() {
 /**
  * Ensure every .tab-nav AND its .fade-in ancestor containers have the
  * .visible class so opacity: 0 doesn't persist.
- * fadeInElementsSequentially() skips elements whose offsetParent is null
- * (hidden containers on landscape load), so we force-show them here.
  */
 function ensureNavsVisible() {
     document.querySelectorAll('.tab-nav').forEach(nav => {
         nav.classList.add('visible');
-        // Walk up and make any fade-in ancestor containers visible too.
         let el = nav.parentElement;
         while (el && el !== document.body) {
             if (el.classList.contains('fade-in')) el.classList.add('visible');
@@ -153,9 +171,8 @@ function clearPanelInlineStyles() {
 }
 
 /**
- * If no list tab is currently active (e.g. the user was on a char-sheet tab
- * in portrait before rotating), click the first available list tab so the
- * right panel is never left blank.
+ * If no list tab is currently active, click the first available list tab
+ * so the right panel is never left blank.
  */
 function ensureListTabActive() {
     const current = localStorage.getItem('activeTab');

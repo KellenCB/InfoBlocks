@@ -1002,11 +1002,6 @@ window.onload = async () => {
 
     initSplitView();
 
-    const isPortraitOnLoad = window.innerHeight > window.innerWidth;
-    if (localStorage.getItem('splitViewActive') === 'true' && !isPortraitOnLoad) {
-        document.getElementById('split-view-button')?.click();
-    }
-
     if (localStorage.getItem("dicePanelOpen") === "true" && diceMenuButton && dicePanel) {
         setDicePanelState(true);
     }

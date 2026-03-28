@@ -88,6 +88,10 @@
     opacity: 1;
 }
 
+#split-view-button.active {
+    background-color: #4CAF50;
+}
+
 /* Action Button Styles */
 
 .action-button {
