@@ -118,26 +118,25 @@ function onEnterLandscape() {
     });
 }
 
-/** Called when rotating / resizing out of landscape. */
+/** Called when rotating / resizing out of landscape.
+ *  Prioritises the left (char-sheet) panel — whichever of tab4/tab8
+ *  was last active is shown, and the right panel is hidden. */
 function onExitLandscape() {
     ensureNavsVisible();
 
-    // Re-apply portrait panel routing based on the currently stored active tab.
-    const currentTab  = localStorage.getItem('activeTab') || LIST_TABS[0];
-    const charPanel   = document.getElementById('char-sheet-panel');
-    const tabsContent = document.querySelector('.tabs-content');
+    const activeCharTab = localStorage.getItem('activeCharTab') || 'tab4';
+    const charPanel     = document.getElementById('char-sheet-panel');
+    const tabsContent   = document.querySelector('.tabs-content');
 
-    if (CHAR_TABS.has(currentTab)) {
-        if (charPanel)   charPanel.style.display   = 'flex';
-        if (tabsContent) tabsContent.style.display = 'none';
-    } else {
-        if (charPanel)   charPanel.style.display   = 'none';
-        if (tabsContent) tabsContent.style.display = '';
-    }
+    if (charPanel)   charPanel.style.display   = 'flex';
+    if (tabsContent) tabsContent.style.display = 'none';
+
+    // Ensure the correct char-sheet tab is active and rendered.
+    activateCharTab(activeCharTab);
 
     // Re-apply active class to the correct main nav button.
     document.querySelectorAll('.tab-nav .tab-button').forEach(btn => {
-        const isActive = btn.dataset.tab === currentTab
+        const isActive = btn.dataset.tab === activeCharTab
             && !btn.closest('#char-sheet-nav')
             && !btn.closest('#list-tab-nav');
         btn.classList.toggle('active', isActive);
