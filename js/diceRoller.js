@@ -157,7 +157,7 @@ async function loadDiceBox() {
   const box = new DiceBox({
     id:             'dice-canvas',
     selector:       'body',
-    assetPath:      '/assets/',
+    assetPath:      './assets/',
     theme:          'default',
     offscreen:      false,
     width:          W,

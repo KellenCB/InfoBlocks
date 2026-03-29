@@ -117,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   
     initSpellSlotSection();
-    initializeActionRowToggles();
   
     const editTabButton = document.getElementById('edit_tab_button');
 
