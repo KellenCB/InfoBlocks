@@ -1,8 +1,6 @@
 // layoutMode.js
 // Handles the automatic landscape / portrait layout.
 // Uses body.landscape-mode class to drive CSS — keeps JS and CSS in sync.
-// Landscape mode only activates when BOTH the screen is wide (≥1220px)
-// AND the user has toggled split view on via the split-view-button.
 
 import { appManager } from './appManager.js';
 
