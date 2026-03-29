@@ -99,7 +99,7 @@ function setDicePanelState(open) {
   dicePanel.classList.toggle("open", open);
   diceMenuButton.classList.toggle("active", open);
   if (diceMenuImg) {
-    diceMenuImg.src = open ? "images/Dice_button_v2_Green.svg" : "images/Dice_button_v2.svg";
+    diceMenuImg.src = open ? "images/Dice_Button_v2_Green.svg" : "images/Dice_Button_v2.svg";
   }
   localStorage.setItem("dicePanelOpen", open);
 }
