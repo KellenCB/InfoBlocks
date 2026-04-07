@@ -162,7 +162,14 @@ export const handleSaveBlock = () => {
         }
 
         const combinedTagsLowercase = [...new Set([...tagsInput, ...selectedPredefinedTags])];
-        const allTags = combinedTagsLowercase.map(tag => tag.charAt(0).toUpperCase() + tag.slice(1));
+        const predefinedTagsMap = new Map(
+            Object.values(categoryTags).flatMap(cat => cat.tags).map(t => [t.toLowerCase(), t])
+        );
+        const allTags = combinedTagsLowercase.map(tag => {
+            const predefined = predefinedTagsMap.get(tag);
+            if (predefined) return predefined;
+            return tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
+        });
 
         const usesState = JSON.parse(localStorage.getItem("uses_field_overlay_state") || "[]");
 
@@ -170,7 +177,12 @@ export const handleSaveBlock = () => {
             ? Array.from(document.querySelectorAll('#character_type_tags_add .tag-button.selected')).map(b => b.dataset.tag)
             : null;
 
-        const success = appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, blockType);
+        const propertiesInput = document.getElementById("properties_input_overlay").value
+            .split(",")
+            .map(p => p.trim())
+            .filter(p => p.length > 0);
+
+        const success = appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, propertiesInput, blockType);
 
         if (success) {
             console.log("✅ Block saved successfully with tags:", allTags);
@@ -184,6 +196,7 @@ export const handleSaveBlock = () => {
             textElement.innerHTML = "";
             textElement.dispatchEvent(new Event('input'));
             document.getElementById("tags_input_overlay").value = "";
+            document.getElementById("properties_input_overlay").value = "";
             document.querySelectorAll(".add-block-overlay .tag-button.selected")
                 .forEach(tag => tag.classList.remove("selected"));
             addBlockOverlay.classList.remove("show");
@@ -238,10 +251,12 @@ export const overlayHandler = (() => {
             const titleInput = document.getElementById("title_input_overlay");
             const textInput  = document.getElementById("block_text_overlay");
             const tagsInput  = document.getElementById("tags_input_overlay");
+            const propertiesInput = document.getElementById("properties_input_overlay");
     
             titleInput.value = "";
             textInput.value  = "";
             tagsInput.value  = "";
+            propertiesInput.value = "";
     
             document.querySelectorAll(".add-block-overlay .tag-button.selected").forEach(tag => {
                 tag.classList.remove("selected");
@@ -269,10 +284,12 @@ export const overlayHandler = (() => {
             const titleInput = document.getElementById("title_input_edit_overlay");
             const textInput  = document.getElementById("block_text_edit_overlay").innerHTML.trim();
             const tagsInput  = document.getElementById("tags_input_edit_overlay");
+            const propertiesInput = document.getElementById("properties_input_edit_overlay");
     
             titleInput.value = "";
             textInput.value  = "";
             tagsInput.value  = "";
+            propertiesInput.value = "";
     
             console.log("Edit overlay fields cleared.");
         });
@@ -389,6 +406,22 @@ export const overlayHandler = (() => {
             }
 
             tagsContainer.innerHTML = html;
+            // Inject chips into collapsed groups that have selected tags
+            tagsContainer.querySelectorAll('.tag-accordion-group:not(.open)').forEach(group => {
+                const pill = group.querySelector('.tag-accordion-pill');
+                const body = group.querySelector('.tag-accordion-body');
+                if (!pill || !body) return;
+                const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group') || '';
+                body.querySelectorAll('.tag-button.selected').forEach(btn => {
+                    const chip = document.createElement('button');
+                    chip.classList.add('tag-accordion-chip');
+                    if (tagClass) chip.classList.add(tagClass);
+                    chip.dataset.tag = btn.dataset.tag;
+                    chip.textContent = btn.dataset.tag;
+                    pill.appendChild(chip);
+                });
+            });
+
         }
     
         tagsContainer.addEventListener("click", (event) => {

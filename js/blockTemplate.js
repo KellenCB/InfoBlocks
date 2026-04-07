@@ -38,6 +38,12 @@ export const blockTemplate = (block, tab = "tab4") => {
         return `<span class=\"tag-button tag-user ${isSelected}\" data-tag=\"${tag}\">${tag}</span>`;
     }).join("");
 
+    const propertiesHTML = (viewState === 'expanded' && block.properties && block.properties.length > 0)
+    ? `<div class="block-properties">${block.properties.map(p =>
+        `<span class="block-property">${p}</span>`
+      ).join("")}</div>`
+    : "";
+
     // Only render block-tags if there are any tags
     const blockTypes = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
     const blockTypeHTML = blockTypes.map(bt =>
@@ -87,6 +93,7 @@ export const blockTemplate = (block, tab = "tab4") => {
             </div>
             </div>
             ${tagSectionsHTML}
+            ${propertiesHTML}
             ${ hasBody ? `
                 <div class="block-body">
                     <span>${bodyHTML}</span>

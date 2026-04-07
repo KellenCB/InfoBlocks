@@ -497,8 +497,9 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
           if (searchInput && searchInput.value.trim() !== "") {
             const query = searchInput.value.trim().toLowerCase();
             filteredBlocks = filteredBlocks.filter(block =>
-              block.title.toLowerCase().includes(query) ||
-              stripHTML(block.text).toLowerCase().includes(query)
+                block.title.toLowerCase().includes(query) ||
+                stripHTML(block.text).toLowerCase().includes(query) ||
+                (block.properties || []).some(p => p.toLowerCase().includes(query))
             );
           }
           
@@ -652,7 +653,7 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
 /* ======================== DATA MANAGEMENT ========================*/
 /* =================================================================*/
 
-  const saveBlock = (tab, blockTitle, text, tags, uses, blockType = null, blockId = null, timestamp = null) => {
+  const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType = null, blockId = null, timestamp = null) => {
     console.log(`📥 Attempting to save block in ${tab}:`, { blockTitle, text, tags, uses, blockId, timestamp });
     
     if (
@@ -681,6 +682,7 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
               text,
               tags,
               uses,
+              properties,
               blockType,
               timestamp: userBlocks[blockIndex].timestamp || Date.now()
             };
@@ -691,17 +693,22 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
             return false;
         }
     } else {
-        const predefinedTagsSet = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
-        const formattedTags = tags.map(tag => 
-            predefinedTagsSet.has(tag) ? tag : tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
+        const predefinedTagsMap = new Map(
+            Object.values(categoryTags).flatMap(cat => cat.tags).map(tag => [tag.toLowerCase(), tag])
         );
-    
+        const formattedTags = tags.map(tag => {
+            const predefined = predefinedTagsMap.get(tag.toLowerCase());
+            if (predefined) return predefined;
+            return tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
+        });
+            
         const newBlock = {
           id: crypto.randomUUID(),
           title: blockTitle,
           text: text,
           tags: formattedTags,
           uses,
+          properties,
           blockType: blockType || null,
           timestamp: timestamp || Date.now(),
           viewState: "expanded"

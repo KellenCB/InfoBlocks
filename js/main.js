@@ -36,14 +36,15 @@ function filterAndRender(tabNumber) {
   
     // 3) by search
     const query = document
-      .getElementById(`search_input_${tabNumber}`)
-      ?.value.trim().toLowerCase() || "";
-    if (query) {
-      blocks = blocks.filter(b =>
-        b.title.toLowerCase().includes(query) ||
-        stripHTML(b.text).toLowerCase().includes(query)
-      );
-    }
+        .getElementById(`search_input_${tabNumber}`)
+        ?.value.trim().toLowerCase() || "";
+            if (query) {
+                blocks = blocks.filter(b =>
+                    b.title.toLowerCase().includes(query) ||
+                    stripHTML(b.text).toLowerCase().includes(query) ||
+                    (b.properties || []).some(p => p.toLowerCase().includes(query))
+                );
+            }
   
     appManager.renderBlocks(activeTab, blocks);
 }
@@ -99,7 +100,7 @@ function setDicePanelState(open) {
   dicePanel.classList.toggle("open", open);
   diceMenuButton.classList.toggle("active", open);
   if (diceMenuImg) {
-    diceMenuImg.src = open ? "images/Dice_button_v2_Green.svg" : "images/Dice_button_v2.svg";
+    diceMenuImg.src = open ? "images/Dice_Button_v2_Green.svg" : "images/Dice_Button_v2.svg";
   }
   localStorage.setItem("dicePanelOpen", open);
 }
@@ -494,9 +495,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const resultsSection = document.getElementById(`results_section_${tabNumber}`);
             resultsSection.querySelectorAll('.block-title').forEach(el => {
-                el.innerHTML = highlightInText(el.textContent, query);
+                el.innerHTML = highlightInText(el.innerHTML, query);
             });
             resultsSection.querySelectorAll('.block-body').forEach(el => {
+                el.innerHTML = highlightInHTML(el.innerHTML, query);
+            });
+            resultsSection.querySelectorAll('.block-property').forEach(el => {
                 el.innerHTML = highlightInHTML(el.innerHTML, query);
             });
         });

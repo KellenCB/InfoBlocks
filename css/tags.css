@@ -268,3 +268,29 @@
     gap: 10px;
     width: 100%;
 }
+
+
+/* ==================================================================*/
+/* ======================== BLOCK PROPERTIES ========================*/
+/* ==================================================================*/
+
+.block-properties {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    column-gap: 7px;
+    row-gap: 8px;
+}
+
+.block-property {
+    padding: 6px 8px;
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 7px;
+    font-size: 16px;
+    letter-spacing: 0.3px;
+    white-space: pre-wrap;
+    display: inline-flex;
+    align-items: center;
+}

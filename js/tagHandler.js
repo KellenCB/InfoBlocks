@@ -95,7 +95,8 @@ export const tagHandler = (() => {
             if (searchQuery.length > 0) {
                 filteredBlocks = filteredBlocks.filter(block =>
                     block.title.toLowerCase().includes(searchQuery) ||
-                    stripHTML(block.text).toLowerCase().includes(searchQuery)
+                    stripHTML(block.text).toLowerCase().includes(searchQuery) ||
+                    (block.properties || []).some(p => p.toLowerCase().includes(searchQuery))
                 );
             }
                       
