@@ -191,8 +191,8 @@
 #block_text_overlay li,
 #block_text_edit_overlay li,
 .block-body li {
-    margin-right: 0.25em 0;      /* small vertical spacing */
-    line-height: 1.4;      /* comfortable line height */
+    margin-right: 0.25em 0;
+    line-height: 1.6;
     margin-bottom: 12px;
 
 }
