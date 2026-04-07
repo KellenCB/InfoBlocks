@@ -413,6 +413,16 @@
     color: #fff;
 }
 
+.inline-dice-roll.hit {
+    border-color: #2d81ff;
+    color: #2d81ff;
+}
+
+.inline-dice-roll.hit:hover {
+    background-color: #2d81ff;
+    color: #fff;
+}
+
 /* ==================================================================*/
 /* =================== BLOCK ACTIONS MENU ===========================*/
 /* ==================================================================*/
