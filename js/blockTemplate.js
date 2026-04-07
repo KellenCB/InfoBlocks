@@ -44,7 +44,6 @@ export const blockTemplate = (block, tab = "tab4") => {
       ).join("")}</div>`
     : "";
 
-    // Only render block-tags if there are any tags
     const blockTypes = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
     const blockTypeHTML = blockTypes.map(bt =>
         `<span class="tag-button tag-characterType${selectedTags.includes(bt) ? ' selected' : ''}" data-tag="${bt}">${bt}</span>`
@@ -58,6 +57,23 @@ export const blockTemplate = (block, tab = "tab4") => {
         </div>
     ` : "";
 
+    // Shared action menu HTML (used by expanded and condensed)
+    const actionMenuHTML = `
+        <div class="block-actions">
+            <button class="action-button pin-button${block.pinned ? ' pin-active' : ''}" data-id="${block.id}" title="${block.pinned ? 'Unpin' : 'Pin'}">
+                <img src="images/${block.pinned ? 'Pin_Icon_Blue' : 'Pin_Icon'}.svg" alt="Pin" />
+            </button>
+            <div class="block-actions-menu">
+                <button class="actions-trigger" title="Actions">···</button>
+                <div class="block-actions-reveal">
+                    <button class="action-button remove-button red-button" data-id="${block.id}" title="Remove">×</button>
+                    <button class="action-button duplicate-button blue-button" data-id="${block.id}" title="Copy">❐</button>
+                    <button class="action-button edit-button orange-button" data-id="${block.id}" title="Edit">✎</button>
+                </div>
+            </div>
+        </div>
+    `;
+
     // Process block text formatting
     let bodyHTML = block.text || "";
     bodyHTML = bodyHTML
@@ -68,10 +84,8 @@ export const blockTemplate = (block, tab = "tab4") => {
         .replace(/<\/p>/gi, '<br>')
         .trim();
 
-    // Determine if there is body content
     const hasBody = bodyHTML.trim() !== "";
 
-    // Render content based on view state
     let content = "";
     if (viewState === 'expanded') {
         const usesHTML = block.uses
@@ -83,14 +97,7 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class=\"block-title\"><h4>${block.title}</h4></div>
                     ${ usesHTML ? `<div class=\"block-uses\">${usesHTML}</div>` : "" }
                 </div>
-            <div class=\"block-actions\">
-                <button class=\"action-button pin-button${block.pinned ? ' pin-active' : ''}\" data-id=\"${block.id}\" title=\"${block.pinned ? 'Unpin' : 'Pin'}\">
-                    <img src=\"images/${block.pinned ? 'Pin_Icon_Blue' : 'Pin_Icon'}.svg\" alt=\"Pin\" />
-                </button>
-                <button class=\"action-button duplicate-button green-button\" data-id=\"${block.id}\" title=\"Copy\">❐</button>
-                <button class=\"action-button edit-button orange-button\" data-id=\"${block.id}\" title=\"Edit\">✎</button>
-                <button class=\"action-button remove-button red-button\" data-id=\"${block.id}\" title=\"Remove\">×</button>
-            </div>
+                ${actionMenuHTML}
             </div>
             ${tagSectionsHTML}
             ${propertiesHTML}
@@ -108,14 +115,7 @@ export const blockTemplate = (block, tab = "tab4") => {
             <div class=\"block-header\">
                 <div class=\"block-title\"><h4>${block.title}</h4></div>
                 ${ usesHTML ? `<div class=\"block-uses\">${usesHTML}</div>` : "" }
-            <div class=\"block-actions\">
-                <button class=\"action-button pin-button${block.pinned ? ' pin-active' : ''}\" data-id=\"${block.id}\" title=\"${block.pinned ? 'Unpin' : 'Pin'}\">
-                    <img src=\"images/${block.pinned ? 'Pin_Icon_Blue' : 'Pin_Icon'}.svg\" alt=\"Pin\" />
-                </button>
-                <button class=\"action-button duplicate-button green-button\" data-id=\"${block.id}\" title=\"Copy\">❐</button>
-                <button class=\"action-button edit-button orange-button\" data-id=\"${block.id}\" title=\"Edit\">✎</button>
-                <button class=\"action-button remove-button red-button\" data-id=\"${block.id}\" title=\"Remove\">×</button>
-            </div>
+                ${actionMenuHTML}
             </div>
         `;
     } else if (viewState === 'minimized') {
@@ -130,7 +130,6 @@ export const blockTemplate = (block, tab = "tab4") => {
         `;
     }
 
-    // Wrap and return
     return `
         <div class="block ${viewState}${block.pinned ? ' pinned' : ''}" data-id="${block.id}">
             ${content}

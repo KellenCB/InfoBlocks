@@ -307,6 +307,20 @@ html {
     border-radius: 10px; 
     padding: 10px 15px;
     margin-bottom: 15px;
+    position: relative;   /* ADD */
+    overflow: hidden;     /* ADD */
+}
+
+.block:not(.minimized)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 15px;
+    background: linear-gradient(to left, #444, transparent);
+    pointer-events: none;
+    z-index: 5;
 }
 
 .block-header {

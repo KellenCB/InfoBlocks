@@ -364,3 +364,22 @@ export const blockActionsHandler = (() => {
     
     return { attachBlockActions };
 })();
+
+// Mobile tap: toggle action menu open/closed
+document.addEventListener('click', e => {
+    const trigger = e.target.closest('.actions-trigger');
+    if (trigger) {
+        e.stopPropagation();
+        const menu = trigger.closest('.block-actions-menu');
+        const isOpen = menu.classList.contains('menu-open');
+        document.querySelectorAll('.block-actions-menu.menu-open')
+            .forEach(m => m.classList.remove('menu-open'));
+        if (!isOpen) menu.classList.add('menu-open');
+        return;
+    }
+    // Close any open menu when clicking elsewhere
+    if (!e.target.closest('.block-actions-menu')) {
+        document.querySelectorAll('.block-actions-menu.menu-open')
+            .forEach(m => m.classList.remove('menu-open'));
+    }
+});
