@@ -406,6 +406,22 @@ export const overlayHandler = (() => {
             }
 
             tagsContainer.innerHTML = html;
+            // Inject chips into collapsed groups that have selected tags
+            tagsContainer.querySelectorAll('.tag-accordion-group:not(.open)').forEach(group => {
+                const pill = group.querySelector('.tag-accordion-pill');
+                const body = group.querySelector('.tag-accordion-body');
+                if (!pill || !body) return;
+                const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group') || '';
+                body.querySelectorAll('.tag-button.selected').forEach(btn => {
+                    const chip = document.createElement('button');
+                    chip.classList.add('tag-accordion-chip');
+                    if (tagClass) chip.classList.add(tagClass);
+                    chip.dataset.tag = btn.dataset.tag;
+                    chip.textContent = btn.dataset.tag;
+                    pill.appendChild(chip);
+                });
+            });
+
         }
     
         tagsContainer.addEventListener("click", (event) => {
