@@ -497,8 +497,9 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
           if (searchInput && searchInput.value.trim() !== "") {
             const query = searchInput.value.trim().toLowerCase();
             filteredBlocks = filteredBlocks.filter(block =>
-              block.title.toLowerCase().includes(query) ||
-              stripHTML(block.text).toLowerCase().includes(query)
+                block.title.toLowerCase().includes(query) ||
+                stripHTML(block.text).toLowerCase().includes(query) ||
+                (block.properties || []).some(p => p.toLowerCase().includes(query))
             );
           }
           
@@ -652,7 +653,7 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
 /* ======================== DATA MANAGEMENT ========================*/
 /* =================================================================*/
 
-  const saveBlock = (tab, blockTitle, text, tags, uses, blockType = null, blockId = null, timestamp = null) => {
+  const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType = null, blockId = null, timestamp = null) => {
     console.log(`📥 Attempting to save block in ${tab}:`, { blockTitle, text, tags, uses, blockId, timestamp });
     
     if (
@@ -681,6 +682,7 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
               text,
               tags,
               uses,
+              properties,
               blockType,
               timestamp: userBlocks[blockIndex].timestamp || Date.now()
             };
@@ -702,6 +704,7 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
           text: text,
           tags: formattedTags,
           uses,
+          properties,
           blockType: blockType || null,
           timestamp: timestamp || Date.now(),
           viewState: "expanded"

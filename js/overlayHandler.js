@@ -170,7 +170,12 @@ export const handleSaveBlock = () => {
             ? Array.from(document.querySelectorAll('#character_type_tags_add .tag-button.selected')).map(b => b.dataset.tag)
             : null;
 
-        const success = appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, blockType);
+        const propertiesInput = document.getElementById("properties_input_overlay").value
+            .split(",")
+            .map(p => p.trim())
+            .filter(p => p.length > 0);
+
+        const success = appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, propertiesInput, blockType);
 
         if (success) {
             console.log("✅ Block saved successfully with tags:", allTags);
@@ -184,6 +189,7 @@ export const handleSaveBlock = () => {
             textElement.innerHTML = "";
             textElement.dispatchEvent(new Event('input'));
             document.getElementById("tags_input_overlay").value = "";
+            document.getElementById("properties_input_overlay").value = "";
             document.querySelectorAll(".add-block-overlay .tag-button.selected")
                 .forEach(tag => tag.classList.remove("selected"));
             addBlockOverlay.classList.remove("show");
@@ -238,10 +244,12 @@ export const overlayHandler = (() => {
             const titleInput = document.getElementById("title_input_overlay");
             const textInput  = document.getElementById("block_text_overlay");
             const tagsInput  = document.getElementById("tags_input_overlay");
+            const propertiesInput = document.getElementById("properties_input_overlay");
     
             titleInput.value = "";
             textInput.value  = "";
             tagsInput.value  = "";
+            propertiesInput.value = "";
     
             document.querySelectorAll(".add-block-overlay .tag-button.selected").forEach(tag => {
                 tag.classList.remove("selected");
@@ -269,10 +277,12 @@ export const overlayHandler = (() => {
             const titleInput = document.getElementById("title_input_edit_overlay");
             const textInput  = document.getElementById("block_text_edit_overlay").innerHTML.trim();
             const tagsInput  = document.getElementById("tags_input_edit_overlay");
+            const propertiesInput = document.getElementById("properties_input_edit_overlay");
     
             titleInput.value = "";
             textInput.value  = "";
             tagsInput.value  = "";
+            propertiesInput.value = "";
     
             console.log("Edit overlay fields cleared.");
         });

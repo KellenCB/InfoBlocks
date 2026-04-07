@@ -84,13 +84,17 @@ export const saveEditHandler = () => {
 
     const usesState = JSON.parse(localStorage.getItem("uses_field_edit_overlay_state") || "[]");
 
+    const propertiesInput = document.getElementById("properties_input_edit_overlay").value
+        .split(",")
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
+
     const blockType = tabBTConfig
         ? Array.from(document.querySelectorAll('#character_type_tags_edit .tag-button.selected')).map(b => b.dataset.tag)
         : null;
 
     appManager.saveBlock(
-        activeTab, titleInput, textInput, allTags,
-        usesState, blockType, blockId, blocks[blockIndex].timestamp
+        activeTab, titleInput, textInput, allTags, usesState, propertiesInput, blockType, blockId, blocks[blockIndex].timestamp
     );
     console.log(`✅ Block updated in ${activeTab} with tags:`, allTags);
 
@@ -117,8 +121,9 @@ export const saveEditHandler = () => {
             if (searchQuery) {
                 filteredBlocks = filteredBlocks.filter(block => {
                     return block.title.toLowerCase().includes(searchQuery) ||
-                           stripHTML(block.text).toLowerCase().includes(searchQuery) ||
-                           block.tags.some(tag => tag.toLowerCase().includes(searchQuery));
+                        stripHTML(block.text).toLowerCase().includes(searchQuery) ||
+                        block.tags.some(tag => tag.toLowerCase().includes(searchQuery)) ||
+                        (block.properties || []).some(p => p.toLowerCase().includes(searchQuery));
                 });
             }
 
@@ -193,7 +198,7 @@ export const blockActionsHandler = (() => {
         if (target.classList.contains("duplicate-button")) {
             console.log("📄 Duplicating block:", blockId);
             const blockTags = Array.isArray(block.tags) ? [...block.tags] : [];
-            appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.blockType || null);
+            appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.properties || [], block.blockType || null);
             reapplySearchAndFilters();
 
         } else if (target.classList.contains("edit-button")) {
@@ -225,7 +230,9 @@ export const blockActionsHandler = (() => {
             } else {
                 document.getElementById("tags_input_edit_overlay").value = userDefinedTags.join(", ");
             }
-                                
+
+            document.getElementById("properties_input_edit_overlay").value = (block.properties || []).join(", ");
+
             const editOverlay = document.querySelector(".edit-block-overlay");
             if (editOverlay) {
                 editOverlay.dataset.activeTab = activeTab;
@@ -304,7 +311,8 @@ export const blockActionsHandler = (() => {
             filteredBlocks = filteredBlocks.filter(block =>
                 block.title.toLowerCase().includes(searchQuery) ||
                 stripHTML(block.text).toLowerCase().includes(searchQuery) ||
-                block.tags.some(tag => tag.toLowerCase().includes(searchQuery))
+                block.tags.some(tag => tag.toLowerCase().includes(searchQuery)) ||
+                (block.properties || []).some(p => p.toLowerCase().includes(searchQuery))
             );
         }
     
