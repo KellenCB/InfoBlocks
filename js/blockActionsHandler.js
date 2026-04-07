@@ -58,7 +58,14 @@ export const saveEditHandler = () => {
     tagsInput = tagsInput.filter(tag => !currentBlockTags.includes(tag));
 
     const combinedTagsLowercase = [...new Set([...tagsInput, ...selectedPredefinedTags])];
-    const allTags = combinedTagsLowercase.map(tag => tag.charAt(0).toUpperCase() + tag.slice(1));
+    const predefinedTagsMap = new Map(
+        Object.values(categoryTags).flatMap(cat => cat.tags).map(t => [t.toLowerCase(), t])
+    );
+    const allTags = combinedTagsLowercase.map(tag => {
+        const predefined = predefinedTagsMap.get(tag);
+        if (predefined) return predefined;
+        return tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
+    });
 
     if (
         !titleInput ||

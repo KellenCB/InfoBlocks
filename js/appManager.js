@@ -693,11 +693,15 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
             return false;
         }
     } else {
-        const predefinedTagsSet = new Set(Object.values(categoryTags).flatMap(cat => cat.tags));
-        const formattedTags = tags.map(tag => 
-            predefinedTagsSet.has(tag) ? tag : tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
+        const predefinedTagsMap = new Map(
+            Object.values(categoryTags).flatMap(cat => cat.tags).map(tag => [tag.toLowerCase(), tag])
         );
-    
+        const formattedTags = tags.map(tag => {
+            const predefined = predefinedTagsMap.get(tag.toLowerCase());
+            if (predefined) return predefined;
+            return tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
+        });
+            
         const newBlock = {
           id: crypto.randomUUID(),
           title: blockTitle,
