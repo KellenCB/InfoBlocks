@@ -20,7 +20,7 @@
     --magicItemBonus-color: #F037A5;
     --equippedCheck-color:  #FF4632;
 
-    --or-stripe-opacity: 0.66; /* Controls the faded stripe in OR-selected tags */
+    --or-stripe-opacity: 0.75; /* Controls the faded stripe in OR-selected tags */
 }
 
 /* Accordion groups inherit their colour from the tag category */
@@ -106,6 +106,7 @@
 
 /* ==================================================================*/
 /* ====================== OR-SELECTED STATE =========================*/
+/* Shift+click — stripes alternate full colour / 50% colour         */
 /* ==================================================================*/
 
 .tag-button.selected-or {
@@ -114,7 +115,7 @@
         var(--user-color)                            0px,  var(--user-color)                            4px,
         rgba(228, 224, 224, var(--or-stripe-opacity)) 4px,  rgba(228, 224, 224, var(--or-stripe-opacity)) 10px
     );
-    border: 2px solid var(--user-color);
+    border: 1px solid var(--user-color);
     color: #000;
     font-weight: bolder;
 }

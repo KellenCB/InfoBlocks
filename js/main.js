@@ -230,19 +230,10 @@ function initBlockTypeFilterButtons() {
         const tabNum = tabId.replace("tab", "");
         const container = document.getElementById(`character_type_tags_${tabNum}`);
         if (!container) return;
-
-        // Render buttons
         container.innerHTML = config.types.map(type =>
             `<button class="tag-button ${config.className}" data-tag="${type}">${type}</button>`
         ).join("");
-
-        // Wire click: toggle selected + re-filter
-        container.addEventListener("click", e => {
-            const btn = e.target.closest(".tag-button");
-            if (!btn) return;
-            btn.classList.toggle("selected");
-            filterManager.applyFilters(tabNum); // applyFilters calls updateTags internally
-        });
+        // filterManager.handleTagClick handles all interaction including shift+click
     });
 }
 

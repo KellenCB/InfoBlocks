@@ -466,9 +466,10 @@ export const appManager = (() => {
       localStorage.setItem(`activeViewState_${activeTab}`, newState);
     }
 
-    renderBlocks(activeTab, blocks);
-    updateTags();
-  };
+    import('./filterManager.js').then(({ filterManager }) => {
+        filterManager.applyFilters(activeTab.replace('tab', ''));
+    });
+};
 
   function updateViewToggleDropdown(tabSuffix) {
     const dropdown = document.getElementById(`view-toggle-dropdown_${tabSuffix}`);

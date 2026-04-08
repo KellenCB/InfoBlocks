@@ -184,7 +184,7 @@ export const blockActionsHandler = (() => {
             isEditing = true;
             currentEditingBlockId = blockId;
         
-            selectedFilterTags = tagHandler.getSelectedTags();
+            selectedFilterTags = filterManager.getSelectedTags();
             console.log("✅ Stored search & filter tags BEFORE editing:", selectedFilterTags);
         
             document.getElementById("title_input_edit_overlay").value = block.title;

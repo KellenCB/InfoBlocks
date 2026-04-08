@@ -53,11 +53,20 @@ export const filterManager = (() => {
         const andTags   = getAndTags(activeTab);
         const orTags    = getOrTags(activeTab);
 
+        const selectedBlockTypes = new Set(
+            [...document.querySelectorAll(`#character_type_tags_${tabNumber} .tag-button.selected`)]
+                .map(b => b.dataset.tag)
+        );
+        const orBlockTypes = new Set(
+            [...document.querySelectorAll(`#character_type_tags_${tabNumber} .tag-button.selected-or`)]
+                .map(b => b.dataset.tag)
+        );
+
         const applyTo = (selector) => {
             document.querySelectorAll(selector).forEach(btn => {
                 const tag = btn.dataset.tag;
-                btn.classList.toggle('selected',    andTags.includes(tag));
-                btn.classList.toggle('selected-or', orTags.includes(tag));
+                btn.classList.toggle('selected',    andTags.includes(tag) || selectedBlockTypes.has(tag));
+                btn.classList.toggle('selected-or', orTags.includes(tag)  || orBlockTypes.has(tag));
             });
         };
 
@@ -99,15 +108,21 @@ export const filterManager = (() => {
         // 1. Block-type filter (AND logic, driven by config)
         const tabBTConfig = blockTypeConfig[activeTab];
         if (tabBTConfig) {
-            const selectedTypes = [
-                ...document.querySelectorAll(`#character_type_tags_${tabNumber} .tag-button.selected`)
-            ].map(b => b.dataset.tag);
-            if (selectedTypes.length) {
+            const andTypes = [...document.querySelectorAll(`#character_type_tags_${tabNumber} .tag-button.selected`)]
+                .map(b => b.dataset.tag);
+            const orTypes  = [...document.querySelectorAll(`#character_type_tags_${tabNumber} .tag-button.selected-or`)]
+                .map(b => b.dataset.tag);
+
+            if (andTypes.length) {
                 blocks = blocks.filter(block => {
-                    const types = Array.isArray(block.blockType)
-                        ? block.blockType
-                        : (block.blockType ? [block.blockType] : []);
-                    return selectedTypes.every(t => types.includes(t));
+                    const types = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+                    return andTypes.every(t => types.includes(t));
+                });
+            }
+            if (orTypes.length) {
+                blocks = blocks.filter(block => {
+                    const types = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+                    return orTypes.some(t => types.includes(t));
                 });
             }
         }
@@ -154,17 +169,44 @@ export const filterManager = (() => {
             if (
                 !target.classList.contains('tag-button') ||
                 target.closest('.add-block-overlay') ||
-                target.closest('.edit-block-overlay') ||
-                target.closest('[id^="character_type_tags_"]')  // block type buttons handled separately
+                target.closest('.edit-block-overlay')
             ) return;
 
             const activeTab = document.querySelector('.tab-button.active')?.dataset.tab || 'tab4';
             const tabNumber = activeTab.replace('tab', '');
-            const tag       = target.dataset.tag?.trim();
+            const tag = target.dataset.tag?.trim();
             if (!tag) return;
 
-            const andTags = getAndTags(activeTab);
-            const orTags  = getOrTags(activeTab);
+            const tabBTConfig = blockTypeConfig[activeTab];
+            if (tabBTConfig && tabBTConfig.types.includes(tag)) {
+                const btBtn = document.querySelector(
+                    `#character_type_tags_${tabNumber} .tag-button[data-tag="${tag}"]`
+                );
+                if (btBtn) {
+                    const inAnd = btBtn.classList.contains('selected');
+                    const inOr  = btBtn.classList.contains('selected-or');
+                    if (!e.shiftKey) {
+                        if (inAnd || inOr) {
+                            btBtn.classList.remove('selected', 'selected-or');
+                        } else {
+                            btBtn.classList.add('selected');
+                        }
+                    } else {
+                        if (inOr) {
+                            btBtn.classList.remove('selected-or');
+                        } else if (inAnd) {
+                            btBtn.classList.remove('selected');
+                            btBtn.classList.add('selected-or');
+                        } else {
+                            btBtn.classList.add('selected-or');
+                        }
+                    }
+                    applyFilters(tabNumber);
+                }
+                return;
+            }
+
+            const andTags = getAndTags(activeTab);            const orTags  = getOrTags(activeTab);
             const inAnd   = andTags.includes(tag);
             const inOr    = orTags.includes(tag);
 
@@ -179,9 +221,8 @@ export const filterManager = (() => {
                 }
             } else {
                 if (inOr) {
-                    // OR → AND
-                    selectedOrTagsByTab[activeTab]  = orTags.filter(t => t !== tag);
-                    selectedAndTagsByTab[activeTab] = [...andTags, tag];
+                    // Shift+click OR → deselect
+                    selectedOrTagsByTab[activeTab] = orTags.filter(t => t !== tag);
                 } else if (inAnd) {
                     // AND → OR
                     selectedAndTagsByTab[activeTab] = andTags.filter(t => t !== tag);

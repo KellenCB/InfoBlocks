@@ -74,6 +74,22 @@ export const blockTemplate = (block, tab = "tab4") => {
 
     const hasBody = bodyHTML.trim() !== "";
 
+    const actionMenuHTML = `
+        <div class="block-actions">
+            <button class="action-button pin-button${block.pinned ? ' pin-active' : ''}" data-id="${block.id}" title="${block.pinned ? 'Unpin' : 'Pin'}">
+                <img src="images/${block.pinned ? 'Pin_Icon_Blue' : 'Pin_Icon'}.svg" alt="Pin" />
+            </button>
+            <div class="block-actions-menu">
+                <button class="actions-trigger" title="Actions">···</button>
+                <div class="block-actions-reveal">
+                    <button class="action-button remove-button red-button" data-id="${block.id}" title="Remove">×</button>
+                    <button class="action-button duplicate-button blue-button" data-id="${block.id}" title="Copy">❐</button>
+                    <button class="action-button edit-button orange-button" data-id="${block.id}" title="Edit">✎</button>
+                </div>
+            </div>
+        </div>
+    `;
+
     let content = "";
     if (viewState === 'expanded') {
         const usesHTML = block.uses
@@ -87,14 +103,7 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class="block-title"><h4>${block.title}</h4></div>
                     ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
                 </div>
-                <div class="block-actions">
-                    <button class="action-button pin-button${block.pinned ? ' pin-active' : ''}" data-id="${block.id}" title="${block.pinned ? 'Unpin' : 'Pin'}">
-                        <img src="images/${block.pinned ? 'Pin_Icon_Blue' : 'Pin_Icon'}.svg" alt="Pin" />
-                    </button>
-                    <button class="action-button duplicate-button green-button" data-id="${block.id}" title="Copy">❐</button>
-                    <button class="action-button edit-button orange-button" data-id="${block.id}" title="Edit">✎</button>
-                    <button class="action-button remove-button red-button" data-id="${block.id}" title="Remove">×</button>
-                </div>
+                ${actionMenuHTML}
             </div>
             ${tagSectionsHTML}
             ${propertiesHTML}
@@ -110,14 +119,7 @@ export const blockTemplate = (block, tab = "tab4") => {
             <div class="block-header">
                 <div class="block-title"><h4>${block.title}</h4></div>
                 ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
-                <div class="block-actions">
-                    <button class="action-button pin-button${block.pinned ? ' pin-active' : ''}" data-id="${block.id}" title="${block.pinned ? 'Unpin' : 'Pin'}">
-                        <img src="images/${block.pinned ? 'Pin_Icon_Blue' : 'Pin_Icon'}.svg" alt="Pin" />
-                    </button>
-                    <button class="action-button duplicate-button green-button" data-id="${block.id}" title="Copy">❐</button>
-                    <button class="action-button edit-button orange-button" data-id="${block.id}" title="Edit">✎</button>
-                    <button class="action-button remove-button red-button" data-id="${block.id}" title="Remove">×</button>
-                </div>
+                ${actionMenuHTML}
             </div>
         `;
     } else if (viewState === 'minimized') {
@@ -140,3 +142,21 @@ export const blockTemplate = (block, tab = "tab4") => {
         </div>
     `;
 };
+
+// Mobile tap: toggle action menu open/closed
+document.addEventListener('click', e => {
+    const trigger = e.target.closest('.actions-trigger');
+    if (trigger) {
+        e.stopPropagation();
+        const menu = trigger.closest('.block-actions-menu');
+        const isOpen = menu.classList.contains('menu-open');
+        document.querySelectorAll('.block-actions-menu.menu-open')
+            .forEach(m => m.classList.remove('menu-open'));
+        if (!isOpen) menu.classList.add('menu-open');
+        return;
+    }
+    if (!e.target.closest('.block-actions-menu')) {
+        document.querySelectorAll('.block-actions-menu.menu-open')
+            .forEach(m => m.classList.remove('menu-open'));
+    }
+});
