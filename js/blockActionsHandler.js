@@ -168,16 +168,15 @@ export const blockActionsHandler = (() => {
             if (idx !== -1) {
                 blocks[idx].pinned = !blocks[idx].pinned;
                 localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
-                reapplySearchAndFilters();
+                reapplySearchAndFilters(activeTab);   // ← was reapplySearchAndFilters()
             }
             return;
         }
 
         if (target.classList.contains("duplicate-button")) {
-            console.log("📄 Duplicating block:", blockId);
             const blockTags = Array.isArray(block.tags) ? [...block.tags] : [];
             appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.properties || [], block.blockType || null);
-            reapplySearchAndFilters();
+            reapplySearchAndFilters(activeTab);
 
         } else if (target.classList.contains("edit-button")) {
 
@@ -276,8 +275,8 @@ export const blockActionsHandler = (() => {
         initDeleteConfirmation();
     };  
 
-    function reapplySearchAndFilters() {
-        const activeTab = appManager.getActiveTab();
+    function reapplySearchAndFilters(tabOverride = null) {
+        const activeTab = tabOverride || appManager.getActiveTab();
         filterManager.applyFilters(activeTab.replace('tab', ''));
     }
 
