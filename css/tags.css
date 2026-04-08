@@ -1,62 +1,50 @@
-.tag-section{
-    display: contents;
-    flex-wrap: wrap;
-    column-gap: 7px;
-    row-gap: 8px;
+/* ==================================================================*/
+/* ========================= COLOUR TOKENS ==========================*/
+/* ==================================================================*/
+
+:root {
+    --user-color:           #e4e0e0;
+    --characterType-color:  #00e5ff;
+    --part-color:           #CDF564;
+    --action-color:         #07f371;
+    --ability-color:        #bf5eff;
+    --damage-color:         #F037A5;
+    --condition-color:      #ffa927;
+    --spell-color:          #2b7bf1;
+    --spellLevel-color:     #49c1e6;
+    --infusion-color:       #49c1e6;
+    --attribute-color:      #FF4632;
+    --charges-color:        #43ffef;
+    --itemType-color:       #ff7f00;
+    --magicItemType-color:  #07f371;
+    --magicItemBonus-color: #F037A5;
+    --equippedCheck-color:  #FF4632;
+
+    --or-stripe-opacity: 0.66; /* Controls the faded stripe in OR-selected tags */
 }
 
-.all-tags-container {
-    display: flex !important;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 8px;
-    max-width: 100%;
-    padding: 15px 0;
-}
+/* Accordion groups inherit their colour from the tag category */
+.tag-accordion-group                    { --accordion-color: #aaa; }
+.tag-accordion-group.tag-characterType  { --accordion-color: var(--characterType-color); }
+.tag-accordion-group.tag-partType       { --accordion-color: var(--part-color); }
+.tag-accordion-group.tag-actionType     { --accordion-color: var(--action-color); }
+.tag-accordion-group.tag-abilityType    { --accordion-color: var(--ability-color); }
+.tag-accordion-group.tag-damageType     { --accordion-color: var(--damage-color); }
+.tag-accordion-group.tag-conditionType  { --accordion-color: var(--condition-color); }
+.tag-accordion-group.tag-spellType      { --accordion-color: var(--spell-color); }
+.tag-accordion-group.tag-spellLevel     { --accordion-color: var(--spellLevel-color); }
+.tag-accordion-group.tag-infusion       { --accordion-color: var(--infusion-color); }
+.tag-accordion-group.tag-attributeType  { --accordion-color: var(--attribute-color); }
+.tag-accordion-group.tag-Charges        { --accordion-color: var(--charges-color); }
+.tag-accordion-group.tag-itemType       { --accordion-color: var(--itemType-color); }
+.tag-accordion-group.tag-magicItemType  { --accordion-color: var(--magicItemType-color); }
+.tag-accordion-group.tag-magicItemBonus { --accordion-color: var(--magicItemBonus-color); }
+.tag-accordion-group.tag-equippedCheck  { --accordion-color: var(--equippedCheck-color); }
 
-#all_tags_container {
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: column;
-    justify-content: flex-start; 
-    align-items: flex-start;
-    text-align: left;
-    max-width: 100%;
-    padding: 15px 0px 15px 0px;
-}
 
-.tag-category {
-    display: contents;
-}
-
-.overlay-tags,
-#dynamic_overlay_tags {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: flex-start;
-    max-width: 100%;
-    padding: 10px 0;
-    gap: 6px;
-}
-
-[id^="user_tags_list"],
-[id^="dynamic_tags_section"] {
-    display: flex;
-    flex-wrap: wrap;
-}
-
-/* Character type tags sit above the dynamic tag section in tab9 filter */
-.block-type-tags {
-    display: flex;
-    flex-wrap: wrap;
-    width: 100%;
-    padding: 15px 0 15px 0;
-    border-bottom: 1px solid #444;
-    column-gap: 7px;
-    row-gap: 9px;
-}
+/* ==================================================================*/
+/* ========================== TAG BUTTON ============================*/
+/* ==================================================================*/
 
 .tag-button {
     padding: 14px;
@@ -76,79 +64,77 @@
 
 .tag-button:hover { transform: scale(1.05); }
 
+/* Per-category border + text colour */
+.tag-characterType  { border-color: var(--characterType-color);  color: var(--characterType-color); }
+.tag-partType       { border-color: var(--part-color);           color: var(--part-color); }
+.tag-actionType     { border-color: var(--action-color);         color: var(--action-color); }
+.tag-abilityType    { border-color: var(--ability-color);        color: var(--ability-color); }
+.tag-damageType     { border-color: var(--damage-color);         color: var(--damage-color); }
+.tag-conditionType  { border-color: var(--condition-color);      color: var(--condition-color); }
+.tag-spellType      { border-color: var(--spell-color);          color: var(--spell-color); }
+.tag-spellLevel     { border-color: var(--spellLevel-color);     color: var(--spellLevel-color); }
+.tag-infusion       { border-color: var(--infusion-color);       color: var(--infusion-color); }
+.tag-attributeType  { border-color: var(--attribute-color);      color: var(--attribute-color); }
+.tag-Charges        { border-color: var(--charges-color);        color: var(--charges-color); }
+.tag-button.tag-itemType       { border-color: var(--itemType-color);       color: var(--itemType-color); }
+.tag-button.tag-magicItemType  { border-color: var(--magicItemType-color);  color: var(--magicItemType-color); }
+.tag-button.tag-magicItemBonus { border-color: var(--magicItemBonus-color); color: var(--magicItemBonus-color); }
+.tag-button.tag-equippedCheck  { border-color: var(--equippedCheck-color);  color: var(--equippedCheck-color); }
+
+
 /* ==================================================================*/
-/* ========================== COLOURING =============================*/
+/* ====================== AND-SELECTED STATE ========================*/
 /* ==================================================================*/
 
-:root {
-    --user-color: #e4e0e0;
-    --characterType-color: #00e5ff;
-    --part-color: #CDF564;
-    --action-color: #07f371;
-    --ability-color: #bf5eff;
-    --damage-color: #F037A5;
-    --condition-color: #ffa927;
-    --spell-color: #2b7bf1;
-    --spellLevel-color: #49c1e6;
-    --infusion-color: #49c1e6;
-    --attribute-color: #FF4632;
-    --charges-color: #43ffef; 
-    --itemType-color: #ff7f00;
-    --magicItemType-color: #07f371;
-    --magicItemBonus-color: #F037A5;
-    --equippedCheck-color: #FF4632;
+.tag-button.selected                        { background-color: var(--user-color);          color: #333; font-weight: bolder; }
+.tag-button.selected.tag-characterType      { background-color: var(--characterType-color);  color: #333; }
+.tag-button.selected.tag-partType           { background-color: var(--part-color); }
+.tag-button.selected.tag-actionType         { background-color: var(--action-color); }
+.tag-button.selected.tag-abilityType        { background-color: var(--ability-color); }
+.tag-button.selected.tag-damageType         { background-color: var(--damage-color); }
+.tag-button.selected.tag-conditionType      { background-color: var(--condition-color); }
+.tag-button.selected.tag-spellType          { background-color: var(--spell-color); }
+.tag-button.selected.tag-spellLevel         { background-color: var(--spellLevel-color); }
+.tag-button.selected.tag-infusion           { background-color: var(--infusion-color); }
+.tag-button.selected.tag-attributeType      { background-color: var(--attribute-color); }
+.tag-button.selected.tag-Charges            { background-color: var(--charges-color); }
+.tag-button.selected.tag-itemType           { background-color: var(--itemType-color); }
+.tag-button.selected.tag-magicItemType      { background-color: var(--magicItemType-color); }
+.tag-button.selected.tag-magicItemBonus     { background-color: var(--magicItemBonus-color); }
+.tag-button.selected.tag-equippedCheck      { background-color: var(--equippedCheck-color); }
+
+
+/* ==================================================================*/
+/* ====================== OR-SELECTED STATE =========================*/
+/* ==================================================================*/
+
+.tag-button.selected-or {
+    background: repeating-linear-gradient(
+        45deg,
+        var(--user-color)                            0px,  var(--user-color)                            4px,
+        rgba(228, 224, 224, var(--or-stripe-opacity)) 4px,  rgba(228, 224, 224, var(--or-stripe-opacity)) 10px
+    );
+    border: 2px solid var(--user-color);
+    color: #000;
+    font-weight: bolder;
 }
 
-.tag-characterType { border-color: var(--characterType-color); color: var(--characterType-color); }
-.tag-partType { border-color: var(--part-color); color: var(--part-color);}
-.tag-actionType { border-color: var(--action-color); color: var(--action-color);}
-.tag-abilityType { border-color: var(--ability-color); color: var(--ability-color);}
-.tag-damageType { border-color: var(--damage-color); color: var(--damage-color);}
-.tag-conditionType { border-color: var(--condition-color); color: var(--condition-color);}
-.tag-spellType { border-color: var(--spell-color); color: var(--spell-color);}
-.tag-spellLevel { border-color: var(--spellLevel-color); color: var(--spellLevel-color);}
-.tag-infusion { border-color: var(--infusion-color); color: var(--infusion-color);}
-.tag-attributeType { border-color: var(--attribute-color); color: var(--attribute-color);}
-.tag-Charges { border-color: var(--charges-color); color: var(--charges-color);}
-.tag-button.tag-itemType { border-color: var(--itemType-color); color: var(--itemType-color);}
-.tag-button.tag-magicItemType { border-color: var(--magicItemType-color); color: var(--magicItemType-color);}
-.tag-button.tag-magicItemBonus { border-color: var(--magicItemBonus-color); color: var(--magicItemBonus-color);}
-.tag-button.tag-equippedCheck { border-color: var(--equippedCheck-color); color: var(--equippedCheck-color);}
+.tag-button.selected-or.tag-characterType  { background: repeating-linear-gradient(45deg, var(--characterType-color)  0, var(--characterType-color)  4px, rgba(0,229,255,   var(--or-stripe-opacity)) 4px, rgba(0,229,255,   var(--or-stripe-opacity)) 10px); border-color: var(--characterType-color); }
+.tag-button.selected-or.tag-partType       { background: repeating-linear-gradient(45deg, var(--part-color)           0, var(--part-color)           4px, rgba(205,245,100,var(--or-stripe-opacity)) 4px, rgba(205,245,100,var(--or-stripe-opacity)) 10px); border-color: var(--part-color); }
+.tag-button.selected-or.tag-actionType     { background: repeating-linear-gradient(45deg, var(--action-color)         0, var(--action-color)         4px, rgba(7,243,113,  var(--or-stripe-opacity)) 4px, rgba(7,243,113,  var(--or-stripe-opacity)) 10px); border-color: var(--action-color); }
+.tag-button.selected-or.tag-abilityType    { background: repeating-linear-gradient(45deg, var(--ability-color)        0, var(--ability-color)        4px, rgba(191,94,255, var(--or-stripe-opacity)) 4px, rgba(191,94,255, var(--or-stripe-opacity)) 10px); border-color: var(--ability-color); }
+.tag-button.selected-or.tag-damageType     { background: repeating-linear-gradient(45deg, var(--damage-color)         0, var(--damage-color)         4px, rgba(240,55,165, var(--or-stripe-opacity)) 4px, rgba(240,55,165, var(--or-stripe-opacity)) 10px); border-color: var(--damage-color); }
+.tag-button.selected-or.tag-conditionType  { background: repeating-linear-gradient(45deg, var(--condition-color)      0, var(--condition-color)      4px, rgba(255,169,39, var(--or-stripe-opacity)) 4px, rgba(255,169,39, var(--or-stripe-opacity)) 10px); border-color: var(--condition-color); }
+.tag-button.selected-or.tag-spellType      { background: repeating-linear-gradient(45deg, var(--spell-color)          0, var(--spell-color)          4px, rgba(43,123,241, var(--or-stripe-opacity)) 4px, rgba(43,123,241, var(--or-stripe-opacity)) 10px); border-color: var(--spell-color); }
+.tag-button.selected-or.tag-spellLevel     { background: repeating-linear-gradient(45deg, var(--spellLevel-color)     0, var(--spellLevel-color)     4px, rgba(73,193,230, var(--or-stripe-opacity)) 4px, rgba(73,193,230, var(--or-stripe-opacity)) 10px); border-color: var(--spellLevel-color); }
+.tag-button.selected-or.tag-infusion       { background: repeating-linear-gradient(45deg, var(--infusion-color)       0, var(--infusion-color)       4px, rgba(73,193,230, var(--or-stripe-opacity)) 4px, rgba(73,193,230, var(--or-stripe-opacity)) 10px); border-color: var(--infusion-color); }
+.tag-button.selected-or.tag-attributeType  { background: repeating-linear-gradient(45deg, var(--attribute-color)      0, var(--attribute-color)      4px, rgba(255,70,50,  var(--or-stripe-opacity)) 4px, rgba(255,70,50,  var(--or-stripe-opacity)) 10px); border-color: var(--attribute-color); }
+.tag-button.selected-or.tag-Charges        { background: repeating-linear-gradient(45deg, var(--charges-color)        0, var(--charges-color)        4px, rgba(67,255,239, var(--or-stripe-opacity)) 4px, rgba(67,255,239, var(--or-stripe-opacity)) 10px); border-color: var(--charges-color); }
+.tag-button.selected-or.tag-itemType       { background: repeating-linear-gradient(45deg, var(--itemType-color)       0, var(--itemType-color)       4px, rgba(255,127,0,  var(--or-stripe-opacity)) 4px, rgba(255,127,0,  var(--or-stripe-opacity)) 10px); border-color: var(--itemType-color); }
+.tag-button.selected-or.tag-magicItemType  { background: repeating-linear-gradient(45deg, var(--magicItemType-color)  0, var(--magicItemType-color)  4px, rgba(7,243,113,  var(--or-stripe-opacity)) 4px, rgba(7,243,113,  var(--or-stripe-opacity)) 10px); border-color: var(--magicItemType-color); }
+.tag-button.selected-or.tag-magicItemBonus { background: repeating-linear-gradient(45deg, var(--magicItemBonus-color) 0, var(--magicItemBonus-color) 4px, rgba(240,55,165, var(--or-stripe-opacity)) 4px, rgba(240,55,165, var(--or-stripe-opacity)) 10px); border-color: var(--magicItemBonus-color); }
+.tag-button.selected-or.tag-equippedCheck  { background: repeating-linear-gradient(45deg, var(--equippedCheck-color)  0, var(--equippedCheck-color)  4px, rgba(255,70,50,  var(--or-stripe-opacity)) 4px, rgba(255,70,50,  var(--or-stripe-opacity)) 10px); border-color: var(--equippedCheck-color); }
 
-.tag-button.selected { background-color: var(--user-color); color: #333; font-weight: bolder;}
-
-.tag-button.selected.tag-characterType { background-color: var(--characterType-color); color: #333; }
-.tag-button.selected.tag-partType { background-color: var(--part-color);}
-.tag-button.selected.tag-actionType { background-color: var(--action-color);}
-.tag-button.selected.tag-abilityType { background-color: var(--ability-color);}
-.tag-button.selected.tag-damageType { background-color: var(--damage-color);}
-.tag-button.selected.tag-conditionType { background-color: var(--condition-color);}
-.tag-button.selected.tag-spellType { background-color: var(--spell-color);}
-.tag-button.selected.tag-spellLevel { background-color: var(--spellLevel-color);}
-.tag-button.selected.tag-infusion { background-color: var(--infusion-color);}
-.tag-button.selected.tag-attributeType { background-color: var(--attribute-color);}
-.tag-button.selected.tag-Charges { background-color: var(--charges-color);}
-.tag-button.selected.tag-itemType { background-color: var(--itemType-color);}
-.tag-button.selected.tag-magicItemType { background-color: var(--magicItemType-color)}
-.tag-button.selected.tag-magicItemBonus { background-color: var(--magicItemBonus-color)}
-.tag-button.selected.tag-equippedCheck { background-color: var(--equippedCheck-color)}
-
-.tag-accordion-group                    { --accordion-color: #aaa; }
-.tag-accordion-group.tag-characterType  { --accordion-color: var(--characterType-color); }
-.tag-accordion-group.tag-partType       { --accordion-color: var(--part-color); }
-.tag-accordion-group.tag-actionType     { --accordion-color: var(--action-color); }
-.tag-accordion-group.tag-abilityType    { --accordion-color: var(--ability-color); }
-.tag-accordion-group.tag-damageType     { --accordion-color: var(--damage-color); }
-.tag-accordion-group.tag-conditionType  { --accordion-color: var(--condition-color); }
-.tag-accordion-group.tag-spellType      { --accordion-color: var(--spell-color); }
-.tag-accordion-group.tag-spellLevel     { --accordion-color: var(--spellLevel-color); }
-.tag-accordion-group.tag-infusion       { --accordion-color: var(--infusion-color); }
-.tag-accordion-group.tag-attributeType      { --accordion-color: var(--attribute-color); }
-.tag-accordion-group.tag-Charges        { --accordion-color: var(--charges-color); }
-.tag-accordion-group.tag-itemType       { --accordion-color: var(--itemType-color); }
-.tag-accordion-group.tag-magicItemType  { --accordion-color: var(--magicItemType-color); }
-.tag-accordion-group.tag-magicItemBonus { --accordion-color: var(--magicItemBonus-color); }
-.tag-accordion-group.tag-equippedCheck  { --accordion-color: var(--equippedCheck-color); }
 
 /* ==================================================================*/
 /* ======================= TAG ACCORDION ============================*/
@@ -159,12 +145,6 @@
     flex-wrap: wrap;
     align-items: center;
     width: auto;
-}
-
-.tag-accordion-pill:has(.tag-accordion-chip) {
-    width: 100%;
-    box-sizing: border-box;
-    grid-gap: 10px;
 }
 
 .tag-accordion-pill {
@@ -187,6 +167,13 @@
     background-color: rgba(255, 255, 255, 0.07);
 }
 
+/* Pill expands to full width when it contains chips */
+.tag-accordion-pill:has(.tag-accordion-chip) {
+    width: 100%;
+    box-sizing: border-box;
+    grid-gap: 10px;
+}
+
 .tag-accordion-body {
     display: none;
     flex-wrap: wrap;
@@ -200,10 +187,20 @@
     background-color: transparent;
 }
 
-.tag-accordion-group.open .tag-accordion-body {
-    display: flex;
+.tag-accordion-group.open .tag-accordion-body  { display: flex; }
+.tag-accordion-group.open .tag-accordion-pill  { display: none; }
+.tag-accordion-group.open .tag-accordion-chip  { display: none; }
+
+.tag-accordion-label {
+    font-size: 16px;
+    color: var(--accordion-color);
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
+.filter-section .tag-accordion-label { width: 100%; }
+
+/* Chips — shown inside the collapsed pill for any selected tags */
 .tag-accordion-chip {
     min-height: 40px;
     padding: 10px 15px;
@@ -222,42 +219,65 @@
     transition: transform 0.5s;
 }
 
-.tag-accordion-chip:hover {
-    transform: scale(1.05);
+.tag-accordion-chip:hover { transform: scale(1.05); }
+
+/* OR-selected chip — solid colour fallback (CSS vars can't be used inside rgba()) */
+.tag-accordion-chip.selected-or {
+    background-color: var(--accordion-color);
+    border: 2px solid var(--accordion-color);
+    color: #000;
+    opacity: 0.75;
 }
 
-.tag-accordion-group.open .tag-accordion-pill {
-    display: none;
-}
-
-.tag-accordion-group.open .tag-accordion-chip {
-    display: none;
-}
-
-.tag-accordion-label {
-    font-size: 16px;
-    color: var(--accordion-color);
-    flex-shrink: 0;
-    white-space: nowrap;
-}
-
-.filter-section .tag-accordion-label {
-        width: 100%;
-}
 
 /* ==================================================================*/
-/* ========================= BLOCK TAGS =============================*/
+/* ====================== LAYOUT CONTAINERS =========================*/
 /* ==================================================================*/
 
+.tag-section {
+    display: contents;
+    flex-wrap: wrap;
+    column-gap: 7px;
+    row-gap: 8px;
+}
+
+.tag-category { display: contents; }
+
+[id^="user_tags_list"],
+[id^="dynamic_tags_section"] {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+/* Block-type tag row — sits above the accordion in the filter panel */
+.block-type-tags {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    padding: 15px 0;
+    border-bottom: 1px solid #444;
+    column-gap: 7px;
+    row-gap: 9px;
+}
+
+/* Overlay tag containers */
+.overlay-tags,
+#dynamic_overlay_tags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    max-width: 100%;
+    padding: 10px 0;
+    gap: 6px;
+}
+
+/* Block-type rows inside add/edit overlays */
 .add-block-overlay .block-type-tags,
 .edit-block-overlay .block-type-tags {
     border-bottom: none;
     border-top: 1px solid #444;
     padding: 10px 0 0 0;
-}
-
-.add-block-overlay .block-type-tags,
-.edit-block-overlay .block-type-tags {
     justify-content: center;
 }
 

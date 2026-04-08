@@ -1,5 +1,5 @@
 import { appManager } from './appManager.js';
-import { tagHandler } from './tagHandler.js';
+import { filterManager } from './filterManager.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 
 // Returns the correct tab for an overlay save operation.
@@ -26,7 +26,7 @@ function populateBlockTypeOverlay(containerId, selectedTypes = [], tabOverride =
     }
 
     container.innerHTML = config.types.map(type => {
-        const isSelected = selectedTypes.includes(type) ? "selected" : "";
+        const cls = selClass(tag);
         return `<button class="tag-button ${config.className} ${isSelected}" data-tag="${type}">${type}</button>`;
     }).join("");
 }
@@ -391,7 +391,7 @@ export const overlayHandler = (() => {
                 html += `<div class="tag-accordion-body">`;
                 html += `<span class="tag-accordion-label">${label}</span>`;
                 html += data.tags.map(tag => {
-                    const isSelected = blockTags.includes(tag) ? " selected" : "";
+                    const cls = selClass(tag);
                     return `<button class="tag-button ${data.className}${isSelected}" data-tag="${tag}">${tag}</button>`;
                 }).join("");
                 html += `</div></div>`;
