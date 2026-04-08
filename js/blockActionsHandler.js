@@ -2,7 +2,7 @@ let isEditing = false;
 let currentEditingBlockId = null;
 
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
-import { tagHandler } from './tagHandler.js';
+import { filterManager } from './filterManager.js';
 import { appManager } from './appManager.js';
 import { overlayHandler, getOverlayTargetTab } from './overlayHandler.js';
 import { initUsesField } from './overlayHandler.js';
@@ -117,36 +117,7 @@ export const saveEditHandler = () => {
         if (isSplitActive()) {
             refreshPanelsShowingTab(activeTab);
         } else {
-            // Original behaviour — reapply search and filters in main view
-            const tabSuffix    = activeTab.replace("tab", "");
-            const selectedTags = tagHandler.getSelectedTags(activeTab);
-            const searchInput  = document.getElementById(`search_input_${tabSuffix}`);
-            const searchQuery  = searchInput ? searchInput.value.trim().toLowerCase() : "";
-
-            let filteredBlocks = appManager.getBlocks(activeTab);
-
-            if (searchQuery) {
-                filteredBlocks = filteredBlocks.filter(block => {
-                    return block.title.toLowerCase().includes(searchQuery) ||
-                        stripHTML(block.text).toLowerCase().includes(searchQuery) ||
-                        block.tags.some(tag => tag.toLowerCase().includes(searchQuery)) ||
-                        (block.properties || []).some(p => p.toLowerCase().includes(searchQuery));
-                });
-            }
-
-            if (selectedTags.length > 0) {
-                filteredBlocks = filteredBlocks.filter(block =>
-                    selectedTags.every(tag =>
-                        block.tags.some(blockTag =>
-                            blockTag.charAt(0).toUpperCase() + blockTag.slice(1).toLowerCase() ===
-                            tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()
-                        )
-                    )
-                );
-            }
-
-            appManager.renderBlocks(activeTab, filteredBlocks);
-            appManager.updateTags();
+            filterManager.applyFilters(activeTab.replace('tab', ''));
         }
     });
 };
@@ -213,7 +184,7 @@ export const blockActionsHandler = (() => {
             isEditing = true;
             currentEditingBlockId = blockId;
         
-            selectedFilterTags = tagHandler.getSelectedTags();
+            selectedFilterTags = filterManager.getSelectedTags();
             console.log("✅ Stored search & filter tags BEFORE editing:", selectedFilterTags);
         
             document.getElementById("title_input_edit_overlay").value = block.title;
@@ -306,50 +277,10 @@ export const blockActionsHandler = (() => {
     };  
 
     function reapplySearchAndFilters() {
-        const activeTab    = appManager.getActiveTab();
-        const selectedTags = tagHandler.getSelectedTags(activeTab);
-        const tabNumber    = activeTab.replace("tab", "");
-        const searchInput  = document.getElementById(`search_input_${tabNumber}`);
-        const searchQuery  = searchInput ? searchInput.value.trim().toLowerCase() : "";
-        
-        let filteredBlocks = appManager.getBlocks(activeTab);
-    
-        if (searchQuery) {
-            filteredBlocks = filteredBlocks.filter(block =>
-                block.title.toLowerCase().includes(searchQuery) ||
-                stripHTML(block.text).toLowerCase().includes(searchQuery) ||
-                block.tags.some(tag => tag.toLowerCase().includes(searchQuery)) ||
-                (block.properties || []).some(p => p.toLowerCase().includes(searchQuery))
-            );
-        }
-    
-        const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
-
-        // Block type filtering — config-driven
-        const tabBTConfig = blockTypeConfig[activeTab];
-        if (tabBTConfig) {
-            const selectedTypes = [...document.querySelectorAll(`#character_type_tags_${tabNumber} .tag-button.selected`)]
-                .map(b => b.dataset.tag);
-            if (selectedTypes.length > 0) {
-                filteredBlocks = filteredBlocks.filter(block => {
-                    const types = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
-                    return selectedTypes.every(t => types.includes(t));
-                });
-            }
-        }
-
-        // Regular tag filtering
-        if (selectedTags.length > 0) {
-            filteredBlocks = filteredBlocks.filter(block =>
-                selectedTags.every(selectedTag =>
-                    block.tags.some(blockTag => normalizeTag(blockTag) === normalizeTag(selectedTag))
-                )
-            );
-        }
-    
-        appManager.renderBlocks(activeTab, filteredBlocks);
-        appManager.updateTags();
+        const activeTab = appManager.getActiveTab();
+        filterManager.applyFilters(activeTab.replace('tab', ''));
     }
+
 
     const attachBlockActions = () => {
         initUndoLastDelete();
@@ -364,3 +295,22 @@ export const blockActionsHandler = (() => {
     
     return { attachBlockActions };
 })();
+
+// Mobile tap: toggle action menu open/closed
+document.addEventListener('click', e => {
+    const trigger = e.target.closest('.actions-trigger');
+    if (trigger) {
+        e.stopPropagation();
+        const menu = trigger.closest('.block-actions-menu');
+        const isOpen = menu.classList.contains('menu-open');
+        document.querySelectorAll('.block-actions-menu.menu-open')
+            .forEach(m => m.classList.remove('menu-open'));
+        if (!isOpen) menu.classList.add('menu-open');
+        return;
+    }
+    // Close any open menu when clicking elsewhere
+    if (!e.target.closest('.block-actions-menu')) {
+        document.querySelectorAll('.block-actions-menu.menu-open')
+            .forEach(m => m.classList.remove('menu-open'));
+    }
+});

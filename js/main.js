@@ -2,52 +2,62 @@ import { initSplitView } from './splitView.js';
 import { appManager, actionButtonHandlers } from './appManager.js';
 import { blockActionsHandler, saveEditHandler } from './blockActionsHandler.js';
 import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
-import { tagHandler } from './tagHandler.js';
+import { filterManager } from './filterManager.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { stripHTML } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
 import { initLayoutMode, activateCharTab } from './layoutMode.js';
 
-function filterAndRender(tabNumber) {
-    const activeTab = `tab${tabNumber}`;
-    let blocks = appManager.getBlocks(activeTab);
-  
-    // 1) by block types (from blockTypeConfig)
-    const tabBTConfig = blockTypeConfig[activeTab];
-    if (tabBTConfig) {
-        const selectedTypes = [...document.querySelectorAll(`#character_type_tags_${tabNumber} .tag-button.selected`)]
-            .map(b => b.dataset.tag);
-        if (selectedTypes.length) {
-            blocks = blocks.filter(block => {
-                const types = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
-                return selectedTypes.every(t => types.includes(t));
-            });
-        }
-    }
+const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    // 2) by tags
-    const sel = tagHandler.getSelectedTags(activeTab);
-    if (sel.length) {
-        const normalizeTag = t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
-        blocks = blocks.filter(b =>
-            sel.every(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
-        );
-    }
-  
-    // 3) by search
-    const query = document
-        .getElementById(`search_input_${tabNumber}`)
-        ?.value.trim().toLowerCase() || "";
-            if (query) {
-                blocks = blocks.filter(b =>
-                    b.title.toLowerCase().includes(query) ||
-                    stripHTML(b.text).toLowerCase().includes(query) ||
-                    (b.properties || []).some(p => p.toLowerCase().includes(query))
-                );
-            }
-  
-    appManager.renderBlocks(activeTab, blocks);
+const highlightInText = (text, query) => {
+    if (!query) return text;
+    const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
+    return text.replace(re, '<span class="highlight">$1</span>');
+};
+
+const highlightInHTML = (html, query) => {
+    if (!query) return html;
+    const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+        const parent = node.parentNode;
+        let last = 0;
+        const frag = document.createDocumentFragment();
+        const txt = node.nodeValue;
+        txt.replace(re, (match, p1, offset) => {
+            if (offset > last) frag.appendChild(document.createTextNode(txt.slice(last, offset)));
+            const span = document.createElement('span');
+            span.className = 'highlight';
+            span.textContent = match;
+            frag.appendChild(span);
+            last = offset + match.length;
+        });
+        if (last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+        if (frag.childNodes.length) parent.replaceChild(frag, node);
+    });
+    return container.innerHTML;
+};
+
+function applyHighlights(tabNumber, query) {
+    if (!query) return;
+    const sec = document.getElementById(`results_section_${tabNumber}`);
+    if (!sec) return;
+    sec.querySelectorAll('.block-title').forEach(el => { el.innerHTML = highlightInText(el.innerHTML, query); });
+    sec.querySelectorAll('.block-body').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
+    sec.querySelectorAll('.block-property').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
 }
+
+// Re-apply highlights whenever filterManager re-renders blocks
+document.addEventListener('blocksRerendered', e => {
+    const tabNumber = e.detail.tab.replace('tab', '');
+    const query = document.getElementById(`search_input_${tabNumber}`)?.value.trim() || '';
+    applyHighlights(tabNumber, query);
+});
 
 // 📌 Attach event listeners efficiently
 const attachEventListeners = () => {
@@ -58,8 +68,6 @@ const attachEventListeners = () => {
     keyboardShortcutsHandler.handleKeyboardShortcuts();
 
     blockActionsHandler.attachBlockActions();
-
-    document.getElementById("dynamic_tags_section")?.addEventListener("click", handleTagFilter);
 };
 
 /* ===================================================================*/
@@ -222,20 +230,10 @@ function initBlockTypeFilterButtons() {
         const tabNum = tabId.replace("tab", "");
         const container = document.getElementById(`character_type_tags_${tabNum}`);
         if (!container) return;
-
-        // Render buttons
         container.innerHTML = config.types.map(type =>
             `<button class="tag-button ${config.className}" data-tag="${type}">${type}</button>`
         ).join("");
-
-        // Wire click: toggle selected + re-filter
-        container.addEventListener("click", e => {
-            const btn = e.target.closest(".tag-button");
-            if (!btn) return;
-            btn.classList.toggle("selected");
-            filterAndRender(parseInt(tabNum));
-            appManager.updateTags();
-        });
+        // filterManager.handleTagClick handles all interaction including shift+click
     });
 }
 
@@ -392,25 +390,7 @@ document.addEventListener("DOMContentLoaded", () => {
             actionButtonHandlers.attachActionButtonListeners();
 
             const tabSuffix = targetTab.replace("tab", "");
-            const allBlocks = appManager.getBlocks(targetTab);
-            const searchInput = document.getElementById(`search_input_${tabSuffix}`);
-            const query = searchInput?.value.trim().toLowerCase() || "";
-    
-            let filtered = query
-              ? allBlocks.filter(block =>
-                  block.title.toLowerCase().includes(query) ||
-                  stripHTML(block.text).toLowerCase().includes(query)
-                )
-              : allBlocks;
-    
-            const selectedTags = tagHandler.getSelectedTags(targetTab);
-            if (selectedTags.length) {
-              filtered = filtered.filter(block =>
-                selectedTags.every(tag => block.tags.includes(tag))
-              );
-            }
-    
-            appManager.renderBlocks(targetTab, filtered);
+            filterManager.applyFilters(tabSuffix);
             appManager.updateViewToggleDropdown(tabSuffix);
             setTimeout(() => {
                 const cs = window.getComputedStyle(targetContent);
@@ -442,96 +422,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
       
     function setupTabSearchAndFilters(tabNumber) {
-        const searchInput        = document.getElementById(`search_input_${tabNumber}`);
-        const clearSearchButton  = document.getElementById(`clear_search_button_${tabNumber}`);
-        const clearFiltersButton = document.getElementById(`clear_filters_button_${tabNumber}`);
-      
-        if (!searchInput) return;
-      
-        const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      
-        const highlightInText = (text, query) => {
-          if (!query) return text;
-          const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
-          return text.replace(re, `<span class="highlight">$1</span>`);
-        };
-      
-        const highlightInHTML = (html, query) => {
-          if (!query) return html;
-          const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
-          const container = document.createElement('div');
-          container.innerHTML = html;
-          const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
-          const textNodes = [];
-          while (walker.nextNode()) textNodes.push(walker.currentNode);
-      
-          textNodes.forEach(node => {
-            const parent = node.parentNode;
-            let lastIndex = 0;
-            const frag = document.createDocumentFragment();
-            const text = node.nodeValue;
-            text.replace(re, (match, p1, offset) => {
-              if (offset > lastIndex) {
-                frag.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
-              }
-              const span = document.createElement('span');
-              span.className = 'highlight';
-              span.textContent = match;
-              frag.appendChild(span);
-              lastIndex = offset + match.length;
-            });
-            if (lastIndex < text.length) {
-              frag.appendChild(document.createTextNode(text.slice(lastIndex)));
-            }
-            if (frag.childNodes.length) parent.replaceChild(frag, node);
-          });
-      
-          return container.innerHTML;
-        };
-      
-        searchInput.addEventListener('input', () => {
-            const query = searchInput.value.trim();
-            filterAndRender(tabNumber);
+        const searchInput       = document.getElementById(`search_input_${tabNumber}`);
+        const clearSearchButton = document.getElementById(`clear_search_button_${tabNumber}`);
 
-            const resultsSection = document.getElementById(`results_section_${tabNumber}`);
-            resultsSection.querySelectorAll('.block-title').forEach(el => {
-                el.innerHTML = highlightInText(el.innerHTML, query);
-            });
-            resultsSection.querySelectorAll('.block-body').forEach(el => {
-                el.innerHTML = highlightInHTML(el.innerHTML, query);
-            });
-            resultsSection.querySelectorAll('.block-property').forEach(el => {
-                el.innerHTML = highlightInHTML(el.innerHTML, query);
-            });
+        if (!searchInput) return;
+
+        searchInput.addEventListener('input', () => {
+            filterManager.applyFilters(tabNumber);
+            applyHighlights(tabNumber, searchInput.value.trim());
         });
-                          
+
         clearSearchButton?.addEventListener('click', () => {
             searchInput.value = '';
-            filterAndRender(tabNumber);
-            const resultsSection = document.getElementById(`results_section_${tabNumber}`);
-            resultsSection.querySelectorAll('.highlight').forEach(span => {
-                span.replaceWith(document.createTextNode(span.textContent));
-            });
+            filterManager.applyFilters(tabNumber);
         });
-                  
-        clearFiltersButton?.addEventListener('click', () => {
-            const btContainer = document.getElementById(`character_type_tags_${tabNumber}`);
-            if (btContainer) {
-                btContainer.querySelectorAll('.tag-button.selected')
-                    .forEach(b => b.classList.remove('selected'));
-            }
-            document
-                .querySelectorAll(`#tab${tabNumber} .tag-button.selected`)
-                .forEach(b => b.classList.remove('selected'));
-            document
-                .querySelectorAll(`#tab${tabNumber} .tag-accordion-chip`)
-                .forEach(c => c.remove());
-            tagHandler.clearSelectedTags(`tab${tabNumber}`);
-            searchInput.value = '';
-            filterAndRender(tabNumber);
-        });
+        // clearFiltersButton is handled by the module-level clearFilters listener below.
     }
-          
+            
     [3, 4, 6, 7, 8, 9].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
 
     appManager.renderBlocks(activeTabId);
@@ -564,37 +471,18 @@ document.querySelectorAll("#tab4 .editable, #tab8 .editable").forEach(field => {
         }
     });
 });
-
-// 📌 Handle tag filtering
-const handleTagFilter = (event) => {
-    const btn = event.target;
-    if (!btn.classList.contains("tag-button")) return;
-    btn.classList.toggle("selected");
-  
-    const tabNumber = appManager.getActiveTab().replace("tab", "");
-    const selected = [...document
-      .getElementById(`dynamic_tags_section_${tabNumber}`)
-      .querySelectorAll(".tag-button.selected")]
-      .map(b => b.dataset.tag);
-    tagHandler.setSelectedTags(`tab${tabNumber}`, selected);
-  
-    filterAndRender(tabNumber);
-};
     
 // Clear filters and reset results for the specific tab
 const clearFilters = (event) => {
-    console.log("Clear Filters button clicked");
     const tabNumber = event.currentTarget.id.split("_").pop();
-    document.querySelectorAll(`#tab${tabNumber} .tag-button.selected`).forEach(tag =>
-        tag.classList.remove("selected")
-    );
+    // Also clear block-type button selections (these live only in the DOM)
+    document.getElementById(`character_type_tags_${tabNumber}`)
+        ?.querySelectorAll('.tag-button.selected')
+        .forEach(b => b.classList.remove('selected'));
     const searchInput = document.getElementById(`search_input_${tabNumber}`);
-    if (searchInput) searchInput.value = "";
-    tagHandler.clearSelectedTags(`tab${tabNumber}`);
-    const activeTab = `tab${tabNumber}`;
-    appManager.renderBlocks(activeTab, appManager.getBlocks(activeTab));
-    const updatedTags = tagHandler.getSelectedTags(`tab${tabNumber}`); 
-    console.log("🔵 Currently selected tags:", updatedTags);
+    if (searchInput) searchInput.value = '';
+    filterManager.clearSelectedTags(`tab${tabNumber}`);
+    filterManager.applyFilters(tabNumber);
 };
 
 document.querySelectorAll(".clear_filters_button").forEach(button => {
@@ -689,10 +577,11 @@ document.addEventListener("click", (e) => {
         if (!pill || !body) return;
         const tagClass = [...group.classList]
             .find(c => c !== "tag-accordion-group" && c !== "open") || "";
-        body.querySelectorAll(".tag-button.selected").forEach(btn => {
+        body.querySelectorAll(".tag-button.selected, .tag-button.selected-or").forEach(btn => {
             const chip = document.createElement("button");
             chip.classList.add("tag-accordion-chip");
             if (tagClass) chip.classList.add(tagClass);
+            if (btn.classList.contains("selected-or")) chip.classList.add("selected-or");
             chip.dataset.tag = btn.dataset.tag;
             chip.textContent = btn.dataset.tag;
             pill.appendChild(chip);
@@ -949,8 +838,12 @@ window.onload = async () => {
     initBlockTypeFilterButtons();
 
     await appManager.loadBlocks();
-    appManager.renderBlocks(appManager.getActiveTab());
-    appManager.updateTags();
+    filterManager.registerRenderer(
+        (tab, blocks) => appManager.renderBlocks(tab, blocks),
+        ()            => appManager.updateTags(),
+        (tab)         => appManager.getBlocks(tab)
+    );
+    filterManager.applyFilters(appManager.getActiveTab().replace('tab', ''));
     actionButtonHandlers.attachActionButtonListeners();
 
     function initializeEditableFields(tabId) {

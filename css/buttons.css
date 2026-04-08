@@ -1,4 +1,6 @@
-/* Colored Button Styling */
+/* ==================================================================*/
+/* ======================== COLORED BUTTONS =========================*/
+/* ==================================================================*/
 
 .green-button {
     background-color: #4CAF50;
@@ -31,7 +33,9 @@
     color: white;
 }
 
-/* Hero Button Styles */
+/* ==================================================================*/
+/* ========================= HERO BUTTONS ===========================*/
+/* ==================================================================*/
 
 .hero-button {
     border-radius: 50%;
@@ -49,7 +53,6 @@
     width: 41px;
     height: 41px;
 }
-
 
 #Menu_button {
     position: relative;
@@ -92,7 +95,9 @@
     background-color: #4CAF50;
 }
 
-/* Action Button Styles */
+/* ==================================================================*/
+/* ======================== ACTION BUTTONS ==========================*/
+/* ==================================================================*/
 
 .action-button {
     width: 18px;
@@ -115,7 +120,9 @@
     font-size: 18px;
 }
 
-/* General Button Styling */
+/* ==================================================================*/
+/* ======================== GENERAL BUTTONS =========================*/
+/* ==================================================================*/
 
 .button {
     padding: 8px 12px;
@@ -130,6 +137,10 @@
     display: inline-block;
     width: auto;
 }
+
+/* ==================================================================*/
+/* ========================= FORM BUTTONS ===========================*/
+/* ==================================================================*/
 
 .cleardata-form .button {
     width: 40%;
@@ -170,79 +181,81 @@
     color: white;
 }
 
-/* Tab buttons */
+/* ==================================================================*/
+/* =========================== TAB BUTTONS ==========================*/
+/* ==================================================================*/
 
-    .tab-button {
-        background: transparent;
-        color: #ddd;
-        border: 2px solid #333;
-        padding: 10px;
-        cursor: pointer;
-        font-weight: bold;
-        border-radius: 10px;
-        transition: background 0.3s, color 0.3s, border 0.3s;
-        white-space: nowrap;
-    }
+.tab-button {
+    background: transparent;
+    color: #ddd;
+    border: 2px solid #333;
+    padding: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 10px;
+    transition: background 0.3s, color 0.3s, border 0.3s;
+    white-space: nowrap;
+}
 
-    .tab-button:hover {
-        border: 2px solid #444;
-        background: #444;
-    }
+.tab-button:hover {
+    border: 2px solid #444;
+    background: #444;
+}
 
-    .tab-button.active {
-        border: 2px solid #4CAF50;
-        background: #4CAF50;
-        color: white;
-    }
+.tab-button.active {
+    border: 2px solid #4CAF50;
+    background: #4CAF50;
+    color: white;
+}
 
-    .tab-button.dragging {
-        opacity: 0.5;
-    }
+.tab-button.dragging {
+    opacity: 0.5;
+}
 
 /* ==================================================================*/
 /* ============================= CIRCLES ============================*/
 /* ==================================================================*/
 
-    :root { --circle-color: #e4e0e0; }
+:root { --circle-color: #e4e0e0; }
 
-    .circle {
-        display: inline-block;
-        width: 30px;
-        height: 30px;
-        background-color: var(--circle-color);
-        border-radius: 50%;
-        transition: background-color 0.3s, border-color 0.3s;
-        margin: 0;
-        box-sizing: border-box;
-    }
+.circle {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    background-color: var(--circle-color);
+    border-radius: 50%;
+    transition: background-color 0.3s, border-color 0.3s;
+    margin: 0;
+    box-sizing: border-box;
+}
 
-    .circle.unfilled {
-        border: 1px solid var(--circle-color);
-        background-color: transparent;
-    }
+.circle.unfilled {
+    border: 1px solid var(--circle-color);
+    background-color: transparent;
+}
 
-    .circle.filled {
-        border: 1px solid var(--circle-color);
-        background-color: #fff;
-    }
+.circle.filled {
+    border: 1px solid var(--circle-color);
+    background-color: #fff;
+}
 
-    .circle-button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-        user-select: none;
-        background-color: transparent;
-        border: 1px solid var(--circle-color);
-        transition: background-color 0.3s ease;
-    }
+.circle-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    background-color: transparent;
+    border: 1px solid var(--circle-color);
+    transition: background-color 0.3s ease;
+}
 
-    .block-uses .circle {
-        height: 18px;
-        width: 18px;
-    }
+.block-uses .circle {
+    height: 18px;
+    width: 18px;
+}
 
 /* ==================================================================*/
 /* ======================= DEATH SAVE STYLING =======================*/
@@ -271,9 +284,8 @@
 .deathSaveGreen.toggle-circle.filled { background-color: #4CAF50; border-color: #4CAF50; }
 .deathSaveRed.toggle-circle.filled   { background-color: #ff6b6b; border-color: #ff6b6b; }
 
-
 /* ==================================================================*/
-/* ====================== SORT CONTROLS =============================*/
+/* ========================= SORT CONTROLS ==========================*/
 /* ==================================================================*/
 
 .header-controls {
@@ -329,7 +341,6 @@
 /* ============================= PIN ================================*/
 /* ==================================================================*/
 
-
 .pin-button {
     background-color: transparent;
     border: none;
@@ -379,7 +390,7 @@
     border: 1px solid #4CAF50;
     border-radius: 5px;
     color: #4CAF50;
-    font-size: inherit;
+    font-size: 0.9em;
     font-family: inherit;
     cursor: pointer;
     line-height: inherit;
@@ -392,7 +403,6 @@
     color: #fff;
 }
 
-/* Crank (tab8) variant — red */
 .inline-dice-roll.crank {
     border-color: #ff6b6b;
     color: #ff6b6b;
@@ -401,4 +411,85 @@
 .inline-dice-roll.crank:hover {
     background-color: #ff6b6b;
     color: #fff;
+}
+
+.inline-dice-roll.hit {
+    border-color: #2d81ff;
+    color: #2d81ff;
+}
+
+.inline-dice-roll.hit:hover {
+    background-color: #2d81ff;
+    color: #fff;
+}
+
+/* ==================================================================*/
+/* =================== BLOCK ACTIONS MENU ===========================*/
+/* ==================================================================*/
+
+.block-actions-menu {
+    position: relative;
+    height: 18px;
+    width: 18px;
+    flex-shrink: 0;
+    transition: width 0.25s ease;
+}
+
+.actions-trigger {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background-color: #666;
+    color: white;
+    font-size: 8px;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+    pointer-events: auto;
+}
+
+.actions-trigger:hover {
+    background-color: #888;
+}
+
+.block-actions-reveal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    gap: 7.5px;
+    opacity: 0;
+    transform: translateX(30px);
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.2s ease, transform 0.25s ease;
+}
+
+.block-actions-menu:hover,
+.block-actions-menu.menu-open {
+    width: 69px;
+}
+
+.block-actions-menu:hover .actions-trigger,
+.block-actions-menu.menu-open .actions-trigger {
+    opacity: 0;
+    transform: translateX(8px);
+    pointer-events: none;
+}
+
+.block-actions-menu:hover .block-actions-reveal,
+.block-actions-menu.menu-open .block-actions-reveal {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
 }

@@ -1,26 +1,32 @@
-/* base-layout.css */
-body {
-    background-color: #1e1e1e;
-    color: #ddd;
-    display: flex; 
-    flex-direction: column;
-    align-items: center; 
-    height: 100%;
-    padding: 20px;
-    overflow: hidden;
-}    
+/* ==================================================================*/
+/* ============================ ROOT & BASE =========================*/
+/* ==================================================================*/
 
-/* General Styles */
 html {
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
+body {
+    background-color: #1e1e1e;
+    color: #ddd;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    padding: 20px;
+    overflow: hidden;
+}
+
 #header-row {
     position: relative;
     z-index: 9999;
 }
+
+/* ==================================================================*/
+/* ======================= LAYOUT STRUCTURE =========================*/
+/* ==================================================================*/
 
 #main-row {
     display: flex;
@@ -62,18 +68,30 @@ html {
     display: flex;
     gap: 20px;
     padding-bottom: 20px;
-;}
+}
 
 .container:last-of-type {
     padding-bottom: 0px;
 }
 
-/* Tabs styling */
+.fade-in {
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
+.fade-in.visible {
+    opacity: 1;
+}
+
+/* ==================================================================*/
+/* ================================ TABS ============================*/
+/* ==================================================================*/
+
 .tab-content {
     position: relative;
     width: 100vw;
     gap: 20px;
-    height: calc(100vh - 213px);  /* Adjust for correct height */
+    height: calc(100vh - 213px);
     display: flex;
     flex-direction: column;
 }
@@ -93,7 +111,6 @@ html {
     margin-bottom: 0px;
 }
 
-/* Layout for sections */
 .title-section {
     display: flex;
     height: auto;
@@ -125,7 +142,7 @@ html {
     pointer-events: none;
 }
 
-.hero-button-section{
+.hero-button-section {
     display: flex;
     height: auto;
     align-items: center;
@@ -142,6 +159,10 @@ html {
     display: flex;
     gap: 7.5px;
 }
+
+/* ==================================================================*/
+/* ========================= FILTER PANEL ===========================*/
+/* ==================================================================*/
 
 .filter-and-results {
     position: relative;
@@ -166,8 +187,7 @@ html {
     font-size: 1.5rem;
     z-index: 15;
     opacity: 50%;
-}  
-
+}
 
 .filter-section-overlay-top {
     position: absolute;
@@ -182,12 +202,12 @@ html {
         rgba(42, 42, 42, 1) 10%,
         rgba(42, 42, 42, 0.6) 65%,
         rgba(42, 42, 42, 0) 100%
-        );
+    );
     pointer-events: none;
     z-index: 10;
     width: calc(100% - 10px);
 }
-  
+
 .filter-section-overlay-bottom {
     position: absolute;
     left: 0;
@@ -200,7 +220,7 @@ html {
         rgba(42, 42, 42, 0) 0%,
         rgba(42, 42, 42, 0.5) 50%,
         rgba(42, 42, 42, 1) 100%
-        );
+    );
     pointer-events: none;
     z-index: 10;
     width: calc(100% - 10px);
@@ -208,14 +228,14 @@ html {
 
 .filter-section-wrapper {
     position: relative;
-    display: flex;  
+    display: flex;
     width: 33%;
     min-width: 290px;
 }
 
 .filter-section-wrapper.hidden {
     display: none;
-}  
+}
 
 .filter-section {
     height: 100%;
@@ -228,7 +248,6 @@ html {
     padding: 20px;
     padding-top: 0px;
     border-radius: 20px;
-    overflow-y: auto;
     opacity: 1;
     transition: opacity 0.3s ease-out;
 }
@@ -251,17 +270,9 @@ html {
     row-gap: 5px;
 }
 
-.character-sheet-column .results-section {
-    padding: 0px 20px 20px 20px;
-    width: 100%;
-    height: 50%;
-    min-height: 120px;
-    max-height: calc(100% - 80px - 32px);
-    position: relative;
-    background-color: #2a2a2a;
-    border-radius: 20px;
-    overflow-y: auto;
-}
+/* ==================================================================*/
+/* ======================= RESULTS SECTION ==========================*/
+/* ==================================================================*/
 
 .results-section {
     padding: 0px 20px 20px 20px;
@@ -273,40 +284,65 @@ html {
     overflow-y: auto;
 }
 
+.character-sheet-column .results-section {
+    height: 50%;
+    max-height: calc(100% - 80px - 32px);
+}
+
 .results-header {
     position: sticky;
     display: flex;
-    justify-content: right; 
+    justify-content: right;
     align-items: top;
-    position: sticky;
     top: 0;
     width: 100%;
     height: 70px;
     z-index: 10;
-    background: linear-gradient(to bottom, 
-        rgba(42, 42, 42, 1) 0%, 
-        rgba(42, 42, 42, 1) 50%, 
-        rgba(42, 42, 42, 0.75) 75%, 
+    background: linear-gradient(to bottom,
+        rgba(42, 42, 42, 1) 0%,
+        rgba(42, 42, 42, 1) 50%,
+        rgba(42, 42, 42, 0.75) 75%,
         rgba(42, 42, 42, 0) 100%
     );
-    padding: 20px 0px 0px 0px;
-    padding-bottom: 20px;
+    padding: 20px 0px 20px 0px;
 }
 
-.block-tags {
-    display: flex;
-    flex-wrap: wrap;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    column-gap: 7px;
-    row-gap: 8px;
-}
+/* ==================================================================*/
+/* ======================= BLOCK STRUCTURE ==========================*/
+/* ==================================================================*/
 
 .block {
-    background-color: #444; 
-    border-radius: 10px; 
+    background-color: #444;
+    border-radius: 10px;
     padding: 10px 15px;
     margin-bottom: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.block:not(.minimized)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 15px;
+    background: linear-gradient(to left, #444, transparent);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.block:last-child {
+    margin-bottom: 0;
+}
+
+.block.minimized {
+    display: inline-block;
+    width: auto;
+    vertical-align: top;
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin-right: 10px;
 }
 
 .block-header {
@@ -349,7 +385,6 @@ html {
     text-wrap: balance;
 }
 
-
 .block.condensed .block-title h4 {
     white-space: nowrap;
     overflow: hidden;
@@ -376,40 +411,25 @@ html {
     padding-top: 2px;
 }
 
-.block.expanded {
-}
+/* ==================================================================*/
+/* ========================= BLOCK CONTENT ==========================*/
+/* ==================================================================*/
 
-.block.condensed { 
-}
-
-.block.minimized { 
-    display: inline-block;
-    width: auto;
-    vertical-align: top; 
-    padding: 10px 15px;
-    border-radius: 10px; 
-    margin-right: 10px;
-}
-
-.block:last-child {
-    margin-bottom: 0;
+.block-tags {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    column-gap: 7px;
+    row-gap: 8px;
 }
 
 .block-body {
     display: flex;
     flex-direction: column;
     width: 100%;
-    padding: 0px 0px 0px 0px;
+    padding: 0px;
     margin-top: 6px;
-}
-
-.fade-in {
-    opacity: 0;
-    transition: opacity 1s ease;
-}
-  
-.fade-in.visible {
-    opacity: 1;
 }
 
 /* ==================================================================*/
@@ -418,7 +438,7 @@ html {
 
 * {
     font-family: 'Roboto', sans-serif;
-    margin: 0; 
+    margin: 0;
     padding: 0;
     box-sizing: border-box;
     letter-spacing: 0.03em;
@@ -442,7 +462,6 @@ h3 {
 h4 {
     font-size: 18px;
     font-weight: Medium;
-    /* text-transform: uppercase; */
     letter-spacing: 0.045em;
     color: #fff;
 }
@@ -476,7 +495,7 @@ a {
     transition: color 0.2s;
     text-decoration: underline;
 }
-    
+
 a:hover {
     color: #2e7d32;
 }
@@ -505,31 +524,30 @@ a:hover {
     display: none;
 }
 
-/* =================================================================*/
-/* ========================= Resize Handle =========================*/
-/* =================================================================*/
+/* ==================================================================*/
+/* ========================= RESIZE HANDLE ==========================*/
+/* ==================================================================*/
 
 .resizable-handle {
-    height: 2px; 
+    height: 2px;
     background-color: #ccc;
     cursor: row-resize;
     width: 1rem;
-    margin: 5px 0;
     border-top: 1px solid #aaa;
     border-bottom: 1px solid #aaa;
     margin: 15px 0px 15px 0px;
     z-index: 1000;
-    pointer-events: auto;  
+    pointer-events: auto;
 }
-      
+
 /* ==================================================================*/
-/* ========================== Menu Styling ==========================*/
+/* ========================== MENU STYLING ==========================*/
 /* ==================================================================*/
 
 .menu-overlay {
     position: fixed;
     top: 0;
-    left: 0;  
+    left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
@@ -599,7 +617,7 @@ a:hover {
 .button-icon {
     display: flex;
     align-items: center;
-    justify-content: center;  
+    justify-content: center;
 }
 
 .menu_footer {
@@ -655,11 +673,11 @@ a:hover {
 
 .menu_footer nav ul li a:hover {
     color: #4CAF50;
-  }     
+}
 
-/* ===================================================================*/
-/* ======================== Inventory styling ========================*/
-/* ===================================================================*/
+/* ==================================================================*/
+/* ======================== INVENTORY STYLING =======================*/
+/* ==================================================================*/
 
 .permanent-items-container {
     display: inline-block;
@@ -669,9 +687,9 @@ a:hover {
     display: inline-block;
     width: auto;
     height: auto;
-    vertical-align: top; 
+    vertical-align: top;
     padding: 8px 15px 8px 15px;
-    border-radius: 7px; 
+    border-radius: 7px;
     margin-right: 10px;
     margin-bottom: 16px;
 }
@@ -682,14 +700,12 @@ a:hover {
     white-space: nowrap;
 }
 
-.gold-bg { background-color: rgba(255, 215, 0, 0.5);}
-
-.silver-bg { background-color: rgba(192, 192, 192, 0.5);}
-
-.copper-bg { background-color: rgba(226, 135, 67, 0.5);}
+.gold-bg   { background-color: rgba(255, 215, 0, 0.5); }
+.silver-bg { background-color: rgba(192, 192, 192, 0.5); }
+.copper-bg { background-color: rgba(226, 135, 67, 0.5); }
 
 /* ==================================================================*/
-/* ======================= Spell slot styling =======================*/
+/* ====================== SPELL SLOT STYLING ========================*/
 /* ==================================================================*/
 
 .spell-slot-section,
@@ -748,18 +764,18 @@ a:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.75);
+    background-color: rgba(0, 0, 0, 0.75);
     display: none;
     align-items: center;
     justify-content: center;
     z-index: 1000;
 }
-  
+
 .spell-slot-edit-overlay.show {
     display: flex;
     z-index: 10001;
 }
-  
+
 .spell-slot-edit-container {
     background-color: #2a2a2a;
     padding: 25px;
@@ -771,7 +787,7 @@ a:hover {
     justify-content: center;
     text-align: center;
 }
-  
+
 .spell-slot-title {
     font-weight: bold;
     font-size: 16px;
@@ -786,7 +802,7 @@ a:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.75);
+    background-color: rgba(0, 0, 0, 0.75);
     display: none;
     align-items: center;
     justify-content: center;
@@ -799,7 +815,7 @@ a:hover {
 }
 
 /* ==================================================================*/
-/* ========================== Uses styling ==========================*/
+/* ========================== USES STYLING ==========================*/
 /* ==================================================================*/
 
 .uses-field {
@@ -819,7 +835,7 @@ a:hover {
     width: 100%;
     gap: 7.5px;
 }
-  
+
 .uses-circles-container {
     display: flex;
     flex-direction: row;
@@ -837,9 +853,9 @@ a:hover {
     width: fit-content;
 }
 
-/* =================================================================*/
-/* ============================ Tooltip ============================*/
-/* =================================================================*/
+/* ==================================================================*/
+/* ============================ TOOLTIP =============================*/
+/* ==================================================================*/
 
 .text-tooltip {
     position: absolute;
@@ -847,7 +863,7 @@ a:hover {
     color: #fff;
     padding: 15px 15px;
     border-radius: 10px;
-    box-shadow: 10px rgba(0,0,0,.8);
+    box-shadow: 10px rgba(0, 0, 0, 0.8);
     font-size: 14px;
     line-height: 1.5;
     letter-spacing: 1.2;
@@ -857,21 +873,21 @@ a:hover {
     pointer-events: none;
 }
 
-/* =================================================================*/
-/* ======================= Results Drop Downs =======================*/
+/* ==================================================================*/
+/* ====================== RESULTS DROPDOWNS =========================*/
 /* ==================================================================*/
 
 .results-settings img {
-    width: 20px;        /* scale as you like */
+    width: 20px;
     height: 20px;
-    pointer-events: none; /* so clicks hit the button, not the img */
+    pointer-events: none;
 }
 
 .sort-dropdown,
 .view-toggle-dropdown {
     position: absolute;
     background-color: rgba(31, 31, 31, 0.95);
-    box-shadow: 10px rgba(0,0,0,.8);
+    box-shadow: 10px rgba(0, 0, 0, 0.8);
     border-radius: 10px;
     padding: 5px;
     display: flex;
@@ -912,7 +928,7 @@ a:hover {
 }
 
 /* ==================================================================*/
-/* ============================ Dice Panel ==========================*/
+/* ============================ DICE PANEL ==========================*/
 /* ==================================================================*/
 
 body:has(#dice-panel.open) #app-row > .tabs-content .tab-content {
@@ -920,7 +936,7 @@ body:has(#dice-panel.open) #app-row > .tabs-content .tab-content {
 }
 
 /* ==================================================================*/
-/* ========================= Pinned Blocks ==========================*/
+/* ========================= PINNED BLOCKS ==========================*/
 /* ==================================================================*/
 
 .pinned-blocks-zone {

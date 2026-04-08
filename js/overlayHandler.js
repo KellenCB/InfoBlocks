@@ -1,5 +1,5 @@
 import { appManager } from './appManager.js';
-import { tagHandler } from './tagHandler.js';
+import { filterManager } from './filterManager.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 
 // Returns the correct tab for an overlay save operation.
