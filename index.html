@@ -637,7 +637,7 @@
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <!-- RIGHT PANEL — list tabs only                                   -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <div class="tabs-content fade-in">
+<div class="tabs-content fade-in">
 
             <nav id="list-tab-nav" class="tab-nav">
                 <button class="tab-button" data-tab="tab9" draggable="false">Feats &amp; Magic</button>
@@ -649,15 +649,18 @@
             <!-- Tab 3: Quests & Notes -->
             <div class="tab-content" id="tab3">
                 <div class="filter-and-results">
-                    <button id="toggle_filter_3" class="toggle-filter-button">
-                        <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
-                    </button>
+                    <div id="results_section_3" class="results-section"></div>
                     <div class="filter-section-wrapper">
-                        <div class="filter-section-overlay-top"></div>
-                        <div class="filter-section-overlay-bottom"></div>
+                        <div class="filter-panel-header">
+                            <button id="clear_filters_button_3" class="clear_filters_button">Clear Filters</button>
+                            <button class="toggle-filter-button" data-tab="tab3">
+                                <img src="./images/Filter_Hide_Icon.svg" alt="Toggle filter">
+                            </button>
+                        </div>
                         <div id="filter_section_3" class="filter-section">
+                            <div class="filter-section-overlay-top"></div>
+                            <div class="filter-section-overlay-bottom"></div>
                             <div class="filter-sticky-top">
-                                <button id="clear_filters_button_3" class="clear_filters_button">Clear Filters</button>
                                 <div class="search-container">
                                     <input id="search_input_3" class="search_input" type="text" placeholder="Search by text" />
                                     <button id="clear_search_button_3" class="clear-search">✖</button>
@@ -669,22 +672,26 @@
                             </div>
                         </div>
                     </div>
-                    <div id="results_section_3" class="results-section"></div>
                 </div>
             </div>
 
             <!-- Tab 6: Inventory -->
             <div class="tab-content" id="tab6">
                 <div class="filter-and-results">
-                    <button id="toggle_filter_6" class="toggle-filter-button">
-                        <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
-                    </button>
+                    <div id="results_section_6" class="results-section">
+                        <div id="results_header" class="results-header"></div>
+                    </div>
                     <div class="filter-section-wrapper">
-                        <div class="filter-section-overlay-top"></div>
-                        <div class="filter-section-overlay-bottom"></div>
+                        <div class="filter-panel-header">
+                            <button id="clear_filters_button_6" class="clear_filters_button">Clear Filters</button>
+                            <button class="toggle-filter-button" data-tab="tab6">
+                                <img src="./images/Filter_Hide_Icon.svg" alt="Toggle filter">
+                            </button>
+                        </div>
                         <div id="filter_section_6" class="filter-section">
+                            <div class="filter-section-overlay-top"></div>
+                            <div class="filter-section-overlay-bottom"></div>
                             <div class="filter-sticky-top">
-                                <button id="clear_filters_button_6" class="clear_filters_button">Clear Filters</button>
                                 <div class="search-container">
                                     <input id="search_input_6" class="search_input" type="text" placeholder="Search by text" />
                                     <button id="clear_search_button_6" class="clear-search">✖</button>
@@ -695,24 +702,24 @@
                             </div>
                         </div>
                     </div>
-                    <div id="results_section_6" class="results-section">
-                        <div id="results_header" class="results-header"></div>
-                    </div>
                 </div>
             </div>
 
             <!-- Tab 7: Session Logs -->
             <div class="tab-content" id="tab7">
                 <div class="filter-and-results">
-                    <button id="toggle_filter_7" class="toggle-filter-button">
-                        <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
-                    </button>
+                    <div id="results_section_7" class="results-section"></div>
                     <div class="filter-section-wrapper">
-                        <div class="filter-section-overlay-top"></div>
-                        <div class="filter-section-overlay-bottom"></div>
+                        <div class="filter-panel-header">
+                            <button id="clear_filters_button_7" class="clear_filters_button">Clear Filters</button>
+                            <button class="toggle-filter-button" data-tab="tab7">
+                                <img src="./images/Filter_Hide_Icon.svg" alt="Toggle filter">
+                            </button>
+                        </div>
                         <div id="filter_section_7" class="filter-section">
+                            <div class="filter-section-overlay-top"></div>
+                            <div class="filter-section-overlay-bottom"></div>
                             <div class="filter-sticky-top">
-                                <button id="clear_filters_button_7" class="clear_filters_button">Clear Filters</button>
                                 <div class="search-container">
                                     <input id="search_input_7" class="search_input" type="text" placeholder="Search by text" />
                                     <button id="clear_search_button_7" class="clear-search">✖</button>
@@ -723,7 +730,6 @@
                             </div>
                         </div>
                     </div>
-                    <div id="results_section_7" class="results-section"></div>
                 </div>
             </div>
 
@@ -747,15 +753,18 @@
                     <button id="edit_spell_slots_button" class="add-block-button orange-button" title="Edit spell slots">✎</button>
                 </div>
                 <div class="filter-and-results">
-                    <button id="toggle_filter_9" class="toggle-filter-button">
-                        <img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">
-                    </button>
+                    <div id="results_section_9" class="results-section"></div>
                     <div class="filter-section-wrapper">
-                        <div class="filter-section-overlay-top"></div>
-                        <div class="filter-section-overlay-bottom"></div>
+                        <div class="filter-panel-header">
+                            <button id="clear_filters_button_9" class="clear_filters_button">Clear Filters</button>
+                            <button class="toggle-filter-button" data-tab="tab9">
+                                <img src="./images/Filter_Hide_Icon.svg" alt="Toggle filter">
+                            </button>
+                        </div>
                         <div id="filter_section_9" class="filter-section">
+                            <div class="filter-section-overlay-top"></div>
+                            <div class="filter-section-overlay-bottom"></div>
                             <div class="filter-sticky-top">
-                                <button id="clear_filters_button_9" class="clear_filters_button">Clear Filters</button>
                                 <div class="search-container">
                                     <input id="search_input_9" class="search_input" type="text" placeholder="Search by text" />
                                     <button id="clear_search_button_9" class="clear-search">✖</button>
@@ -767,7 +776,6 @@
                             </div>
                         </div>
                     </div>
-                    <div id="results_section_9" class="results-section"></div>
                 </div>
             </div>
 

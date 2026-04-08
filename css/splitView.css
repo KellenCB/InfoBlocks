@@ -112,11 +112,18 @@ body.landscape-mode #app-row .tabs-content {
     overflow: hidden;
 }
 
+/* All right-panel tab-contents hidden by default in landscape */
 body.landscape-mode #app-row .tabs-content .tab-content {
+    display: none !important;
+    min-height: 0;
+    width: 100% !important;
+}
+
+/* Only the active one is shown, and fills the available column space */
+body.landscape-mode #app-row .tabs-content .tab-content.active {
+    display: flex !important;
     flex: 1;
     min-height: 0;
-    height: auto !important;
-    width: 100% !important;
 }
 
 /* Right nav — list tabs only */

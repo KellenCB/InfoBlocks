@@ -190,30 +190,20 @@ export const appManager = (() => {
     return Array.from(usedTags);
   };
 
-  const ToggleFilters = document.querySelectorAll(".toggle-filter-button");
-  ToggleFilters.forEach(button => {
-    button.addEventListener("click", () => {
-      const container  = button.closest(".filter-and-results");
-      const tabContent = button.closest(".tab-content");
-      const tabId      = tabContent ? tabContent.id : null;
-      const selectors  = [
-        ".filter-section",
-        ".filter-section-wrapper",
-        ".filter-section-overlay-top",
-        ".filter-section-overlay-bottom"
-      ].join(", ");
+  // Toggle filter panel open/closed.
+  document.addEventListener('click', e => {
+    const button = e.target.closest('.toggle-filter-button');
+    if (!button) return;
+    const tabId = button.dataset.tab;
+    const filterAndResults = button.closest('.filter-and-results')
+        || (tabId ? document.getElementById(tabId)?.querySelector('.filter-and-results') : null);
+    if (!filterAndResults) return;
 
-      container.querySelectorAll(selectors).forEach(el => el.classList.toggle("hidden"));
+    const wrapper = filterAndResults.querySelector('.filter-section-wrapper');
+    wrapper?.classList.toggle('filter-panel-closed');
 
-      const filterSection = container.querySelector(".filter-section");
-      const isHidden = filterSection.classList.contains("hidden");
-
-      button.innerHTML = isHidden
-        ? '<img src="./images/Filter_Open_Icon.svg" alt="Filter icon">'
-        : '<img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">';
-
-      if (tabId) localStorage.setItem(`filterVisible_${tabId}`, (!isHidden).toString());
-    });
+    const isNowClosed = wrapper?.classList.contains('filter-panel-closed');
+    if (tabId) localStorage.setItem(`filterVisible_${tabId}`, (!isNowClosed).toString());
   });
 
   let renderAbortController = null;
@@ -239,9 +229,25 @@ export const appManager = (() => {
     const resultsSection = document.getElementById(sectionId);
     if (!resultsSection) return;
 
+    const _filterTabs  = new Set(['tab3', 'tab6', 'tab7', 'tab9']);
+    const _openBtnHTML = _filterTabs.has(tab)
+        ? `<button class="filter-open-btn toggle-filter-button" data-tab="${tab}">
+               <img src="./images/Filter_Open_Icon.svg" alt="Open filter">
+           </button>`
+        : '';
+
     resultsSection.innerHTML = `
       <div id="results_header_${tabSuffix}" class="results-header">
         <div id="header-controls_${tabSuffix}" class="header-controls">
+          <button id="add_block_button" class="add-block-button green-button">+</button>
+          <button id="results-settings_${tabSuffix}" class="results-settings">
+            <img src="./images/View_Icon.svg" alt="View‑state icon">
+          </button>
+          <div id="view-toggle-dropdown_${tabSuffix}" class="view-toggle-dropdown hidden">
+            <button class="view-toggle-item" data-state="expanded">Expand</button>
+            <button class="view-toggle-item" data-state="condensed">Condense</button>
+            <button class="view-toggle-item" data-state="minimized">Minimize</button>
+          </div>
           <button id="results-sort-btn_${tabSuffix}" class="results-settings">
             <img src="./images/Sort_Icon.svg" alt="Sort icon">
           </button>
@@ -251,19 +257,11 @@ export const appManager = (() => {
             <button class="sort-item" data-sort="alpha">A‑Z</button>
             <button class="sort-item" data-sort="unalpha">Z-A</button>
           </div>
-          <button id="results-settings_${tabSuffix}" class="results-settings">
-            <img src="./images/View_Icon.svg" alt="View‑state icon">
-          </button>
-          <div id="view-toggle-dropdown_${tabSuffix}" class="view-toggle-dropdown hidden">
-            <button class="view-toggle-item" data-state="expanded">Expand</button>
-            <button class="view-toggle-item" data-state="condensed">Condense</button>
-            <button class="view-toggle-item" data-state="minimized">Minimize</button>
-          </div>
-          <button id="add_block_button" class="add-block-button green-button add-block-float">+</button>
         </div>
+        ${_openBtnHTML}
       </div>
     `;
-
+    
     const addBtn = document.getElementById(`results_header_${tabSuffix}`)
       .querySelector('#add_block_button');
     if (addBtn) {
@@ -469,7 +467,7 @@ export const appManager = (() => {
     import('./filterManager.js').then(({ filterManager }) => {
         filterManager.applyFilters(activeTab.replace('tab', ''));
     });
-};
+  };
 
   function updateViewToggleDropdown(tabSuffix) {
     const dropdown = document.getElementById(`view-toggle-dropdown_${tabSuffix}`);

@@ -244,6 +244,8 @@
 
 .tag-category { display: contents; }
 
+[id="all_tags_container"] {margin: 15px 0px;}
+
 [id^="user_tags_list"],
 [id^="dynamic_tags_section"] {
     display: flex;

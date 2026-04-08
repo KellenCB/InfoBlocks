@@ -265,21 +265,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (saved === "false") {
             const tab = document.getElementById(tabId);
             if (!tab) return;
-            const button = tab.querySelector(".toggle-filter-button");
-            const container = tab.querySelector(".filter-and-results");
-            if (!button || !container) return;
-
-            const selectors = [
-                ".filter-section",
-                ".filter-section-wrapper",
-                ".filter-section-overlay-top",
-                ".filter-section-overlay-bottom"
-            ].join(", ");
-
-            container.querySelectorAll(selectors).forEach(el => el.classList.add("hidden"));
-            button.innerHTML = '<img src="./images/Filter_Open_Icon.svg" alt="Filter icon">';
+            const wrapper = tab.querySelector('.filter-section-wrapper');
+            if (!wrapper) return;
+            wrapper.classList.add('filter-panel-closed');
         }
-    });
+});
 
     const tabButtons = document.querySelectorAll(".tab-button");
     tabButtons.forEach(button => {

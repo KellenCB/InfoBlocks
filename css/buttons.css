@@ -149,10 +149,10 @@
 }
 
 .clear_filters_button {
-    align-self: flex-end;
+    align-self: flex-start;
     position: relative;
     z-index: 11;
-    margin-bottom: 10px;
+    margin-bottom: 0px;
     padding: 5px 10px;
     height: auto;
     font-size: 12px;
@@ -289,8 +289,9 @@
 /* ==================================================================*/
 
 .header-controls {
+    position: relative;   /* dropdowns now anchor to this, not results-section */
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
     align-items: center;
     height: auto;
     gap: 15px;
