@@ -528,6 +528,7 @@ const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
           }
           
           renderBlocks(tab, filteredBlocks);
+          document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab } })); // ADD THIS
         });
       });
     

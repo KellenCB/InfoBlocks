@@ -8,6 +8,57 @@ import { stripHTML } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
 import { initLayoutMode, activateCharTab } from './layoutMode.js';
 
+const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const highlightInText = (text, query) => {
+    if (!query) return text;
+    const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
+    return text.replace(re, '<span class="highlight">$1</span>');
+};
+
+const highlightInHTML = (html, query) => {
+    if (!query) return html;
+    const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+    textNodes.forEach(node => {
+        const parent = node.parentNode;
+        let lastIndex = 0;
+        const frag = document.createDocumentFragment();
+        const text = node.nodeValue;
+        text.replace(re, (match, p1, offset) => {
+            if (offset > lastIndex) frag.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
+            const span = document.createElement('span');
+            span.className = 'highlight';
+            span.textContent = match;
+            frag.appendChild(span);
+            lastIndex = offset + match.length;
+        });
+        if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+        if (frag.childNodes.length) parent.replaceChild(frag, node);
+    });
+    return container.innerHTML;
+};
+
+function applyHighlights(tabNumber, query) {
+    if (!query) return;
+    const sec = document.getElementById(`results_section_${tabNumber}`);
+    if (!sec) return;
+    sec.querySelectorAll('.block-title').forEach(el => { el.innerHTML = highlightInText(el.innerHTML, query); });
+    sec.querySelectorAll('.block-body').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
+    sec.querySelectorAll('.block-property').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
+}
+
+// Whenever appManager re-renders blocks due to a click-expand, re-apply highlights
+document.addEventListener('blocksRerendered', e => {
+    const tabNumber = e.detail.tab.replace('tab', '');
+    const query = document.getElementById(`search_input_${tabNumber}`)?.value.trim() || '';
+    applyHighlights(tabNumber, query);
+});
+
 function filterAndRender(tabNumber) {
     const activeTab = `tab${tabNumber}`;
     let blocks = appManager.getBlocks(activeTab);
@@ -448,63 +499,12 @@ document.addEventListener("DOMContentLoaded", () => {
       
         if (!searchInput) return;
       
-        const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      
-        const highlightInText = (text, query) => {
-          if (!query) return text;
-          const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
-          return text.replace(re, `<span class="highlight">$1</span>`);
-        };
-      
-        const highlightInHTML = (html, query) => {
-          if (!query) return html;
-          const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
-          const container = document.createElement('div');
-          container.innerHTML = html;
-          const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
-          const textNodes = [];
-          while (walker.nextNode()) textNodes.push(walker.currentNode);
-      
-          textNodes.forEach(node => {
-            const parent = node.parentNode;
-            let lastIndex = 0;
-            const frag = document.createDocumentFragment();
-            const text = node.nodeValue;
-            text.replace(re, (match, p1, offset) => {
-              if (offset > lastIndex) {
-                frag.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
-              }
-              const span = document.createElement('span');
-              span.className = 'highlight';
-              span.textContent = match;
-              frag.appendChild(span);
-              lastIndex = offset + match.length;
-            });
-            if (lastIndex < text.length) {
-              frag.appendChild(document.createTextNode(text.slice(lastIndex)));
-            }
-            if (frag.childNodes.length) parent.replaceChild(frag, node);
-          });
-      
-          return container.innerHTML;
-        };
-      
         searchInput.addEventListener('input', () => {
             const query = searchInput.value.trim();
             filterAndRender(tabNumber);
-
-            const resultsSection = document.getElementById(`results_section_${tabNumber}`);
-            resultsSection.querySelectorAll('.block-title').forEach(el => {
-                el.innerHTML = highlightInText(el.innerHTML, query);
-            });
-            resultsSection.querySelectorAll('.block-body').forEach(el => {
-                el.innerHTML = highlightInHTML(el.innerHTML, query);
-            });
-            resultsSection.querySelectorAll('.block-property').forEach(el => {
-                el.innerHTML = highlightInHTML(el.innerHTML, query);
-            });
+            applyHighlights(tabNumber, query);
         });
-                          
+                                
         clearSearchButton?.addEventListener('click', () => {
             searchInput.value = '';
             filterAndRender(tabNumber);
