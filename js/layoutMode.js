@@ -3,6 +3,7 @@
 // Uses body.landscape-mode class to drive CSS — keeps JS and CSS in sync.
 
 import { appManager } from './appManager.js';
+import { repositionAllSliders } from './main.js';
 
 const CHAR_TABS = new Set(['tab4', 'tab8']);
 const LIST_TABS = ['tab9', 'tab3', 'tab6', 'tab7']; // priority order for default
@@ -114,6 +115,8 @@ function onEnterLandscape() {
     document.querySelectorAll('#list-tab-nav .tab-button').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === currentTab);
     });
+
+    repositionAllSliders();
 }
 
 /** Called when rotating / resizing out of landscape.
@@ -139,6 +142,8 @@ function onExitLandscape() {
             && !btn.closest('#list-tab-nav');
         btn.classList.toggle('active', isActive);
     });
+
+    repositionAllSliders();
 }
 
 /**

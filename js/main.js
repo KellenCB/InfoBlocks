@@ -8,6 +8,26 @@ import { stripHTML } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
 import { initLayoutMode, activateCharTab } from './layoutMode.js';
 
+export function repositionAllSliders() {
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.tab-nav').forEach(nav => {
+            const slider = nav.querySelector('.tab-nav-slider');
+            const activeBtn = nav.querySelector('.tab-button.active');
+            if (!slider || !activeBtn) return;
+            slider.style.transition = 'none';
+            const navRect = nav.getBoundingClientRect();
+            const btnRect = activeBtn.getBoundingClientRect();
+            slider.style.left = (btnRect.left - navRect.left + nav.scrollLeft) + 'px';
+            slider.style.top = (btnRect.top - navRect.top) + 'px';
+            slider.style.width = btnRect.width + 'px';
+            slider.style.height = btnRect.height + 'px';
+            requestAnimationFrame(() => {
+                slider.style.transition = '';
+            });
+        });
+    });
+}
+
 const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const highlightInText = (text, query) => {
@@ -136,8 +156,40 @@ const fadeInElementsSequentially = (container = document) => {
 };
 
 /* ===================================================================*/
-/* ========================= TAB ORDER ===============================*/
+/* ===================== TAB NAV FUNCTIONS ===========================*/
 /* ===================================================================*/
+
+function initTabNavSlider(nav) {
+    const slider = document.createElement('div');
+    slider.classList.add('tab-nav-slider');
+    nav.style.position = 'relative';
+    nav.insertBefore(slider, nav.firstChild);
+
+    function moveSlider(btn) {
+        const navRect = nav.getBoundingClientRect();
+        const btnRect = btn.getBoundingClientRect();
+        slider.style.left = (btnRect.left - navRect.left + nav.scrollLeft) + 'px';
+        slider.style.top = (btnRect.top - navRect.top) + 'px';
+        slider.style.width = btnRect.width + 'px';
+        slider.style.height = btnRect.height + 'px';
+    }
+
+    const activeBtn = nav.querySelector('.tab-button.active');
+    if (activeBtn) {
+        slider.style.transition = 'none';
+        requestAnimationFrame(() => {
+            moveSlider(activeBtn);
+            requestAnimationFrame(() => {
+                slider.style.transition = '';
+            });
+        });
+    }
+
+    nav.addEventListener('click', e => {
+        const btn = e.target.closest('.tab-button');
+        if (btn) moveSlider(btn);
+    });
+}
 
 function saveTabOrder() {
     // Only read from the main nav, not split view navs
@@ -279,6 +331,8 @@ document.addEventListener("DOMContentLoaded", () => {
             saveTabOrder();
         });
     });
+
+    document.querySelectorAll('.tab-nav').forEach(nav => initTabNavSlider(nav));
 
     const tabContents = document.querySelectorAll(".tab-content");
 
@@ -894,5 +948,7 @@ window.onload = async () => {
     }
 
     fadeInElementsSequentially();
+
+    repositionAllSliders();
 
 };
