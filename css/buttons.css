@@ -3,34 +3,34 @@
 /* ==================================================================*/
 
 .green-button {
-    background-color: #4CAF50;
-    color: white;
+    background-color: var(--color-green);
+    color: var(--gray-900);
 }
 
 .blue-button {
-    background-color: #2d81ff;
-    color: white;
+    background-color: var(--color-blue);
+    color: var(--gray-900);
 }
 
 .clear-button {
     background-color: transparent;
-    color: white;
+    color: var(--gray-900);
 }
 
 .green-border-button {
     background-color: transparent;
-    border: 2px solid #4CAF50 !important;
-    color: white;
+    border: 2px solid var(--color-green) !important;
+    color: var(--gray-900);
 }
 
 .orange-button {
-    background-color: #f4a261;
-    color: white;
+    background-color: var(--color-orange);
+    color: var(--gray-900);
 }
 
 .red-button {
-    background-color: #ff6b6b;
-    color: white;
+    background-color: var(--color-red);
+    color: var(--gray-900);
 }
 
 /* ==================================================================*/
@@ -57,7 +57,7 @@
 #Menu_button {
     position: relative;
     z-index: 9999;
-    background-color: #444;
+    background-color: var(--gray-400);
     align-items: center;
     justify-content: center;
 }
@@ -75,24 +75,24 @@
 .hero-button svg {
     width: 20px;
     height: 20px;
-    stroke: white;
+    stroke: var(--gray-900);
     fill: none;
     stroke-width: 2px;
 }
 
 .state-button {
-    background-color: #ffF;
+    background-color: var(--gray-900);
     opacity: 0.5;
-    color: #333;
+    color: var(--gray-350);
 }
 
 .state-button.active {
-    background-color: #ffF;
+    background-color: var(--gray-900);
     opacity: 1;
 }
 
 #split-view-button.active {
-    background-color: #4CAF50;
+    background-color: var(--color-green);
 }
 
 /* ==================================================================*/
@@ -106,7 +106,7 @@
     border: none;
     cursor: pointer;
     transition: background-color 0.2s ease;
-    color: white;
+    color: var(--gray-900);
 }
 
 .add-block-button {
@@ -116,7 +116,7 @@
     border: none;
     cursor: pointer;
     transition: background-color 0.2s ease;
-    color: white;
+    color: var(--gray-900);
     font-size: 18px;
 }
 
@@ -156,8 +156,8 @@
     padding: 5px 10px;
     height: auto;
     font-size: 12px;
-    color: #333;
-    background-color: #06ade4;
+    color: var(--gray-350);
+    background-color: var(--color-cyan);
     border: none;
     border-radius: 30px;
     cursor: pointer;
@@ -176,16 +176,14 @@
 }
 
 #save-block-button {
-    background-color: #4CAF50;
+    background-color: var(--color-green);
     height: 100%;
-    color: white;
+    color: var(--gray-900);
 }
 
 /* ==================================================================*/
 /* ============================= CIRCLES ============================*/
 /* ==================================================================*/
-
-:root { --circle-color: #e4e0e0; }
 
 .circle {
     display: inline-block;
@@ -205,7 +203,7 @@
 
 .circle.filled {
     border: 1px solid var(--circle-color);
-    background-color: #fff;
+    background-color: var(--gray-900);
 }
 
 .circle-button {
@@ -231,34 +229,34 @@
 /* ==================================================================*/
 
 .deathSaveGreen {
-    background-color: #4CAF50;
-    border: 1px solid #4CAF50;
+    background-color: var(--color-green);
+    border: 1px solid var(--color-green);
     width: 16px;
     height: 16px;
 }
 
 .deathSaveRed {
-    background-color: #ff6b6b;
-    border: 1px solid #ff6b6b;
+    background-color: var(--color-red);
+    border: 1px solid var(--color-red);
     width: 16px;
     height: 16px;
 }
 
-.deathSaveGreen.toggle-circle { background-color: #4CAF50; border-color: #4CAF50; }
-.deathSaveRed.toggle-circle   { background-color: #ff6b6b; border-color: #ff6b6b; }
+.deathSaveGreen.toggle-circle { background-color: var(--color-green); border-color: var(--color-green); }
+.deathSaveRed.toggle-circle   { background-color: var(--color-red);   border-color: var(--color-red); }
 
 .deathSaveGreen.toggle-circle.unfilled { background-color: transparent; }
 .deathSaveRed.toggle-circle.unfilled   { background-color: transparent; }
 
-.deathSaveGreen.toggle-circle.filled { background-color: #4CAF50; border-color: #4CAF50; }
-.deathSaveRed.toggle-circle.filled   { background-color: #ff6b6b; border-color: #ff6b6b; }
+.deathSaveGreen.toggle-circle.filled { background-color: var(--color-green); border-color: var(--color-green); }
+.deathSaveRed.toggle-circle.filled   { background-color: var(--color-red);   border-color: var(--color-red); }
 
 /* ==================================================================*/
 /* ========================= SORT CONTROLS ==========================*/
 /* ==================================================================*/
 
 .header-controls {
-    position: relative;   /* dropdowns now anchor to this, not results-section */
+    position: relative;
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -267,7 +265,7 @@
 }
 
 .sort-button {
-    color: white;
+    color: var(--gray-900);
     font-size: 14px;
     cursor: pointer;
     opacity: 0.5;
@@ -277,17 +275,11 @@
     height: 20px;
 }
 
-.sort-button:hover {
-    opacity: 1;
-}
-
-.sort-button.selected {
-    opacity: 1;
-}
+.sort-button:hover    { opacity: 1; }
+.sort-button.selected { opacity: 1; }
 
 .results-settings {
-    color: white;
-    background-color: aquamarine;
+    color: var(--gray-900);
     background: none;
     width: 20px;
     height: 20px;
@@ -299,13 +291,8 @@
     border: none;
 }
 
-.results-settings:hover {
-    opacity: 1;
-}
-
-.results-settings.selected {
-    opacity: 1;
-}
+.results-settings:hover    { opacity: 1; }
+.results-settings.selected { opacity: 1; }
 
 /* ==================================================================*/
 /* ============================= PIN ================================*/
@@ -330,23 +317,11 @@
     pointer-events: none;
 }
 
-.pin-button:hover {
-    opacity: 1;
-    background-color: transparent;
-}
+.pin-button:hover         { opacity: 1; background-color: transparent; }
+.pin-button.pin-active    { opacity: 1; background-color: transparent; }
+.pin-button.pin-active:hover { opacity: 0.5; }
 
-.pin-button.pin-active {
-    opacity: 1;
-    background-color: transparent;
-}
-
-.pin-button.pin-active:hover {
-    opacity: 0.5;
-}
-
-.pinned-zone-label {
-    display: none;
-}
+.pinned-zone-label { display: none; }
 
 /* ==================================================================*/
 /* =================== INLINE DICE ROLL BUTTON ======================*/
@@ -356,10 +331,10 @@
     display: inline;
     padding: 1px 7px;
     margin: 0 2px;
-    background-color: #333;
-    border: 1px solid #4CAF50;
+    background-color: var(--gray-350);
+    border: 1px solid var(--color-green);
     border-radius: 5px;
-    color: #4CAF50;
+    color: var(--color-green);
     font-size: 0.9em;
     font-family: inherit;
     cursor: pointer;
@@ -369,29 +344,15 @@
 }
 
 .inline-dice-roll:hover {
-    background-color: #4CAF50;
-    color: #fff;
+    background-color: var(--color-green);
+    color: var(--gray-900);
 }
 
-.inline-dice-roll.crank {
-    border-color: #ff6b6b;
-    color: #ff6b6b;
-}
+.inline-dice-roll.crank          { border-color: var(--color-red);  color: var(--color-red); }
+.inline-dice-roll.crank:hover    { background-color: var(--color-red);  color: var(--gray-900); }
 
-.inline-dice-roll.crank:hover {
-    background-color: #ff6b6b;
-    color: #fff;
-}
-
-.inline-dice-roll.hit {
-    border-color: #2d81ff;
-    color: #2d81ff;
-}
-
-.inline-dice-roll.hit:hover {
-    background-color: #2d81ff;
-    color: #fff;
-}
+.inline-dice-roll.hit            { border-color: var(--color-blue); color: var(--color-blue); }
+.inline-dice-roll.hit:hover      { background-color: var(--color-blue); color: var(--gray-900); }
 
 /* ==================================================================*/
 /* =================== BLOCK ACTIONS MENU ===========================*/
@@ -414,8 +375,8 @@
     border-radius: 50%;
     border: none;
     cursor: pointer;
-    background-color: #666;
-    color: white;
+    background-color: var(--gray-600);
+    color: var(--gray-900);
     font-size: 8px;
     letter-spacing: 0.5px;
     display: flex;
@@ -428,9 +389,7 @@
     pointer-events: auto;
 }
 
-.actions-trigger:hover {
-    background-color: #888;
-}
+.actions-trigger:hover { background-color: var(--gray-700); }
 
 .block-actions-reveal {
     position: absolute;

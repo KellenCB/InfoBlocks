@@ -117,6 +117,36 @@ if (menuButton && menuOverlay) {
 }
 
 /* ===================================================================*/
+/* ================= CENTRAL OVERLAY CANCEL BUTTONS =================*/
+/* ===================================================================*/
+
+// All overlays whose cancel/close button simply dismisses the overlay.
+// Note: cancel_remove_button is handled in blockActionsHandler because it
+// also needs to clear pendingDeleteBlockId.
+const overlayCloseConfigs = [
+    { buttonId: 'cancel_add_block',            overlaySelector: '.add-block-overlay' },
+    { buttonId: 'cancel_edit_block',           overlaySelector: '.edit-block-overlay' },
+    { buttonId: 'cancel_clear_button',         overlaySelector: '.cleardata-overlay' },
+    { buttonId: 'close_spell_slot_edit',       overlaySelector: '.spell-slot-edit-overlay' },
+    { buttonId: 'close_suit_uses_edit',        overlaySelector: '.suit-uses-edit-overlay' },
+    { buttonId: 'cancel_remove_action_button', overlaySelector: '.remove-action-overlay' },
+];
+
+function initOverlayCancelButtons() {
+    overlayCloseConfigs.forEach(({ buttonId, overlaySelector }) => {
+        const btn = document.getElementById(buttonId);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                document.querySelector(overlaySelector)?.classList.remove('show');
+            });
+        } else {
+            console.warn(`initOverlayCancelButtons: button "${buttonId}" not found.`);
+        }
+    });
+    console.log('✅ Overlay cancel buttons initialised centrally.');
+}
+
+/* ===================================================================*/
 /* ========================= DICE ROLLER PANEL =======================*/
 /* ===================================================================*/
 
@@ -864,6 +894,8 @@ window.onload = async () => {
     // Run migrations before anything else
     migrateToTab9();
     migrateTab5ToTab3();
+
+    initOverlayCancelButtons();
 
     attachEventListeners();
     blockActionsHandler.attachBlockActions();

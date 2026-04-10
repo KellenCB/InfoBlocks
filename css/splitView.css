@@ -62,7 +62,7 @@ body.landscape-mode .container:has(.tab-nav) {
 body.landscape-mode #char-sheet-panel {
     display: flex !important;
     flex-direction: column;
-    flex: 0 0 50%;        /* grow:0 shrink:0 basis:50% — reliable in flex rows */
+    flex: 0 0 50%;
     min-width: 0;
     gap: 20px;
     overflow: hidden;
@@ -95,7 +95,7 @@ body.landscape-mode #char-sheet-nav {
 body.landscape-mode #landscape-divider {
     display: block;
     width: 2px;
-    background-color: #444;
+    background-color: var(--gray-400);
     margin: 0 15px;
     flex-shrink: 0;
     border-radius: 2px;

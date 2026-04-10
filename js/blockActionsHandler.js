@@ -250,29 +250,6 @@ export const blockActionsHandler = (() => {
             const overlay = document.querySelector(".remove-block-overlay");
             overlay && overlay.classList.add("show");
         }
-          
-        const initDeleteConfirmation = () => {
-            const confirmBtn = document.getElementById("confirm_remove_button");
-            const cancelBtn  = document.getElementById("cancel_remove_button");
-            if (confirmBtn && cancelBtn) {
-                confirmBtn.addEventListener("click", () => {
-                    if (pendingDeleteBlockId) {
-                        const deletedTab   = appManager.getActiveTab();
-                        const deletedBlock = appManager.removeBlock(pendingDeleteBlockId);
-                        lastDeletedBlock   = { tab: deletedTab, block: deletedBlock };
-                        pendingDeleteBlockId = null;
-                        reapplySearchAndFilters();
-                    }
-                    document.querySelector(".remove-block-overlay").classList.remove("show");
-                });
-                cancelBtn.addEventListener("click", () => {
-                    pendingDeleteBlockId = null;
-                    document.querySelector(".remove-block-overlay").classList.remove("show");
-                });
-            }
-        };
-                                    
-        initDeleteConfirmation();
     };  
 
     function reapplySearchAndFilters(tabOverride = null) {
@@ -280,9 +257,30 @@ export const blockActionsHandler = (() => {
         filterManager.applyFilters(activeTab.replace('tab', ''));
     }
 
+    const initDeleteConfirmation = () => {
+        const confirmBtn = document.getElementById("confirm_remove_button");
+        const cancelBtn  = document.getElementById("cancel_remove_button");
+        if (confirmBtn && cancelBtn) {
+            confirmBtn.addEventListener("click", () => {
+                if (pendingDeleteBlockId) {
+                    const deletedTab   = appManager.getActiveTab();
+                    const deletedBlock = appManager.removeBlock(pendingDeleteBlockId);
+                    lastDeletedBlock   = { tab: deletedTab, block: deletedBlock };
+                    pendingDeleteBlockId = null;
+                    reapplySearchAndFilters();
+                }
+                document.querySelector(".remove-block-overlay").classList.remove("show");
+            });
+            cancelBtn.addEventListener("click", () => {
+                pendingDeleteBlockId = null;
+                document.querySelector(".remove-block-overlay").classList.remove("show");
+            });
+        }
+    };
 
     const attachBlockActions = () => {
         initUndoLastDelete();
+        initDeleteConfirmation();
 
         document.querySelectorAll(".results-section").forEach(resultsSection => {
             resultsSection.removeEventListener("click", handleBlockActions);

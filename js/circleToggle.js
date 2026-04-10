@@ -126,10 +126,6 @@ if (circleContainer) {
       renderOverlayCircles();
       overlay.classList.add('show');
     });
-
-    cancelBtn.addEventListener('click', () => {
-      overlay.classList.remove('show');
-    });
   }
 }
 

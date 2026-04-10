@@ -238,26 +238,3 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Edit tab button with id "edit_tab_button" not found.');
     }
 });
-
-const overlayCancelConfigs = [
-    {
-      cancelId: 'close_action_edit',
-      overlaySelector: '.actions-edit-overlay',
-      overlayName: 'Actions edit overlay'
-    }
-  ];
-  
-  overlayCancelConfigs.forEach(({ cancelId, overlaySelector, overlayName }) => {
-    const cancelButton = document.getElementById(cancelId);
-    if (cancelButton) {
-      cancelButton.addEventListener('click', () => {
-        console.log(`❌ ${overlayName} cancelled.`);
-        const overlay = document.querySelector(overlaySelector);
-        if (overlay) {
-          overlay.classList.remove('show');
-        }
-      });
-    } else {
-      console.warn(`Cancel button with id "${cancelId}" not found.`);
-    }
-});

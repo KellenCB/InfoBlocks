@@ -37,7 +37,6 @@ export const actionButtonHandlers = (() => {
       addBlockOverlay: document.querySelector(".add-block-overlay"),
       clearDataOverlay: document.querySelector(".cleardata-overlay"),
       confirmClearButton: document.getElementById("confirm_clear_button"),
-      cancelClearButton: document.getElementById("cancel_clear_button"),
     };
 
     if (elements.binButtons.length > 0 && elements.clearDataOverlay) {
@@ -54,12 +53,6 @@ export const actionButtonHandlers = (() => {
         alert("All data has been cleared.");
         location.reload();
       };
-    }
-
-    if (elements.cancelClearButton && elements.clearDataOverlay) {
-      elements.cancelClearButton.addEventListener("click", () => {
-        elements.clearDataOverlay.classList.remove("show");
-      });
     }
 
     console.log("✅ Action button event listeners attached");
@@ -209,6 +202,39 @@ export const appManager = (() => {
   let renderAbortController = null;
 
 /* ==================================================================*/
+/* ============================= SECTION GRADIENTS =============================*/
+/* ==================================================================*/
+
+
+    function initScrollFades(el) {
+        const check = () => {
+            const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+            el.style.setProperty('--results-fade-opacity', Math.min(distanceFromBottom / 42, 1));
+        };
+        el.removeEventListener('scroll', el._scrollFadeHandler);
+        el._scrollFadeHandler = check;
+        el.addEventListener('scroll', check);
+        check();
+    }
+
+function initFilterScrollFades() {
+    setTimeout(() => {
+        document.querySelectorAll('.filter-section').forEach(el => {
+            const wrapper = el.closest('.filter-section-wrapper');
+            const check = () => {
+                const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+                el.style.setProperty('--filter-fade-top-opacity', Math.min(el.scrollTop / 42, 1));
+                if (wrapper) wrapper.style.setProperty('--filter-fade-bottom-opacity', Math.min(distanceFromBottom / 42, 1));
+            };
+            el.removeEventListener('scroll', el._filterFadeHandler);
+            el._filterFadeHandler = check;
+            el.addEventListener('scroll', check);
+            check();
+        });
+    }, 100);
+}
+
+/* ==================================================================*/
 /* ============================= BLOCKS =============================*/
 /* ==================================================================*/
 
@@ -285,10 +311,14 @@ export const appManager = (() => {
       e.stopPropagation();
       const wasOpen = !viewDropdown.classList.contains("hidden");
       closeDropdowns();
-      if (!wasOpen) viewDropdown.classList.remove("hidden");
+      if (!wasOpen) {
+        const rect = settingsBtn.getBoundingClientRect();
+        viewDropdown.style.top  = `${rect.bottom + 5}px`;
+        viewDropdown.style.left = `${rect.left}px`;
+        viewDropdown.classList.remove("hidden");
+      }
     });
 
-    document.addEventListener("click", () => viewDropdown.classList.add("hidden"), { signal });
     document.addEventListener("click", closeDropdowns, { signal });
 
     viewDropdown.querySelectorAll(".view-toggle-item").forEach(item => {
@@ -312,10 +342,13 @@ export const appManager = (() => {
       e.stopPropagation();
       const wasOpen = !sortDropdown.classList.contains("hidden");
       closeDropdowns();
-      if (!wasOpen) sortDropdown.classList.remove("hidden");
+      if (!wasOpen) {
+        const rect = sortBtn.getBoundingClientRect();
+        sortDropdown.style.top  = `${rect.bottom + 5}px`;
+        sortDropdown.style.left = `${rect.left}px`;
+        sortDropdown.classList.remove("hidden");
+      }
     });
-
-    document.addEventListener("click", () => sortDropdown.classList.add("hidden"), { signal });
 
     sortDropdown.querySelectorAll(".sort-item").forEach(item => {
       const mode = item.dataset.sort;
@@ -420,6 +453,8 @@ export const appManager = (() => {
 
     updateTags();
     attachDynamicTooltips();
+    initScrollFades(resultsSection);
+    initFilterScrollFades();
   };
 
   const loadBlocks = () => {

@@ -467,6 +467,12 @@ document.addEventListener('keydown', (e) => {
   const panel = document.getElementById('dice-panel');
   if (!panel?.classList.contains('open')) return;
   if (e.key === 'Escape') {
+    const overlayOpen = document.querySelector(
+      '.add-block-overlay.show, .edit-block-overlay.show, .cleardata-overlay.show, ' +
+      '.remove-block-overlay.show, .spell-slot-edit-overlay.show, ' +
+      '.suit-uses-edit-overlay.show, #menu_overlay.active'
+    );
+    if (overlayOpen) return;
     e.preventDefault();
     panel.classList.remove('open');
     document.getElementById('dice-menu-button')?.classList.remove('active');

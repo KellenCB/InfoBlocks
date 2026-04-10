@@ -266,15 +266,7 @@ export const overlayHandler = (() => {
         });
     };
     
-    const handleCancelBlock = () => {
-        const cancelAddBlockButton = document.getElementById("cancel_add_block");
-        if (!cancelAddBlockButton) return;
 
-        cancelAddBlockButton.addEventListener("click", () => {
-            console.log("Cancel button clicked");
-            document.querySelector(".add-block-overlay").classList.remove("show");
-        });
-    };
 
     const handleClearEditOverlay = () => {
         const clearEditButton = document.getElementById("clear_edit-button");
@@ -295,15 +287,7 @@ export const overlayHandler = (() => {
         });
     };
 
-    const handleCancelEditOverlay = () => {
-        const cancelEditButton = document.getElementById("cancel_edit_block");
-        if (!cancelEditButton) return;
-    
-        cancelEditButton.addEventListener("click", () => {
-            document.querySelector(".edit-block-overlay").classList.remove("show");
-            console.log("Edit overlay canceled and closed.");
-        });
-    };
+
 
     const handleTagSelection = (containerId, type) => {
         const container = document.getElementById(containerId);
@@ -903,9 +887,7 @@ function initCEPlaceholder(id) {
     const initializeEventHandlers = () => {
         handleSaveBlock();
         handleClearBlock();
-        handleCancelBlock();
         handleClearEditOverlay();
-        handleCancelEditOverlay();
         handleTagSelection();
         initializeTextareas();
         addOverlayListeners();
