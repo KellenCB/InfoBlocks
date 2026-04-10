@@ -113,7 +113,7 @@ export const saveEditHandler = () => {
     delete editOverlay.dataset.blockId;
 
     // ── Refresh the correct view ──────────────────────────────────────────────
-    import('./splitView.js').then(({ isSplitActive, refreshPanelsShowingTab }) => {
+    import('./layoutMode.js').then(({ isSplitActive, refreshPanelsShowingTab }) => {
         if (isSplitActive()) {
             refreshPanelsShowingTab(activeTab);
         } else {

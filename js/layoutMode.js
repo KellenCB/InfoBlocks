@@ -72,6 +72,22 @@ export function initLayoutMode() {
     });
 }
 
+// ── Split view compatibility exports ───────────────────────────────────────
+
+export function isSplitActive() {
+    return localStorage.getItem('splitViewActive') === 'true';
+}
+
+export function initSplitView() { /* no-op — layout is handled by initLayoutMode() */ }
+
+export const panelState     = { left: { activeTab: null }, right: { activeTab: null } };
+export const SINGLETON_TABS = new Set();
+
+export function refreshPanelsShowingTab(tabId) {
+    appManager.renderBlocks(tabId);
+    appManager.updateTags();
+}
+
 // ── Public helpers ─────────────────────────────────────────────────────────
 
 export function isLandscape() {

@@ -1,139 +1,43 @@
 /* ==================================================================*/
 /* ========================= COLOUR PALETTE =========================*/
 /* ==================================================================*/
-/* All colours used across the app are defined here as CSS           */
-/* custom properties. Change a value here to change it everywhere.   */
-/*                                                                   */
-/* USAGE:                                                            */
-/* Solid colour:                                                      */
-/*   background-color: var(--gray-300);                              */
-/*                                                                   */
-/* With opacity (use color-mix):                                     */
-/*   background-color: color-mix(in srgb, var(--gray-300) 50%, transparent);  */
-/*                                                                   */
-/* The percentage is equivalent to opacity:                          */
-/*   50% = 0.5 opacity                                               */
-/*   75% = 0.75 opacity                                              */
-/*   95% = 0.95 opacity                                              */
-/* ==================================================================*/
 
 :root {
 
     /* ── Gray Scale (dark → light) ───────────────────────────────── */
 
     --gray-100: #1a1a1a;
-    /* dice roller: clear-all button background                       */
-
     --gray-150: #1e1e1e;
-    /* app body background.
-       Also appears as rgba(30, 30, 30, x) in the results-header
-       gradient and the results-section bottom fade gradient.         */
-
     --gray-200: #222;
-    /* dice roller: selected-dice tray background                     */
-
     --gray-250: #1f1f1f;
-    /* tooltips and sort/view dropdowns.
-       Appears as rgba(31, 31, 31, 0.95) in those elements.          */
-
     --gray-300: #2a2a2a;
-    /* panel / card surface — the most-used background colour.
-       Used in: tab-nav, title-section, hero-button-section,
-       filter-section-wrapper, filter-section, spell-slot-section,
-       circle-section, spell-slot-edit-container, uses-field,
-       pinned-blocks-zone, saving-throws-and-skills-column,
-       character-sheet-stats, dice-roller-container, roll-results.
-       Also appears as rgba(42, 42, 42, x) in the filter-section
-       top/bottom fade gradients.                                     */
-
     --gray-350: #333;
-    /* overlay form backgrounds (add-block-form, edit-block-form),
-       inline-dice-roll button background,
-       roll-history-entry card background,
-       edit-mode spell-slot group background,
-       find-replace panel background                                  */
-
     --gray-400: #444;
-    /* block backgrounds, form inputs (search bar, add/edit overlays),
-       menu button (#Menu_button) background,
-       menu footer border-top, scrollbar thumb,
-       menu-item-button background                                    */
-
     --gray-450: #4e4e4e;
-    /* sort/view dropdowns: selected item highlight background        */
-
     --gray-500: #555;
-    /* borders: pinned-blocks-zone, input fields, find-replace panel;
-       text-toolbar button backgrounds;
-       find-replace action button backgrounds;
-       roll-results entry top divider                                 */
-
     --gray-550: #5e5e5e;
-    /* dice roller: selected-dice tray border                         */
-
     --gray-600: #666;
-    /* block actions-trigger background,
-       find-replace clear-search icon stroke,
-       edit-spell-slots and suit-uses button background               */
-
     --gray-650: #777;
-    /* text-toolbar button hover background                           */
-
     --gray-700: #888;
-    /* tab button default text colour,
-       actions-trigger hover background                               */
-
     --gray-750: #aaa;
-    /* placeholder text colour,
-       find-replace feedback text,
-       tag-accordion default pill colour,
-       menu footer nav link text                                      */
-
     --gray-800: #bbb;
-    /* tab button hover text colour,
-       form placeholder text (overlays)                               */
-
     --gray-850: #ddd;
-    /* body / general text colour                                     */
-
     --gray-900: #fff;
-    /* primary text, circle fills, button text, all white elements    */
-
 
     /* ── Brand / Action Colours ──────────────────────────────────── */
 
     --color-green: #4CAF50;
-    /* primary action colour — save buttons, add (+) buttons,
-       tab-nav slider highlight, split-view active button,
-       active links, roll button, death save successes,
-       inline dice-roll (default), green-button class,
-       green-border-button class                                      */
-
     --color-green-dark: #388e3c;
-    /* roll button hover state                                        */
-
     --color-orange: #f4a261;
-    /* edit / warning — orange-button class,
-       edit-spell-slots and suit-uses button hover state              */
-
     --color-red: #ff6b6b;
-    /* delete / danger — red-button class,
-       death save failure circles, crank inline-dice-roll             */
-
     --color-blue: #2d81ff;
-    /* duplicate / info — blue-button class,
-       hit inline-dice-roll                                           */
-
     --color-cyan: #06ade4;
-    /* clear-filters button background                                */
-
 
     /* ── Inventory Colours ───────────────────────────────────────── */
 
-    --color-gold:   rgba(255, 215, 0, 0.5);   /* gold coin block    */
-    --color-silver: rgba(192, 192, 192, 0.5); /* silver coin block  */
-    --color-copper: rgba(226, 135, 67, 0.5);  /* copper coin block  */
-
+    --color-gold:   rgba(255, 215, 0, 0.5);
+    --color-silver: rgba(192, 192, 192, 0.5);
+    --color-copper: rgba(226, 135, 67, 0.5);
 
     /* ── Find & Replace Highlights ───────────────────────────────── */
 
@@ -142,35 +46,28 @@
     --color-find-active-outline: rgba(255, 180, 0, 0.90); /* active match border       */
     --color-find-close-hover:    #ff8e8e;                 /* ✕ close button hover      */
 
-
     /* ── Tag Colours ─────────────────────────────────────────────── */
-    /* Used by tag buttons, accordion groups, and chips throughout    */
-    /* the filter panels, block displays, and overlay tag pickers.    */
 
-    --user-color:           #e4e0e0; /* user-defined / custom tags                  */
-    --characterType-color:  #00e5ff; /* block type tags (Hazard, Crank, Spell, etc) */
-    --part-color:           #CDF564; /* armour part tags                            */
-    --action-color:         #07f371; /* action type tags; also magic item rarity    */
-    --ability-color:        #bf5eff; /* ability type tags                           */
-    --damage-color:         #F037A5; /* damage type tags; also magic item bonus     */
-    --condition-color:      #ffa927; /* condition tags                              */
-    --spell-color:          #2b7bf1; /* spell type tags                             */
-    --spellLevel-color:     #49c1e6; /* spell level tags                            */
-    --infusion-color:       #49c1e6; /* infusion tags (same value as spellLevel)    */
-    --attribute-color:      #FF4632; /* attribute tags; also equipped/attuned       */
-    --charges-color:        #43ffef; /* charges tags                                */
-    --itemType-color:       #ff7f00; /* item type tags                              */
-    --magicItemType-color:  #07f371; /* magic item rarity (same value as action)    */
-    --magicItemBonus-color: #F037A5; /* magic item bonus (same value as damage)     */
-    --equippedCheck-color:  #FF4632; /* equipped/attuned (same value as attribute)  */
+    --user-color:           #e4e0e0;
+    --characterType-color:  #00e5ff;
+    --part-color:           #CDF564;
+    --action-color:         #07f371;
+    --ability-color:        #bf5eff;
+    --damage-color:         #F037A5;
+    --condition-color:      #ffa927;
+    --spell-color:          #2b7bf1;
+    --spellLevel-color:     #49c1e6;
+    --infusion-color:       #49c1e6;
+    --attribute-color:      #FF4632;
+    --charges-color:        #43ffef;
+    --itemType-color:       #ff7f00;
+    --magicItemType-color:  #07f371;
+    --magicItemBonus-color: #F037A5;
+    --equippedCheck-color:  #FF4632;
 
    --or-selected-opacity: 50%;
-   /* OR-selected tag background tint — percentage of the tag colour   */
 
     /* ── Circle Colour ───────────────────────────────────────────── */
 
     --circle-color: #e4e0e0;
-    /* toggle circles, spell-slot circles, uses circles,
-       death save circles (base — death saves override with their own
-       green/red colours)                                             */
 }

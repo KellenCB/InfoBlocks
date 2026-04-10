@@ -1097,7 +1097,7 @@ body:has(#dice-panel.open) #app-row > .tabs-content .tab-content {
 
 .pinned-blocks-zone {
     position: sticky;
-    top: 70px;
+    top: 40px;
     z-index: 9;
     background-color: var(--gray-150);
     padding-top: 0px;

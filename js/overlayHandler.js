@@ -205,7 +205,7 @@ export const handleSaveBlock = () => {
             delete addBlockOverlay.dataset.activeTab;
 
             // ── Refresh the correct view ──────────────────────────────────────
-            import('./splitView.js').then(({ isSplitActive, refreshPanelsShowingTab }) => {
+            import('./layoutMode.js').then(({ isSplitActive, refreshPanelsShowingTab }) => {
                 if (isSplitActive() && savedPanelSide) {
                     refreshPanelsShowingTab(savedActiveTab);
                 } else {

@@ -1,4 +1,4 @@
-import { initSplitView } from './splitView.js';
+import { initSplitView } from './layoutMode.js';
 import { appManager, actionButtonHandlers } from './appManager.js';
 import { blockActionsHandler, saveEditHandler } from './blockActionsHandler.js';
 import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
