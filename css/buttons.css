@@ -2,36 +2,12 @@
 /* ======================== COLORED BUTTONS =========================*/
 /* ==================================================================*/
 
-.green-button {
-    background-color: var(--color-green);
-    color: var(--gray-900);
-}
-
-.blue-button {
-    background-color: var(--color-blue);
-    color: var(--gray-900);
-}
-
-.clear-button {
-    background-color: transparent;
-    color: var(--gray-900);
-}
-
-.green-border-button {
-    background-color: transparent;
-    border: 2px solid var(--color-green) !important;
-    color: var(--gray-900);
-}
-
-.orange-button {
-    background-color: var(--color-orange);
-    color: var(--gray-900);
-}
-
-.red-button {
-    background-color: var(--color-red);
-    color: var(--gray-900);
-}
+.green-button        { background-color: var(--color-green);  color: var(--gray-900); }
+.blue-button         { background-color: var(--color-blue);   color: var(--gray-900); }
+.orange-button       { background-color: var(--color-orange); color: var(--gray-900); }
+.red-button          { background-color: var(--color-red);    color: var(--gray-900); }
+.clear-button        { background-color: transparent;         color: var(--gray-900); }
+.green-border-button { background-color: transparent; border: 2px solid var(--color-green) !important; color: var(--gray-900); }
 
 /* ==================================================================*/
 /* ========================= HERO BUTTONS ===========================*/
@@ -49,10 +25,7 @@
     border: 0px;
 }
 
-.dice-menu-button {
-    width: 41px;
-    height: 41px;
-}
+.dice-menu-button { width: 41px; height: 41px; }
 
 #Menu_button {
     position: relative;
@@ -62,15 +35,8 @@
     justify-content: center;
 }
 
-.menu-button-open #menu-icon-default {
-    opacity: 0;
-    transform: scale(0.8);
-}
-
-.menu-button-open #menu-icon-close {
-    opacity: 1;
-    transform: scale(1);
-}
+.menu-button-open #menu-icon-default { opacity: 0; transform: scale(0.8); }
+.menu-button-open #menu-icon-close   { opacity: 1; transform: scale(1); }
 
 .hero-button svg {
     width: 20px;
@@ -80,20 +46,10 @@
     stroke-width: 2px;
 }
 
-.state-button {
-    background-color: var(--gray-900);
-    opacity: 0.5;
-    color: var(--gray-350);
-}
+.state-button        { background-color: var(--gray-900); opacity: 0.5; color: var(--gray-350); }
+.state-button.active { background-color: var(--gray-900); opacity: 1; }
 
-.state-button.active {
-    background-color: var(--gray-900);
-    opacity: 1;
-}
-
-#split-view-button.active {
-    background-color: var(--color-green);
-}
+#split-view-button.active { background-color: var(--color-green); }
 
 /* ==================================================================*/
 /* ======================== ACTION BUTTONS ==========================*/
@@ -152,7 +108,6 @@
     align-self: flex-start;
     position: relative;
     z-index: 11;
-    margin-bottom: 0px;
     padding: 5px 10px;
     height: auto;
     font-size: 12px;
@@ -170,10 +125,7 @@
     opacity: 0.5;
 }
 
-.clear_filters_button:hover {
-    opacity: 1;
-    transition: opacity 0.6s;
-}
+.clear_filters_button:hover { opacity: 1; }
 
 #save-block-button {
     background-color: var(--color-green);
@@ -219,40 +171,25 @@
     transition: background-color 0.3s ease;
 }
 
-.block-uses .circle {
-    height: 18px;
-    width: 18px;
-}
+.block-uses .circle { height: 18px; width: 18px; }
 
 /* ==================================================================*/
 /* ======================= DEATH SAVE STYLING =======================*/
 /* ==================================================================*/
 
-.deathSaveGreen {
-    background-color: var(--color-green);
-    border: 1px solid var(--color-green);
-    width: 16px;
-    height: 16px;
-}
+.deathSaveGreen,
+.deathSaveGreen.toggle-circle,
+.deathSaveGreen.toggle-circle.filled { background-color: var(--color-green); border: 1px solid var(--color-green); width: 16px; height: 16px; }
 
-.deathSaveRed {
-    background-color: var(--color-red);
-    border: 1px solid var(--color-red);
-    width: 16px;
-    height: 16px;
-}
-
-.deathSaveGreen.toggle-circle { background-color: var(--color-green); border-color: var(--color-green); }
-.deathSaveRed.toggle-circle   { background-color: var(--color-red);   border-color: var(--color-red); }
+.deathSaveRed,
+.deathSaveRed.toggle-circle,
+.deathSaveRed.toggle-circle.filled   { background-color: var(--color-red);   border: 1px solid var(--color-red);   width: 16px; height: 16px; }
 
 .deathSaveGreen.toggle-circle.unfilled { background-color: transparent; }
 .deathSaveRed.toggle-circle.unfilled   { background-color: transparent; }
 
-.deathSaveGreen.toggle-circle.filled { background-color: var(--color-green); border-color: var(--color-green); }
-.deathSaveRed.toggle-circle.filled   { background-color: var(--color-red);   border-color: var(--color-red); }
-
 /* ==================================================================*/
-/* ========================= SORT CONTROLS ==========================*/
+/* ==================== RESULTS HEADER CONTROLS =====================*/
 /* ==================================================================*/
 
 .header-controls {
@@ -264,35 +201,21 @@
     gap: 15px;
 }
 
-.sort-button {
-    color: var(--gray-900);
-    font-size: 14px;
-    cursor: pointer;
-    opacity: 0.5;
-    transition: opacity 0.3s ease-in-out;
-    background: none;
-    border: none;
-    height: 20px;
-}
-
-.sort-button:hover    { opacity: 1; }
-.sort-button.selected { opacity: 1; }
-
+.sort-button,
 .results-settings {
     color: var(--gray-900);
     background: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    font-size: 14px;
+    border: none;
     cursor: pointer;
     opacity: 0.5;
     transition: opacity 0.3s ease-in-out;
-    border: none;
 }
 
-.results-settings:hover    { opacity: 1; }
-.results-settings.selected { opacity: 1; }
+.sort-button          { font-size: 14px; height: 20px; }
+.results-settings     { width: 20px; height: 20px; border-radius: 50%; font-size: 14px; }
+
+.sort-button:hover,    .sort-button.selected,
+.results-settings:hover, .results-settings.selected { opacity: 1; }
 
 /* ==================================================================*/
 /* ============================= PIN ================================*/
@@ -311,15 +234,11 @@
     justify-content: center;
 }
 
-.pin-button img {
-    width: 25px;
-    height: 25px;
-    pointer-events: none;
-}
+.pin-button img { width: 25px; height: 25px; pointer-events: none; }
 
-.pin-button:hover         { opacity: 1; background-color: transparent; }
-.pin-button.pin-active    { opacity: 1; background-color: transparent; }
-.pin-button.pin-active:hover { opacity: 0.5; }
+.pin-button:hover,
+.pin-button.pin-active          { opacity: 1; background-color: transparent; }
+.pin-button.pin-active:hover    { opacity: 0.5; }
 
 .pinned-zone-label { display: none; }
 
@@ -343,16 +262,11 @@
     transition: background-color 0.2s, color 0.2s;
 }
 
-.inline-dice-roll:hover {
-    background-color: var(--color-green);
-    color: var(--gray-900);
-}
-
-.inline-dice-roll.crank          { border-color: var(--color-red);  color: var(--color-red); }
-.inline-dice-roll.crank:hover    { background-color: var(--color-red);  color: var(--gray-900); }
-
-.inline-dice-roll.hit            { border-color: var(--color-blue); color: var(--color-blue); }
-.inline-dice-roll.hit:hover      { background-color: var(--color-blue); color: var(--gray-900); }
+.inline-dice-roll:hover              { background-color: var(--color-green); color: var(--gray-900); }
+.inline-dice-roll.crank              { border-color: var(--color-red);  color: var(--color-red); }
+.inline-dice-roll.crank:hover        { background-color: var(--color-red);   color: var(--gray-900); }
+.inline-dice-roll.hit                { border-color: var(--color-blue); color: var(--color-blue); }
+.inline-dice-roll.hit:hover          { background-color: var(--color-blue);  color: var(--gray-900); }
 
 /* ==================================================================*/
 /* =================== BLOCK ACTIONS MENU ===========================*/
@@ -405,20 +319,10 @@
 }
 
 .block-actions-menu:hover,
-.block-actions-menu.menu-open {
-    width: 69px;
-}
+.block-actions-menu.menu-open                          { width: 69px; }
 
 .block-actions-menu:hover .actions-trigger,
-.block-actions-menu.menu-open .actions-trigger {
-    opacity: 0;
-    transform: translateX(8px);
-    pointer-events: none;
-}
+.block-actions-menu.menu-open .actions-trigger         { opacity: 0; transform: translateX(8px); pointer-events: none; }
 
 .block-actions-menu:hover .block-actions-reveal,
-.block-actions-menu.menu-open .block-actions-reveal {
-    opacity: 1;
-    transform: translateX(0);
-    pointer-events: auto;
-}
+.block-actions-menu.menu-open .block-actions-reveal    { opacity: 1; transform: translateX(0); pointer-events: auto; }
