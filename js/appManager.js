@@ -14,6 +14,23 @@ export function stripHTML(html) {
 
 export let selectedFilterTagsBeforeAdd = [];
 
+export function initScrollFades(selector, topVar, bottomVar, handlerKey, delay = 0) {
+    const run = () => {
+        document.querySelectorAll(selector).forEach(el => {
+            const check = () => {
+                const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+                if (topVar) el.style.setProperty(topVar, Math.min(el.scrollTop / 42, 1));
+                if (bottomVar) el.style.setProperty(bottomVar, Math.min(distanceFromBottom / 42, 1));
+            };
+            el.removeEventListener('scroll', el[handlerKey]);
+            el[handlerKey] = check;
+            el.addEventListener('scroll', check);
+            check();
+        });
+    };
+    delay ? setTimeout(run, delay) : run();
+}
+
 /* ==================================================================*/
 /* ============================== TABS ==============================*/
 /* ==================================================================*/
@@ -37,7 +54,6 @@ export const actionButtonHandlers = (() => {
       addBlockOverlay: document.querySelector(".add-block-overlay"),
       clearDataOverlay: document.querySelector(".cleardata-overlay"),
       confirmClearButton: document.getElementById("confirm_clear_button"),
-      cancelClearButton: document.getElementById("cancel_clear_button"),
     };
 
     if (elements.binButtons.length > 0 && elements.clearDataOverlay) {
@@ -54,12 +70,6 @@ export const actionButtonHandlers = (() => {
         alert("All data has been cleared.");
         location.reload();
       };
-    }
-
-    if (elements.cancelClearButton && elements.clearDataOverlay) {
-      elements.cancelClearButton.addEventListener("click", () => {
-        elements.clearDataOverlay.classList.remove("show");
-      });
     }
 
     console.log("✅ Action button event listeners attached");
@@ -190,30 +200,20 @@ export const appManager = (() => {
     return Array.from(usedTags);
   };
 
-  const ToggleFilters = document.querySelectorAll(".toggle-filter-button");
-  ToggleFilters.forEach(button => {
-    button.addEventListener("click", () => {
-      const container  = button.closest(".filter-and-results");
-      const tabContent = button.closest(".tab-content");
-      const tabId      = tabContent ? tabContent.id : null;
-      const selectors  = [
-        ".filter-section",
-        ".filter-section-wrapper",
-        ".filter-section-overlay-top",
-        ".filter-section-overlay-bottom"
-      ].join(", ");
+  // Toggle filter panel open/closed.
+  document.addEventListener('click', e => {
+    const button = e.target.closest('.toggle-filter-button, .filter-open-btn');
+    if (!button) return;
+    const tabId = button.dataset.tab;
+    const filterAndResults = button.closest('.filter-and-results')
+        || (tabId ? document.getElementById(tabId)?.querySelector('.filter-and-results') : null);
+    if (!filterAndResults) return;
 
-      container.querySelectorAll(selectors).forEach(el => el.classList.toggle("hidden"));
+    const wrapper = filterAndResults.querySelector('.filter-section-wrapper');
+    wrapper?.classList.toggle('filter-panel-closed');
 
-      const filterSection = container.querySelector(".filter-section");
-      const isHidden = filterSection.classList.contains("hidden");
-
-      button.innerHTML = isHidden
-        ? '<img src="./images/Filter_Open_Icon.svg" alt="Filter icon">'
-        : '<img src="./images/Filter_Hide_Icon.svg" alt="Arrow left icon">';
-
-      if (tabId) localStorage.setItem(`filterVisible_${tabId}`, (!isHidden).toString());
-    });
+    const isNowClosed = wrapper?.classList.contains('filter-panel-closed');
+    if (tabId) localStorage.setItem(`filterVisible_${tabId}`, (!isNowClosed).toString());
   });
 
   let renderAbortController = null;
@@ -239,7 +239,14 @@ export const appManager = (() => {
     const resultsSection = document.getElementById(sectionId);
     if (!resultsSection) return;
 
-    resultsSection.innerHTML = `
+    const _filterTabs  = new Set(['tab3', 'tab6', 'tab7', 'tab9']);
+    const _openBtnHTML = _filterTabs.has(tab)
+        ? `<button class="filter-open-btn" data-tab="${tab}">
+              <img src="./images/Filter_Open_Icon.svg" alt="Open filter">
+          </button>`
+        : '';
+
+resultsSection.innerHTML = `
       <div id="results_header_${tabSuffix}" class="results-header">
         <div id="header-controls_${tabSuffix}" class="header-controls">
           <button id="results-sort-btn_${tabSuffix}" class="results-settings">
@@ -259,11 +266,12 @@ export const appManager = (() => {
             <button class="view-toggle-item" data-state="condensed">Condense</button>
             <button class="view-toggle-item" data-state="minimized">Minimize</button>
           </div>
-          <button id="add_block_button" class="add-block-button green-button add-block-float">+</button>
+          <button id="add_block_button" class="add-block-button green-button">+</button>
+          ${_openBtnHTML}
         </div>
       </div>
     `;
-
+        
     const addBtn = document.getElementById(`results_header_${tabSuffix}`)
       .querySelector('#add_block_button');
     if (addBtn) {
@@ -287,10 +295,14 @@ export const appManager = (() => {
       e.stopPropagation();
       const wasOpen = !viewDropdown.classList.contains("hidden");
       closeDropdowns();
-      if (!wasOpen) viewDropdown.classList.remove("hidden");
+      if (!wasOpen) {
+        const rect = settingsBtn.getBoundingClientRect();
+        viewDropdown.style.top  = `${rect.bottom + 5}px`;
+        viewDropdown.style.left = `${rect.left}px`;
+        viewDropdown.classList.remove("hidden");
+      }
     });
 
-    document.addEventListener("click", () => viewDropdown.classList.add("hidden"), { signal });
     document.addEventListener("click", closeDropdowns, { signal });
 
     viewDropdown.querySelectorAll(".view-toggle-item").forEach(item => {
@@ -314,10 +326,13 @@ export const appManager = (() => {
       e.stopPropagation();
       const wasOpen = !sortDropdown.classList.contains("hidden");
       closeDropdowns();
-      if (!wasOpen) sortDropdown.classList.remove("hidden");
+      if (!wasOpen) {
+        const rect = sortBtn.getBoundingClientRect();
+        sortDropdown.style.top  = `${rect.bottom + 5}px`;
+        sortDropdown.style.left = `${rect.left}px`;
+        sortDropdown.classList.remove("hidden");
+      }
     });
-
-    document.addEventListener("click", () => sortDropdown.classList.add("hidden"), { signal });
 
     sortDropdown.querySelectorAll(".sort-item").forEach(item => {
       const mode = item.dataset.sort;
@@ -422,7 +437,12 @@ export const appManager = (() => {
 
     updateTags();
     attachDynamicTooltips();
+    initScrollFades('.results-section',              null,                        '--results-fade-opacity',      '_scrollFadeHandler');
+    initScrollFades('.filter-section',               '--filter-fade-top-opacity', '--filter-fade-bottom-opacity','_filterFadeHandler', 100);
+    initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
+    initScrollFades('.roll-results', '--dice-fade-top-opacity', '--dice-fade-bottom-opacity', '_diceFadeHandler', 100);
   };
+
 
   const loadBlocks = () => {
     const savedBlocks = localStorage.getItem("userBlocks");
@@ -469,7 +489,7 @@ export const appManager = (() => {
     import('./filterManager.js').then(({ filterManager }) => {
         filterManager.applyFilters(activeTab.replace('tab', ''));
     });
-};
+  };
 
   function updateViewToggleDropdown(tabSuffix) {
     const dropdown = document.getElementById(`view-toggle-dropdown_${tabSuffix}`);

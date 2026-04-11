@@ -1,12 +1,32 @@
-import { initSplitView } from './splitView.js';
+import { initSplitView } from './layoutMode.js';
 import { appManager, actionButtonHandlers } from './appManager.js';
 import { blockActionsHandler, saveEditHandler } from './blockActionsHandler.js';
 import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
 import { filterManager } from './filterManager.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { stripHTML } from './appManager.js';
+import { initScrollFades } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
 import { initLayoutMode, activateCharTab } from './layoutMode.js';
+export function repositionAllSliders() {
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.tab-nav').forEach(nav => {
+            const slider = nav.querySelector('.tab-nav-slider');
+            const activeBtn = nav.querySelector('.tab-button.active');
+            if (!slider || !activeBtn) return;
+            slider.style.transition = 'none';
+            const navRect = nav.getBoundingClientRect();
+            const btnRect = activeBtn.getBoundingClientRect();
+            slider.style.left = (btnRect.left - navRect.left + nav.scrollLeft) + 'px';
+            slider.style.top = (btnRect.top - navRect.top) + 'px';
+            slider.style.width = btnRect.width + 'px';
+            slider.style.height = btnRect.height + 'px';
+            requestAnimationFrame(() => {
+                slider.style.transition = '';
+            });
+        });
+    });
+}
 
 const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -97,6 +117,36 @@ if (menuButton && menuOverlay) {
 }
 
 /* ===================================================================*/
+/* ================= CENTRAL OVERLAY CANCEL BUTTONS =================*/
+/* ===================================================================*/
+
+// All overlays whose cancel/close button simply dismisses the overlay.
+// Note: cancel_remove_button is handled in blockActionsHandler because it
+// also needs to clear pendingDeleteBlockId.
+const overlayCloseConfigs = [
+    { buttonId: 'cancel_add_block',            overlaySelector: '.add-block-overlay' },
+    { buttonId: 'cancel_edit_block',           overlaySelector: '.edit-block-overlay' },
+    { buttonId: 'cancel_clear_button',         overlaySelector: '.cleardata-overlay' },
+    { buttonId: 'close_spell_slot_edit',       overlaySelector: '.spell-slot-edit-overlay' },
+    { buttonId: 'close_suit_uses_edit',        overlaySelector: '.suit-uses-edit-overlay' },
+    { buttonId: 'cancel_remove_action_button', overlaySelector: '.remove-action-overlay' },
+];
+
+function initOverlayCancelButtons() {
+    overlayCloseConfigs.forEach(({ buttonId, overlaySelector }) => {
+        const btn = document.getElementById(buttonId);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                document.querySelector(overlaySelector)?.classList.remove('show');
+            });
+        } else {
+            console.warn(`initOverlayCancelButtons: button "${buttonId}" not found.`);
+        }
+    });
+    console.log('✅ Overlay cancel buttons initialised centrally.');
+}
+
+/* ===================================================================*/
 /* ========================= DICE ROLLER PANEL =======================*/
 /* ===================================================================*/
 
@@ -105,12 +155,17 @@ const dicePanel      = document.getElementById("dice-panel");
 const diceMenuImg    = diceMenuButton?.querySelector("img");
 
 function setDicePanelState(open) {
-  dicePanel.classList.toggle("open", open);
-  diceMenuButton.classList.toggle("active", open);
-  if (diceMenuImg) {
-    diceMenuImg.src = open ? "images/Dice_Button_v2_Green.svg" : "images/Dice_Button_v2.svg";
-  }
-  localStorage.setItem("dicePanelOpen", open);
+    dicePanel.classList.toggle("open", open);
+    diceMenuButton.classList.toggle("active", open);
+    if (diceMenuImg) {
+        diceMenuImg.src = open ? "images/Dice_Button_v2_Green.svg" : "images/Dice_Button_v2.svg";
+    }
+    localStorage.setItem("dicePanelOpen", open);
+    if (open) {
+        setTimeout(() => {
+            initScrollFades('.roll-results', '--dice-fade-top-opacity', '--dice-fade-bottom-opacity', '_diceFadeHandler');
+        }, 100);
+    }
 }
 
 if (diceMenuButton && dicePanel) {
@@ -136,8 +191,50 @@ const fadeInElementsSequentially = (container = document) => {
 };
 
 /* ===================================================================*/
-/* ========================= TAB ORDER ===============================*/
+/* ===================== TAB NAV FUNCTIONS ===========================*/
 /* ===================================================================*/
+
+function initTabNavSlider(nav) {
+    const slider = document.createElement('div');
+    slider.classList.add('tab-nav-slider');
+    nav.style.position = 'relative';
+    nav.insertBefore(slider, nav.firstChild);
+
+    function moveSlider(btn) {
+        const navRect = nav.getBoundingClientRect();
+        const btnRect = btn.getBoundingClientRect();
+        slider.style.left = (btnRect.left - navRect.left + nav.scrollLeft) + 'px';
+        slider.style.top = (btnRect.top - navRect.top) + 'px';
+        slider.style.width = btnRect.width + 'px';
+        slider.style.height = btnRect.height + 'px';
+    }
+
+    const activeBtn = nav.querySelector('.tab-button.active');
+    if (activeBtn) {
+        slider.style.transition = 'none';
+        requestAnimationFrame(() => {
+            moveSlider(activeBtn);
+            requestAnimationFrame(() => {
+                slider.style.transition = '';
+            });
+        });
+    }
+
+    nav.addEventListener('click', e => {
+        const btn = e.target.closest('.tab-button');
+        if (btn) moveSlider(btn);
+    });
+
+    new ResizeObserver(() => {
+        const active = nav.querySelector('.tab-button.active');
+        if (!active) return;
+        slider.style.transition = 'none';
+        moveSlider(active);
+        requestAnimationFrame(() => {
+            slider.style.transition = '';
+        });
+    }).observe(nav);
+}
 
 function saveTabOrder() {
     // Only read from the main nav, not split view navs
@@ -245,7 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const CHAR_TABS  = new Set(['tab4', 'tab8']);
     const charPanel  = document.getElementById('char-sheet-panel');
-    const tabsContent = document.querySelector('.tabs-content');
+    const tabsContent = document.getElementById('right-panel');
 
     // Restore tab order on page load if it exists
     const savedOrder = JSON.parse(localStorage.getItem("tabOrder"));
@@ -265,21 +362,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (saved === "false") {
             const tab = document.getElementById(tabId);
             if (!tab) return;
-            const button = tab.querySelector(".toggle-filter-button");
-            const container = tab.querySelector(".filter-and-results");
-            if (!button || !container) return;
-
-            const selectors = [
-                ".filter-section",
-                ".filter-section-wrapper",
-                ".filter-section-overlay-top",
-                ".filter-section-overlay-bottom"
-            ].join(", ");
-
-            container.querySelectorAll(selectors).forEach(el => el.classList.add("hidden"));
-            button.innerHTML = '<img src="./images/Filter_Open_Icon.svg" alt="Filter icon">';
+            const wrapper = tab.querySelector('.filter-section-wrapper');
+            if (!wrapper) return;
+            wrapper.classList.add('filter-panel-closed');
         }
-    });
+});
 
     const tabButtons = document.querySelectorAll(".tab-button");
     tabButtons.forEach(button => {
@@ -289,6 +376,8 @@ document.addEventListener("DOMContentLoaded", () => {
             saveTabOrder();
         });
     });
+
+    document.querySelectorAll('.tab-nav').forEach(nav => initTabNavSlider(nav));
 
     const tabContents = document.querySelectorAll(".tab-content");
 
@@ -821,6 +910,8 @@ window.onload = async () => {
     migrateToTab9();
     migrateTab5ToTab3();
 
+    initOverlayCancelButtons();
+
     attachEventListeners();
     blockActionsHandler.attachBlockActions();
 
@@ -904,5 +995,7 @@ window.onload = async () => {
     }
 
     fadeInElementsSequentially();
+
+    repositionAllSliders();
 
 };

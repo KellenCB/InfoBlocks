@@ -1,0 +1,73 @@
+/* ==================================================================*/
+/* ========================= COLOUR PALETTE =========================*/
+/* ==================================================================*/
+
+:root {
+
+    /* ── Gray Scale (dark → light) ───────────────────────────────── */
+
+    --gray-100: #1a1a1a;
+    --gray-150: #1e1e1e;
+    --gray-200: #222;
+    --gray-250: #1f1f1f;
+    --gray-300: #2a2a2a;
+    --gray-350: #333;
+    --gray-400: #444;
+    --gray-450: #4e4e4e;
+    --gray-500: #555;
+    --gray-550: #5e5e5e;
+    --gray-600: #666;
+    --gray-650: #777;
+    --gray-700: #888;
+    --gray-750: #aaa;
+    --gray-800: #bbb;
+    --gray-850: #ddd;
+    --gray-900: #fff;
+
+    /* ── Brand / Action Colours ──────────────────────────────────── */
+
+    --color-green: #4CAF50;
+    --color-green-dark: #388e3c;
+    --color-orange: #f4a261;
+    --color-red: #ff6b6b;
+    --color-blue: #2d81ff;
+    --color-cyan: #06ade4;
+
+    /* ── Inventory Colours ───────────────────────────────────────── */
+
+    --color-gold:   rgba(255, 215, 0, 0.5);
+    --color-silver: rgba(192, 192, 192, 0.5);
+    --color-copper: rgba(226, 135, 67, 0.5);
+
+    /* ── Find & Replace Highlights ───────────────────────────────── */
+
+    --color-find:                rgba(255, 200, 0, 0.35); /* inactive match highlight  */
+    --color-find-active:         rgba(255, 200, 0, 0.75); /* active match highlight    */
+    --color-find-active-outline: rgba(255, 180, 0, 0.90); /* active match border       */
+    --color-find-close-hover:    #ff8e8e;                 /* ✕ close button hover      */
+
+    /* ── Tag Colours ─────────────────────────────────────────────── */
+
+    --user-color:           #e4e0e0;
+    --characterType-color:  #00e5ff;
+    --part-color:           #CDF564;
+    --action-color:         #07f371;
+    --ability-color:        #bf5eff;
+    --damage-color:         #F037A5;
+    --condition-color:      #ffa927;
+    --spell-color:          #2b7bf1;
+    --spellLevel-color:     #49c1e6;
+    --infusion-color:       #49c1e6;
+    --attribute-color:      #FF4632;
+    --charges-color:        #43ffef;
+    --itemType-color:       #ff7f00;
+    --magicItemType-color:  #07f371;
+    --magicItemBonus-color: #F037A5;
+    --equippedCheck-color:  #FF4632;
+
+   --or-selected-opacity: 50%;
+
+    /* ── Circle Colour ───────────────────────────────────────────── */
+
+    --circle-color: #e4e0e0;
+}

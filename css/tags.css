@@ -1,30 +1,9 @@
 /* ==================================================================*/
-/* ========================= COLOUR TOKENS ==========================*/
+/* ========================== TAG BUTTON ============================*/
 /* ==================================================================*/
 
-:root {
-    --user-color:           #e4e0e0;
-    --characterType-color:  #00e5ff;
-    --part-color:           #CDF564;
-    --action-color:         #07f371;
-    --ability-color:        #bf5eff;
-    --damage-color:         #F037A5;
-    --condition-color:      #ffa927;
-    --spell-color:          #2b7bf1;
-    --spellLevel-color:     #49c1e6;
-    --infusion-color:       #49c1e6;
-    --attribute-color:      #FF4632;
-    --charges-color:        #43ffef;
-    --itemType-color:       #ff7f00;
-    --magicItemType-color:  #07f371;
-    --magicItemBonus-color: #F037A5;
-    --equippedCheck-color:  #FF4632;
-
-    --or-stripe-opacity: 0.75; /* Controls the faded stripe in OR-selected tags */
-}
-
 /* Accordion groups inherit their colour from the tag category */
-.tag-accordion-group                    { --accordion-color: #aaa; }
+.tag-accordion-group                    { --accordion-color: var(--gray-750); }
 .tag-accordion-group.tag-characterType  { --accordion-color: var(--characterType-color); }
 .tag-accordion-group.tag-partType       { --accordion-color: var(--part-color); }
 .tag-accordion-group.tag-actionType     { --accordion-color: var(--action-color); }
@@ -86,8 +65,8 @@
 /* ====================== AND-SELECTED STATE ========================*/
 /* ==================================================================*/
 
-.tag-button.selected                        { background-color: var(--user-color);          color: #333; font-weight: bolder; }
-.tag-button.selected.tag-characterType      { background-color: var(--characterType-color);  color: #333; }
+.tag-button.selected                        { background-color: var(--user-color);          color: var(--gray-350); font-weight: bolder; }
+.tag-button.selected.tag-characterType      { background-color: var(--characterType-color);  color: var(--gray-350); }
 .tag-button.selected.tag-partType           { background-color: var(--part-color); }
 .tag-button.selected.tag-actionType         { background-color: var(--action-color); }
 .tag-button.selected.tag-abilityType        { background-color: var(--ability-color); }
@@ -110,32 +89,26 @@
 /* ==================================================================*/
 
 .tag-button.selected-or {
-    background: repeating-linear-gradient(
-        45deg,
-        var(--user-color)                            0px,  var(--user-color)                            4px,
-        rgba(228, 224, 224, var(--or-stripe-opacity)) 4px,  rgba(228, 224, 224, var(--or-stripe-opacity)) 10px
-    );
-    border: 1px solid var(--user-color);
-    color: #000;
+    background-color: color-mix(in srgb, currentColor var(--or-selected-opacity), transparent);
     font-weight: bolder;
 }
 
-.tag-button.selected-or.tag-characterType  { background: repeating-linear-gradient(45deg, var(--characterType-color)  0, var(--characterType-color)  4px, rgba(0,229,255,   var(--or-stripe-opacity)) 4px, rgba(0,229,255,   var(--or-stripe-opacity)) 10px); border-color: var(--characterType-color); }
-.tag-button.selected-or.tag-partType       { background: repeating-linear-gradient(45deg, var(--part-color)           0, var(--part-color)           4px, rgba(205,245,100,var(--or-stripe-opacity)) 4px, rgba(205,245,100,var(--or-stripe-opacity)) 10px); border-color: var(--part-color); }
-.tag-button.selected-or.tag-actionType     { background: repeating-linear-gradient(45deg, var(--action-color)         0, var(--action-color)         4px, rgba(7,243,113,  var(--or-stripe-opacity)) 4px, rgba(7,243,113,  var(--or-stripe-opacity)) 10px); border-color: var(--action-color); }
-.tag-button.selected-or.tag-abilityType    { background: repeating-linear-gradient(45deg, var(--ability-color)        0, var(--ability-color)        4px, rgba(191,94,255, var(--or-stripe-opacity)) 4px, rgba(191,94,255, var(--or-stripe-opacity)) 10px); border-color: var(--ability-color); }
-.tag-button.selected-or.tag-damageType     { background: repeating-linear-gradient(45deg, var(--damage-color)         0, var(--damage-color)         4px, rgba(240,55,165, var(--or-stripe-opacity)) 4px, rgba(240,55,165, var(--or-stripe-opacity)) 10px); border-color: var(--damage-color); }
-.tag-button.selected-or.tag-conditionType  { background: repeating-linear-gradient(45deg, var(--condition-color)      0, var(--condition-color)      4px, rgba(255,169,39, var(--or-stripe-opacity)) 4px, rgba(255,169,39, var(--or-stripe-opacity)) 10px); border-color: var(--condition-color); }
-.tag-button.selected-or.tag-spellType      { background: repeating-linear-gradient(45deg, var(--spell-color)          0, var(--spell-color)          4px, rgba(43,123,241, var(--or-stripe-opacity)) 4px, rgba(43,123,241, var(--or-stripe-opacity)) 10px); border-color: var(--spell-color); }
-.tag-button.selected-or.tag-spellLevel     { background: repeating-linear-gradient(45deg, var(--spellLevel-color)     0, var(--spellLevel-color)     4px, rgba(73,193,230, var(--or-stripe-opacity)) 4px, rgba(73,193,230, var(--or-stripe-opacity)) 10px); border-color: var(--spellLevel-color); }
-.tag-button.selected-or.tag-infusion       { background: repeating-linear-gradient(45deg, var(--infusion-color)       0, var(--infusion-color)       4px, rgba(73,193,230, var(--or-stripe-opacity)) 4px, rgba(73,193,230, var(--or-stripe-opacity)) 10px); border-color: var(--infusion-color); }
-.tag-button.selected-or.tag-attributeType  { background: repeating-linear-gradient(45deg, var(--attribute-color)      0, var(--attribute-color)      4px, rgba(255,70,50,  var(--or-stripe-opacity)) 4px, rgba(255,70,50,  var(--or-stripe-opacity)) 10px); border-color: var(--attribute-color); }
-.tag-button.selected-or.tag-Charges        { background: repeating-linear-gradient(45deg, var(--charges-color)        0, var(--charges-color)        4px, rgba(67,255,239, var(--or-stripe-opacity)) 4px, rgba(67,255,239, var(--or-stripe-opacity)) 10px); border-color: var(--charges-color); }
-.tag-button.selected-or.tag-itemType       { background: repeating-linear-gradient(45deg, var(--itemType-color)       0, var(--itemType-color)       4px, rgba(255,127,0,  var(--or-stripe-opacity)) 4px, rgba(255,127,0,  var(--or-stripe-opacity)) 10px); border-color: var(--itemType-color); }
-.tag-button.selected-or.tag-magicItemType  { background: repeating-linear-gradient(45deg, var(--magicItemType-color)  0, var(--magicItemType-color)  4px, rgba(7,243,113,  var(--or-stripe-opacity)) 4px, rgba(7,243,113,  var(--or-stripe-opacity)) 10px); border-color: var(--magicItemType-color); }
-.tag-button.selected-or.tag-magicItemBonus { background: repeating-linear-gradient(45deg, var(--magicItemBonus-color) 0, var(--magicItemBonus-color) 4px, rgba(240,55,165, var(--or-stripe-opacity)) 4px, rgba(240,55,165, var(--or-stripe-opacity)) 10px); border-color: var(--magicItemBonus-color); }
-.tag-button.selected-or.tag-equippedCheck  { background: repeating-linear-gradient(45deg, var(--equippedCheck-color)  0, var(--equippedCheck-color)  4px, rgba(255,70,50,  var(--or-stripe-opacity)) 4px, rgba(255,70,50,  var(--or-stripe-opacity)) 10px); border-color: var(--equippedCheck-color); }
 
+.tag-button.selected-or.tag-characterType  { background-color: color-mix(in srgb, var(--characterType-color)  var(--or-selected-opacity), transparent); border-color: var(--characterType-color); }
+.tag-button.selected-or.tag-partType       { background-color: color-mix(in srgb, var(--part-color)           var(--or-selected-opacity), transparent); border-color: var(--part-color); }
+.tag-button.selected-or.tag-actionType     { background-color: color-mix(in srgb, var(--action-color)         var(--or-selected-opacity), transparent); border-color: var(--action-color); }
+.tag-button.selected-or.tag-abilityType    { background-color: color-mix(in srgb, var(--ability-color)        var(--or-selected-opacity), transparent); border-color: var(--ability-color); }
+.tag-button.selected-or.tag-damageType     { background-color: color-mix(in srgb, var(--damage-color)         var(--or-selected-opacity), transparent); border-color: var(--damage-color); }
+.tag-button.selected-or.tag-conditionType  { background-color: color-mix(in srgb, var(--condition-color)      var(--or-selected-opacity), transparent); border-color: var(--condition-color); }
+.tag-button.selected-or.tag-spellType      { background-color: color-mix(in srgb, var(--spell-color)          var(--or-selected-opacity), transparent); border-color: var(--spell-color); }
+.tag-button.selected-or.tag-spellLevel     { background-color: color-mix(in srgb, var(--spellLevel-color)     var(--or-selected-opacity), transparent); border-color: var(--spellLevel-color); }
+.tag-button.selected-or.tag-infusion       { background-color: color-mix(in srgb, var(--infusion-color)       var(--or-selected-opacity), transparent); border-color: var(--infusion-color); }
+.tag-button.selected-or.tag-attributeType  { background-color: color-mix(in srgb, var(--attribute-color)      var(--or-selected-opacity), transparent); border-color: var(--attribute-color); }
+.tag-button.selected-or.tag-Charges        { background-color: color-mix(in srgb, var(--charges-color)        var(--or-selected-opacity), transparent); border-color: var(--charges-color); }
+.tag-button.selected-or.tag-itemType       { background-color: color-mix(in srgb, var(--itemType-color)       var(--or-selected-opacity), transparent); border-color: var(--itemType-color); }
+.tag-button.selected-or.tag-magicItemType  { background-color: color-mix(in srgb, var(--magicItemType-color)  var(--or-selected-opacity), transparent); border-color: var(--magicItemType-color); }
+.tag-button.selected-or.tag-magicItemBonus { background-color: color-mix(in srgb, var(--magicItemBonus-color) var(--or-selected-opacity), transparent); border-color: var(--magicItemBonus-color); }
+.tag-button.selected-or.tag-equippedCheck  { background-color: color-mix(in srgb, var(--equippedCheck-color)  var(--or-selected-opacity), transparent); border-color: var(--equippedCheck-color); }
 
 /* ==================================================================*/
 /* ======================= TAG ACCORDION ============================*/
@@ -165,10 +138,9 @@
 }
 
 .tag-accordion-pill:hover {
-    background-color: rgba(255, 255, 255, 0.07);
+    background-color: color-mix(in srgb, var(--gray-900) 7%, transparent);
 }
 
-/* Pill expands to full width when it contains chips */
 .tag-accordion-pill:has(.tag-accordion-chip) {
     width: 100%;
     box-sizing: border-box;
@@ -201,14 +173,13 @@
 
 .filter-section .tag-accordion-label { width: 100%; }
 
-/* Chips — shown inside the collapsed pill for any selected tags */
 .tag-accordion-chip {
     min-height: 40px;
     padding: 10px 15px;
     background-color: var(--accordion-color);
     border: none;
     border-radius: 20px;
-    color: #333;
+    color: var(--gray-350);
     font-weight: bolder;
     cursor: pointer;
     font-size: 16px;
@@ -222,12 +193,9 @@
 
 .tag-accordion-chip:hover { transform: scale(1.05); }
 
-/* OR-selected chip — solid colour fallback (CSS vars can't be used inside rgba()) */
 .tag-accordion-chip.selected-or {
-    background-color: var(--accordion-color);
-    border: 2px solid var(--accordion-color);
-    color: #000;
-    opacity: 0.75;
+    background-color: color-mix(in srgb, currentColor var(--or-selected-opacity), transparent);
+    border: 2px solid currentColor;
 }
 
 
@@ -244,24 +212,24 @@
 
 .tag-category { display: contents; }
 
+[id="all_tags_container"] { margin: 15px 0px 0px 0px; }
+
 [id^="user_tags_list"],
 [id^="dynamic_tags_section"] {
     display: flex;
     flex-wrap: wrap;
 }
 
-/* Block-type tag row — sits above the accordion in the filter panel */
 .block-type-tags {
     display: flex;
     flex-wrap: wrap;
     width: 100%;
     padding: 15px 0;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid var(--gray-400);
     column-gap: 7px;
     row-gap: 9px;
 }
 
-/* Overlay tag containers */
 .overlay-tags,
 #dynamic_overlay_tags {
     display: flex;
@@ -273,11 +241,10 @@
     gap: 6px;
 }
 
-/* Block-type rows inside add/edit overlays */
 .add-block-overlay .block-type-tags,
 .edit-block-overlay .block-type-tags {
     border-bottom: none;
-    border-top: 1px solid #444;
+    border-top: 1px solid var(--gray-400);
     padding: 10px 0 0 0;
     justify-content: center;
 }
@@ -305,8 +272,8 @@
 
 .block-property {
     padding: 6px 8px;
-    color: #fff;
-    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--gray-900);
+    background-color: color-mix(in srgb, var(--gray-900) 10%, transparent);
     border: none;
     border-radius: 7px;
     font-size: 16px;

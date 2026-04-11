@@ -1,5 +1,5 @@
 /* ==================================================================*/
-/* ====================== Form and input syles ======================*/
+/* ====================== Form and input styles =====================*/
 /* ==================================================================*/
 
 .search-container {
@@ -10,13 +10,13 @@
 }
 
 .search_input {
-    width: 100%; 
-    padding: 12px; 
+    width: 100%;
+    padding: 12px;
     padding-right: 30px;
     font-size: 16px;
-    background-color: #444; 
-    color: #fff;
-    border: 0px; 
+    background-color: var(--gray-400);
+    color: var(--gray-900);
+    border: 0px;
     border-radius: 8px;
     transition: border-color 0.3s;
 }
@@ -39,13 +39,13 @@
 }
 
 .clear-search:hover .clear-icon:hover {
-    stroke: rgb(255, 255, 255);
+    stroke: var(--gray-900);
 }
 
 .clear-icon {
     width: 22px;
     height: 22px;
-    stroke: #666;
+    stroke: var(--gray-600);
     stroke-width: 2;
 }
 
@@ -60,13 +60,13 @@
     margin: 18px 0 18px 0;
 }
 
-.add-block-form input, .edit-block-form input{
+.add-block-form input, .edit-block-form input {
     width: 100%;
     padding: 12px;
     font-size: 16px;
-    background-color: #444;
-    color: #fff;
-    border: 1px solid #555;
+    background-color: var(--gray-400);
+    color: var(--gray-900);
+    border: 1px solid var(--gray-500);
     border-radius: 8px;
     box-sizing: border-box;
     transition: border-color 0.3s;
@@ -79,13 +79,13 @@
     padding: 12px;
     resize: vertical;
     overflow: auto;
-    max-height: 60vh;  
+    max-height: 60vh;
 }
 
 .auto-resize[contenteditable] {
     font-family: inherit;
     position: relative;
-}  
+}
 
 .auto-resize[contenteditable].empty::before {
     content: attr(data-placeholder);
@@ -94,7 +94,7 @@
     left: 12px;
     pointer-events: none;
     user-select: none;
-    color: #bbb;
+    color: var(--gray-800);
     opacity: 0.5;
     letter-spacing: 0.2px;
     font-style: normal;
@@ -107,25 +107,25 @@
 .auto-resize[contenteditable] {
     position: relative;
     padding-top: 15px;
-    box-sizing: border-box;  
+    box-sizing: border-box;
 }
 
 ::placeholder {
-    color: #bbb;
+    color: var(--gray-800);
     opacity: 0.5;
     letter-spacing: 0.2px;
-}  
+}
 
 /* ==================================================================*/
-/* ========================= Text Toolbar =========================*/
+/* ========================= Text Toolbar ==========================*/
 /* ==================================================================*/
-  
+
 .editor-toolbar-wrapper {
     width: 100%;
     font-size: 16px;
-    background-color: #444;
-    color: #fff;
-    border: 1px solid #555;
+    background-color: var(--gray-400);
+    color: var(--gray-900);
+    border: 1px solid var(--gray-500);
     border-radius: 8px;
     box-sizing: border-box;
     transition: border-color 0.3s;
@@ -139,7 +139,7 @@
     z-index: 1;
     justify-content: left;
 }
-  
+
 .text-toolbar {
     display: flex;
     justify-content: center;
@@ -148,14 +148,14 @@
     gap: 7px;
     z-index: 2;
     pointer-events: none;
-    border-bottom: 1px solid #555;
+    border-bottom: 1px solid var(--gray-500);
     overflow: auto;
 }
 
 .text-toolbar button, #font-size-select {
-    background-color: #555;
+    background-color: var(--gray-500);
     border: none;
-    color: #fff;
+    color: var(--gray-900);
     border-radius: 8px;
     padding: 8px 7px 7px 7px;
     font-size: 14px;
@@ -167,13 +167,13 @@
 }
 
 .text-toolbar button:hover {
-    background-color: #777;
+    background-color: var(--gray-650);
 }
 
 .text-toolbar button.selected {
-    background-color: #666;
-    border-color: #888;
-    color: #fff;
+    background-color: var(--gray-600);
+    border-color: var(--gray-700);
+    color: var(--gray-900);
     opacity: 1;
 }
 
@@ -194,9 +194,7 @@
     margin-right: 0.25em 0;
     line-height: 1.6;
     margin-bottom: 12px;
-
 }
-
 
 /* ==================================================================*/
 /* ========================= Overlay Styles =========================*/
@@ -229,7 +227,7 @@
 }
 
 .add-block-form, .cleardata-form, .edit-block-form {
-    background-color: #333;
+    background-color: var(--gray-350);
     padding: 30px;
     border-radius: 12px;
     width: 350px;
@@ -239,8 +237,8 @@
 
 /* Find & Replace Panel */
 .find-replace-panel {
-    background-color: #444;
-    border-bottom: 1px solid #555;
+    background-color: var(--gray-400);
+    border-bottom: 1px solid var(--gray-500);
     padding: 12px 12px;
     display: flex;
     flex-direction: column;
@@ -265,9 +263,9 @@
     flex: 1;
     padding: 6px 10px;
     font-size: 14px;
-    background-color: #444;
-    color: #fff;
-    border: 1px solid #555;
+    background-color: var(--gray-400);
+    color: var(--gray-900);
+    border: 1px solid var(--gray-500);
     border-radius: 6px;
     box-sizing: border-box;
     margin: 0;
@@ -276,9 +274,9 @@
 .fr-btn {
     padding: 6px 10px;
     font-size: 14px;
-    background-color: #555;
-    color: #fff;
-    border: 1px solid #555;
+    background-color: var(--gray-500);
+    color: var(--gray-900);
+    border: 1px solid var(--gray-500);
     opacity: 0.5;
     border-radius: 6px;
     cursor: pointer;
@@ -287,26 +285,26 @@
 }
 
 .fr-btn:hover {
-    background-color: #777;
+    background-color: var(--gray-650);
 }
 
 .fr-close:hover {
-    background-color: #ff8e8e;
+    background-color: var(--color-find-close-hover);
     opacity: 1;
 }
 
 .fr-feedback {
     font-size: 12px;
-    color: #aaa;
+    color: var(--gray-750);
 }
 
 .fr-highlight {
-    background-color: rgba(255, 200, 0, 0.35);
+    background-color: var(--color-find);
     border-radius: 2px;
 }
 
 .fr-highlight-active {
-    background-color: rgba(255, 200, 0, 0.75);
+    background-color: var(--color-find-active);
     border-radius: 2px;
-    outline: 1px solid rgba(255, 180, 0, 0.9);
+    outline: 1px solid var(--color-find-active-outline);
 }

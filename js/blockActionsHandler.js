@@ -113,7 +113,7 @@ export const saveEditHandler = () => {
     delete editOverlay.dataset.blockId;
 
     // ── Refresh the correct view ──────────────────────────────────────────────
-    import('./splitView.js').then(({ isSplitActive, refreshPanelsShowingTab }) => {
+    import('./layoutMode.js').then(({ isSplitActive, refreshPanelsShowingTab }) => {
         if (isSplitActive()) {
             refreshPanelsShowingTab(activeTab);
         } else {
@@ -168,16 +168,15 @@ export const blockActionsHandler = (() => {
             if (idx !== -1) {
                 blocks[idx].pinned = !blocks[idx].pinned;
                 localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
-                reapplySearchAndFilters();
+                reapplySearchAndFilters(activeTab);   // ← was reapplySearchAndFilters()
             }
             return;
         }
 
         if (target.classList.contains("duplicate-button")) {
-            console.log("📄 Duplicating block:", blockId);
             const blockTags = Array.isArray(block.tags) ? [...block.tags] : [];
             appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.properties || [], block.blockType || null);
-            reapplySearchAndFilters();
+            reapplySearchAndFilters(activeTab);
 
         } else if (target.classList.contains("edit-button")) {
 
@@ -251,39 +250,37 @@ export const blockActionsHandler = (() => {
             const overlay = document.querySelector(".remove-block-overlay");
             overlay && overlay.classList.add("show");
         }
-          
-        const initDeleteConfirmation = () => {
-            const confirmBtn = document.getElementById("confirm_remove_button");
-            const cancelBtn  = document.getElementById("cancel_remove_button");
-            if (confirmBtn && cancelBtn) {
-                confirmBtn.addEventListener("click", () => {
-                    if (pendingDeleteBlockId) {
-                        const deletedTab   = appManager.getActiveTab();
-                        const deletedBlock = appManager.removeBlock(pendingDeleteBlockId);
-                        lastDeletedBlock   = { tab: deletedTab, block: deletedBlock };
-                        pendingDeleteBlockId = null;
-                        reapplySearchAndFilters();
-                    }
-                    document.querySelector(".remove-block-overlay").classList.remove("show");
-                });
-                cancelBtn.addEventListener("click", () => {
-                    pendingDeleteBlockId = null;
-                    document.querySelector(".remove-block-overlay").classList.remove("show");
-                });
-            }
-        };
-                                    
-        initDeleteConfirmation();
     };  
 
-    function reapplySearchAndFilters() {
-        const activeTab = appManager.getActiveTab();
+    function reapplySearchAndFilters(tabOverride = null) {
+        const activeTab = tabOverride || appManager.getActiveTab();
         filterManager.applyFilters(activeTab.replace('tab', ''));
     }
 
+    const initDeleteConfirmation = () => {
+        const confirmBtn = document.getElementById("confirm_remove_button");
+        const cancelBtn  = document.getElementById("cancel_remove_button");
+        if (confirmBtn && cancelBtn) {
+            confirmBtn.addEventListener("click", () => {
+                if (pendingDeleteBlockId) {
+                    const deletedTab   = appManager.getActiveTab();
+                    const deletedBlock = appManager.removeBlock(pendingDeleteBlockId);
+                    lastDeletedBlock   = { tab: deletedTab, block: deletedBlock };
+                    pendingDeleteBlockId = null;
+                    reapplySearchAndFilters();
+                }
+                document.querySelector(".remove-block-overlay").classList.remove("show");
+            });
+            cancelBtn.addEventListener("click", () => {
+                pendingDeleteBlockId = null;
+                document.querySelector(".remove-block-overlay").classList.remove("show");
+            });
+        }
+    };
 
     const attachBlockActions = () => {
         initUndoLastDelete();
+        initDeleteConfirmation();
 
         document.querySelectorAll(".results-section").forEach(resultsSection => {
             resultsSection.removeEventListener("click", handleBlockActions);

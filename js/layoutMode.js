@@ -3,6 +3,7 @@
 // Uses body.landscape-mode class to drive CSS — keeps JS and CSS in sync.
 
 import { appManager } from './appManager.js';
+import { repositionAllSliders } from './main.js';
 
 const CHAR_TABS = new Set(['tab4', 'tab8']);
 const LIST_TABS = ['tab9', 'tab3', 'tab6', 'tab7']; // priority order for default
@@ -71,6 +72,22 @@ export function initLayoutMode() {
     });
 }
 
+// ── Split view compatibility exports ───────────────────────────────────────
+
+export function isSplitActive() {
+    return localStorage.getItem('splitViewActive') === 'true';
+}
+
+export function initSplitView() { /* no-op — layout is handled by initLayoutMode() */ }
+
+export const panelState     = { left: { activeTab: null }, right: { activeTab: null } };
+export const SINGLETON_TABS = new Set();
+
+export function refreshPanelsShowingTab(tabId) {
+    appManager.renderBlocks(tabId);
+    appManager.updateTags();
+}
+
 // ── Public helpers ─────────────────────────────────────────────────────────
 
 export function isLandscape() {
@@ -114,6 +131,8 @@ function onEnterLandscape() {
     document.querySelectorAll('#list-tab-nav .tab-button').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === currentTab);
     });
+
+    repositionAllSliders();
 }
 
 /** Called when rotating / resizing out of landscape.
@@ -124,7 +143,7 @@ function onExitLandscape() {
 
     const activeCharTab = localStorage.getItem('activeCharTab') || 'tab4';
     const charPanel     = document.getElementById('char-sheet-panel');
-    const tabsContent   = document.querySelector('.tabs-content');
+    const tabsContent   = document.getElementById('right-panel');
 
     if (charPanel)   charPanel.style.display   = 'flex';
     if (tabsContent) tabsContent.style.display = 'none';
@@ -139,6 +158,8 @@ function onExitLandscape() {
             && !btn.closest('#list-tab-nav');
         btn.classList.toggle('active', isActive);
     });
+
+    repositionAllSliders();
 }
 
 /**
@@ -162,7 +183,7 @@ function ensureNavsVisible() {
  */
 function clearPanelInlineStyles() {
     const charPanel   = document.getElementById('char-sheet-panel');
-    const tabsContent = document.querySelector('.tabs-content');
+    const tabsContent = document.getElementById('right-panel');
     if (charPanel)   charPanel.style.display   = '';
     if (tabsContent) tabsContent.style.display = '';
 }

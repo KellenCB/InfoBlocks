@@ -1,31 +1,30 @@
-/* diceRoller.css */
-
 /* ─────────────────────────────────────────────────────────────────────────────
    DICE PANEL — side column
 ───────────────────────────────────────────────────────────────────────────── */
 
-/* Outer shell: width collapses to 0 when closed, slides open to 320px */
 #dice-panel {
   width: 0;
   flex-shrink: 0;
   overflow: hidden;
   transition: width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 #dice-panel.open {
-  width: 380px; /* 300px content + 20px left gap */
+  width: 380px;
 }
 
-/* Inner wrapper: always 300px wide — sits "off-screen" until outer expands */
 #dice-panel-inner {
   width: 100%;
   min-width: 0;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   padding-left: 20px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 20px;
   overflow: hidden;
 }
 
@@ -42,22 +41,25 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   DICE ROLLER CONTAINER — the top card (dice selection + tray)
+   DICE ROLLER CONTAINER — single scrollable column
 ───────────────────────────────────────────────────────────────────────────── */
 
 .dice-roller-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
   width: 100%;
   padding: 20px;
-  background-color: #2a2a2a;
+  background-color: var(--gray-300);
   border-radius: 20px;
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
+
 /* ─────────────────────────────────────────────────────────────────────────────
-   DICE SELECTION ROW — 6 buttons in a single line
+   DICE SELECTION ROW
 ───────────────────────────────────────────────────────────────────────────── */
 
 .dice-selection {
@@ -67,7 +69,6 @@
   justify-content: space-between;
 }
 
-/* Each dice button */
 .dice-button {
   display: inline-flex;
   align-items: center;
@@ -85,7 +86,6 @@
 .dice-button:hover  { opacity: 0.8; }
 .dice-button:active { transform: scale(0.95); }
 
-/* Wrapper holding the SVG image + label */
 .dice-wrapper {
   position: relative;
   width: 100%;
@@ -98,26 +98,24 @@
   object-fit: contain;
 }
 
-/* Centred label over the die shape */
 .dice-label {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #fff;
+  color: var(--gray-900);
   font-size: 11px;
   pointer-events: none;
 }
 
-/* D4 triangle label nudged down across all contexts */
-.dice-button[data-dice="4"]        .dice-label,
+.dice-button[data-dice="4"]          .dice-label,
 .selected-die-wrapper[data-dice="4"] .dice-label,
-.roll-die-wrapper[data-dice="4"]   .roll-number {
+.roll-die-wrapper[data-dice="4"]     .roll-number {
   top: 60%;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   ACTION ROW — Roll! + Clear All side by side
+   ACTION ROW
 ───────────────────────────────────────────────────────────────────────────── */
 
 .dice-panel-actions {
@@ -127,8 +125,8 @@
 
 #roll-button {
   flex: 1;
-  background-color: #4CAF50;
-  color: #fff;
+  background-color: var(--color-green);
+  color: var(--gray-900);
   border: none;
   border-radius: 8px;
   padding: 9px 12px;
@@ -138,13 +136,13 @@
   transition: background-color 0.3s;
 }
 
-#roll-button:hover    { background-color: #388e3c; }
+#roll-button:hover    { background-color: var(--color-green-dark); }
 #roll-button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 #clear-selected-button {
   flex: 1;
-  background-color: #1a1a1a;
-  color: #fff;
+  background-color: var(--gray-100);
+  color: var(--gray-900);
   border: none;
   border-radius: 8px;
   padding: 9px 12px;
@@ -163,13 +161,13 @@
   width: 100%;
   min-height: 90px;
   position: relative;
-  background-color: #222;
+  background-color: var(--gray-200);
   padding: 20px 10px;
-  border: 1px solid #5e5e5e;
+  border: 1px solid var(--gray-550);
   border-radius: 15px;
   box-sizing: border-box;
   overflow-y: auto;
-  box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 4px 10px color-mix(in srgb, black 50%, transparent);
 }
 
 .selected-dice-container {
@@ -179,7 +177,6 @@
   justify-content: center;
 }
 
-/* Each die added to the tray */
 .selected-die {
   cursor: pointer;
   transition: transform 0.3s;
@@ -205,38 +202,68 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #fff;
+  color: var(--gray-900);
   font-weight: bold;
   font-size: 12px;
   pointer-events: none;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   ROLL RESULTS PANEL
+   ROLL RESULTS
 ───────────────────────────────────────────────────────────────────────────── */
 
 .roll-results {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  background-color: #2a2a2a;
-  border-radius: 20px;
-  padding: 15px;
-  color: #fff;
-  font-size: 14px;
-  line-height: 1.4;
-  gap: 10px;
-  align-items: center;
-  text-align: center;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: block;
+    color: var(--gray-900);
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: center;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    box-shadow:
+        inset 0 40px 20px -20px var(--gray-300),
+        inset 0 -40px 20px -20px var(--gray-300);
 }
 
-.roll-results h3 {
-  margin: 0;
-  font-size: 16px;
-  text-align: center;
-  flex-shrink: 0;
+.roll-results::-webkit-scrollbar {
+    display: none;
+}
+
+.roll-results::before {
+    content: '';
+    position: sticky;
+    top: 0;
+    display: block;
+    height: 40px;
+    margin-bottom: -40px;
+    background: linear-gradient(
+        var(--gray-300) 0%,
+        color-mix(in srgb, var(--gray-300) 50%, transparent) 50%,
+        color-mix(in srgb, var(--gray-300) 0%, transparent) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--dice-fade-top-opacity, 0);
+}
+
+.roll-results::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    display: block;
+    height: 40px;
+    margin-top: -40px;
+    background: linear-gradient(
+        color-mix(in srgb, var(--gray-300) 0%, transparent) 0%,
+        color-mix(in srgb, var(--gray-300) 50%, transparent) 50%,
+        var(--gray-300) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--dice-fade-bottom-opacity, 1);
 }
 
 .rolls-container {
@@ -254,23 +281,27 @@
   text-align: center;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #555;
+  border-top: 1px solid var(--gray-500);
   width: 100%;
 }
 
-/* History entry card */
 .roll-history-entry {
-  background-color: #333;
+  background-color: var(--gray-350);
   border-radius: 12px;
   padding: 12px;
   width: 100%;
   transition: transform 0.3s ease, opacity 0.3s ease;
+  margin-bottom: 10px;
 }
 
 .roll-history-entry.new-entry {
   scale: 0.9;
   transform: translateY(-20px);
   animation: slide-in 0.6s ease-out forwards;
+}
+
+.roll-history-entry:last-child {
+    margin-bottom: 0;
 }
 
 @keyframes slide-in {
@@ -280,7 +311,6 @@
   }
 }
 
-/* Die icon + number in results */
 .roll-die-wrapper {
   position: relative;
   width: 44px;
@@ -299,7 +329,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #fff;
+  color: var(--gray-900);
   font-weight: bold;
   font-size: 13px;
   pointer-events: none;
