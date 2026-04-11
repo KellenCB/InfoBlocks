@@ -49,6 +49,34 @@ body {
     overflow: hidden;
 }
 
+#right-panel {
+    flex: 1;
+    min-width: 0;
+}
+
+#char-sheet-panel {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    gap: 10px;
+}
+
+#char-sheet-panel.active {
+    display: flex;
+}
+
+#char-sheet-nav,
+#list-tab-nav {
+    display: none;
+}
+
+#landscape-divider {
+    display: none;
+}
+
 #app-row {
     display: flex;
     flex-direction: row;
@@ -99,11 +127,11 @@ body {
 .tab-nav {
     position: relative;
     display: flex;
-    border-radius: 20px;
+    border-radius: 25px;
     background-color: var(--gray-300);
-    padding: 15px;
+    padding: 5px;
     justify-content: flex-start;
-    gap: 10px;
+    gap: 5px;
     width: 100%;
     flex-shrink: 0;
     opacity: 0;
@@ -114,7 +142,7 @@ body {
 
 .tab-nav-slider {
     position: absolute;
-    border-radius: 10px;
+    border-radius: 20px;
     pointer-events: none;
     border: none;
     background-color: color-mix(in srgb, var(--color-green) 15%, transparent);
@@ -130,7 +158,7 @@ body {
     background: transparent;
     color: var(--gray-700);
     border: none;
-    padding: 10px 14px;
+    padding: 10px 14px 12px 14px;
     cursor: pointer;
     font-weight: bold;
     border-radius: 10px;
@@ -140,17 +168,15 @@ body {
     z-index: 1;
     -webkit-appearance: none;
     appearance: none;
+    flex: 1;
+    text-align: center;
 }
 
 .tab-button:hover {
-    border: none;
-    background: transparent;
     color: var(--gray-800);
 }
 
 .tab-button.active {
-    border: none;
-    background: transparent;
     color: var(--gray-900);
 }
 
@@ -212,8 +238,10 @@ body {
 }
 
 /* ==================================================================*/
-/* ========================= FILTER PANEL ===========================*/
+/* ======================== FILTER & RESULTS ========================*/
 /* ==================================================================*/
+
+/* ── Outer layout ─────────────────────────────────────────────────── */
 
 .filter-and-results {
     position: relative;
@@ -221,20 +249,41 @@ body {
     flex-direction: row;
     width: 100%;
     height: 100%;
-    gap: 20px;
+    padding: 0px 10px;
+    gap: 15px;
     overflow: hidden;
 }
 
-/* When filter is closed: remove gap */
 .filter-and-results:has(.filter-section-wrapper.filter-panel-closed) {
     gap: 0;
 }
 
-/* Results section expands to fill space when filter collapses */
 .filter-and-results > .results-section {
     flex: 1;
     min-width: 0;
 }
+
+.filter-divider {
+    max-width: 2px;
+    width: 2px;
+    background-color: var(--gray-400);
+    flex-shrink: 0;
+    border-radius: 2px;
+    align-self: stretch;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-width 0.3s ease, opacity 0.3s ease;
+}
+
+.filter-and-results:has(.filter-section-wrapper.filter-panel-closed) .filter-divider {
+    max-width: 0;
+    opacity: 0;
+}
+
+/* ==================================================================*/
+/* ========================= FILTER SECTION =========================*/
+/* ==================================================================*/
+
 
 .filter-section-wrapper {
     position: relative;
@@ -242,34 +291,11 @@ body {
     flex-direction: column;
     width: 33%;
     min-width: 290px;
-    background-color: var(--gray-300);
-    border-radius: 20px;
+    background-color: transparent;
     overflow: hidden;
     transition: width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease;
 }
 
-.filter-section-wrapper::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 60px;
-    background: linear-gradient(
-        color-mix(in srgb, var(--gray-300) 0%, transparent) 0%,
-        color-mix(in srgb, var(--gray-300) 50%, transparent) 50%,
-        var(--gray-300) 100%
-    );
-    pointer-events: none;
-    z-index: 10;
-    opacity: var(--filter-fade-bottom-opacity, 1);
-}
-
-.filter-section-overlay-bottom {
-    display: none;
-}
-
-/* Collapsed — fades out while narrowing */
 .filter-section-wrapper.filter-panel-closed {
     width: 0;
     min-width: 0;
@@ -280,25 +306,35 @@ body {
     display: none;
 }
 
-/* Always-visible header row containing both buttons */
+/* ── Filter header ────────────────────────────────────────────────── */
+
 .filter-panel-header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 15px 20px 0px 20px;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0px 0px 15px 0px;
     flex-shrink: 0;
     position: relative;
     z-index: 2;
 }
 
-.filter-panel-header .clear_filters_button {
-    align-self: center;
+.filter-panel-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-/* Toggle button inside header — normal flow, no absolute positioning */
+.filter-panel-header .search-container {
+    width: 100%;
+}
+
+.filter-panel-header .clear_filters_button {
+    flex-shrink: 0;
+}
+
 .filter-panel-header .toggle-filter-button {
-    width: 40px;
-    height: 40px;
+    width: 18px;
+    height: 18px;
     background: none;
     border: none;
     cursor: pointer;
@@ -315,13 +351,63 @@ body {
     opacity: 1;
 }
 
-/* Open button in results header — always in DOM so opacity can transition */
-.filter-open-btn {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    width: 40px;
+/* ── Filter section ───────────────────────────────────────────────── */
+
+.filter-section {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    position: relative;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    overflow: auto;
+    padding: 0px 20px 0px 20px;
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.filter-section::before {
+    content: '';
+    position: sticky;
+    top: 0;
+    display: block;
     height: 40px;
+    margin-bottom: -40px;
+    background: linear-gradient(
+        var(--gray-150) 0%,
+        color-mix(in srgb, var(--gray-150) 50%, transparent) 50%,
+        color-mix(in srgb, var(--gray-150) 0%, transparent) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--filter-fade-top-opacity, 0);
+}
+
+.filter-section::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    display: block;
+    height: 40px;
+    margin-top: -40px;
+    background: linear-gradient(
+        color-mix(in srgb, var(--gray-150) 0%, transparent) 0%,
+        color-mix(in srgb, var(--gray-150) 50%, transparent) 50%,
+        var(--gray-150) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--filter-fade-bottom-opacity, 1);
+}
+
+/* ── Open filter button ───────────────────────────────────────────── */
+
+.filter-open-btn {
+    width: 20px;
+    max-width: 20px;
+    height: 20px;
     background: none;
     border: none;
     cursor: pointer;
@@ -330,11 +416,32 @@ body {
     justify-content: center;
     flex-shrink: 0;
     padding: 0;
+    opacity: 0.5;
+    transform: scale(1);
+    overflow: hidden;
+    pointer-events: none;
+    transition: max-width 0.3s ease, opacity 0.3s ease, transform 0.3s ease, margin 0.3s ease;
 }
 
-/* Fades in when filter panel closes */
+.filter-open-btn img {
+    width: 30px;
+    height: 30px;
+    pointer-events: none;
+    flex-shrink: 0;
+}
+
+.filter-and-results:not(:has(.filter-section-wrapper.filter-panel-closed)) .filter-open-btn {
+    max-width: 0px;
+    opacity: 0;
+    transform: scale(0);
+    margin-left: -15px;
+    pointer-events: none;
+}
+
 .filter-and-results:has(.filter-section-wrapper.filter-panel-closed) .filter-open-btn {
+    max-width: 20px;
     opacity: 0.5;
+    transform: scale(1);
     pointer-events: auto;
 }
 
@@ -342,66 +449,6 @@ body {
     opacity: 1;
 }
 
-/* Filter section fills remaining height in the column wrapper */
-.filter-section {
-    flex: 1;
-    min-height: 0;
-    width: 100%;
-    position: relative;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    background-color: var(--gray-300);
-    overflow: auto;
-    padding: 0px 20px 20px 20px;
-    opacity: 1;
-    transition: opacity 0.3s ease-out;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.filter-section-overlay-bottom {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 60px;
-    background: linear-gradient(
-        rgba(42, 42, 42, 0) 0%,   /* = var(--gray-300) */
-        rgba(42, 42, 42, 0.5) 50%,
-        rgba(42, 42, 42, 1) 100%
-    );
-    pointer-events: none;
-    z-index: 10;
-    width: 100%;
-}
-
-.filter-sticky-top {
-    position: sticky;
-    top: 0;
-    z-index: 11;
-    background-color: var(--gray-300);
-    padding: 10px 0px;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    row-gap: 5px;
-}
-
-.filter-sticky-top::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -50px;
-    height: 50px;
-    background: linear-gradient(
-        var(--gray-300) 0%,
-        color-mix(in srgb, var(--gray-300) 0%, transparent) 100%
-    );
-    pointer-events: none;
-    z-index: 10;
-    opacity: var(--filter-fade-top-opacity, 0);
-}
 
 /* ==================================================================*/
 /* ======================= RESULTS SECTION ==========================*/
@@ -443,7 +490,7 @@ body {
 .results-header {
     position: sticky;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: flex-start;
     top: 0;
     width: 100%;
@@ -462,7 +509,8 @@ body {
 /* ==================================================================*/
 
 .block {
-    background-color: var(--gray-400);
+    --block-bg: var(--gray-300);
+    background-color: var(--block-bg);
     border-radius: 10px;
     padding: 10px 15px;
     margin-bottom: 15px;
@@ -477,7 +525,7 @@ body {
     top: 0;
     bottom: 0;
     width: 15px;
-    background: linear-gradient(to left, var(--gray-400), transparent);
+    background: linear-gradient(to left, var(--block-bg), transparent);
     pointer-events: none;
     z-index: 5;
 }
@@ -580,6 +628,12 @@ body {
     width: 100%;
     padding: 0px;
     margin-top: 6px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--gray-800);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+
 }
 
 /* ==================================================================*/
@@ -620,14 +674,6 @@ p {
     line-height: 1.5em;
 }
 
-.block-body {
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--gray-800);
-    font-weight: 400;
-    letter-spacing: 0.01em;
-}
-
 u {
     line-height: 2em;
 }
@@ -654,46 +700,43 @@ a:hover {
 /* =========================== SCROLLBAR ============================*/
 /* ==================================================================*/
 
-.results-section::-webkit-scrollbar,
-.filter-section::-webkit-scrollbar {
+/* ==================================================================*/
+/* =========================== SCROLLBAR ============================*/
+/* ==================================================================*/
+
+* {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
     display: none;
 }
 
-::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-    margin: 20px;
-}
+        .results-section::-webkit-scrollbar,
+        .filter-section::-webkit-scrollbar {
+            display: none;
+        }
 
-::-webkit-scrollbar-thumb {
-    background: var(--gray-400);
-    border-radius: 8px;
-}
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+            margin: 20px;
+        }
 
-::-webkit-scrollbar-track {
-    opacity: 0;
-    margin: 20px;
-}
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-400);
+            border-radius: 8px;
+        }
 
-::-webkit-scrollbar-button {
-    display: none;
-}
+        ::-webkit-scrollbar-track {
+            opacity: 0;
+            margin: 20px;
+        }
 
-/* ==================================================================*/
-/* ========================= RESIZE HANDLE ==========================*/
-/* ==================================================================*/
-
-.resizable-handle {
-    height: 2px;
-    background-color: #ccc;
-    cursor: row-resize;
-    width: 1rem;
-    border-top: 1px solid #aaa;
-    border-bottom: 1px solid #aaa;
-    margin: 15px 0px 15px 0px;
-    z-index: 1000;
-    pointer-events: auto;
-}
+        ::-webkit-scrollbar-button {
+            display: none;
+        }
 
 /* ==================================================================*/
 /* ========================== MENU STYLING ==========================*/
@@ -1071,7 +1114,7 @@ a:hover {
 
 .sort-item:hover,
 .view-toggle-item:hover {
-    background: var(--gray-450);
+    background: var(--gray-350);
     border-radius: 5px;
     transition: background-color 0.3s ease;
 }
@@ -1087,7 +1130,7 @@ a:hover {
 /* ============================ DICE PANEL ==========================*/
 /* ==================================================================*/
 
-body:has(#dice-panel.open) #app-row > .tabs-content .tab-content {
+body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     padding-right: 0 !important;
 }
 

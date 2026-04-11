@@ -1,55 +1,9 @@
-/* splitView.css — manages automatic landscape / portrait layout              */
+/* splitView.css — landscape overrides only                                    */
 /* JS counterpart: layoutMode.js                                               */
-/* Landscape rules use body.landscape-mode (set by JS) rather than a CSS       */
-/* orientation media query — this keeps CSS and JS in perfect sync.            */
+/* All portrait defaults live in base-layout.css                               */
+/* Landscape rules use body.landscape-mode (set by JS)                        */
 
-/* ── App Row ──────────────────────────────────────────────────────────────── */
-#app-row {
-    display: flex;
-    flex-direction: row;
-    flex: 1;
-    align-self: stretch;
-    min-height: 0;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
-}
-
-#app-row .tabs-content {
-    flex: 1;
-    min-width: 0;
-}
-
-#app-row .tab-content {
-    width: 100% !important;
-}
-
-/* ── Char-sheet panel: portrait default — JS adds .active to show it ──────── */
-#char-sheet-panel {
-    display: none;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-    min-width: 0;
-    overflow: hidden;
-}
-
-#char-sheet-panel.active {
-    display: flex;
-}
-
-/* ── Landscape-only navs and divider: hidden in portrait ──────────────────── */
-#char-sheet-nav,
-#list-tab-nav {
-    display: none;
-}
-
-#landscape-divider {
-    display: none;
-}
-
-/* ── Landscape layout — body.landscape-mode class is toggled by layoutMode.js */
+/* ── Hide portrait-only nav when in landscape ────────────────────────────── */
 body.landscape-mode .container:has(.tab-nav) {
     display: none !important;
     padding: 0 !important;
@@ -58,31 +12,31 @@ body.landscape-mode .container:has(.tab-nav) {
     overflow: hidden !important;
 }
 
-/* Left panel — always visible, 50% wide */
+/* ── Left panel ───────────────────────────────────────────────────────────── */
 body.landscape-mode #char-sheet-panel {
     display: flex !important;
     flex-direction: column;
     flex: 0 0 50%;
     min-width: 0;
-    gap: 20px;
     overflow: hidden;
     min-height: 0;
+    gap: 10px;
 }
 
-/* Only the active char-sheet tab shows */
 body.landscape-mode #char-sheet-panel .tab-content {
     display: none;
     flex: 1;
     min-height: 0;
     height: auto !important;
     width: 100% !important;
+    gap: 15px;
 }
 
 body.landscape-mode #char-sheet-panel .tab-content.active {
     display: flex !important;
 }
 
-/* Left nav — Hazard / Crank toggle */
+/* ── Left nav ─────────────────────────────────────────────────────────────── */
 body.landscape-mode #char-sheet-nav {
     display: flex !important;
     flex-wrap: wrap;
@@ -91,7 +45,7 @@ body.landscape-mode #char-sheet-nav {
     opacity: 1 !important;
 }
 
-/* Vertical divider */
+/* ── Vertical divider ─────────────────────────────────────────────────────── */
 body.landscape-mode #landscape-divider {
     display: block;
     width: 2px;
@@ -102,8 +56,8 @@ body.landscape-mode #landscape-divider {
     align-self: stretch;
 }
 
-/* Right panel — flex column so nav sits above content */
-body.landscape-mode #app-row .tabs-content {
+/* ── Right panel ──────────────────────────────────────────────────────────── */
+body.landscape-mode #right-panel {
     display: flex !important;
     flex-direction: column;
     flex: 1;
@@ -112,29 +66,26 @@ body.landscape-mode #app-row .tabs-content {
     overflow: hidden;
 }
 
-/* All right-panel tab-contents hidden by default in landscape */
-body.landscape-mode #app-row .tabs-content .tab-content {
+body.landscape-mode #right-panel .tab-content {
     display: none !important;
     min-height: 0;
     width: 100% !important;
 }
 
-/* Only the active one is shown, and fills the available column space */
-body.landscape-mode #app-row .tabs-content .tab-content.active {
+body.landscape-mode #right-panel .tab-content.active {
     display: flex !important;
     flex: 1;
     min-height: 0;
 }
 
-/* Right nav — list tabs only */
+/* ── Right nav ────────────────────────────────────────────────────────────── */
 body.landscape-mode #list-tab-nav {
     display: flex !important;
     flex-shrink: 0;
     opacity: 1 !important;
 }
 
-/* Hide tab4/tab8 only from the main portrait nav and the list-tab-nav,
-   NOT from #char-sheet-nav where they are the primary controls */
+/* ── Hide char-sheet tabs from portrait nav and list nav ──────────────────── */
 body.landscape-mode .container .tab-nav .tab-button[data-tab="tab4"],
 body.landscape-mode .container .tab-nav .tab-button[data-tab="tab8"],
 body.landscape-mode #list-tab-nav .tab-button[data-tab="tab4"],
@@ -142,7 +93,7 @@ body.landscape-mode #list-tab-nav .tab-button[data-tab="tab8"] {
     display: none;
 }
 
-/* ── Ensure overlays always render above both panels ──────────────────────── */
+/* ── Overlays always above both panels ────────────────────────────────────── */
 .add-block-overlay,
 .edit-block-overlay,
 .cleardata-overlay,

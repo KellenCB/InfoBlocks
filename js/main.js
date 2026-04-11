@@ -5,9 +5,9 @@ import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
 import { filterManager } from './filterManager.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { stripHTML } from './appManager.js';
+import { initScrollFades } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
 import { initLayoutMode, activateCharTab } from './layoutMode.js';
-
 export function repositionAllSliders() {
     requestAnimationFrame(() => {
         document.querySelectorAll('.tab-nav').forEach(nav => {
@@ -155,12 +155,17 @@ const dicePanel      = document.getElementById("dice-panel");
 const diceMenuImg    = diceMenuButton?.querySelector("img");
 
 function setDicePanelState(open) {
-  dicePanel.classList.toggle("open", open);
-  diceMenuButton.classList.toggle("active", open);
-  if (diceMenuImg) {
-    diceMenuImg.src = open ? "images/Dice_Button_v2_Green.svg" : "images/Dice_Button_v2.svg";
-  }
-  localStorage.setItem("dicePanelOpen", open);
+    dicePanel.classList.toggle("open", open);
+    diceMenuButton.classList.toggle("active", open);
+    if (diceMenuImg) {
+        diceMenuImg.src = open ? "images/Dice_Button_v2_Green.svg" : "images/Dice_Button_v2.svg";
+    }
+    localStorage.setItem("dicePanelOpen", open);
+    if (open) {
+        setTimeout(() => {
+            initScrollFades('.roll-results', '--dice-fade-top-opacity', '--dice-fade-bottom-opacity', '_diceFadeHandler');
+        }, 100);
+    }
 }
 
 if (diceMenuButton && dicePanel) {
@@ -219,6 +224,16 @@ function initTabNavSlider(nav) {
         const btn = e.target.closest('.tab-button');
         if (btn) moveSlider(btn);
     });
+
+    new ResizeObserver(() => {
+        const active = nav.querySelector('.tab-button.active');
+        if (!active) return;
+        slider.style.transition = 'none';
+        moveSlider(active);
+        requestAnimationFrame(() => {
+            slider.style.transition = '';
+        });
+    }).observe(nav);
 }
 
 function saveTabOrder() {
@@ -327,7 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const CHAR_TABS  = new Set(['tab4', 'tab8']);
     const charPanel  = document.getElementById('char-sheet-panel');
-    const tabsContent = document.querySelector('.tabs-content');
+    const tabsContent = document.getElementById('right-panel');
 
     // Restore tab order on page load if it exists
     const savedOrder = JSON.parse(localStorage.getItem("tabOrder"));

@@ -14,6 +14,23 @@ export function stripHTML(html) {
 
 export let selectedFilterTagsBeforeAdd = [];
 
+export function initScrollFades(selector, topVar, bottomVar, handlerKey, delay = 0) {
+    const run = () => {
+        document.querySelectorAll(selector).forEach(el => {
+            const check = () => {
+                const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+                if (topVar) el.style.setProperty(topVar, Math.min(el.scrollTop / 42, 1));
+                if (bottomVar) el.style.setProperty(bottomVar, Math.min(distanceFromBottom / 42, 1));
+            };
+            el.removeEventListener('scroll', el[handlerKey]);
+            el[handlerKey] = check;
+            el.addEventListener('scroll', check);
+            check();
+        });
+    };
+    delay ? setTimeout(run, delay) : run();
+}
+
 /* ==================================================================*/
 /* ============================== TABS ==============================*/
 /* ==================================================================*/
@@ -185,7 +202,7 @@ export const appManager = (() => {
 
   // Toggle filter panel open/closed.
   document.addEventListener('click', e => {
-    const button = e.target.closest('.toggle-filter-button');
+    const button = e.target.closest('.toggle-filter-button, .filter-open-btn');
     if (!button) return;
     const tabId = button.dataset.tab;
     const filterAndResults = button.closest('.filter-and-results')
@@ -200,39 +217,6 @@ export const appManager = (() => {
   });
 
   let renderAbortController = null;
-
-/* ==================================================================*/
-/* ============================= SECTION GRADIENTS =============================*/
-/* ==================================================================*/
-
-
-    function initScrollFades(el) {
-        const check = () => {
-            const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-            el.style.setProperty('--results-fade-opacity', Math.min(distanceFromBottom / 42, 1));
-        };
-        el.removeEventListener('scroll', el._scrollFadeHandler);
-        el._scrollFadeHandler = check;
-        el.addEventListener('scroll', check);
-        check();
-    }
-
-function initFilterScrollFades() {
-    setTimeout(() => {
-        document.querySelectorAll('.filter-section').forEach(el => {
-            const wrapper = el.closest('.filter-section-wrapper');
-            const check = () => {
-                const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-                el.style.setProperty('--filter-fade-top-opacity', Math.min(el.scrollTop / 42, 1));
-                if (wrapper) wrapper.style.setProperty('--filter-fade-bottom-opacity', Math.min(distanceFromBottom / 42, 1));
-            };
-            el.removeEventListener('scroll', el._filterFadeHandler);
-            el._filterFadeHandler = check;
-            el.addEventListener('scroll', check);
-            check();
-        });
-    }, 100);
-}
 
 /* ==================================================================*/
 /* ============================= BLOCKS =============================*/
@@ -257,23 +241,14 @@ function initFilterScrollFades() {
 
     const _filterTabs  = new Set(['tab3', 'tab6', 'tab7', 'tab9']);
     const _openBtnHTML = _filterTabs.has(tab)
-        ? `<button class="filter-open-btn toggle-filter-button" data-tab="${tab}">
-               <img src="./images/Filter_Open_Icon.svg" alt="Open filter">
-           </button>`
+        ? `<button class="filter-open-btn" data-tab="${tab}">
+              <img src="./images/Filter_Open_Icon.svg" alt="Open filter">
+          </button>`
         : '';
 
-    resultsSection.innerHTML = `
+resultsSection.innerHTML = `
       <div id="results_header_${tabSuffix}" class="results-header">
         <div id="header-controls_${tabSuffix}" class="header-controls">
-          <button id="add_block_button" class="add-block-button green-button">+</button>
-          <button id="results-settings_${tabSuffix}" class="results-settings">
-            <img src="./images/View_Icon.svg" alt="View‑state icon">
-          </button>
-          <div id="view-toggle-dropdown_${tabSuffix}" class="view-toggle-dropdown hidden">
-            <button class="view-toggle-item" data-state="expanded">Expand</button>
-            <button class="view-toggle-item" data-state="condensed">Condense</button>
-            <button class="view-toggle-item" data-state="minimized">Minimize</button>
-          </div>
           <button id="results-sort-btn_${tabSuffix}" class="results-settings">
             <img src="./images/Sort_Icon.svg" alt="Sort icon">
           </button>
@@ -283,11 +258,20 @@ function initFilterScrollFades() {
             <button class="sort-item" data-sort="alpha">A‑Z</button>
             <button class="sort-item" data-sort="unalpha">Z-A</button>
           </div>
+          <button id="results-settings_${tabSuffix}" class="results-settings">
+            <img src="./images/View_Icon.svg" alt="View‑state icon">
+          </button>
+          <div id="view-toggle-dropdown_${tabSuffix}" class="view-toggle-dropdown hidden">
+            <button class="view-toggle-item" data-state="expanded">Expand</button>
+            <button class="view-toggle-item" data-state="condensed">Condense</button>
+            <button class="view-toggle-item" data-state="minimized">Minimize</button>
+          </div>
+          <button id="add_block_button" class="add-block-button green-button">+</button>
+          ${_openBtnHTML}
         </div>
-        ${_openBtnHTML}
       </div>
     `;
-    
+        
     const addBtn = document.getElementById(`results_header_${tabSuffix}`)
       .querySelector('#add_block_button');
     if (addBtn) {
@@ -453,9 +437,12 @@ function initFilterScrollFades() {
 
     updateTags();
     attachDynamicTooltips();
-    initScrollFades(resultsSection);
-    initFilterScrollFades();
+    initScrollFades('.results-section',              null,                        '--results-fade-opacity',      '_scrollFadeHandler');
+    initScrollFades('.filter-section',               '--filter-fade-top-opacity', '--filter-fade-bottom-opacity','_filterFadeHandler', 100);
+    initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
+    initScrollFades('.roll-results', '--dice-fade-top-opacity', '--dice-fade-bottom-opacity', '_diceFadeHandler', 100);
   };
+
 
   const loadBlocks = () => {
     const savedBlocks = localStorage.getItem("userBlocks");

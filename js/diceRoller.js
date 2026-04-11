@@ -258,7 +258,7 @@ export function initDiceRoller() {
   const selectedDiceContainer = container.querySelector(".selected-dice-container");
   const rollButton            = container.querySelector("#roll-button");
   const clearButton           = container.querySelector("#clear-selected-button");
-  const rollResult            = container.parentElement.querySelector(".roll-results");
+  const rollResult            = container.querySelector(".roll-results");
 
   // Refresh onclick closures after any mutation so indices stay correct.
   // Only sets a property — no DOM mutations, no repaints.
@@ -327,7 +327,12 @@ export function initDiceRoller() {
         }
 
         clearDiceBox();
-        const results = await box.roll(notation);
+        const results = await Promise.race([
+            box.roll(notation),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Roll timed out')), 10000)
+            )
+        ]);
 
         const rolls = results.map(r => r.value);
         const sides = results.map(r => r.sides);
@@ -364,7 +369,12 @@ export function initDiceRoller() {
               canvas.style.opacity = '1';
           }
           clearDiceBox();
-          const results = await box.roll(notation);
+          const results = await Promise.race([
+              box.roll(notation),
+              new Promise((_, reject) =>
+                  setTimeout(() => reject(new Error('Roll timed out')), 10000)
+              )
+          ]);
           const rolls   = results.map(r => r.value);
           const sides   = results.map(r => r.sides);
           const total   = rolls.reduce((a, b) => a + b, 0);

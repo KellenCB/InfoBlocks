@@ -6,34 +6,35 @@
     container-type: inline-size;
 }
 
+:root {--csGap: 3px; --csBorder-radius: 8px;}
+
 .character-sheet-stats {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+    border-radius: var(--csBorder-radius);
+    overflow: hidden;
     width: 100%;
-    padding: 15px;
     border-radius: 20px;
-    background-color: var(--gray-300);
-    margin-bottom: 20px;
-    row-gap: 10px;
+    row-gap: var(--csGap);
     min-height: min-content;
     min-width: 820px;
 }
 
 .cs-panel {
-    border-radius: 15px;
     padding: 10px;
     color: var(--gray-900);
     display: flex;
-    box-shadow: inset 0 0 15px color-mix(in srgb, black 25%, transparent);
-    overflow: hidden;
+    background-color: var(--gray-300);
+    border-radius: var(--csBorder-radius);
+
 }
 
 .stats-container-row {
     display: flex;
     flex: 1;
     flex-direction: row;
-    gap: 10px;
+    gap: var(--csGap);
     width: 100%;
 }
 
@@ -73,6 +74,11 @@
     min-width: 2px;
     background-color: var(--gray-900);
     opacity: 50%;
+}
+
+.character-sheet-row .vertical-break {
+    background-color: var(--gray-400);
+    opacity: 1;
 }
 
 .horizontal-break {
@@ -165,6 +171,7 @@
     display: flex;
     flex-direction: row;
     gap: 20px;
+    padding: 0px 10px;
     overflow-y: auto;
     overflow-x: hidden;
     width: 100%;
@@ -172,15 +179,53 @@
     box-sizing: border-box;
 }
 
+.saving-throws-and-skills-column-wrapper {
+    overflow-y: auto;
+    flex: 0 0 auto;
+    width: fit-content;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.saving-throws-and-skills-column-wrapper::before {
+    content: '';
+    position: sticky;
+    top: 0;
+    display: block;
+    height: 40px;
+    margin-bottom: -40px;
+    background: linear-gradient(
+        var(--gray-150) 0%,
+        color-mix(in srgb, var(--gray-150) 50%, transparent) 50%,
+        color-mix(in srgb, var(--gray-150) 0%, transparent) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--skills-fade-top-opacity, 0);
+}
+
+.saving-throws-and-skills-column-wrapper::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    display: block;
+    height: 40px;
+    margin-top: -40px;
+    background: linear-gradient(
+        color-mix(in srgb, var(--gray-150) 0%, transparent) 0%,
+        color-mix(in srgb, var(--gray-150) 50%, transparent) 50%,
+        var(--gray-150) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--skills-fade-bottom-opacity, 1);
+}
+
 .saving-throws-and-skills-column {
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
     width: fit-content;
-    flex: 0 0 auto;
     gap: 5px;
-    background-color: var(--gray-300);
-    padding: 20px;
     border-radius: 20px;
     color: var(--gray-900);
 }

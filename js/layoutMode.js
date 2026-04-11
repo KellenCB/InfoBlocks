@@ -143,7 +143,7 @@ function onExitLandscape() {
 
     const activeCharTab = localStorage.getItem('activeCharTab') || 'tab4';
     const charPanel     = document.getElementById('char-sheet-panel');
-    const tabsContent   = document.querySelector('.tabs-content');
+    const tabsContent   = document.getElementById('right-panel');
 
     if (charPanel)   charPanel.style.display   = 'flex';
     if (tabsContent) tabsContent.style.display = 'none';
@@ -183,7 +183,7 @@ function ensureNavsVisible() {
  */
 function clearPanelInlineStyles() {
     const charPanel   = document.getElementById('char-sheet-panel');
-    const tabsContent = document.querySelector('.tabs-content');
+    const tabsContent = document.getElementById('right-panel');
     if (charPanel)   charPanel.style.display   = '';
     if (tabsContent) tabsContent.style.display = '';
 }
