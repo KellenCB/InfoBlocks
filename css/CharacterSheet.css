@@ -319,7 +319,7 @@
         max-height: fit-content;
     }
     .character-sheet-stats {
-        height: 200%;
+        height: auto;
         max-height: fit-content;
         margin-bottom: 0px;
         min-height: 0;
