@@ -1,6 +1,6 @@
 import { filterManager } from './filterManager.js';
 import { categoryTags } from './tagConfig.js';
-import { toggleBlockUse } from './circleToggle.js';
+import { toggleBlockUse } from './uiHandlers.js';
 
 export const blockTemplate = (block, tab = "tab4") => {
     const viewState = block.viewState || 'expanded';

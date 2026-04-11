@@ -361,7 +361,6 @@ body {
     align-items: flex-start;
     flex-wrap: wrap;
     overflow: auto;
-    padding: 0px 20px 0px 20px;
     opacity: 1;
     transition: opacity 0.3s ease-out;
     scrollbar-width: none;
