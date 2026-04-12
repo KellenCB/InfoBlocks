@@ -169,7 +169,8 @@ export const filterManager = (() => {
             if (
                 !target.classList.contains('tag-button') ||
                 target.closest('.add-block-overlay') ||
-                target.closest('.edit-block-overlay')
+                target.closest('.edit-block-overlay') ||
+                target.closest('.character-sheet-results')
             ) return;
 
             const activeTab = document.querySelector('.tab-button.active')?.dataset.tab || 'tab4';

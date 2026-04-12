@@ -5,7 +5,7 @@ import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
 import { filterManager } from './filterManager.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { stripHTML } from './appManager.js';
-import { initScrollFades } from './appManager.js';
+import { initScrollFades, setupSearchInput } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
 import { initLayoutMode, activateCharTab } from './layoutMode.js';
 export function repositionAllSliders() {
@@ -534,15 +534,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!searchInput) return;
 
-        searchInput.addEventListener('input', () => {
-            filterManager.applyFilters(tabNumber);
-            applyHighlights(tabNumber, searchInput.value.trim());
-        });
-
-        clearSearchButton?.addEventListener('click', () => {
-            searchInput.value = '';
-            filterManager.applyFilters(tabNumber);
-        });
+        setupSearchInput(
+            searchInput,
+            clearSearchButton,
+            (value) => {
+                filterManager.applyFilters(tabNumber);
+                applyHighlights(tabNumber, value.trim());
+            },
+            () => {
+                filterManager.applyFilters(tabNumber);
+            }
+        );
         // clearFiltersButton is handled by the module-level clearFilters listener below.
     }
             

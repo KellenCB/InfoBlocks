@@ -27,7 +27,7 @@
 
 .tag-button {
     padding: 14px;
-    height: 40px;
+    height: 34px;
     color: var(--user-color);
     background-color: transparent;
     border: 1px solid var(--user-color);
@@ -126,11 +126,11 @@
     flex-wrap: wrap;
     flex-shrink: 0;
     align-items: center;
-    min-height: 40px;
-    padding: 10px 12px;
+    min-height: 34px;
+    padding: 0px 12px;
     background-color: transparent;
     border: 1px solid var(--accordion-color);
-    border-radius: 20px;
+    border-radius: 17px;
     color: var(--accordion-color);
     font-size: 16px;
     transition: background-color 0.2s ease;
@@ -155,7 +155,7 @@
     padding: 10px 12px;
     max-width: 100%;
     border: 1px solid var(--accordion-color);
-    border-radius: 20px;
+    border-radius: 17px;
     box-sizing: border-box;
     background-color: transparent;
 }
@@ -174,11 +174,11 @@
 .filter-section .tag-accordion-label { width: 100%; }
 
 .tag-accordion-chip {
-    min-height: 40px;
-    padding: 10px 15px;
+    min-height: 34px;
+    padding: 0px 15px;
     background-color: var(--accordion-color);
     border: none;
-    border-radius: 20px;
+    border-radius: 17px;
     color: var(--gray-350);
     font-weight: bolder;
     cursor: pointer;

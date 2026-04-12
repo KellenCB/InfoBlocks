@@ -816,9 +816,10 @@ a:hover {
     min-width: 0;
     min-height: 0;
     overflow-y: auto;
+    overflow-x: clip;
     background-color: var(--gray-300);
     border-radius: 15px;
-    padding: 15px 15px 0px 15px;
+    padding: 0 15px 0 15px;
     position: relative;
     scrollbar-width: none;
 }
@@ -847,14 +848,18 @@ a:hover {
     gap: 10px;
     position: sticky;
     top: 0;
+    padding-top: 15px;
     background-color: var(--gray-300);
     z-index: 2;
 }
 
-.session-viewer-top-fade {
-    position: sticky;
+.session-viewer-header::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
     height: 30px;
-    margin-bottom: -30px;
     background: linear-gradient(
         var(--gray-300) 0%,
         transparent 100%

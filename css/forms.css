@@ -37,6 +37,8 @@
     height: 24px;
     padding: 0;
     color: #000;
+    opacity: 0;
+    transition: opacity 0.15s;
 }
 
 .clear-search:hover .clear-icon:hover {
