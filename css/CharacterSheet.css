@@ -405,10 +405,6 @@
     background-color: transparent;
 }
 
-.no-gap {
-    gap: 0px;
-}
-
 .character-sheet-results {
     flex: 1;
     min-height: 150px;

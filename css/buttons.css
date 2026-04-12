@@ -66,14 +66,18 @@
 }
 
 .add-block-button {
-    width: 22px;
-    height: 22px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     border: none;
     cursor: pointer;
     transition: background-color 0.2s ease;
     color: var(--gray-900);
     font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 /* ==================================================================*/
@@ -105,24 +109,21 @@
 }
 
 .clear_filters_button {
-    align-self: flex-start;
-    position: relative;
-    z-index: 11;
-    padding: 5px 10px;
-    height: auto;
-    font-size: 12px;
-    color: var(--gray-350);
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
     background-color: var(--color-cyan);
+    color: var(--gray-350);
     border: none;
-    border-radius: 30px;
+    border-radius: 50%;
     cursor: pointer;
+    font-size: 14px;
     font-weight: bold;
-    letter-spacing: 0.3px;
-    transition: background-color 0.6s, transform 0.5s, opacity 0.6s;
-    white-space: nowrap;
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: center;
     opacity: 0.5;
+    transition: opacity 0.2s, background-color 0.2s;
 }
 
 .clear_filters_button:hover { opacity: 1; }
@@ -198,24 +199,33 @@
     justify-content: flex-start;
     align-items: center;
     height: auto;
-    gap: 15px;
+    gap: 8px;
 }
 
 .sort-button,
 .results-settings {
-    color: var(--gray-900);
-    background: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: var(--gray-400);
     border: none;
     cursor: pointer;
-    opacity: 0.5;
-    transition: opacity 0.3s ease-in-out;
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
 }
 
-.sort-button          { font-size: 14px; height: 20px; }
-.results-settings     { width: 20px; height: 20px; border-radius: 50%; font-size: 14px; }
+.sort-button:hover,
+.sort-button.selected,
+.results-settings:hover,
+.results-settings.selected {
+    opacity: 1;
+    background-color: var(--gray-450);
+}
 
-.sort-button:hover,    .sort-button.selected,
-.results-settings:hover, .results-settings.selected { opacity: 1; }
 
 /* ==================================================================*/
 /* ============================= PIN ================================*/

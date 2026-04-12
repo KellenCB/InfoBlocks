@@ -306,7 +306,7 @@ export const appManager = (() => {
               <h4 class="session-viewer-title">${block.title}</h4>
               <div class="session-viewer-header-actions">
                   <button class="session-viewer-delete-btn" data-id="${block.id}" title="Delete">×</button>
-                  <button class="session-viewer-edit-btn" id="session_edit_toggle" title="Edit">                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <button class="session-viewer-edit-btn" id="session_edit_toggle" title="Edit">                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                           <path d="M4 15.5V19h3.5l9.94-9.94-3.5-3.5L4 15.5zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.5 3.5 1.83-1.83z"/>
                       </svg>
                   </button>
@@ -636,8 +636,10 @@ export const appManager = (() => {
 
     const _filterTabs  = new Set(['tab3', 'tab6', 'tab7', 'tab9']);
     const _openBtnHTML = _filterTabs.has(tab)
-        ? `<button class="filter-open-btn" data-tab="${tab}">
-              <img src="./images/Filter_Open_Icon.svg" alt="Open filter">
+        ? `<button class="filter-open-btn" data-tab="${tab}" title="Show filters">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+              </svg>
           </button>`
         : '';
 

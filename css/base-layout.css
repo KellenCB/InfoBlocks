@@ -122,8 +122,8 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 .tab-content {
     position: relative;
     width: 100%;
-    gap: 20px;
     height: calc(100vh - 213px);
+    gap: 20px;
     display: flex;
     flex-direction: column;
 }
@@ -314,45 +314,44 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 
 .filter-panel-header {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
     padding: 0px 0px 15px 0px;
     flex-shrink: 0;
     position: relative;
     z-index: 2;
 }
 
-.filter-panel-header-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
 .filter-panel-header .search-container {
-    width: 100%;
-}
-
-.filter-panel-header .clear_filters_button {
-    flex-shrink: 0;
+    flex: 1;
+    min-width: 0;
 }
 
 .filter-panel-header .toggle-filter-button {
-    width: 18px;
-    height: 18px;
-    background: none;
+    width: 34px;
+    height: 34px;
+    background-color: var(--gray-400);
     border: none;
+    border-radius: 50%;
     cursor: pointer;
-    opacity: 0.5;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     padding: 0;
-    transition: opacity 0.2s;
+    transition: background-color 0.2s;
 }
 
 .filter-panel-header .toggle-filter-button:hover {
-    opacity: 1;
+    background-color: var(--gray-450);
+}
+
+.filter-panel-header .toggle-filter-button svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--gray-900);
+    stroke: none;
 }
 
 /* ── Filter section ───────────────────────────────────────────────── */
@@ -408,48 +407,51 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 /* ── Open filter button ───────────────────────────────────────────── */
 
 .filter-open-btn {
-    width: 20px;
-    max-width: 20px;
-    height: 20px;
-    background: none;
+    width: 34px;
+    height: 34px;
+    background-color: var(--gray-400);
     border: none;
+    border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     padding: 0;
-    opacity: 0.5;
-    transform: scale(1);
+    opacity: 0;
+    transform: scale(0);
+    max-width: 0;
+    margin-left: 0;
     overflow: hidden;
     pointer-events: none;
-    transition: max-width 0.3s ease, opacity 0.3s ease, transform 0.3s ease, margin 0.3s ease;
+    transition: max-width 0.3s ease, opacity 0.3s ease, transform 0.3s ease, margin-left 0.3s ease, background-color 0.2s ease;
 }
 
-.filter-open-btn img {
-    width: 30px;
-    height: 30px;
-    pointer-events: none;
+.filter-open-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--gray-900);
+    stroke: none;
     flex-shrink: 0;
 }
 
 .filter-and-results:not(:has(.filter-section-wrapper.filter-panel-closed)) .filter-open-btn {
-    max-width: 0px;
+    max-width: 0;
     opacity: 0;
     transform: scale(0);
-    margin-left: -15px;
+    margin-left: 0;
     pointer-events: none;
 }
 
 .filter-and-results:has(.filter-section-wrapper.filter-panel-closed) .filter-open-btn {
-    max-width: 20px;
-    opacity: 0.5;
+    max-width: 34px;
+    opacity: 1;
     transform: scale(1);
     pointer-events: auto;
 }
 
 .filter-and-results:has(.filter-section-wrapper.filter-panel-closed) .filter-open-btn:hover {
-    opacity: 1;
+    background-color: var(--gray-450);
 }
 
 
@@ -496,6 +498,7 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     justify-content: flex-end;
     align-items: flex-start;
     top: 0;
+    margin-bottom: 5px;
     width: 100%;
     height: 40px;
     z-index: 10;

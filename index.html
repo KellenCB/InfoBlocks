@@ -28,7 +28,7 @@
     
             <button id="edit_tab_button" class="hero-button orange-button" style="display:none;">
 
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 15.5V19h3.5l9.94-9.94-3.5-3.5L4 15.5zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.5 3.5 1.83-1.83z" />
                 </svg>
             </button>
@@ -85,7 +85,7 @@
             </nav>
 
             <!-- Tab 4: Hazard Character Sheet -->
-            <div class="tab-content no-gap active" id="tab4">
+            <div class="tab-content active" id="tab4">
                 <div class="character-sheet-stats">
                     <!-- Row 1 -->
                     <div class="cs-panel stats-container-row TopLine">
@@ -361,7 +361,7 @@
             </div>
 
             <!-- Tab 8: Crank Character Sheet -->
-            <div class="tab-content no-gap" id="tab8">
+            <div class="tab-content" id="tab8">
                 <div class="character-sheet-stats">
                     <!-- Row 1 -->
                     <div class="cs-panel stats-container-row TopLine">
@@ -660,16 +660,16 @@
                     <div class="filter-divider"></div>
                     <div class="filter-section-wrapper">
                         <div class="filter-panel-header">
-                            <div class="filter-panel-header-row">
-                                <button id="clear_filters_button_3" class="clear_filters_button">Clear Filters</button>
-                                <button class="toggle-filter-button" data-tab="tab3">
-                                    <img src="./images/Filter_Hide_Icon.svg" alt="Toggle filter">
-                                </button>
-                            </div>
+                            <button id="clear_filters_button_3" class="clear_filters_button" title="Clear filters">✕</button>
                             <div class="search-container">
                                 <input id="search_input_3" class="search_input" type="text" placeholder="Search by text" />
                                 <button id="clear_search_button_3" class="clear-search">✖</button>
                             </div>
+                            <button class="toggle-filter-button" data-tab="tab3" title="Hide filters">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18l6-6-6-6"/>
+                                </svg>
+                            </button>
                         </div>
                         <div id="filter_section_3" class="filter-section">
                             <div class="block-type-tags" id="character_type_tags_3"></div>
@@ -690,16 +690,16 @@
                     <div class="filter-divider"></div>
                     <div class="filter-section-wrapper">
                         <div class="filter-panel-header">
-                            <div class="filter-panel-header-row">
-                                <button id="clear_filters_button_6" class="clear_filters_button">Clear Filters</button>
-                                <button class="toggle-filter-button" data-tab="tab6">
-                                    <img src="./images/Filter_Hide_Icon.svg" alt="Toggle filter">
-                                </button>
-                            </div>
+                            <button id="clear_filters_button_6" class="clear_filters_button" title="Clear filters">✕</button>
                             <div class="search-container">
                                 <input id="search_input_6" class="search_input" type="text" placeholder="Search by text" />
                                 <button id="clear_search_button_6" class="clear-search">✖</button>
                             </div>
+                            <button class="toggle-filter-button" data-tab="tab6" title="Hide filters">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18l6-6-6-6"/>
+                                </svg>
+                            </button>
                         </div>
                         <div id="filter_section_6" class="filter-section">
                             <div class="block-type-tags" id="character_type_tags_6"></div>
@@ -757,16 +757,16 @@
                     <div class="filter-divider"></div>
                     <div class="filter-section-wrapper">
                         <div class="filter-panel-header">
-                            <div class="filter-panel-header-row">
-                                <button id="clear_filters_button_9" class="clear_filters_button">Clear Filters</button>
-                                <button class="toggle-filter-button" data-tab="tab9">
-                                    <img src="./images/Filter_Hide_Icon.svg" alt="Toggle filter">
-                                </button>
-                            </div>
+                            <button id="clear_filters_button_9" class="clear_filters_button" title="Clear filters">✕</button>
                             <div class="search-container">
                                 <input id="search_input_9" class="search_input" type="text" placeholder="Search by text" />
                                 <button id="clear_search_button_9" class="clear-search">✖</button>
                             </div>
+                            <button class="toggle-filter-button" data-tab="tab9" title="Hide filters">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18l6-6-6-6"/>
+                                </svg>
+                            </button>
                         </div>
                         <div id="filter_section_9" class="filter-section">
                             <div class="block-type-tags" id="character_type_tags_9"></div>
