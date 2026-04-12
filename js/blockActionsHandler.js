@@ -141,10 +141,14 @@ export const blockActionsHandler = (() => {
             document.querySelector(`.tab-button[data-tab="${tab}"]`)?.click();
             appManager.restoreBlock(block);
             lastDeletedBlock = null;
-            reapplySearchAndFilters();
+            reapplySearchAndFilters(tab);
             document.getElementById("menu_overlay")?.classList.remove("active");
             document.getElementById("Menu_button")?.classList.remove("menu-button-open");
         };
+    };
+
+    const recordLastDeleted = (tab, block) => {
+        lastDeletedBlock = { tab, block };
     };
     
     document.addEventListener("DOMContentLoaded", initUndoLastDelete);
@@ -290,7 +294,8 @@ export const blockActionsHandler = (() => {
         console.log("✅ Block action handlers attached to all tabs!");
     };
     
-    return { attachBlockActions };
+    return { attachBlockActions, recordLastDeleted };
+
 })();
 
 // Mobile tap: toggle action menu open/closed

@@ -3,6 +3,7 @@ import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { blockTemplate } from './blockTemplate.js';
 import { overlayHandler, initUsesField } from './overlayHandler.js';
 import { applyInlineDiceRolls } from './diceRoller.js';
+import { blockActionsHandler } from './blockActionsHandler.js';
 
 const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
 
@@ -341,16 +342,18 @@ export const appManager = (() => {
               overlay.classList.add('show');
 
               const onConfirm = () => {
-                  sessionViewerEditMode   = false;
+                  sessionViewerEditMode  = false;
+                  const removedBlock     = removeBlock(blockId, 'tab7');
                   activeSessionLogBlockId = null;
-                  const stored = JSON.parse(localStorage.getItem('userBlocks_tab7') || '[]');
-                  localStorage.setItem('userBlocks_tab7', JSON.stringify(stored.filter(b => b.id !== blockId)));
                   overlay.classList.remove('show');
                   confirmBtn.removeEventListener('click', onConfirm);
                   cancelBtn.removeEventListener('click', onCancel);
+                  import('./blockActionsHandler.js').then(({ blockActionsHandler }) => {
+                      blockActionsHandler.recordLastDeleted('tab7', removedBlock);
+                  });
                   renderSessionLog();
               };
-
+              
               const onCancel = () => {
                   overlay.classList.remove('show');
                   confirmBtn.removeEventListener('click', onConfirm);
