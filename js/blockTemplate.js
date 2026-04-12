@@ -76,9 +76,10 @@ export const blockTemplate = (block, tab = "tab4") => {
 
     const actionMenuHTML = `
         <div class="block-actions">
+            ${viewState !== 'session-log' ? `
             <button class="action-button pin-button${block.pinned ? ' pin-active' : ''}" data-id="${block.id}" title="${block.pinned ? 'Unpin' : 'Pin'}">
                 <img src="images/${block.pinned ? 'Pin_Icon_Blue' : 'Pin_Icon'}.svg" alt="Pin" />
-            </button>
+            </button>` : ''}
             <div class="block-actions-menu">
                 <button class="actions-trigger" title="Actions">···</button>
                 <div class="block-actions-reveal">
@@ -120,6 +121,12 @@ export const blockTemplate = (block, tab = "tab4") => {
                 <div class="block-title"><h4>${block.title}</h4></div>
                 ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
                 ${actionMenuHTML}
+            </div>
+        `;
+    } else if (viewState === 'session-log') {
+        content = `
+            <div class="block-header">
+                <div class="block-title"><h4>${block.title}</h4></div>
             </div>
         `;
     } else if (viewState === 'minimized') {

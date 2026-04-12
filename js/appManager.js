@@ -83,6 +83,11 @@ export const appManager = (() => {
   let userBlocks = JSON.parse(localStorage.getItem("userBlocks")) || [];
   let title = localStorage.getItem("pageTitle") || "Information Blocks";
 
+  // ── Session Log viewer state ─────────────────────────────────────
+  let activeSessionLogBlockId = null;
+  let sessionViewerEditMode   = false;
+  let pendingEditMode         = false;
+
 /* ==================================================================*/
 /* ============================== TAGS ==============================*/
 /* ==================================================================*/
@@ -216,7 +221,348 @@ export const appManager = (() => {
     if (tabId) localStorage.setItem(`filterVisible_${tabId}`, (!isNowClosed).toString());
   });
 
-  let renderAbortController = null;
+  // ── Session Log: generate next auto-title from most recent block ─
+  const generateNextSessionTitle = () => {
+      const blocks = getBlocks('tab7');
+      if (blocks.length === 0) return 'New Session:';
+      const lastTitle = blocks[0].title.trim();
+      const match = lastTitle.match(/(\d+)/);
+      if (!match) return 'New Session:';
+      const nextNum  = parseInt(match[1], 10) + 1;
+      const before   = lastTitle.slice(0, match.index);
+      const after    = lastTitle.slice(match.index + match[1].length);
+      const colon    = after.match(/^\s*:/) ? ':' : '';
+      return `${before}${nextNum}${colon}`;
+  };
+
+  // ── Session Log: save any pending viewer edits to localStorage ───
+  const saveCurrentViewerEdits = () => {
+      if (!sessionViewerEditMode || !activeSessionLogBlockId) return;
+      const viewer  = document.getElementById('session_log_viewer');
+      if (!viewer) return;
+      const titleEl = viewer.querySelector('.session-viewer-title');
+      const bodyEl  = viewer.querySelector('#session_viewer_body');
+      if (!titleEl || !bodyEl) return;
+      const blocks = getBlocks('tab7');
+      const block  = blocks.find(b => b.id === activeSessionLogBlockId);
+      if (block) {
+          saveBlock(
+              'tab7',
+              titleEl.textContent.trim() || block.title,
+              bodyEl.innerHTML.trim(),
+              block.tags,
+              [],
+              [],
+              block.blockType,
+              activeSessionLogBlockId
+          );
+      }
+      sessionViewerEditMode = false;
+  };
+
+  // ── Session Log: render the viewer panel ─────────────────────────
+  const renderSessionViewer = (blockId) => {
+      const viewer = document.getElementById('session_log_viewer');
+      if (!viewer) return;
+
+      const blocks = getBlocks('tab7');
+      const block  = blocks.find(b => b.id === blockId);
+      if (!block) return;
+
+      activeSessionLogBlockId = blockId;
+
+      // Highlight active block in list
+      document.querySelectorAll('#results_section_7 .block').forEach(b => {
+          b.classList.toggle('session-log-active', b.getAttribute('data-id') === blockId);
+      });
+
+      // Build body (same transforms as blockTemplate)
+      let bodyHTML = block.text || '';
+      bodyHTML = bodyHTML
+          .replace(/<div[^>]*>/gi, '')
+          .replace(/^(&nbsp;|\s)+/gi, '')
+          .replace(/<\/div>/gi, '<br>')
+          .replace(/<p[^>]*>/gi, '')
+          .replace(/<\/p>/gi, '<br>')
+          .trim();
+
+        viewer.innerHTML = `
+          <div class="session-viewer-header">
+              <h4 class="session-viewer-title">${block.title}</h4>
+              <div class="session-viewer-header-actions">
+                  <button class="session-viewer-delete-btn action-button remove-button red-button hidden" data-id="${block.id}" title="Delete">×</button>
+                  <button class="session-viewer-edit-btn" id="session_edit_toggle" title="Edit">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                          <path d="M4 15.5V19h3.5l9.94-9.94-3.5-3.5L4 15.5zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.5 3.5 1.83-1.83z"/>
+                      </svg>
+                  </button>
+              </div>
+          </div>          <div class="session-viewer-top-fade" id="session_viewer_top_fade"></div>
+          <div class="session-viewer-body" id="session_viewer_body">${bodyHTML}</div>
+      `;
+
+      applyInlineDiceRolls(viewer, 'tab7');
+
+      // Position the top fade immediately below the sticky header
+      const topFadeEl = viewer.querySelector('#session_viewer_top_fade');
+      const headerEl  = viewer.querySelector('.session-viewer-header');
+      if (topFadeEl && headerEl) {
+          topFadeEl.style.top = `${headerEl.offsetHeight}px`;
+      }
+
+      initScrollFades('#session_log_viewer', '--viewer-fade-top-opacity', '--viewer-fade-bottom-opacity', '_viewerFadeHandler');
+      document.dispatchEvent(new CustomEvent('sessionViewerRendered', { detail: { tab: 'tab7' } }));
+const editBtn  = viewer.querySelector('#session_edit_toggle');
+      const deleteBtn = viewer.querySelector('.session-viewer-delete-btn');
+
+      if (deleteBtn) {
+          deleteBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const overlay = document.querySelector('.remove-block-overlay');
+              if (!overlay) return;
+              const confirmBtn = document.getElementById('confirm_remove_button');
+              const cancelBtn  = document.getElementById('cancel_remove_button');
+              overlay.classList.add('show');
+
+              const onConfirm = () => {
+                  sessionViewerEditMode   = false;
+                  activeSessionLogBlockId = null;
+                  const stored = JSON.parse(localStorage.getItem('userBlocks_tab7') || '[]');
+                  localStorage.setItem('userBlocks_tab7', JSON.stringify(stored.filter(b => b.id !== blockId)));
+                  overlay.classList.remove('show');
+                  confirmBtn.removeEventListener('click', onConfirm);
+                  cancelBtn.removeEventListener('click', onCancel);
+                  renderSessionLog();
+              };
+
+              const onCancel = () => {
+                  overlay.classList.remove('show');
+                  confirmBtn.removeEventListener('click', onConfirm);
+                  cancelBtn.removeEventListener('click', onCancel);
+              };
+
+              confirmBtn.addEventListener('click', onConfirm);
+              cancelBtn.addEventListener('click', onCancel);
+          });
+      }
+
+      if (pendingEditMode) {
+          pendingEditMode = false;
+          requestAnimationFrame(() => editBtn.click());
+      }
+
+      const titleEl = viewer.querySelector('.session-viewer-title');
+      const bodyEl  = viewer.querySelector('#session_viewer_body');
+      let snapshot = null;
+
+      const exitSave = () => {
+          sessionViewerEditMode   = false;
+          editBtn.classList.remove('active');
+          titleEl.contentEditable = 'false';
+          bodyEl.contentEditable  = 'false';
+          titleEl.removeEventListener('keydown', keydownHandler);
+          bodyEl.removeEventListener('keydown', keydownHandler);
+
+          const newTitle     = titleEl.textContent.trim() || block.title;
+          const newText      = bodyEl.innerHTML.trim();
+          const latestBlocks = getBlocks('tab7');
+          const latestBlock  = latestBlocks.find(b => b.id === blockId);
+          if (latestBlock) {
+              saveBlock(
+                  'tab7', newTitle, newText,
+                  latestBlock.tags,
+                  [],
+                  [],
+                  latestBlock.blockType,
+                  blockId
+              );
+          }
+
+          viewer.querySelector('.session-viewer-delete-btn')?.classList.add('hidden');
+          applyInlineDiceRolls(viewer, 'tab7');
+
+          import('./filterManager.js').then(({ filterManager }) => {
+              filterManager.applyFilters('7');
+          });
+      };
+
+      const exitDiscard = () => {
+          sessionViewerEditMode   = false;
+          editBtn.classList.remove('active');
+          titleEl.contentEditable = 'false';
+          bodyEl.contentEditable  = 'false';
+          titleEl.removeEventListener('keydown', keydownHandler);
+          bodyEl.removeEventListener('keydown', keydownHandler);
+
+          if (snapshot) {
+              titleEl.textContent = snapshot.title;
+              bodyEl.innerHTML    = snapshot.body;
+          }
+
+          viewer.querySelector('.session-viewer-delete-btn')?.classList.add('hidden');
+          applyInlineDiceRolls(viewer, 'tab7');
+      };
+
+      const keydownHandler = (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault();
+              exitSave();
+          } else if (e.key === 'Escape') {
+              e.preventDefault();
+              e.stopPropagation();
+              exitDiscard();
+          }
+      };
+
+      editBtn.addEventListener('click', () => {
+          if (!sessionViewerEditMode) {
+              // ── Enter edit mode ──────────────────────────────────
+              sessionViewerEditMode = true;
+              editBtn.classList.add('active');
+
+              snapshot = {
+                  title: titleEl.textContent,
+                  body:  bodyEl.innerHTML,
+              };
+
+              // Strip inline dice buttons back to plain text
+              bodyEl.querySelectorAll('.inline-dice-roll').forEach(btn => {
+                  btn.replaceWith(document.createTextNode(btn.title));
+              });
+              bodyEl.normalize();
+
+              titleEl.contentEditable = 'true';
+              bodyEl.contentEditable  = 'true';
+              titleEl.addEventListener('keydown', keydownHandler);
+              bodyEl.addEventListener('keydown', keydownHandler);
+
+              viewer.querySelector('.session-viewer-delete-btn')?.classList.remove('hidden');
+
+              titleEl.focus();
+
+              const range = document.createRange();
+              const sel   = window.getSelection();
+              range.selectNodeContents(titleEl);
+              range.collapse(false);
+              sel.removeAllRanges();
+              sel.addRange(range);
+
+          } else {
+              exitSave();
+          }
+      });
+  };
+
+  // ── Session Log: render the condensed block list ─────────────────
+  const renderSessionLog = (filteredBlocks = null) => {
+      // Auto-save any in-progress viewer edit before re-rendering
+      if (sessionViewerEditMode) saveCurrentViewerEdits();
+
+      const resultsSection = document.getElementById('results_section_7');
+      if (!resultsSection) return;
+
+      const allBlocks     = getBlocks('tab7');
+      const displayBlocks = filteredBlocks || allBlocks;
+
+      resultsSection.innerHTML = '';
+
+  const addBtn = document.getElementById('add_block_button_7');
+      if (addBtn) {
+          addBtn.onclick = () => {
+              // Save any in-progress edits to the CURRENT block before switching
+              if (sessionViewerEditMode) {
+                  saveCurrentViewerEdits();
+                  sessionViewerEditMode = false;
+              }
+              const newBlock = {
+                  id:         crypto.randomUUID(),
+                  title:      generateNextSessionTitle(),
+                  text:       '',
+                  tags:       [],
+                  uses:       [],
+                  properties: [],
+                  blockType:  null,
+                  timestamp:  Date.now(),
+                  viewState:  'expanded'
+              };
+              const stored = JSON.parse(localStorage.getItem('userBlocks_tab7') || '[]');
+              stored.unshift(newBlock);
+              localStorage.setItem('userBlocks_tab7', JSON.stringify(stored));
+              pendingEditMode         = true;
+              activeSessionLogBlockId = newBlock.id;
+              renderSessionLog();
+          };
+      }
+
+      if (displayBlocks.length === 0) {
+          const p = document.createElement('p');
+          p.classList.add('results-placeholder');
+          p.textContent = 'Use the + button to add session logs here…';
+          p.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0.25;';
+          resultsSection.appendChild(p);
+      } else {
+          const pinnedBlocks = displayBlocks.filter(b => b.pinned);
+          const normalBlocks = displayBlocks.filter(b => !b.pinned);
+
+          if (pinnedBlocks.length > 0) {
+              const pinnedHTML = pinnedBlocks
+                  .map(b => blockTemplate({ ...b, viewState: 'session-log', uses: null }, 'tab7'))
+                  .join('');
+              resultsSection.insertAdjacentHTML('beforeend',
+                  `<div class="pinned-blocks-zone">${pinnedHTML}</div>`);
+          }
+
+          normalBlocks.forEach(block => {
+              resultsSection.insertAdjacentHTML('beforeend',
+                  blockTemplate({ ...block, viewState: 'session-log', uses: null }, 'tab7'));
+          });
+      }
+
+      // Wire click-to-view on every block
+      resultsSection.querySelectorAll('.block:not(.permanent-block)').forEach(blockEl => {
+          blockEl.addEventListener('click', function(e) {
+              if (e.target.closest('.block-actions')  ||
+                  e.target.closest('.actions-trigger') ||
+                  e.target.closest('.pin-button')) return;
+
+              const clickedId = blockEl.getAttribute('data-id');
+              // Already editing this same block — do nothing
+              if (clickedId === activeSessionLogBlockId && sessionViewerEditMode) return;
+
+              if (sessionViewerEditMode) {
+                  const prevId = activeSessionLogBlockId;
+                  saveCurrentViewerEdits();
+                  const listTitle = resultsSection.querySelector(
+                      `.block[data-id="${prevId}"] .block-title h4`
+                  );
+                  if (listTitle) {
+                      const fresh = getBlocks('tab7').find(b => b.id === prevId);
+                      if (fresh) listTitle.textContent = fresh.title;
+                  }
+              }
+
+              renderSessionViewer(clickedId);
+          });
+      });
+
+      // Show viewer: keep the current block if it's still in the list,
+      // otherwise fall back to the newest (first) block.
+      const viewer = document.getElementById('session_log_viewer');
+      if (displayBlocks.length > 0) {
+          const idToShow = (activeSessionLogBlockId &&
+              displayBlocks.find(b => b.id === activeSessionLogBlockId))
+              ? activeSessionLogBlockId
+              : displayBlocks[0].id;
+          renderSessionViewer(idToShow);
+      } else if (viewer) {
+          viewer.innerHTML = '<p class="session-viewer-placeholder">No entries found</p>';
+      }
+
+      updateTags();
+      attachDynamicTooltips();
+      initScrollFades('.results-section', null, '--results-fade-opacity', '_scrollFadeHandler');
+      document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab7' } }));
+  };  let renderAbortController = null;
 
 /* ==================================================================*/
 /* ============================= BLOCKS =============================*/
@@ -232,6 +578,12 @@ export const appManager = (() => {
     if (typeof tab !== "string") {
       console.error("❌ Error: 'tab' should be a string but got:", tab);
       tab = "tab4";
+    }
+
+        // ── Session Log has its own render path ──────────────────────────
+    if (tab === 'tab7') {
+        renderSessionLog(filteredBlocks);
+        return;
     }
 
     const tabSuffix  = tab.replace("tab", "");

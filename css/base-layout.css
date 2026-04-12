@@ -577,6 +577,50 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     text-wrap: balance;
 }
 
+.block.session-log {
+    background-color: transparent;
+    padding: 10px 0;
+    margin-bottom: 0;
+    border-radius: 0;
+    border-top: 1px solid var(--gray-400);
+}
+
+.block.session-log:last-child {
+    border-bottom: 1px solid var(--gray-400);
+}
+
+.block.session-log .block-title h4 {
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+}
+
+.block.session-log:last-child {
+    border-bottom: 1px solid var(--gray-400);
+}
+
+.block.session-log::after {
+    display: none;
+}
+
+.session-log-delete-btn {
+    background: none;
+    border: none;
+    color: var(--color-red);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 2px;
+    margin-left: auto;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+}
+
+.session-log-delete-btn:hover {
+    opacity: 1;
+}
+
 .block-title-minimized {
     display: inline-block;
     flex: 0 1 auto;
@@ -700,8 +744,239 @@ a:hover {
 }
 
 /* ==================================================================*/
-/* =========================== SCROLLBAR ============================*/
+/* ====================== SESSION LOG LAYOUT ========================*/
 /* ==================================================================*/
+
+.session-log-layout {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    min-height: 0;
+    gap: 15px;
+    overflow: hidden;
+    container-type: inline-size;
+}
+
+.session-log-list-column {
+    display: flex;
+    flex-direction: column;
+    width: 35%;
+    min-width: 180px;
+    max-width: 350px;
+    flex-shrink: 0;
+    gap: 10px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.session-log-search-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.session-log-search-row .search-container {
+    flex: 1;
+    min-width: 0;
+}
+
+.session-log-search-row .add-block-button {
+    width: 34px;
+    height: 34px;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.session-log-list-column .results-section {
+    flex: 1;
+    min-height: 0;
+    padding: 0 0 0 5px;
+}
+
+.session-log-viewer {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    background-color: var(--gray-300);
+    border-radius: 15px;
+    padding: 0 25px;
+    position: relative;
+    scrollbar-width: none;
+}
+
+.session-log-viewer::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    display: block;
+    height: 80px;
+    margin-top: -40px;
+    background: linear-gradient(
+        color-mix(in srgb, var(--gray-300) 0%, transparent) 0%,
+        color-mix(in srgb, var(--gray-300) 50%, transparent) 50%,
+        var(--gray-300) 80%
+    );
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--viewer-fade-bottom-opacity, 1);
+}
+
+.session-viewer-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    background-color: var(--gray-300);
+    z-index: 2;
+    padding-top: 20px;
+    padding-bottom: 10px;
+    margin-bottom: 5px;
+}
+
+.session-viewer-top-fade {
+    position: sticky;
+    height: 30px;
+    margin-bottom: -30px;
+    background: linear-gradient(
+        var(--gray-300) 0%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--viewer-fade-top-opacity, 0);
+}
+
+.session-viewer-title {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--gray-900);
+    word-break: break-word;
+    letter-spacing: 0.045em;
+}
+
+.session-viewer-title {
+    border-bottom: 1px solid transparent;
+    padding-bottom: 4px;
+    transition: border-color 0.2s;
+}
+
+.session-viewer-title[contenteditable="true"] {
+    outline: none;
+    border-bottom-color: var(--gray-500);
+    min-width: 1ch;
+}
+
+.session-viewer-edit-btn {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.4;
+    transition: opacity 0.2s, background-color 0.2s;
+    padding: 0;
+}
+
+.session-viewer-edit-btn:hover { opacity: 1; }
+
+.session-viewer-edit-btn.active {
+    background-color: var(--color-orange);
+    opacity: 1;
+}
+
+.session-viewer-edit-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--gray-900);
+    stroke: none;
+}
+
+.session-viewer-body {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--gray-800);
+    margin-top: 10px;
+    padding: 12px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    min-height: 100px;
+    box-sizing: border-box;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.session-viewer-body ul,
+.session-viewer-body ol {
+    padding-left: 18px;
+}
+
+.session-viewer-body li {
+    margin-bottom: 12px;
+}
+
+.session-viewer-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.session-viewer-delete-btn {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 18px;
+    flex-shrink: 0;
+    border-radius: 50%;
+}
+
+.session-viewer-body[contenteditable="true"] {
+    outline: none;
+    border-color: var(--gray-500);
+    background-color: var(--gray-400);
+}
+
+.session-viewer-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 10px;
+}
+
+.session-viewer-placeholder {
+    text-align: center;
+    opacity: 0.25;
+    padding: 40px;
+    margin: 0;
+}
+
+#results_section_7 .block.session-log-active .block-title h4 {
+    color: var(--color-green);
+    border-left: 3px solid var(--color-green);
+    padding-left: 10px;
+}
+
+@container (max-width: 520px) {
+    .session-log-layout {
+        flex-direction: column;
+    }
+    .session-log-list-column {
+        width: 100%;
+        max-width: 100%;
+        height: 40%;
+        min-height: 0;
+        flex-shrink: 0;
+    }
+}
 
 /* ==================================================================*/
 /* =========================== SCROLLBAR ============================*/

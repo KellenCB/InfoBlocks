@@ -713,32 +713,21 @@
 
             <!-- Tab 7: Session Logs -->
             <div class="tab-content" id="tab7">
-                <div class="filter-and-results">
-                    <div id="results_section_7" class="results-section"></div>
-                    <div class="filter-divider"></div>
-                    <div class="filter-section-wrapper">
-                        <div class="filter-panel-header">
-                            <div class="filter-panel-header-row">
-                                <button id="clear_filters_button_7" class="clear_filters_button">Clear Filters</button>
-                                <button class="toggle-filter-button" data-tab="tab7">
-                                    <img src="./images/Filter_Hide_Icon.svg" alt="Toggle filter">
-                                </button>
-                            </div>
+                <div class="session-log-layout">
+                    <div class="session-log-list-column">
+                        <div class="session-log-search-row">
                             <div class="search-container">
-                                <input id="search_input_7" class="search_input" type="text" placeholder="Search by text" />
+                                <input id="search_input_7" class="search_input" type="text" placeholder="Search session logs..." />
                                 <button id="clear_search_button_7" class="clear-search">✖</button>
                             </div>
+                            <button id="add_block_button_7" class="add-block-button green-button">+</button>
                         </div>
-                        <div id="filter_section_7" class="filter-section">
-                            <div class="block-type-tags" id="character_type_tags_7"></div>
-                            <div id="all_tags_container">
-                                <div id="dynamic_tags_section_7" class="tag-section"></div>
-                            </div>
-                        </div>
+                        <div id="results_section_7" class="results-section"></div>
                     </div>
+                    <div class="session-log-viewer" id="session_log_viewer"></div>
                 </div>
             </div>
-
+            
             <!-- Tab 9: Feats & Magic -->
             <div class="tab-content" id="tab9">
                 <div class="circle-section">

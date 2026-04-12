@@ -72,11 +72,29 @@ function applyHighlights(tabNumber, query) {
     sec.querySelectorAll('.block-property').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
 }
 
+function applyViewerHighlights(query) {
+    const viewer  = document.getElementById('session_log_viewer');
+    if (!viewer) return;
+    const titleEl = viewer.querySelector('.session-viewer-title');
+    const bodyEl  = viewer.querySelector('#session_viewer_body');
+    if (titleEl && titleEl.contentEditable !== 'true') {
+        titleEl.innerHTML = highlightInText(titleEl.innerHTML, query);
+    }
+    if (bodyEl && bodyEl.contentEditable !== 'true') {
+        bodyEl.innerHTML = highlightInHTML(bodyEl.innerHTML, query);
+    }
+}
+
 // Re-apply highlights whenever filterManager re-renders blocks
 document.addEventListener('blocksRerendered', e => {
     const tabNumber = e.detail.tab.replace('tab', '');
     const query = document.getElementById(`search_input_${tabNumber}`)?.value.trim() || '';
     applyHighlights(tabNumber, query);
+});
+
+document.addEventListener('sessionViewerRendered', () => {
+    const query = document.getElementById('search_input_7')?.value.trim() || '';
+    if (query) applyViewerHighlights(query);
 });
 
 // 📌 Attach event listeners efficiently
