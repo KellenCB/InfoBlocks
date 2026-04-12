@@ -273,17 +273,13 @@
 /* ==================================================================*/
 
 .block-actions-menu {
-    position: relative;
-    height: 18px;
-    width: 18px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     flex-shrink: 0;
-    transition: width 0.25s ease;
 }
 
 .actions-trigger {
-    position: absolute;
-    left: 0;
-    top: 0;
     width: 18px;
     height: 18px;
     border-radius: 50%;
@@ -296,33 +292,35 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 3;
-    opacity: 1;
-    transform: translateX(0);
-    transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
-    pointer-events: auto;
+    flex-shrink: 0;
+    transition: background-color 0.2s ease;
 }
 
 .actions-trigger:hover { background-color: var(--gray-700); }
 
 .block-actions-reveal {
-    position: absolute;
-    left: 0;
-    top: 0;
     display: flex;
+    align-items: center;
     gap: 7.5px;
-    opacity: 0;
-    transform: translateX(30px);
-    pointer-events: none;
-    z-index: 1;
-    transition: opacity 0.2s ease, transform 0.25s ease;
 }
 
-.block-actions-menu:hover,
-.block-actions-menu.menu-open                          { width: 69px; }
+.block-actions-reveal .action-button {
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: center;
+    margin-left: calc(-18px - 7.5px);
+    pointer-events: none;
+    transition: transform 0.2s ease, opacity 0.2s ease, margin-left 0.2s ease;
+}
 
-.block-actions-menu:hover .actions-trigger,
-.block-actions-menu.menu-open .actions-trigger         { opacity: 0; transform: translateX(8px); pointer-events: none; }
+.block-actions-menu.menu-open .block-actions-reveal .action-button {
+    opacity: 1;
+    transform: scale(1);
+    margin-left: 0;
+    pointer-events: auto;
+}
 
-.block-actions-menu:hover .block-actions-reveal,
-.block-actions-menu.menu-open .block-actions-reveal    { opacity: 1; transform: translateX(0); pointer-events: auto; }
+.block-actions-menu.menu-open .actions-trigger {
+    margin-left: 7.5px;
+    transition: margin-left 0.2s ease;
+}
