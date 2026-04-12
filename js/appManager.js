@@ -87,6 +87,7 @@ export const appManager = (() => {
   let activeSessionLogBlockId = null;
   let sessionViewerEditMode   = false;
   let pendingEditMode         = false;
+  let sessionListCollapsed    = localStorage.getItem('sessionListCollapsed') === 'true';
 
 /* ==================================================================*/
 /* ============================== TAGS ==============================*/
@@ -221,6 +222,14 @@ export const appManager = (() => {
     if (tabId) localStorage.setItem(`filterVisible_${tabId}`, (!isNowClosed).toString());
   });
 
+  // ── Session Log: toggle list panel ──────────────────────────────
+  const toggleSessionList = () => {
+      sessionListCollapsed = !sessionListCollapsed;
+      localStorage.setItem('sessionListCollapsed', sessionListCollapsed);
+      document.querySelector('.session-log-list-column')
+          ?.classList.toggle('session-log-list-collapsed', sessionListCollapsed);
+  };
+
   // ── Session Log: generate next auto-title from most recent block ─
   const generateNextSessionTitle = () => {
       const blocks = getBlocks('tab7');
@@ -286,18 +295,23 @@ export const appManager = (() => {
           .replace(/<\/p>/gi, '<br>')
           .trim();
 
-        viewer.innerHTML = `
+      viewer.innerHTML = `
           <div class="session-viewer-header">
+              <button class="session-list-open-btn session-viewer-edit-btn" title="Show list">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9 18l6-6-6-6"/>
+                  </svg>
+              </button>
               <h4 class="session-viewer-title">${block.title}</h4>
               <div class="session-viewer-header-actions">
-                  <button class="session-viewer-delete-btn action-button remove-button red-button hidden" data-id="${block.id}" title="Delete">×</button>
-                  <button class="session-viewer-edit-btn" id="session_edit_toggle" title="Edit">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <button class="session-viewer-delete-btn" data-id="${block.id}" title="Delete">×</button>
+                  <button class="session-viewer-edit-btn" id="session_edit_toggle" title="Edit">                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                           <path d="M4 15.5V19h3.5l9.94-9.94-3.5-3.5L4 15.5zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.5 3.5 1.83-1.83z"/>
                       </svg>
                   </button>
               </div>
-          </div>          <div class="session-viewer-top-fade" id="session_viewer_top_fade"></div>
+          </div>
+          <div class="session-viewer-top-fade" id="session_viewer_top_fade"></div>
           <div class="session-viewer-body" id="session_viewer_body">${bodyHTML}</div>
       `;
 
@@ -312,8 +326,10 @@ export const appManager = (() => {
 
       initScrollFades('#session_log_viewer', '--viewer-fade-top-opacity', '--viewer-fade-bottom-opacity', '_viewerFadeHandler');
       document.dispatchEvent(new CustomEvent('sessionViewerRendered', { detail: { tab: 'tab7' } }));
-const editBtn  = viewer.querySelector('#session_edit_toggle');
+      const editBtn   = viewer.querySelector('#session_edit_toggle');
       const deleteBtn = viewer.querySelector('.session-viewer-delete-btn');
+      const openBtn   = viewer.querySelector('.session-list-open-btn');
+      if (openBtn) openBtn.addEventListener('click', toggleSessionList);
 
       if (deleteBtn) {
           deleteBtn.addEventListener('click', (e) => {
@@ -378,12 +394,21 @@ const editBtn  = viewer.querySelector('#session_edit_toggle');
               );
           }
 
-          viewer.querySelector('.session-viewer-delete-btn')?.classList.add('hidden');
-          applyInlineDiceRolls(viewer, 'tab7');
-
-          import('./filterManager.js').then(({ filterManager }) => {
-              filterManager.applyFilters('7');
-          });
+        const deleteBtn = viewer.querySelector('.session-viewer-delete-btn');
+          if (deleteBtn) {
+              deleteBtn.classList.remove('visible');
+              setTimeout(() => {
+                  applyInlineDiceRolls(viewer, 'tab7');
+                  import('./filterManager.js').then(({ filterManager }) => {
+                      filterManager.applyFilters('7');
+                  });
+              }, 200);
+          } else {
+              applyInlineDiceRolls(viewer, 'tab7');
+              import('./filterManager.js').then(({ filterManager }) => {
+                  filterManager.applyFilters('7');
+              });
+          }
       };
 
       const exitDiscard = () => {
@@ -399,8 +424,15 @@ const editBtn  = viewer.querySelector('#session_edit_toggle');
               bodyEl.innerHTML    = snapshot.body;
           }
 
-          viewer.querySelector('.session-viewer-delete-btn')?.classList.add('hidden');
-          applyInlineDiceRolls(viewer, 'tab7');
+          const deleteBtn = viewer.querySelector('.session-viewer-delete-btn');
+          if (deleteBtn) {
+              deleteBtn.classList.remove('visible');
+              setTimeout(() => {
+                  applyInlineDiceRolls(viewer, 'tab7');
+              }, 200);
+          } else {
+              applyInlineDiceRolls(viewer, 'tab7');
+          }
       };
 
       const keydownHandler = (e) => {
@@ -436,7 +468,7 @@ const editBtn  = viewer.querySelector('#session_edit_toggle');
               titleEl.addEventListener('keydown', keydownHandler);
               bodyEl.addEventListener('keydown', keydownHandler);
 
-              viewer.querySelector('.session-viewer-delete-btn')?.classList.remove('hidden');
+              viewer.querySelector('.session-viewer-delete-btn')?.classList.add('visible');
 
               titleEl.focus();
 
@@ -465,6 +497,14 @@ const editBtn  = viewer.querySelector('#session_edit_toggle');
       const displayBlocks = filteredBlocks || allBlocks;
 
       resultsSection.innerHTML = '';
+
+      document.querySelector('.session-log-list-column')
+          ?.classList.toggle('session-log-list-collapsed', sessionListCollapsed);
+      const closeBtn = document.getElementById('session_list_toggle');
+      if (closeBtn) {
+          closeBtn.classList.toggle('hidden', sessionListCollapsed);
+          closeBtn.onclick = toggleSessionList;
+      }
 
   const addBtn = document.getElementById('add_block_button_7');
       if (addBtn) {
