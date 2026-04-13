@@ -13,6 +13,53 @@ export function stripHTML(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 
+export function initDragToScroll() {
+    let isDown   = false;
+    let moved    = false;
+    let startX, startY, scrollEl, initScrollLeft, initScrollTop;
+
+    document.addEventListener('mousedown', e => {
+        const el = e.target.closest(
+            '.results-section:not(.character-sheet-results), .filter-section, .saving-throws-and-skills-column-wrapper, ' +
+            '.qr-blocks-scroll, .qr-tags-scroll, .session-log-viewer, .roll-results'
+        );
+        if (!el) return;
+        isDown                 = true;
+        scrollEl               = el;
+        startX                 = e.clientX;
+        startY                 = e.clientY;
+        initScrollLeft         = el.scrollLeft;
+        initScrollTop          = el.scrollTop;
+        document.body.style.userSelect = 'none';
+    });
+
+    document.addEventListener('mousemove', e => {
+        if (!isDown) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (!moved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+        moved = true;
+        scrollEl.scrollLeft = initScrollLeft - dx;
+        scrollEl.scrollTop  = initScrollTop  - dy;
+    });
+
+    const onUp = () => {
+        isDown = false;
+        document.body.style.userSelect = '';
+    };
+
+    document.addEventListener('mouseup',    onUp);
+    document.addEventListener('mouseleave', onUp);
+
+    document.addEventListener('click', e => {
+        if (moved) {
+            e.stopPropagation();
+            e.preventDefault();
+            moved = false;
+        }
+    }, true);
+}
+
 export let selectedFilterTagsBeforeAdd = [];
 
 export function initScrollFades(selector, topVar, bottomVar, handlerKey, delay = 0) {
@@ -988,6 +1035,8 @@ resultsSection.innerHTML = `
       el.innerHTML = buildQrBlockHTML(block, expanded);
       blocksDiv.appendChild(el);
     });
+    initScrollFades('.qr-blocks-scroll', '--qr-fade-top-opacity', '--qr-fade-bottom-opacity', '_qrScrollFadeHandler');
+    document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: charTab } }));
   };
 
   const wireQrEvents = (section, charTab, tabSuffix) => {

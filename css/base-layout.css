@@ -65,7 +65,6 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     min-height: 0;
     min-width: 0;
     overflow: hidden;
-    gap: 10px;
 }
 
 #char-sheet-panel.active {

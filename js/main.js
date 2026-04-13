@@ -5,7 +5,7 @@ import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
 import { filterManager } from './filterManager.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { stripHTML } from './appManager.js';
-import { initScrollFades, setupSearchInput } from './appManager.js';
+import { initScrollFades, setupSearchInput, initDragToScroll } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
 import { initLayoutMode, activateCharTab } from './layoutMode.js';
 export function repositionAllSliders() {
@@ -925,6 +925,8 @@ window.onload = async () => {
     console.log("🔄 Window Loaded - Initializing App");
 
     initLayoutMode();
+
+    initDragToScroll();
 
     // Run migrations before anything else
     migrateToTab9();
