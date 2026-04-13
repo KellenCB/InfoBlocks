@@ -5,7 +5,7 @@ import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
 import { filterManager } from './filterManager.js';
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { stripHTML } from './appManager.js';
-import { initScrollFades } from './appManager.js';
+import { initScrollFades, setupSearchInput, initDragToScroll } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
 import { initLayoutMode, activateCharTab } from './layoutMode.js';
 export function repositionAllSliders() {
@@ -72,11 +72,29 @@ function applyHighlights(tabNumber, query) {
     sec.querySelectorAll('.block-property').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
 }
 
+function applyViewerHighlights(query) {
+    const viewer  = document.getElementById('session_log_viewer');
+    if (!viewer) return;
+    const titleEl = viewer.querySelector('.session-viewer-title');
+    const bodyEl  = viewer.querySelector('#session_viewer_body');
+    if (titleEl && titleEl.contentEditable !== 'true') {
+        titleEl.innerHTML = highlightInText(titleEl.innerHTML, query);
+    }
+    if (bodyEl && bodyEl.contentEditable !== 'true') {
+        bodyEl.innerHTML = highlightInHTML(bodyEl.innerHTML, query);
+    }
+}
+
 // Re-apply highlights whenever filterManager re-renders blocks
 document.addEventListener('blocksRerendered', e => {
     const tabNumber = e.detail.tab.replace('tab', '');
     const query = document.getElementById(`search_input_${tabNumber}`)?.value.trim() || '';
     applyHighlights(tabNumber, query);
+});
+
+document.addEventListener('sessionViewerRendered', () => {
+    const query = document.getElementById('search_input_7')?.value.trim() || '';
+    if (query) applyViewerHighlights(query);
 });
 
 // 📌 Attach event listeners efficiently
@@ -516,15 +534,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!searchInput) return;
 
-        searchInput.addEventListener('input', () => {
-            filterManager.applyFilters(tabNumber);
-            applyHighlights(tabNumber, searchInput.value.trim());
-        });
-
-        clearSearchButton?.addEventListener('click', () => {
-            searchInput.value = '';
-            filterManager.applyFilters(tabNumber);
-        });
+        setupSearchInput(
+            searchInput,
+            clearSearchButton,
+            (value) => {
+                filterManager.applyFilters(tabNumber);
+                applyHighlights(tabNumber, value.trim());
+            },
+            () => {
+                filterManager.applyFilters(tabNumber);
+            }
+        );
         // clearFiltersButton is handled by the module-level clearFilters listener below.
     }
             
@@ -905,6 +925,8 @@ window.onload = async () => {
     console.log("🔄 Window Loaded - Initializing App");
 
     initLayoutMode();
+
+    initDragToScroll();
 
     // Run migrations before anything else
     migrateToTab9();

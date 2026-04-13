@@ -3,6 +3,7 @@ import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { blockTemplate } from './blockTemplate.js';
 import { overlayHandler, initUsesField } from './overlayHandler.js';
 import { applyInlineDiceRolls } from './diceRoller.js';
+import { blockActionsHandler } from './blockActionsHandler.js';
 
 const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
 
@@ -10,6 +11,53 @@ export function stripHTML(html) {
   const tmp = document.createElement('div');
   tmp.innerHTML = html || '';
   return tmp.textContent || tmp.innerText || '';
+}
+
+export function initDragToScroll() {
+    let isDown   = false;
+    let moved    = false;
+    let startX, startY, scrollEl, initScrollLeft, initScrollTop;
+
+    document.addEventListener('mousedown', e => {
+        const el = e.target.closest(
+            '.results-section:not(.character-sheet-results), .filter-section, .saving-throws-and-skills-column-wrapper, ' +
+            '.qr-blocks-scroll, .qr-tags-scroll, .session-log-viewer, .roll-results'
+        );
+        if (!el) return;
+        isDown                 = true;
+        scrollEl               = el;
+        startX                 = e.clientX;
+        startY                 = e.clientY;
+        initScrollLeft         = el.scrollLeft;
+        initScrollTop          = el.scrollTop;
+        document.body.style.userSelect = 'none';
+    });
+
+    document.addEventListener('mousemove', e => {
+        if (!isDown) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (!moved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+        moved = true;
+        scrollEl.scrollLeft = initScrollLeft - dx;
+        scrollEl.scrollTop  = initScrollTop  - dy;
+    });
+
+    const onUp = () => {
+        isDown = false;
+        document.body.style.userSelect = '';
+    };
+
+    document.addEventListener('mouseup',    onUp);
+    document.addEventListener('mouseleave', onUp);
+
+    document.addEventListener('click', e => {
+        if (moved) {
+            e.stopPropagation();
+            e.preventDefault();
+            moved = false;
+        }
+    }, true);
 }
 
 export let selectedFilterTagsBeforeAdd = [];
@@ -29,6 +77,22 @@ export function initScrollFades(selector, topVar, bottomVar, handlerKey, delay =
         });
     };
     delay ? setTimeout(run, delay) : run();
+}
+
+export const CLEAR_SEARCH_SVG = `<svg class="clear-icon" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg>`;
+
+export function setupSearchInput(inputEl, clearBtnEl, onInput, onClear) {
+    if (!inputEl) return;
+    if (clearBtnEl) clearBtnEl.style.opacity = inputEl.value ? '1' : '0';
+    inputEl.addEventListener('input', () => {
+        if (clearBtnEl) clearBtnEl.style.opacity = inputEl.value ? '1' : '0';
+        onInput(inputEl.value);
+    });
+    clearBtnEl?.addEventListener('click', () => {
+        inputEl.value = '';
+        if (clearBtnEl) clearBtnEl.style.opacity = '0';
+        onClear();
+    });
 }
 
 /* ==================================================================*/
@@ -82,6 +146,12 @@ export const actionButtonHandlers = (() => {
 export const appManager = (() => {
   let userBlocks = JSON.parse(localStorage.getItem("userBlocks")) || [];
   let title = localStorage.getItem("pageTitle") || "Information Blocks";
+
+  // ── Session Log viewer state ─────────────────────────────────────
+  let activeSessionLogBlockId = null;
+  let sessionViewerEditMode   = false;
+  let pendingEditMode         = false;
+  let sessionListCollapsed    = localStorage.getItem('sessionListCollapsed') === 'true';
 
 /* ==================================================================*/
 /* ============================== TAGS ==============================*/
@@ -216,11 +286,401 @@ export const appManager = (() => {
     if (tabId) localStorage.setItem(`filterVisible_${tabId}`, (!isNowClosed).toString());
   });
 
-  let renderAbortController = null;
+  // ── Session Log: toggle list panel ──────────────────────────────
+  const toggleSessionList = () => {
+      sessionListCollapsed = !sessionListCollapsed;
+      localStorage.setItem('sessionListCollapsed', sessionListCollapsed);
+      document.querySelector('.session-log-list-column')
+          ?.classList.toggle('session-log-list-collapsed', sessionListCollapsed);
+  };
+
+  // ── Session Log: generate next auto-title from most recent block ─
+  const generateNextSessionTitle = () => {
+      const blocks = getBlocks('tab7');
+      if (blocks.length === 0) return 'New Session:';
+      const lastTitle = blocks[0].title.trim();
+      const match = lastTitle.match(/(\d+)/);
+      if (!match) return 'New Session:';
+      const nextNum  = parseInt(match[1], 10) + 1;
+      const before   = lastTitle.slice(0, match.index);
+      const after    = lastTitle.slice(match.index + match[1].length);
+      const colon    = after.match(/^\s*:/) ? ':' : '';
+      return `${before}${nextNum}${colon}`;
+  };
+
+  // ── Session Log: save any pending viewer edits to localStorage ───
+  const saveCurrentViewerEdits = () => {
+      if (!sessionViewerEditMode || !activeSessionLogBlockId) return;
+      const viewer  = document.getElementById('session_log_viewer');
+      if (!viewer) return;
+      const titleEl = viewer.querySelector('.session-viewer-title');
+      const bodyEl  = viewer.querySelector('#session_viewer_body');
+      if (!titleEl || !bodyEl) return;
+      const blocks = getBlocks('tab7');
+      const block  = blocks.find(b => b.id === activeSessionLogBlockId);
+      if (block) {
+          saveBlock(
+              'tab7',
+              titleEl.textContent.trim() || block.title,
+              bodyEl.innerHTML.trim(),
+              block.tags,
+              [],
+              [],
+              block.blockType,
+              activeSessionLogBlockId
+          );
+      }
+      sessionViewerEditMode = false;
+  };
+
+  // ── Session Log: render the viewer panel ─────────────────────────
+  const renderSessionViewer = (blockId) => {
+      const viewer = document.getElementById('session_log_viewer');
+      if (!viewer) return;
+
+      const blocks = getBlocks('tab7');
+      const block  = blocks.find(b => b.id === blockId);
+      if (!block) return;
+
+      activeSessionLogBlockId = blockId;
+
+      // Highlight active block in list
+      document.querySelectorAll('#results_section_7 .block').forEach(b => {
+          b.classList.toggle('session-log-active', b.getAttribute('data-id') === blockId);
+      });
+
+      // Build body (same transforms as blockTemplate)
+      let bodyHTML = block.text || '';
+      bodyHTML = bodyHTML
+          .replace(/<div[^>]*>/gi, '')
+          .replace(/^(&nbsp;|\s)+/gi, '')
+          .replace(/<\/div>/gi, '<br>')
+          .replace(/<p[^>]*>/gi, '')
+          .replace(/<\/p>/gi, '<br>')
+          .trim();
+
+      viewer.innerHTML = `
+          <div class="session-viewer-header">
+              <button class="session-list-open-btn session-viewer-edit-btn" title="Show list">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9 18l6-6-6-6"/>
+                  </svg>
+              </button>
+              <h4 class="session-viewer-title">${block.title}</h4>
+              <div class="session-viewer-header-actions">
+                  <button class="session-viewer-delete-btn" data-id="${block.id}" title="Delete">×</button>
+                  <button class="session-viewer-edit-btn" id="session_edit_toggle" title="Edit">                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M4 15.5V19h3.5l9.94-9.94-3.5-3.5L4 15.5zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.5 3.5 1.83-1.83z"/>
+                      </svg>
+                  </button>
+              </div>
+          </div>
+          <div class="session-viewer-body" id="session_viewer_body">${bodyHTML}</div>
+      `;
+
+      applyInlineDiceRolls(viewer, 'tab7');
+
+      initScrollFades('#session_log_viewer', '--viewer-fade-top-opacity', '--viewer-fade-bottom-opacity', '_viewerFadeHandler');
+      document.dispatchEvent(new CustomEvent('sessionViewerRendered', { detail: { tab: 'tab7' } }));
+      const editBtn   = viewer.querySelector('#session_edit_toggle');
+      const deleteBtn = viewer.querySelector('.session-viewer-delete-btn');
+      const openBtn   = viewer.querySelector('.session-list-open-btn');
+      if (openBtn) openBtn.addEventListener('click', toggleSessionList);
+
+      if (deleteBtn) {
+          deleteBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const overlay = document.querySelector('.remove-block-overlay');
+              if (!overlay) return;
+              const confirmBtn = document.getElementById('confirm_remove_button');
+              const cancelBtn  = document.getElementById('cancel_remove_button');
+              overlay.classList.add('show');
+
+              const onConfirm = () => {
+                  sessionViewerEditMode  = false;
+                  const removedBlock     = removeBlock(blockId, 'tab7');
+                  activeSessionLogBlockId = null;
+                  overlay.classList.remove('show');
+                  confirmBtn.removeEventListener('click', onConfirm);
+                  cancelBtn.removeEventListener('click', onCancel);
+                  import('./blockActionsHandler.js').then(({ blockActionsHandler }) => {
+                      blockActionsHandler.recordLastDeleted('tab7', removedBlock);
+                  });
+                  renderSessionLog();
+              };
+              
+              const onCancel = () => {
+                  overlay.classList.remove('show');
+                  confirmBtn.removeEventListener('click', onConfirm);
+                  cancelBtn.removeEventListener('click', onCancel);
+              };
+
+              confirmBtn.addEventListener('click', onConfirm);
+              cancelBtn.addEventListener('click', onCancel);
+          });
+      }
+
+      if (pendingEditMode) {
+          pendingEditMode = false;
+          requestAnimationFrame(() => editBtn.click());
+      }
+
+      const titleEl = viewer.querySelector('.session-viewer-title');
+      const bodyEl  = viewer.querySelector('#session_viewer_body');
+      let snapshot = null;
+
+      const exitSave = () => {
+          sessionViewerEditMode   = false;
+          editBtn.classList.remove('active');
+          titleEl.contentEditable = 'false';
+          bodyEl.contentEditable  = 'false';
+          titleEl.removeEventListener('keydown', keydownHandler);
+          bodyEl.removeEventListener('keydown', keydownHandler);
+
+          const newTitle     = titleEl.textContent.trim() || block.title;
+          const newText      = bodyEl.innerHTML.trim();
+          const latestBlocks = getBlocks('tab7');
+          const latestBlock  = latestBlocks.find(b => b.id === blockId);
+          if (latestBlock) {
+              saveBlock(
+                  'tab7', newTitle, newText,
+                  latestBlock.tags,
+                  [],
+                  [],
+                  latestBlock.blockType,
+                  blockId
+              );
+          }
+
+        const deleteBtn = viewer.querySelector('.session-viewer-delete-btn');
+          if (deleteBtn) {
+              deleteBtn.classList.remove('visible');
+              setTimeout(() => {
+                  applyInlineDiceRolls(viewer, 'tab7');
+                  import('./filterManager.js').then(({ filterManager }) => {
+                      filterManager.applyFilters('7');
+                  });
+              }, 200);
+          } else {
+              applyInlineDiceRolls(viewer, 'tab7');
+              import('./filterManager.js').then(({ filterManager }) => {
+                  filterManager.applyFilters('7');
+              });
+          }
+      };
+
+      const exitDiscard = () => {
+          sessionViewerEditMode   = false;
+          editBtn.classList.remove('active');
+          titleEl.contentEditable = 'false';
+          bodyEl.contentEditable  = 'false';
+          titleEl.removeEventListener('keydown', keydownHandler);
+          bodyEl.removeEventListener('keydown', keydownHandler);
+
+          if (snapshot) {
+              titleEl.textContent = snapshot.title;
+              bodyEl.innerHTML    = snapshot.body;
+          }
+
+          const deleteBtn = viewer.querySelector('.session-viewer-delete-btn');
+          if (deleteBtn) {
+              deleteBtn.classList.remove('visible');
+              setTimeout(() => {
+                  applyInlineDiceRolls(viewer, 'tab7');
+              }, 200);
+          } else {
+              applyInlineDiceRolls(viewer, 'tab7');
+          }
+      };
+
+      const keydownHandler = (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault();
+              exitSave();
+          } else if (e.key === 'Escape') {
+              e.preventDefault();
+              e.stopPropagation();
+              exitDiscard();
+          }
+      };
+
+      editBtn.addEventListener('click', () => {
+          if (!sessionViewerEditMode) {
+              // ── Enter edit mode ──────────────────────────────────
+              sessionViewerEditMode = true;
+              editBtn.classList.add('active');
+
+              snapshot = {
+                  title: titleEl.textContent,
+                  body:  bodyEl.innerHTML,
+              };
+
+              // Strip inline dice buttons back to plain text
+              bodyEl.querySelectorAll('.inline-dice-roll').forEach(btn => {
+                  btn.replaceWith(document.createTextNode(btn.title));
+              });
+              bodyEl.normalize();
+
+              titleEl.contentEditable = 'true';
+              bodyEl.contentEditable  = 'true';
+              titleEl.addEventListener('keydown', keydownHandler);
+              bodyEl.addEventListener('keydown', keydownHandler);
+
+              viewer.querySelector('.session-viewer-delete-btn')?.classList.add('visible');
+
+              titleEl.focus();
+
+              const range = document.createRange();
+              const sel   = window.getSelection();
+              range.selectNodeContents(titleEl);
+              range.collapse(false);
+              sel.removeAllRanges();
+              sel.addRange(range);
+
+          } else {
+              exitSave();
+          }
+      });
+  };
+
+  // ── Session Log: render the condensed block list ─────────────────
+  const renderSessionLog = (filteredBlocks = null) => {
+      // Auto-save any in-progress viewer edit before re-rendering
+      if (sessionViewerEditMode) saveCurrentViewerEdits();
+
+      const resultsSection = document.getElementById('results_section_7');
+      if (!resultsSection) return;
+
+      const allBlocks     = getBlocks('tab7');
+      const displayBlocks = filteredBlocks || allBlocks;
+
+      resultsSection.innerHTML = '';
+
+      document.querySelector('.session-log-list-column')
+          ?.classList.toggle('session-log-list-collapsed', sessionListCollapsed);
+      const closeBtn = document.getElementById('session_list_toggle');
+      if (closeBtn) {
+          closeBtn.classList.toggle('hidden', sessionListCollapsed);
+          closeBtn.onclick = toggleSessionList;
+      }
+
+  const addBtn = document.getElementById('add_block_button_7');
+      if (addBtn) {
+          addBtn.onclick = () => {
+              // Save any in-progress edits to the CURRENT block before switching
+              if (sessionViewerEditMode) {
+                  saveCurrentViewerEdits();
+                  sessionViewerEditMode = false;
+              }
+              const newBlock = {
+                  id:         crypto.randomUUID(),
+                  title:      generateNextSessionTitle(),
+                  text:       '',
+                  tags:       [],
+                  uses:       [],
+                  properties: [],
+                  blockType:  null,
+                  timestamp:  Date.now(),
+                  viewState:  'expanded'
+              };
+              const stored = JSON.parse(localStorage.getItem('userBlocks_tab7') || '[]');
+              stored.unshift(newBlock);
+              localStorage.setItem('userBlocks_tab7', JSON.stringify(stored));
+              pendingEditMode         = true;
+              activeSessionLogBlockId = newBlock.id;
+              renderSessionLog();
+          };
+      }
+
+      if (displayBlocks.length === 0) {
+          const p = document.createElement('p');
+          p.classList.add('results-placeholder');
+          p.textContent = 'Use the + button to add session logs here…';
+          p.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0.25;';
+          resultsSection.appendChild(p);
+      } else {
+          const pinnedBlocks = displayBlocks.filter(b => b.pinned);
+          const normalBlocks = displayBlocks.filter(b => !b.pinned);
+
+          if (pinnedBlocks.length > 0) {
+              const pinnedHTML = pinnedBlocks
+                  .map(b => blockTemplate({ ...b, viewState: 'session-log', uses: null }, 'tab7'))
+                  .join('');
+              resultsSection.insertAdjacentHTML('beforeend',
+                  `<div class="pinned-blocks-zone">${pinnedHTML}</div>`);
+          }
+
+          normalBlocks.forEach(block => {
+              resultsSection.insertAdjacentHTML('beforeend',
+                  blockTemplate({ ...block, viewState: 'session-log', uses: null }, 'tab7'));
+          });
+      }
+
+      // Wire click-to-view on every block
+      resultsSection.querySelectorAll('.block:not(.permanent-block)').forEach(blockEl => {
+          blockEl.addEventListener('click', function(e) {
+              if (e.target.closest('.block-actions')  ||
+                  e.target.closest('.actions-trigger') ||
+                  e.target.closest('.pin-button')) return;
+
+              const clickedId = blockEl.getAttribute('data-id');
+              // Already editing this same block — do nothing
+              if (clickedId === activeSessionLogBlockId && sessionViewerEditMode) return;
+
+              if (sessionViewerEditMode) {
+                  const prevId = activeSessionLogBlockId;
+                  saveCurrentViewerEdits();
+                  const listTitle = resultsSection.querySelector(
+                      `.block[data-id="${prevId}"] .block-title h4`
+                  );
+                  if (listTitle) {
+                      const fresh = getBlocks('tab7').find(b => b.id === prevId);
+                      if (fresh) listTitle.textContent = fresh.title;
+                  }
+              }
+
+              renderSessionViewer(clickedId);
+          });
+      });
+
+      // Show viewer: keep the current block if it's still in the list,
+      // otherwise fall back to the newest (first) block.
+      const viewer = document.getElementById('session_log_viewer');
+      if (displayBlocks.length > 0) {
+          const idToShow = (activeSessionLogBlockId &&
+              displayBlocks.find(b => b.id === activeSessionLogBlockId))
+              ? activeSessionLogBlockId
+              : displayBlocks[0].id;
+          renderSessionViewer(idToShow);
+      } else if (viewer) {
+          viewer.innerHTML = '<p class="session-viewer-placeholder">No entries found</p>';
+      }
+
+      updateTags();
+      attachDynamicTooltips();
+      initScrollFades('.results-section', null, '--results-fade-opacity', '_scrollFadeHandler');
+      document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab7' } }));
+  };  let renderAbortController = null;
 
 /* ==================================================================*/
 /* ============================= BLOCKS =============================*/
 /* ==================================================================*/
+
+  /* ==================================================================*/
+  /* ====================== QUICK-REF PANEL ===========================*/
+  /* ==================================================================*/
+
+  const QR_CHAR_TABS    = new Set(['tab4', 'tab8']);
+  const QR_ACTION_TAGS  = ['Action', 'Reaction', 'Bonus action', 'Free action', 'Check', 'Save'];
+  const QR_ABILITY_TAGS = ['Buff', 'Debuff', 'Heal', 'Movement', 'Ranged', 'Melee', 'Spell', 'Utility', 'AC'];
+
+  // Per-tab filter state — persists across re-renders (e.g. when tab9 changes in landscape)
+  const qrState = {};
+
+  const getQrState = (charTab) => {
+    if (!qrState[charTab]) qrState[charTab] = { query: '', activeTags: new Set(), expandedIds: new Set() };
+    return qrState[charTab];
+  };
 
   const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
     console.log("🔍 Checking tab value:", tab, typeof tab);
@@ -234,6 +694,18 @@ export const appManager = (() => {
       tab = "tab4";
     }
 
+        // ── Session Log has its own render path ──────────────────────────
+    if (tab === 'tab7') {
+        renderSessionLog(filteredBlocks);
+        return;
+    }
+
+        // ── Character sheet tabs get the quick-ref panel ──────────────────
+    if (QR_CHAR_TABS.has(tab)) {
+        renderQuickRef(tab);
+        return;
+    }
+
     const tabSuffix  = tab.replace("tab", "");
     const sectionId  = `results_section_${tabSuffix}`;
     const resultsSection = document.getElementById(sectionId);
@@ -241,8 +713,10 @@ export const appManager = (() => {
 
     const _filterTabs  = new Set(['tab3', 'tab6', 'tab7', 'tab9']);
     const _openBtnHTML = _filterTabs.has(tab)
-        ? `<button class="filter-open-btn" data-tab="${tab}">
-              <img src="./images/Filter_Open_Icon.svg" alt="Open filter">
+        ? `<button class="filter-open-btn" data-tab="${tab}" title="Show filters">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+              </svg>
           </button>`
         : '';
 
@@ -441,6 +915,270 @@ resultsSection.innerHTML = `
     initScrollFades('.filter-section',               '--filter-fade-top-opacity', '--filter-fade-bottom-opacity','_filterFadeHandler', 100);
     initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
     initScrollFades('.roll-results', '--dice-fade-top-opacity', '--dice-fade-bottom-opacity', '_diceFadeHandler', 100);
+
+    // When tab9 changes, refresh any currently-visible quick-ref panels
+    if (tab === 'tab9') {
+      QR_CHAR_TABS.forEach(charTab => {
+        const tabEl = document.getElementById(charTab);
+        if (tabEl && tabEl.style.display !== 'none') renderQuickRef(charTab);
+      });
+    }
+  };
+
+  /* ==================================================================*/
+  /* ================== QUICK-REF HELPER FUNCTIONS ====================*/
+  /* ==================================================================*/
+
+  const buildQrBlockHTML = (block, expanded) => {
+    const usesHTML = block.uses
+      ? block.uses.map(state =>
+          `<span class="circle ${state ? 'unfilled' : 'filled'}"></span>`
+        ).join('')
+      : '';
+
+    const headerHTML = `
+      <div class="block-header">
+        <div class="block-header-left">
+          <div class="block-title"><h4>${block.title}</h4></div>
+          ${usesHTML ? `<div class="block-uses">${usesHTML}</div>` : ''}
+        </div>
+      </div>`;
+
+    if (!expanded) return headerHTML;
+
+    const blockTypes = Array.isArray(block.blockType)
+      ? block.blockType
+      : (block.blockType ? [block.blockType] : []);
+
+    const blockTypeHTML = blockTypes
+      .map(bt => `<button class="tag-button tag-characterType" data-tag="${bt}">${bt}</button>`)
+      .join('');
+
+    const tabPredefinedTags = Object.entries(categoryTags)
+      .filter(([, data]) => data.tabs.includes('tab9'))
+      .flatMap(([, data]) => data.tags);
+
+    const predefinedTagsHTML = Object.entries(categoryTags)
+      .filter(([, data]) => data.tabs.includes('tab9'))
+      .flatMap(([, data]) =>
+        data.tags
+          .filter(tag => block.tags.includes(tag))
+          .map(tag => `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`)
+      ).join('');
+
+    const userTagsHTML = block.tags
+      .filter(t => !tabPredefinedTags.includes(t))
+      .map(t => `<button class="tag-button tag-user" data-tag="${t}">${t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()}</button>`)
+      .join('');
+
+    const hasAnyTags = blockTypeHTML || predefinedTagsHTML || userTagsHTML;
+    const tagsHTML = hasAnyTags
+      ? `<div class="block-tags">${blockTypeHTML}${predefinedTagsHTML}${userTagsHTML}</div>`
+      : '';
+
+    const propertiesHTML = block.properties && block.properties.length > 0
+      ? `<div class="block-properties">${block.properties.map(p => `<span class="block-property">${p}</span>`).join('')}</div>`
+      : '';
+
+    let bodyText = block.text || '';
+    bodyText = bodyText
+      .replace(/<div[^>]*>/gi, '')
+      .replace(/^(&nbsp;|\s)+/gi, '')
+      .replace(/<\/div>/gi, '<br>')
+      .replace(/<p[^>]*>/gi, '')
+      .replace(/<\/p>/gi, '<br>')
+      .trim();
+    const bodyHTML = bodyText ? `<div class="block-body"><span>${bodyText}</span></div>` : '';
+
+    return headerHTML + tagsHTML + propertiesHTML + bodyHTML;
+  };
+
+  const refilterQr = (charTab) => {
+    const state    = getQrState(charTab);
+    const tabSuffix = charTab.replace('tab', '');
+    const blocksDiv = document.getElementById(`qr_blocks_${tabSuffix}`);
+    if (!blocksDiv) return;
+
+    let filtered = getBlocks('tab9');
+
+    if (state.query) {
+      const q = state.query.toLowerCase();
+      filtered = filtered.filter(b =>
+        b.title.toLowerCase().includes(q) ||
+        stripHTML(b.text || '').toLowerCase().includes(q) ||
+        (b.properties || []).some(p => p.toLowerCase().includes(q))
+      );
+    }
+
+    if (state.activeTags.size > 0) {
+      filtered = filtered.filter(b =>
+        [...state.activeTags].some(t => b.tags.includes(t))
+      );
+    }
+
+    blocksDiv.innerHTML = '';
+
+    if (filtered.length === 0) {
+      const p = document.createElement('p');
+      p.classList.add('results-placeholder');
+      p.style.cssText = 'text-align:center;opacity:0.25;padding:30px 0;';
+      p.textContent = 'No matching abilities';
+      blocksDiv.appendChild(p);
+      return;
+    }
+
+    filtered.forEach(block => {
+      const expanded = state.expandedIds.has(block.id);
+      const el = document.createElement('div');
+      el.className = `block ${expanded ? 'expanded' : 'condensed'}`;
+      el.dataset.qrId = block.id;
+      el.innerHTML = buildQrBlockHTML(block, expanded);
+      blocksDiv.appendChild(el);
+    });
+    initScrollFades('.qr-blocks-scroll', '--qr-fade-top-opacity', '--qr-fade-bottom-opacity', '_qrScrollFadeHandler');
+    document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: charTab } }));
+  };
+
+  const wireQrEvents = (section, charTab, tabSuffix) => {
+    const state     = getQrState(charTab);
+    const searchEl  = document.getElementById(`qr_search_${tabSuffix}`);
+    const clearEl   = document.getElementById(`qr_clear_${tabSuffix}`);
+    const blocksDiv = document.getElementById(`qr_blocks_${tabSuffix}`);
+
+    setupSearchInput(
+      searchEl,
+      clearEl,
+      (value) => { state.query = value; refilterQr(charTab); },
+      ()      => { state.query = '';    refilterQr(charTab); }
+    );
+
+    // Filter pill toggles
+    section.querySelectorAll('[data-qr-filter-tag]').forEach(pill => {
+      pill.addEventListener('click', e => {
+        e.stopPropagation();
+        const tag = pill.dataset.qrFilterTag;
+        if (state.activeTags.has(tag)) {
+          state.activeTags.delete(tag);
+          pill.classList.remove('selected');
+        } else {
+          state.activeTags.add(tag);
+          pill.classList.add('selected');
+        }
+        refilterQr(charTab);
+      });
+    });
+
+    // Delegated listener on blocks area — handles both tag clicks and expand/collapse
+    blocksDiv?.addEventListener('click', e => {
+      // Tag inside a block — activate the matching filter pill
+      const tagBtn = e.target.closest('.tag-button[data-tag]');
+      if (tagBtn) {
+        e.stopPropagation();
+        const tag  = tagBtn.dataset.tag;
+        const pill = section.querySelector(`[data-qr-filter-tag="${tag}"]`);
+        if (pill) {
+          if (state.activeTags.has(tag)) {
+            state.activeTags.delete(tag);
+            pill.classList.remove('selected');
+          } else {
+            state.activeTags.add(tag);
+            pill.classList.add('selected');
+          }
+          refilterQr(charTab);
+        }
+        return;
+      }
+
+      // Expand / collapse block on header / empty space click
+      const blockEl = e.target.closest('.block[data-qr-id]');
+      if (!blockEl) return;
+      const validTargets = ['.block', '.block-header', '.block-header-left', '.block-title'];
+      const isEmptySpace = validTargets.some(sel => {
+        const node = blockEl.querySelector(sel);
+        return e.target === blockEl || e.target === node;
+      });
+      if (!isEmptySpace) return;
+
+      const id    = blockEl.dataset.qrId;
+      const block = getBlocks('tab9').find(b => b.id === id);
+      if (!block) return;
+
+      const isExpanded = blockEl.classList.contains('expanded');
+      if (isExpanded) {
+        state.expandedIds.delete(id);
+        blockEl.classList.replace('expanded', 'condensed');
+      } else {
+        state.expandedIds.add(id);
+        blockEl.classList.replace('condensed', 'expanded');
+      }
+      blockEl.innerHTML = buildQrBlockHTML(block, !isExpanded);
+      document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: charTab } }));
+    });
+
+    // Horizontal fades on tag scroll row
+    const tagsScroll  = section.querySelector('.qr-tags-scroll');
+    const tagsWrapper = section.querySelector('.qr-tags-scroll-wrapper');
+
+    const updateTagFades = () => {
+      if (!tagsScroll || !tagsWrapper) return;
+      const left    = tagsScroll.scrollLeft;
+      const maxLeft = tagsScroll.scrollWidth - tagsScroll.clientWidth;
+      tagsWrapper.style.setProperty('--qr-tags-fade-left',  Math.min(left / 30, 1));
+      tagsWrapper.style.setProperty('--qr-tags-fade-right', Math.min((maxLeft - left) / 30, 1));
+    };
+
+    tagsScroll?.addEventListener('scroll', updateTagFades);
+    updateTagFades();
+
+    // Redirect vertical wheel to horizontal scroll when hovering over tag row
+    tagsWrapper?.addEventListener('wheel', e => {
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        tagsScroll.scrollLeft += e.deltaY;
+        updateTagFades();
+      }
+    }, { passive: false });
+  };
+
+  const renderQuickRef = (charTab) => {
+    const tabSuffix = charTab.replace('tab', '');
+    const section   = document.getElementById(`results_section_${tabSuffix}`);
+    if (!section) return;
+
+    const state = getQrState(charTab);
+
+    const actionPillsHTML = QR_ACTION_TAGS.map(tag =>
+      `<button class="tag-button tag-actionType${state.activeTags.has(tag) ? ' selected' : ''}" data-qr-filter-tag="${tag}">${tag}</button>`
+    ).join('');
+
+    const abilityPillsHTML = QR_ABILITY_TAGS.map(tag =>
+      `<button class="tag-button tag-abilityType${state.activeTags.has(tag) ? ' selected' : ''}" data-qr-filter-tag="${tag}">${tag}</button>`
+    ).join('');
+
+    section.innerHTML = `
+      <div class="qr-filter-row">
+        <div class="search-container" style="width:160px;flex-shrink:0;">
+          <input id="qr_search_${tabSuffix}" class="search_input" type="text" placeholder="Search…" value="${state.query}" />
+          <button class="clear-search" id="qr_clear_${tabSuffix}">
+            ${CLEAR_SEARCH_SVG}
+          </button>
+        </div>
+        <div class="qr-tags-scroll-wrapper">
+          <div class="qr-tags-scroll" id="qr_tags_${tabSuffix}">
+            <div class="vertical-break" style="height:22px;flex-shrink:0;"></div>
+            ${actionPillsHTML}
+            <div class="vertical-break" style="height:22px;flex-shrink:0;"></div>
+            ${abilityPillsHTML}
+          </div>
+        </div>
+      </div>
+      <div class="qr-blocks-scroll" id="qr_blocks_${tabSuffix}"></div>
+    `;
+
+    refilterQr(charTab);
+    wireQrEvents(section, charTab, tabSuffix);
+    initScrollFades('.qr-blocks-scroll', '--qr-fade-top-opacity', '--qr-fade-bottom-opacity', '_qrScrollFadeHandler', 100);
+    initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
   };
 
 
@@ -674,6 +1412,7 @@ resultsSection.innerHTML = `
   return {
     getActiveTab,
     renderBlocks,
+    renderQuickRef,
     loadBlocks,
     getBlocks,
     updateBlocksViewState,

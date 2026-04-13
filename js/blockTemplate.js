@@ -1,6 +1,6 @@
 import { filterManager } from './filterManager.js';
 import { categoryTags } from './tagConfig.js';
-import { toggleBlockUse } from './circleToggle.js';
+import { toggleBlockUse } from './uiHandlers.js';
 
 export const blockTemplate = (block, tab = "tab4") => {
     const viewState = block.viewState || 'expanded';
@@ -76,16 +76,17 @@ export const blockTemplate = (block, tab = "tab4") => {
 
     const actionMenuHTML = `
         <div class="block-actions">
+            ${viewState !== 'session-log' ? `
             <button class="action-button pin-button${block.pinned ? ' pin-active' : ''}" data-id="${block.id}" title="${block.pinned ? 'Unpin' : 'Pin'}">
                 <img src="images/${block.pinned ? 'Pin_Icon_Blue' : 'Pin_Icon'}.svg" alt="Pin" />
-            </button>
+            </button>` : ''}
             <div class="block-actions-menu">
-                <button class="actions-trigger" title="Actions">···</button>
                 <div class="block-actions-reveal">
                     <button class="action-button remove-button red-button" data-id="${block.id}" title="Remove">×</button>
                     <button class="action-button duplicate-button blue-button" data-id="${block.id}" title="Copy">❐</button>
                     <button class="action-button edit-button orange-button" data-id="${block.id}" title="Edit">✎</button>
                 </div>
+                <button class="actions-trigger" title="Actions">···</button>
             </div>
         </div>
     `;
@@ -122,6 +123,12 @@ export const blockTemplate = (block, tab = "tab4") => {
                 ${actionMenuHTML}
             </div>
         `;
+    } else if (viewState === 'session-log') {
+        content = `
+            <div class="block-header">
+                <div class="block-title"><h4>${block.title}</h4></div>
+            </div>
+        `;
     } else if (viewState === 'minimized') {
         const usesHTML = block.uses
             ? block.uses.map((state, idx) =>
@@ -142,21 +149,3 @@ export const blockTemplate = (block, tab = "tab4") => {
         </div>
     `;
 };
-
-// Mobile tap: toggle action menu open/closed
-document.addEventListener('click', e => {
-    const trigger = e.target.closest('.actions-trigger');
-    if (trigger) {
-        e.stopPropagation();
-        const menu = trigger.closest('.block-actions-menu');
-        const isOpen = menu.classList.contains('menu-open');
-        document.querySelectorAll('.block-actions-menu.menu-open')
-            .forEach(m => m.classList.remove('menu-open'));
-        if (!isOpen) menu.classList.add('menu-open');
-        return;
-    }
-    if (!e.target.closest('.block-actions-menu')) {
-        document.querySelectorAll('.block-actions-menu.menu-open')
-            .forEach(m => m.classList.remove('menu-open'));
-    }
-});

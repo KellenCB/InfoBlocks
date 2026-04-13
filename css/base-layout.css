@@ -19,6 +19,10 @@ body {
     overflow: hidden;
 }
 
+body:not(.landscape-mode) #char-sheet-panel .tab-content {
+    overflow-y: auto;
+}
+
 #header-row {
     position: relative;
     z-index: 9999;
@@ -50,8 +54,11 @@ body {
 }
 
 #right-panel {
+    display: flex;
+    flex-direction: column;
     flex: 1;
     min-width: 0;
+    min-height: 0;
 }
 
 #char-sheet-panel {
@@ -61,7 +68,6 @@ body {
     min-height: 0;
     min-width: 0;
     overflow: hidden;
-    gap: 10px;
 }
 
 #char-sheet-panel.active {
@@ -117,9 +123,10 @@ body {
 
 .tab-content {
     position: relative;
-    width: 100vw;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
     gap: 20px;
-    height: calc(100vh - 213px);
     display: flex;
     flex-direction: column;
 }
@@ -248,7 +255,8 @@ body {
     display: flex;
     flex-direction: row;
     width: 100%;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     padding: 0px 10px;
     gap: 15px;
     overflow: hidden;
@@ -310,45 +318,44 @@ body {
 
 .filter-panel-header {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
     padding: 0px 0px 15px 0px;
     flex-shrink: 0;
     position: relative;
     z-index: 2;
 }
 
-.filter-panel-header-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
 .filter-panel-header .search-container {
-    width: 100%;
-}
-
-.filter-panel-header .clear_filters_button {
-    flex-shrink: 0;
+    flex: 1;
+    min-width: 0;
 }
 
 .filter-panel-header .toggle-filter-button {
-    width: 18px;
-    height: 18px;
-    background: none;
+    width: 34px;
+    height: 34px;
+    background-color: var(--gray-400);
     border: none;
+    border-radius: 50%;
     cursor: pointer;
-    opacity: 0.5;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     padding: 0;
-    transition: opacity 0.2s;
+    transition: background-color 0.2s;
 }
 
 .filter-panel-header .toggle-filter-button:hover {
-    opacity: 1;
+    background-color: var(--gray-450);
+}
+
+.filter-panel-header .toggle-filter-button svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--gray-900);
+    stroke: none;
 }
 
 /* ── Filter section ───────────────────────────────────────────────── */
@@ -361,7 +368,6 @@ body {
     align-items: flex-start;
     flex-wrap: wrap;
     overflow: auto;
-    padding: 0px 20px 0px 20px;
     opacity: 1;
     transition: opacity 0.3s ease-out;
     scrollbar-width: none;
@@ -405,48 +411,51 @@ body {
 /* ── Open filter button ───────────────────────────────────────────── */
 
 .filter-open-btn {
-    width: 20px;
-    max-width: 20px;
-    height: 20px;
-    background: none;
+    width: 34px;
+    height: 34px;
+    background-color: var(--gray-400);
     border: none;
+    border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     padding: 0;
-    opacity: 0.5;
-    transform: scale(1);
+    opacity: 0;
+    transform: scale(0);
+    max-width: 0;
+    margin-left: 0;
     overflow: hidden;
     pointer-events: none;
-    transition: max-width 0.3s ease, opacity 0.3s ease, transform 0.3s ease, margin 0.3s ease;
+    transition: max-width 0.3s ease, opacity 0.3s ease, transform 0.3s ease, margin-left 0.3s ease, background-color 0.2s ease;
 }
 
-.filter-open-btn img {
-    width: 30px;
-    height: 30px;
-    pointer-events: none;
+.filter-open-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--gray-900);
+    stroke: none;
     flex-shrink: 0;
 }
 
 .filter-and-results:not(:has(.filter-section-wrapper.filter-panel-closed)) .filter-open-btn {
-    max-width: 0px;
+    max-width: 0;
     opacity: 0;
     transform: scale(0);
-    margin-left: -15px;
+    margin-left: 0;
     pointer-events: none;
 }
 
 .filter-and-results:has(.filter-section-wrapper.filter-panel-closed) .filter-open-btn {
-    max-width: 20px;
-    opacity: 0.5;
+    max-width: 34px;
+    opacity: 1;
     transform: scale(1);
     pointer-events: auto;
 }
 
 .filter-and-results:has(.filter-section-wrapper.filter-panel-closed) .filter-open-btn:hover {
-    opacity: 1;
+    background-color: var(--gray-450);
 }
 
 
@@ -493,6 +502,7 @@ body {
     justify-content: flex-end;
     align-items: flex-start;
     top: 0;
+    margin-bottom: 5px;
     width: 100%;
     height: 40px;
     z-index: 10;
@@ -574,6 +584,50 @@ body {
     text-wrap: balance;
 }
 
+.block.session-log {
+    background-color: transparent;
+    padding: 10px 0;
+    margin-bottom: 0;
+    border-radius: 0;
+    border-top: 1px solid var(--gray-400);
+}
+
+.block.session-log:last-child {
+    border-bottom: 1px solid var(--gray-400);
+}
+
+.block.session-log .block-title h4 {
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+}
+
+.block.session-log:last-child {
+    border-bottom: 1px solid var(--gray-400);
+}
+
+.block.session-log::after {
+    display: none;
+}
+
+.session-log-delete-btn {
+    background: none;
+    border: none;
+    color: var(--color-red);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 2px;
+    margin-left: auto;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+}
+
+.session-log-delete-btn:hover {
+    opacity: 1;
+}
+
 .block-title-minimized {
     display: inline-block;
     flex: 0 1 auto;
@@ -646,6 +700,7 @@ body {
     padding: 0;
     box-sizing: border-box;
     letter-spacing: 0.03em;
+    outline: none;
 }
 
 h1 {
@@ -697,8 +752,308 @@ a:hover {
 }
 
 /* ==================================================================*/
-/* =========================== SCROLLBAR ============================*/
+/* ====================== SESSION LOG LAYOUT ========================*/
 /* ==================================================================*/
+
+.session-log-layout {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    min-height: 0;
+    gap: 15px;
+    overflow: hidden;
+    container-type: inline-size;
+}
+
+.session-log-list-column {
+    display: flex;
+    flex-direction: column;
+    width: 35%;
+    min-width: 180px;
+    max-width: 350px;
+    flex-shrink: 0;
+    gap: 10px;
+    min-height: 0;
+    overflow: hidden;
+    transition: width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease;
+}
+
+.session-log-list-column.session-log-list-collapsed {
+    width: 0;
+    min-width: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.session-log-layout:has(.session-log-list-collapsed) {
+    gap: 0;
+}
+
+.session-log-search-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.session-log-search-row .search-container {
+    flex: 1;
+    min-width: 0;
+}
+
+.session-log-search-row .add-block-button {
+    width: 34px;
+    height: 34px;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.session-log-list-column .results-section {
+    flex: 1;
+    min-height: 0;
+    padding: 0 0 0 5px;
+}
+
+.session-log-viewer {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: clip;
+    background-color: var(--gray-300);
+    border-radius: 15px;
+    padding: 0 15px 0 15px;
+    position: relative;
+    scrollbar-width: none;
+}
+
+.session-log-viewer::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    display: block;
+    height: 80px;
+    margin-top: -40px;
+    background: linear-gradient(
+        color-mix(in srgb, var(--gray-300) 0%, transparent) 0%,
+        color-mix(in srgb, var(--gray-300) 50%, transparent) 50%,
+        var(--gray-300) 80%
+    );
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--viewer-fade-bottom-opacity, 1);
+}
+
+.session-viewer-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    padding-top: 15px;
+    background-color: var(--gray-300);
+    z-index: 2;
+}
+
+.session-viewer-header::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(
+        var(--gray-300) 0%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--viewer-fade-top-opacity, 0);
+}
+
+.session-viewer-title {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--gray-900);
+    word-break: break-word;
+    letter-spacing: 0.045em;
+}
+
+.session-viewer-title {
+    border-bottom: 1px solid transparent;
+    padding-bottom: 4px;
+    transition: border-color 0.2s;
+}
+
+.session-viewer-title[contenteditable="true"] {
+    outline: none;
+    border-bottom-color: var(--gray-500);
+    min-width: 1ch;
+}
+
+.session-viewer-edit-btn {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.4;
+    transition: opacity 0.2s, background-color 0.2s;
+    padding: 0;
+}
+
+.session-viewer-edit-btn:hover {
+    opacity: 1;
+    background-color: color-mix(in srgb, var(--color-orange) 50%, transparent);
+}
+
+#session_list_toggle {
+    background-color: var(--gray-400);
+    opacity: 1;
+    width: 34px;
+    height: 34px;
+    transition: background-color 0.2s;
+}
+
+.session-list-open-btn {
+    background-color: var(--gray-400) !important;
+}
+
+#session_list_toggle:hover, .session-list-open-btn:hover {
+    background-color: var(--gray-600) !important;
+}
+
+.session-list-open-btn {
+    opacity: 0;
+    transform: scale(0);
+    width: 0;
+    margin-right: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease, width 0.3s ease, margin-right 0.3s ease;
+    pointer-events: none;
+}
+
+.session-log-layout:has(.session-log-list-collapsed) .session-list-open-btn {
+    opacity: 1;
+    transform: scale(1);
+    width: 30px;
+    margin-right: 0;
+    pointer-events: auto;
+}
+
+.session-viewer-edit-btn.active {
+    background-color: var(--color-orange);
+    opacity: 1;
+}
+
+.session-viewer-edit-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--gray-900);
+    stroke: none;
+}
+
+.session-viewer-body {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--gray-800);
+    padding: 12px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    min-height: 100px;
+    box-sizing: border-box;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.session-viewer-body ul,
+.session-viewer-body ol {
+    padding-left: 18px;
+}
+
+.session-viewer-body li {
+    margin-bottom: 12px;
+}
+
+.session-viewer-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.session-viewer-delete-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background-color: var(--color-red);
+    color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: center;
+    margin-left: -36px;
+    pointer-events: none;
+    transition: transform 0.2s ease, opacity 0.2s ease, margin-left 0.2s ease;
+}
+
+.session-viewer-delete-btn.visible {
+    opacity: 1;
+    transform: scale(1);
+    margin-left: 0;
+    pointer-events: auto;
+}
+
+.session-viewer-body[contenteditable="true"] {
+    outline: none;
+    border-color: var(--gray-500);
+    background-color: var(--gray-400);
+}
+
+.session-viewer-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 10px;
+}
+
+.session-viewer-placeholder {
+    text-align: center;
+    opacity: 0.25;
+    padding: 40px;
+    margin: 0;
+}
+
+#results_section_7 .block.session-log-active .block-title h4 {
+    color: var(--color-green);
+    border-left: 3px solid var(--color-green);
+    padding-left: 10px;
+}
+
+@container (max-width: 520px) {
+    .session-log-layout {
+        flex-direction: column;
+    }
+    .session-log-list-column {
+        width: 100%;
+        max-width: 100%;
+        height: 40%;
+        min-height: 0;
+        flex-shrink: 0;
+    }
+}
 
 /* ==================================================================*/
 /* =========================== SCROLLBAR ============================*/
