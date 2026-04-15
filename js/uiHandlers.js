@@ -6,6 +6,24 @@
 /* ==================================================================*/
 
 // Determine if a save or skill toggle is proficient
+
+export function evaluateStatExpression(expr) {
+    const trimmed = expr.trim();
+    if (!/[+\-]/.test(trimmed)) return null;
+    if (!/^[+\-]?[\d\.]+(\s*[+\-]\s*[\d\.]+)*$/.test(trimmed)) return null;
+    const matches = trimmed.match(/[+\-]?\s*[\d\.]+/g);
+    if (!matches) return null;
+    const result = matches.reduce((sum, part) => sum + parseFloat(part.replace(/\s/g, '')), 0);
+    if (isNaN(result)) return null;
+    return Number.isInteger(result) ? result : parseFloat(result.toFixed(2));
+}
+
+function syncHitDieMax(tabPrefix) {
+    const level = localStorage.getItem(`${tabPrefix}_level`) || '';
+    const el = document.querySelector(`[data-storage-key="${tabPrefix}_hit_die_max"]`);
+    if (el) el.textContent = level;
+}
+
 function isProficient(toggleKey) {
     const toggle = document.querySelector(`[data-storage-key="${toggleKey}"]`);
     return toggle && toggle.classList.contains("filled");
@@ -38,7 +56,8 @@ function calculateAbilityBonus(scoreKey, bonusKey) {
         if (el) el.textContent = "00";
         return;
     }
-    const score = parseInt(raw, 10);
+    const evaluated = evaluateStatExpression(raw);
+    const score = evaluated !== null ? evaluated : parseInt(raw, 10);
     const mod = Math.floor((score - 10) / 2);
     localStorage.setItem(bonusKey, mod);
     if (el) el.textContent = (mod >= 0 ? "+" : "") + mod;
@@ -161,6 +180,8 @@ function initSaveSkillRollHandlers() {
 // Initial calculation after all load handlers
 window.addEventListener("load", () => {
     setTimeout(() => {
+        syncHitDieMax('tab4');
+        syncHitDieMax('tab8');
         updateTab4AbilityBonuses();
         updateTab8AbilityBonuses();
         updateTab4Saves();
@@ -177,6 +198,8 @@ document.addEventListener("input", (e) => {
     const key = e.target.getAttribute("data-storage-key");
     if (!key) return;
     localStorage.setItem(key, e.target.textContent);
+    if (key === 'tab4_level') syncHitDieMax('tab4');
+    else if (key === 'tab8_level') syncHitDieMax('tab8');
     if (key.endsWith("_score")) {
         if (key.startsWith("tab4_")) updateTab4AbilityBonuses();
         else if (key.startsWith("tab8_")) updateTab8AbilityBonuses();

@@ -182,7 +182,7 @@
   transition: transform 0.3s;
 }
 
-.selected-die:hover { transform: scale(1.05); }
+.selected-die:hover { background-color: color-mix(in srgb, var(--charges-color) 25%, transparent); }
 
 .selected-die-wrapper {
   position: relative;

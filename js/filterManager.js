@@ -74,7 +74,7 @@ export const filterManager = (() => {
         applyTo(`#dynamic_tags_section_${tabNumber} .tag-button`);
         // Rendered block tags
         applyTo(`#results_section_${tabNumber} .tag-button`);
-
+        
         // Accordion chips (collapsed groups)
         document.getElementById(`dynamic_tags_section_${tabNumber}`)
             ?.querySelectorAll('.tag-accordion-group:not(.open)').forEach(group => {
@@ -169,8 +169,7 @@ export const filterManager = (() => {
             if (
                 !target.classList.contains('tag-button') ||
                 target.closest('.add-block-overlay') ||
-                target.closest('.edit-block-overlay') ||
-                target.closest('.character-sheet-results')
+                target.closest('.edit-block-overlay')
             ) return;
 
             const activeTab = document.querySelector('.tab-button.active')?.dataset.tab || 'tab4';
@@ -280,6 +279,7 @@ export const filterManager = (() => {
         clearSelectedTags,
         applyFilters,
         applyFiltersAfterSave,
+        applySelectionClasses: _applySelectionClasses,
         handleTagClick,
         handleOverlayTagClick,
         filterBlocksBySelectedTags,

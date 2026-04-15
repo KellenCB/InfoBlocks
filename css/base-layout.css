@@ -562,6 +562,12 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     gap: 10px;
 }
 
+.block.expanded {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
 .block.expanded .block-header {
     align-items: stretch;
 }
@@ -670,9 +676,7 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 .block-tags {
     display: flex;
     flex-wrap: wrap;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    column-gap: 7px;
+    column-gap: 6px;
     row-gap: 8px;
 }
 
@@ -681,9 +685,8 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     flex-direction: column;
     width: 100%;
     padding: 0px;
-    margin-top: 6px;
     font-size: 16px;
-    line-height: 1.6;
+    line-height: 2;
     color: var(--gray-800);
     font-weight: 400;
     letter-spacing: 0.01em;

@@ -7,6 +7,7 @@ import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { stripHTML } from './appManager.js';
 import { initScrollFades, setupSearchInput, initDragToScroll } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
+import { evaluateStatExpression } from './uiHandlers.js';
 import { initLayoutMode, activateCharTab } from './layoutMode.js';
 export function repositionAllSliders() {
     requestAnimationFrame(() => {
@@ -556,13 +557,18 @@ document.addEventListener("DOMContentLoaded", () => {
 // 📌 Make character sheet editable fields more user friendly
 document.querySelectorAll("#tab4 .editable, #tab8 .editable").forEach(field => {
     field.addEventListener("focus", function () {
+        if (this.classList.contains('stat-subvalue') && this.dataset.rawExpression !== undefined) {
+            this.textContent = this.dataset.rawExpression;
+            this.dataset.initialValue = this.dataset.rawExpression;
+        } else {
+            this.dataset.initialValue = this.textContent;
+        }
         const range = document.createRange();
         range.selectNodeContents(this);
         const selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
         this.style.opacity = "1";
-        this.dataset.initialValue = this.textContent;
     });
 
     field.addEventListener("keydown", function (e) {
@@ -966,12 +972,20 @@ window.onload = async () => {
             const key = el.getAttribute('data-storage-key');
             if (key) {
                 const defaultValue = el.closest('.descriptor-grid') ? "XX" : "00";
+                const isSubvalue = el.classList.contains('stat-subvalue');
                 let savedValue = localStorage.getItem(key);
                 if (savedValue !== null && savedValue !== "") {
-                    el.textContent = savedValue;
+                    if (isSubvalue) {
+                        el.dataset.rawExpression = savedValue;
+                        const evaluated = evaluateStatExpression(savedValue);
+                        el.textContent = evaluated !== null ? String(evaluated) : savedValue;
+                    } else {
+                        el.textContent = savedValue;
+                    }
                     el.style.opacity = (savedValue === defaultValue) ? "0.5" : "1";
                 } else {
                     el.textContent = defaultValue;
+                    if (isSubvalue) el.dataset.rawExpression = defaultValue;
                     el.style.opacity = "0.5";
                     localStorage.setItem(key, defaultValue);
                 }
@@ -981,7 +995,13 @@ window.onload = async () => {
                         newValue = defaultValue;
                         el.textContent = newValue;
                         el.style.opacity = "0.5";
+                        if (isSubvalue) el.dataset.rawExpression = newValue;
                     } else {
+                        if (isSubvalue) {
+                            el.dataset.rawExpression = newValue;
+                            const evaluated = evaluateStatExpression(newValue);
+                            if (evaluated !== null) el.textContent = String(evaluated);
+                        }
                         el.style.opacity = (newValue === defaultValue) ? "0.5" : "1";
                     }
                     localStorage.setItem(key, newValue);

@@ -510,7 +510,7 @@ document.addEventListener('keydown', (e) => {
 
 // ── Inline dice roll pattern & applier ───────────────────────────────────────
 
-const STAT_NAMES = 'STR|DEX|CON|INT|WIS|CHA|PROF|INIT';
+const STAT_NAMES = 'STR|DEX|CON|INT|WIS|CHA|PROF|PB|INIT';
 
 const DICE_PATTERN = new RegExp(
     `(\\d+)d(\\d+)((?:\\s*[+\\-]\\s*(?:\\d+|${STAT_NAMES}))*)`,
@@ -539,6 +539,7 @@ function resolveStatValue(statName, tabPrefix) {
         WIS:  `${tabPrefix}_wis_bonus`,
         CHA:  `${tabPrefix}_cha_bonus`,
         PROF: 'tab4_prof',
+        PB:   'tab4_prof',
         INIT: 'tab4_initiative',
     };
     const key = statMap[statName.toUpperCase()];
@@ -547,7 +548,7 @@ function resolveStatValue(statName, tabPrefix) {
 
 function parseModifierString(modStr, tabPrefix) {
     if (!modStr) return { total: 0, display: '' };
-    const termRe = /([+\-])\s*(\d+|STR|DEX|CON|INT|WIS|CHA|PROF|INIT)/gi;
+    const termRe = /([+\-])\s*(\d+|STR|DEX|CON|INT|WIS|CHA|PROF|PB|INIT)/gi;
     let total = 0, m;
     while ((m = termRe.exec(modStr)) !== null) {
         const sign = m[1] === '+' ? 1 : -1;
