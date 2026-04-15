@@ -41,7 +41,12 @@
     align-items: center;
 }
 
-.tag-button:hover { transform: scale(1.05); }
+.block-tags .tag-button {
+    border-radius: 20px;
+    padding: 4px 14px;
+    height: auto;
+    font-size: 16px;
+}
 
 /* Per-category border + text colour */
 .tag-characterType  { border-color: var(--characterType-color);  color: var(--characterType-color); }
@@ -265,8 +270,7 @@
 .block-properties {
     display: flex;
     flex-wrap: wrap;
-    margin-top: 10px;
-    column-gap: 7px;
+    column-gap: 6px;
     row-gap: 8px;
 }
 

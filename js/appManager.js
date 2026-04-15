@@ -3,6 +3,7 @@ import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { blockTemplate } from './blockTemplate.js';
 import { overlayHandler, initUsesField } from './overlayHandler.js';
 import { applyInlineDiceRolls } from './diceRoller.js';
+import { filterManager } from './filterManager.js';
 import { blockActionsHandler } from './blockActionsHandler.js';
 
 const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
@@ -678,7 +679,7 @@ export const appManager = (() => {
   const qrState = {};
 
   const getQrState = (charTab) => {
-    if (!qrState[charTab]) qrState[charTab] = { query: '', activeTags: new Set(), expandedIds: new Set() };
+    if (!qrState[charTab]) qrState[charTab] = { query: '', expandedIds: new Set() };
     return qrState[charTab];
   };
 
@@ -1010,9 +1011,17 @@ resultsSection.innerHTML = `
       );
     }
 
-    if (state.activeTags.size > 0) {
+    const andTags = filterManager.getAndTags(charTab);
+    const orTags  = filterManager.getOrTags(charTab);
+
+    if (andTags.length > 0) {
       filtered = filtered.filter(b =>
-        [...state.activeTags].some(t => b.tags.includes(t))
+        andTags.every(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
+      );
+    }
+    if (orTags.length > 0) {
+      filtered = filtered.filter(b =>
+        orTags.some(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
       );
     }
 
@@ -1035,8 +1044,9 @@ resultsSection.innerHTML = `
       el.innerHTML = buildQrBlockHTML(block, expanded);
       blocksDiv.appendChild(el);
     });
+    applyInlineDiceRolls(blocksDiv, charTab);
+    filterManager.applySelectionClasses(charTab);
     initScrollFades('.qr-blocks-scroll', '--qr-fade-top-opacity', '--qr-fade-bottom-opacity', '_qrScrollFadeHandler');
-    document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: charTab } }));
   };
 
   const wireQrEvents = (section, charTab, tabSuffix) => {
@@ -1052,42 +1062,9 @@ resultsSection.innerHTML = `
       ()      => { state.query = '';    refilterQr(charTab); }
     );
 
-    // Filter pill toggles
-    section.querySelectorAll('[data-qr-filter-tag]').forEach(pill => {
-      pill.addEventListener('click', e => {
-        e.stopPropagation();
-        const tag = pill.dataset.qrFilterTag;
-        if (state.activeTags.has(tag)) {
-          state.activeTags.delete(tag);
-          pill.classList.remove('selected');
-        } else {
-          state.activeTags.add(tag);
-          pill.classList.add('selected');
-        }
-        refilterQr(charTab);
-      });
-    });
-
-    // Delegated listener on blocks area — handles both tag clicks and expand/collapse
+    // Delegated listener on blocks area — expand/collapse only; tag clicks handled by filterManager
     blocksDiv?.addEventListener('click', e => {
-      // Tag inside a block — activate the matching filter pill
-      const tagBtn = e.target.closest('.tag-button[data-tag]');
-      if (tagBtn) {
-        e.stopPropagation();
-        const tag  = tagBtn.dataset.tag;
-        const pill = section.querySelector(`[data-qr-filter-tag="${tag}"]`);
-        if (pill) {
-          if (state.activeTags.has(tag)) {
-            state.activeTags.delete(tag);
-            pill.classList.remove('selected');
-          } else {
-            state.activeTags.add(tag);
-            pill.classList.add('selected');
-          }
-          refilterQr(charTab);
-        }
-        return;
-      }
+      if (e.target.closest('.tag-button[data-tag]')) return;
 
       // Expand / collapse block on header / empty space click
       const blockEl = e.target.closest('.block[data-qr-id]');
@@ -1112,6 +1089,10 @@ resultsSection.innerHTML = `
         blockEl.classList.replace('condensed', 'expanded');
       }
       blockEl.innerHTML = buildQrBlockHTML(block, !isExpanded);
+      if (!isExpanded) {
+          applyInlineDiceRolls(blockEl, charTab);
+          filterManager.applySelectionClasses(charTab);
+      }
       document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: charTab } }));
     });
 
@@ -1147,14 +1128,17 @@ resultsSection.innerHTML = `
 
     const state = getQrState(charTab);
 
+  const andTags = filterManager.getAndTags(charTab);
+    const orTags  = filterManager.getOrTags(charTab);
+
     const actionPillsHTML = QR_ACTION_TAGS.map(tag =>
-      `<button class="tag-button tag-actionType${state.activeTags.has(tag) ? ' selected' : ''}" data-qr-filter-tag="${tag}">${tag}</button>`
+      `<button class="tag-button tag-actionType${andTags.includes(tag) ? ' selected' : orTags.includes(tag) ? ' selected-or' : ''}" data-tag="${tag}">${tag}</button>`
     ).join('');
 
     const abilityPillsHTML = QR_ABILITY_TAGS.map(tag =>
-      `<button class="tag-button tag-abilityType${state.activeTags.has(tag) ? ' selected' : ''}" data-qr-filter-tag="${tag}">${tag}</button>`
+      `<button class="tag-button tag-abilityType${andTags.includes(tag) ? ' selected' : orTags.includes(tag) ? ' selected-or' : ''}" data-tag="${tag}">${tag}</button>`
     ).join('');
-
+    
     section.innerHTML = `
       <div class="qr-filter-row">
         <div class="search-container" style="width:160px;flex-shrink:0;">

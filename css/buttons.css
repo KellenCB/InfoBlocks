@@ -267,7 +267,7 @@
     font-size: 0.9em;
     font-family: inherit;
     cursor: pointer;
-    line-height: inherit;
+    line-height: 1.5;
     vertical-align: baseline;
     transition: background-color 0.2s, color 0.2s;
 }
