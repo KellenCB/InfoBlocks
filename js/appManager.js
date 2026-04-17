@@ -1,7 +1,7 @@
 // appManager.js
 import { categoryTags, blockTypeConfig } from './tagConfig.js';
 import { blockTemplate } from './blockTemplate.js';
-import { overlayHandler, initUsesField } from './overlayHandler.js';
+import { overlayHandler, initUsesField, initToolbarForEditor } from './overlayHandler.js';
 import { applyInlineDiceRolls } from './diceRoller.js';
 import { filterManager } from './filterManager.js';
 import { blockActionsHandler } from './blockActionsHandler.js';
@@ -429,14 +429,18 @@ export const appManager = (() => {
       const titleEl = viewer.querySelector('.session-viewer-title');
       const bodyEl  = viewer.querySelector('#session_viewer_body');
       let snapshot = null;
+      let enforceList = null;
+      let viewerToolbarTeardown = null;
 
       const exitSave = () => {
           sessionViewerEditMode   = false;
           editBtn.classList.remove('active');
+          if (viewerToolbarTeardown) { viewerToolbarTeardown(); viewerToolbarTeardown = null; }
           titleEl.contentEditable = 'false';
           bodyEl.contentEditable  = 'false';
           titleEl.removeEventListener('keydown', keydownHandler);
           bodyEl.removeEventListener('keydown', keydownHandler);
+          if (enforceList) bodyEl.removeEventListener('input', enforceList);
 
           const newTitle     = titleEl.textContent.trim() || block.title;
           const newText      = bodyEl.innerHTML.trim();
@@ -477,6 +481,8 @@ export const appManager = (() => {
           bodyEl.contentEditable  = 'false';
           titleEl.removeEventListener('keydown', keydownHandler);
           bodyEl.removeEventListener('keydown', keydownHandler);
+          if (enforceList) bodyEl.removeEventListener('input', enforceList);
+          if (viewerToolbarTeardown) { viewerToolbarTeardown(); viewerToolbarTeardown = null; }
 
           if (snapshot) {
               titleEl.textContent = snapshot.title;
@@ -494,14 +500,22 @@ export const appManager = (() => {
           }
       };
 
+      let lastEscapeTime = 0;
       const keydownHandler = (e) => {
           if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
               e.preventDefault();
+              e.stopPropagation();
               exitSave();
           } else if (e.key === 'Escape') {
               e.preventDefault();
               e.stopPropagation();
-              exitDiscard();
+              const now = Date.now();
+              if (now - lastEscapeTime < 400) {
+                  lastEscapeTime = 0;
+                  exitDiscard();
+              } else {
+                  lastEscapeTime = now;
+              }
           }
       };
 
@@ -524,8 +538,26 @@ export const appManager = (() => {
 
               titleEl.contentEditable = 'true';
               bodyEl.contentEditable  = 'true';
+
               titleEl.addEventListener('keydown', keydownHandler);
               bodyEl.addEventListener('keydown', keydownHandler);
+
+              enforceList = () => {
+                  if (!bodyEl.querySelector('ul, ol')) {
+                      bodyEl.innerHTML = '<ul><li></li></ul>';
+                      const li = bodyEl.querySelector('li');
+                      if (li) {
+                          const range = document.createRange();
+                          const sel   = window.getSelection();
+                          range.selectNodeContents(li);
+                          range.collapse(false);
+                          sel.removeAllRanges();
+                          sel.addRange(range);
+                      }
+                  }
+              };
+              bodyEl.addEventListener('input', enforceList);
+              viewerToolbarTeardown = initToolbarForEditor(bodyEl);
 
               viewer.querySelector('.session-viewer-delete-btn')?.classList.add('visible');
 
@@ -576,7 +608,7 @@ export const appManager = (() => {
               const newBlock = {
                   id:         crypto.randomUUID(),
                   title:      generateNextSessionTitle(),
-                  text:       '',
+                  text:       '<ul><li><br></li></ul>',
                   tags:       [],
                   uses:       [],
                   properties: [],
