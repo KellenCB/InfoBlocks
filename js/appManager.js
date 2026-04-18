@@ -1043,8 +1043,8 @@ resultsSection.innerHTML = `
       );
     }
 
-    const andTags = filterManager.getAndTags(charTab);
-    const orTags  = filterManager.getOrTags(charTab);
+    const andTags = filterManager.getAndTags(tab);
+    const orTags  = filterManager.getOrTags(tab);
 
     if (andTags.length > 0) {
       filtered = filtered.filter(b =>
