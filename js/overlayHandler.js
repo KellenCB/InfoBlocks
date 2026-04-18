@@ -218,6 +218,8 @@ export const handleSaveBlock = () => {
     });
 };
 
+let initToolbarForEditor;
+
 export const overlayHandler = (() => {
     const selectedOverlayTags = Object.keys(categoryTags).reduce((acc, category) => {
         acc[category] = [];
@@ -478,18 +480,7 @@ export const overlayHandler = (() => {
 /* ========================== TEXT TOOLBAR ==========================*/
 /* ==================================================================*/
 
-function addFormatToolbar() {
-    const configs = [
-      { formSel: '.add-block-form', textareaId: 'block_text_overlay' },
-      { formSel: '.edit-block-form', textareaId: 'block_text_edit_overlay' }
-    ];
-  
-    configs.forEach(({ formSel, textareaId }) => {
-      const form = document.querySelector(formSel);
-      if (!form) return;
-      const editor = form.querySelector(`#${textareaId}`);
-      if (!editor) return;
-  
+initToolbarForEditor = function(editor) {
       const toolbar = document.createElement('div');
       toolbar.className = 'text-toolbar';
       toolbar.innerHTML = `
@@ -867,6 +858,25 @@ function addFormatToolbar() {
         document.execCommand('insertHTML', false, cleaned);
         updateToolbarState();
       });
+
+    return function teardown() {
+        if (wrapper.parentNode) {
+            wrapper.parentNode.replaceChild(editor, wrapper);
+        }
+    };
+}
+
+function addFormatToolbar() {
+    const configs = [
+      { formSel: '.add-block-form', textareaId: 'block_text_overlay' },
+      { formSel: '.edit-block-form', textareaId: 'block_text_edit_overlay' }
+    ];
+    configs.forEach(({ formSel, textareaId }) => {
+      const form = document.querySelector(formSel);
+      if (!form) return;
+      const editor = form.querySelector(`#${textareaId}`);
+      if (!editor) return;
+      initToolbarForEditor(editor);
     });
 }
     
@@ -904,4 +914,4 @@ function initCEPlaceholder(id) {
     };
 })();
 
-export { initUsesField };
+export { initUsesField, initToolbarForEditor };

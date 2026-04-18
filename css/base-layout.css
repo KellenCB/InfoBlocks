@@ -680,6 +680,31 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     row-gap: 8px;
 }
 
+.block.condensed .block-tags-condensed .tag-button {
+    display: none;
+}
+
+.block.condensed .block-tags-condensed .tag-button.selected,
+.block.condensed .block-tags-condensed .tag-button.selected-or {
+    display: inline-flex;
+    font-size: 0.7em;
+    padding: 1px 6px;
+}
+
+.block-tags-condensed {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    flex: 1;
+    margin: 0;
+    padding: 0;
+    gap: 4px;
+    min-width: 0;
+    overflow: hidden;
+    mask-image: linear-gradient(to right, black 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
+}
+
 .block-body {
     display: flex;
     flex-direction: column;
@@ -1020,9 +1045,6 @@ a:hover {
 }
 
 .session-viewer-body[contenteditable="true"] {
-    outline: none;
-    border-color: var(--gray-500);
-    background-color: var(--gray-400);
 }
 
 .session-viewer-tags {

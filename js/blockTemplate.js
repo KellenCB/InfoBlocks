@@ -116,10 +116,18 @@ export const blockTemplate = (block, tab = "tab4") => {
                 `<span class="circle ${state ? 'unfilled' : ''}" onclick="toggleBlockUse('${block.id}', ${idx}, event, this)"></span>`
               ).join("")
             : "";
+        const condensedTagsHTML = hasAnyTags ? `
+            <div class="block-tags block-tags-condensed">
+                ${blockTypeHTML}
+                ${predefinedTagsHTML}
+                ${userTagsHTML}
+            </div>
+        ` : "";
         content = `
             <div class="block-header">
                 <div class="block-title"><h4>${block.title}</h4></div>
                 ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
+                ${condensedTagsHTML}
                 ${actionMenuHTML}
             </div>
         `;
