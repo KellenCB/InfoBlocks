@@ -21,7 +21,7 @@ export function initDragToScroll() {
 
     document.addEventListener('mousedown', e => {
         const el = e.target.closest(
-            '.results-section:not(.character-sheet-results), .filter-section, .saving-throws-and-skills-column-wrapper, ' +
+            '.pinned-blocks-zone, .results-section:not(.character-sheet-results), .filter-section, .saving-throws-and-skills-column-wrapper, ' +
             '.qr-blocks-scroll, .qr-tags-scroll, .session-log-viewer, .roll-results'
         );
         if (!el) return;
@@ -640,7 +640,7 @@ export const appManager = (() => {
                   .map(b => blockTemplate({ ...b, viewState: 'session-log', uses: null }, 'tab7'))
                   .join('');
               resultsSection.insertAdjacentHTML('beforeend',
-                  `<div class="pinned-blocks-zone">${pinnedHTML}</div>`);
+                  `<div class="pinned-blocks-zone-wrapper"><div class="pinned-blocks-zone">${pinnedHTML}</div></div>`);
           }
 
           normalBlocks.forEach(block => {
@@ -884,7 +884,7 @@ resultsSection.innerHTML = `
 
     if (pinnedBlocks.length > 0) {
       const pinnedHTML = pinnedBlocks.map(b => blockTemplate(b, tab)).join('');
-      resultsSection.insertAdjacentHTML('beforeend', `<div class="pinned-blocks-zone">${pinnedHTML}</div>`);
+      resultsSection.insertAdjacentHTML('beforeend', `<div class="pinned-blocks-zone-wrapper"><div class="pinned-blocks-zone">${pinnedHTML}</div></div>`);
     }
 
     if (displayBlocks.length === 0 && pinnedBlocks.length === 0) {

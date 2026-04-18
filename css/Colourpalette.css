@@ -33,6 +33,12 @@
     --color-blue: #2d81ff;
     --color-cyan: #06ade4;
 
+    /* ── Block States ────────────────────────────────────────────── */
+
+    --block-bg-pinned-base: color-mix(in srgb, var(--color-blue) 12%, var(--gray-300));
+    --block-bg-pinned-highlight: rgba(45, 129, 255, 0.35);
+    --block-border-pinned: rgba(45, 129, 255, 0.25);
+
     /* ── Inventory Colours ───────────────────────────────────────── */
 
     --color-gold:   rgba(255, 215, 0, 0.5);

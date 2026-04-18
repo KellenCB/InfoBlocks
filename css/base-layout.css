@@ -1518,9 +1518,9 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 /* ========================= PINNED BLOCKS ==========================*/
 /* ==================================================================*/
 
-.pinned-blocks-zone {
+.pinned-blocks-zone-wrapper {
     position: sticky;
-    top: 40px;
+    top: 45px;
     z-index: 9;
     background-color: var(--gray-150);
     padding-top: 0px;
@@ -1528,4 +1528,25 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     border-bottom: 1px solid var(--gray-500);
     margin-bottom: 10px;
     box-shadow: 0 -20px 0 20px var(--gray-150);
+    max-height: 60%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.pinned-blocks-zone {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.block.pinned {
+    background-color: var(--block-bg-pinned-base);
+    background-image: radial-gradient(90% 110% at 50% 0%, var(--block-bg-pinned-highlight) 0%, transparent 100%);
+    border: 1px solid var(--block-border-pinned);
+    padding: 9px 14px;
+}
+
+.block.pinned:not(.minimized)::after {
+    display: none;
 }

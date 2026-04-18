@@ -260,7 +260,7 @@
     display: inline;
     padding: 1px 7px;
     margin: 0 2px;
-    background-color: var(--gray-350);
+    background-color: color-mix(in srgb, var(--gray-350) 25%, transparent);;
     border: 1px solid var(--color-green);
     border-radius: 5px;
     color: var(--color-green);
