@@ -1043,18 +1043,36 @@ resultsSection.innerHTML = `
       );
     }
 
-    const andTags = filterManager.getAndTags(tab);
-    const orTags  = filterManager.getOrTags(tab);
+    const andTags = filterManager.getAndTags(charTab);
+    const orTags  = filterManager.getOrTags(charTab);
 
-    if (andTags.length > 0) {
+    const tab9Types      = blockTypeConfig['tab9']?.types || [];
+    const andBlockTypes  = andTags.filter(t => tab9Types.includes(t));
+    const orBlockTypes   = orTags.filter(t => tab9Types.includes(t));
+    const regularAndTags = andTags.filter(t => !tab9Types.includes(t));
+    const regularOrTags  = orTags.filter(t => !tab9Types.includes(t));
+
+    if (regularAndTags.length > 0) {
       filtered = filtered.filter(b =>
-        andTags.every(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
+        regularAndTags.every(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
       );
     }
-    if (orTags.length > 0) {
+    if (regularOrTags.length > 0) {
       filtered = filtered.filter(b =>
-        orTags.some(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
+        regularOrTags.some(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
       );
+    }
+    if (andBlockTypes.length > 0) {
+      filtered = filtered.filter(b => {
+        const types = Array.isArray(b.blockType) ? b.blockType : (b.blockType ? [b.blockType] : []);
+        return andBlockTypes.every(t => types.includes(t));
+      });
+    }
+    if (orBlockTypes.length > 0) {
+      filtered = filtered.filter(b => {
+        const types = Array.isArray(b.blockType) ? b.blockType : (b.blockType ? [b.blockType] : []);
+        return orBlockTypes.some(t => types.includes(t));
+      });
     }
 
     blocksDiv.innerHTML = '';
