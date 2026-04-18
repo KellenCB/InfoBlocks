@@ -138,6 +138,7 @@
 /* ============================= CIRCLES ============================*/
 /* ==================================================================*/
 
+
 .circle {
     display: inline-block;
     width: 30px;
@@ -172,7 +173,7 @@
     transition: background-color 0.3s ease;
 }
 
-.block-uses .circle { height: 18px; width: 18px; }
+.block-uses .circle { height: 15px; width: 15px; }
 
 /* ==================================================================*/
 /* ======================= DEATH SAVE STYLING =======================*/
@@ -257,14 +258,16 @@
 /* ==================================================================*/
 
 .inline-dice-roll {
+    --roll-color: var(--color-green);
     display: inline;
-    padding: 1px 7px;
+    padding: 2px 5px 1px 5px;
     margin: 0 2px;
-    background-color: color-mix(in srgb, var(--gray-350) 25%, transparent);;
-    border: 1px solid var(--color-green);
+    background-color: color-mix(in srgb, var(--roll-color) 20%, transparent);
+    border: none;
     border-radius: 5px;
-    color: var(--color-green);
+    color: var(--roll-color);
     font-size: 0.9em;
+    font-weight: 500;
     font-family: inherit;
     cursor: pointer;
     line-height: 1.5;
@@ -272,11 +275,9 @@
     transition: background-color 0.2s, color 0.2s;
 }
 
-.inline-dice-roll:hover              { background-color: var(--color-green); color: var(--gray-900); }
-.inline-dice-roll.crank              { border-color: var(--color-red);  color: var(--color-red); }
-.inline-dice-roll.crank:hover        { background-color: var(--color-red);   color: var(--gray-900); }
-.inline-dice-roll.hit                { border-color: var(--color-blue); color: var(--color-blue); }
-.inline-dice-roll.hit:hover          { background-color: var(--color-blue);  color: var(--gray-900); }
+.inline-dice-roll:hover   { background-color: var(--roll-color); color: var(--gray-150); }
+.inline-dice-roll.crank   { --roll-color: var(--color-red); }
+.inline-dice-roll.hit     { --roll-color: var(--color-blue); }
 
 /* ==================================================================*/
 /* =================== BLOCK ACTIONS MENU ===========================*/

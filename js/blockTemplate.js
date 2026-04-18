@@ -7,8 +7,11 @@ export const blockTemplate = (block, tab = "tab4") => {
 
     const andTags = filterManager.getAndTags();
     const orTags  = filterManager.getOrTags();
+    const notTags = filterManager.getNotTags();
     const selClass = tag =>
-        andTags.includes(tag) ? 'selected' : orTags.includes(tag) ? 'selected-or' : '';
+        andTags.includes(tag)  ? 'selected'     :
+        orTags.includes(tag)   ? 'selected-or'  :
+        notTags.includes(tag)  ? 'selected-not' : '';
 
     const tabPredefinedTags = Object.entries(categoryTags)
         .filter(([_, data]) => data.tabs.includes(tab))

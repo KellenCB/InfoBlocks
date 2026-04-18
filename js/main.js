@@ -681,12 +681,11 @@ document.addEventListener("click", (e) => {
         }
     }
 
-    // Remove stale chips from inside the pill either way before possibly re-adding
-    group.querySelector(".tag-accordion-pill")
-        ?.querySelectorAll(".tag-accordion-chip").forEach(c => c.remove());
+    // Remove stale chips from the group either way before possibly re-adding
+    group.querySelectorAll(":scope > .tag-accordion-chip").forEach(c => c.remove());
 
     if (wasOpen) {
-        // Just collapsed — add a chip inside the pill for every selected tag in the body
+        // Just collapsed — add a chip as a sibling after the pill for every selected tag
         const pill = group.querySelector(".tag-accordion-pill");
         const body = group.querySelector(".tag-accordion-body");
         if (!pill || !body) return;
@@ -699,7 +698,7 @@ document.addEventListener("click", (e) => {
             if (btn.classList.contains("selected-or")) chip.classList.add("selected-or");
             chip.dataset.tag = btn.dataset.tag;
             chip.textContent = btn.dataset.tag;
-            pill.appendChild(chip);
+            group.appendChild(chip);
         });
     }
 });

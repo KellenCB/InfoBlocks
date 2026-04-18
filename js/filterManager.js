@@ -19,6 +19,7 @@ let _getBlocks    = null;
 // ── Filter state ───────────────────────────────────────────────────────────────
 let selectedAndTagsByTab = {};
 let selectedOrTagsByTab  = {};
+let selectedNotTagsByTab = {};
 
 export const filterManager = (() => {
 
@@ -32,6 +33,7 @@ export const filterManager = (() => {
     // ── Getters / setters ──────────────────────────────────────────────────────
     const getAndTags      = (tab = 'tab4') => selectedAndTagsByTab[tab] ? [...selectedAndTagsByTab[tab]] : [];
     const getOrTags       = (tab = 'tab4') => selectedOrTagsByTab[tab]  ? [...selectedOrTagsByTab[tab]]  : [];
+    const getNotTags      = (tab = 'tab4') => selectedNotTagsByTab[tab] ? [...selectedNotTagsByTab[tab]] : [];
     const getSelectedTags = (tab = 'tab4') => getAndTags(tab); // backward-compatible alias
 
     const setSelectedTags = (tab, tags) => {
@@ -41,6 +43,7 @@ export const filterManager = (() => {
     const clearSelectedTags = (tab) => {
         selectedAndTagsByTab[tab] = [];
         selectedOrTagsByTab[tab]  = [];
+        selectedNotTagsByTab[tab] = [];
     };
 
     // ── Apply selected/selected-or classes to the DOM ─────────────────────────
@@ -52,6 +55,7 @@ export const filterManager = (() => {
         const tabNumber = activeTab.replace('tab', '');
         const andTags   = getAndTags(activeTab);
         const orTags    = getOrTags(activeTab);
+        const notTags   = getNotTags(activeTab);
 
         const selectedBlockTypes = new Set(
             [...document.querySelectorAll(`#character_type_tags_${tabNumber} .tag-button.selected`)]
@@ -61,12 +65,17 @@ export const filterManager = (() => {
             [...document.querySelectorAll(`#character_type_tags_${tabNumber} .tag-button.selected-or`)]
                 .map(b => b.dataset.tag)
         );
+        const notBlockTypes = new Set(
+            [...document.querySelectorAll(`#character_type_tags_${tabNumber} .tag-button.selected-not`)]
+                .map(b => b.dataset.tag)
+        );
 
         const applyTo = (selector) => {
             document.querySelectorAll(selector).forEach(btn => {
                 const tag = btn.dataset.tag;
-                btn.classList.toggle('selected',    andTags.includes(tag) || selectedBlockTypes.has(tag));
-                btn.classList.toggle('selected-or', orTags.includes(tag)  || orBlockTypes.has(tag));
+                btn.classList.toggle('selected',     andTags.includes(tag) || selectedBlockTypes.has(tag));
+                btn.classList.toggle('selected-or',  orTags.includes(tag)  || orBlockTypes.has(tag));
+                btn.classList.toggle('selected-not', notTags.includes(tag) || notBlockTypes.has(tag));
             });
         };
 
@@ -81,17 +90,19 @@ export const filterManager = (() => {
                 const pill     = group.querySelector('.tag-accordion-pill');
                 const body     = group.querySelector('.tag-accordion-body');
                 if (!pill || !body) return;
-                pill.querySelectorAll('.tag-accordion-chip').forEach(c => c.remove());
+                group.querySelectorAll(':scope > .tag-accordion-chip').forEach(c => c.remove());
                 const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group') || '';
-                body.querySelectorAll('.tag-button.selected, .tag-button.selected-or').forEach(btn => {
+                body.querySelectorAll('.tag-button.selected, .tag-button.selected-or, .tag-button.selected-not').forEach(btn => {
                     const chip = document.createElement('button');
                     chip.classList.add('tag-accordion-chip');
                     if (tagClass) chip.classList.add(tagClass);
-                    if (btn.classList.contains('selected-or')) chip.classList.add('selected-or');
+                    if (btn.classList.contains('selected-or'))  chip.classList.add('selected-or');
+                    if (btn.classList.contains('selected-not')) chip.classList.add('selected-not');
                     chip.dataset.tag = btn.dataset.tag;
                     chip.textContent = btn.dataset.tag;
-                    pill.appendChild(chip);
+                    group.appendChild(chip);
                 });
+
             });
     };
 
@@ -112,6 +123,8 @@ export const filterManager = (() => {
                 .map(b => b.dataset.tag);
             const orTypes  = [...document.querySelectorAll(`#character_type_tags_${tabNumber} .tag-button.selected-or`)]
                 .map(b => b.dataset.tag);
+            const notTypes = [...document.querySelectorAll(`#character_type_tags_${tabNumber} .tag-button.selected-not`)]
+                .map(b => b.dataset.tag);
 
             if (andTypes.length) {
                 blocks = blocks.filter(block => {
@@ -123,6 +136,12 @@ export const filterManager = (() => {
                 blocks = blocks.filter(block => {
                     const types = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
                     return orTypes.some(t => types.includes(t));
+                });
+            }
+            if (notTypes.length) {
+                blocks = blocks.filter(block => {
+                    const types = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+                    return !notTypes.some(t => types.includes(t));
                 });
             }
         }
@@ -137,12 +156,18 @@ export const filterManager = (() => {
 
         // 3. OR tags — block must have AT LEAST ONE of these
         const orTags = getOrTags(activeTab);
-        console.log('OR filter - orTags:', orTags, 'blocks before:', blocks.length);
         if (orTags.length) {
             blocks = blocks.filter(b =>
                 orTags.some(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
             );
-            console.log('OR filter - blocks after:', blocks.length);
+        }
+
+        // 3b. NOT tags — block must have NONE of these
+        const notTags = getNotTags(activeTab);
+        if (notTags.length) {
+            blocks = blocks.filter(b =>
+                !notTags.some(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
+            );
         }
 
         // 4. Search query
@@ -177,6 +202,7 @@ export const filterManager = (() => {
             const tag = target.dataset.tag?.trim();
             if (!tag) return;
 
+            // Block-type tags — handled via DOM classes directly (not state objects)
             const tabBTConfig = blockTypeConfig[activeTab];
             if (tabBTConfig && tabBTConfig.types.includes(tag)) {
                 const btBtn = document.querySelector(
@@ -185,52 +211,48 @@ export const filterManager = (() => {
                 if (btBtn) {
                     const inAnd = btBtn.classList.contains('selected');
                     const inOr  = btBtn.classList.contains('selected-or');
-                    if (!e.shiftKey) {
-                        if (inAnd || inOr) {
-                            btBtn.classList.remove('selected', 'selected-or');
-                        } else {
-                            btBtn.classList.add('selected');
-                        }
+                    const inNot = btBtn.classList.contains('selected-not');
+
+                    if (e.altKey) {
+                        // alt-click: any state → NOT, unless already NOT → unselected
+                        btBtn.classList.remove('selected', 'selected-or', 'selected-not');
+                        if (!inNot) btBtn.classList.add('selected-not');
+                    } else if (e.shiftKey) {
+                        // shift-click: AND → OR, NOT → OR, OR → unselected, unselected → OR
+                        btBtn.classList.remove('selected', 'selected-or', 'selected-not');
+                        if (!inOr) btBtn.classList.add('selected-or');
                     } else {
-                        if (inOr) {
-                            btBtn.classList.remove('selected-or');
-                        } else if (inAnd) {
-                            btBtn.classList.remove('selected');
-                            btBtn.classList.add('selected-or');
-                        } else {
-                            btBtn.classList.add('selected-or');
-                        }
+                        // plain click: any state → unselected, unselected → AND
+                        btBtn.classList.remove('selected', 'selected-or', 'selected-not');
+                        if (!inAnd && !inOr && !inNot) btBtn.classList.add('selected');
                     }
                     applyFilters(tabNumber);
                 }
                 return;
             }
 
-            const andTags = getAndTags(activeTab);            const orTags  = getOrTags(activeTab);
+            // Normal tags — handled via state objects
+            const andTags = getAndTags(activeTab);
+            const orTags  = getOrTags(activeTab);
+            const notTags = getNotTags(activeTab);
             const inAnd   = andTags.includes(tag);
             const inOr    = orTags.includes(tag);
+            const inNot   = notTags.includes(tag);
 
-            if (!e.shiftKey) {
-                if (inAnd || inOr) {
-                    // Deselect
-                    selectedAndTagsByTab[activeTab] = andTags.filter(t => t !== tag);
-                    selectedOrTagsByTab[activeTab]  = orTags.filter(t => t !== tag);
-                } else {
-                    // Unselected → AND
-                    selectedAndTagsByTab[activeTab] = [...andTags, tag];
-                }
+            // Remove from all three arrays first — we'll add back to the right one
+            selectedAndTagsByTab[activeTab] = andTags.filter(t => t !== tag);
+            selectedOrTagsByTab[activeTab]  = orTags.filter(t => t !== tag);
+            selectedNotTagsByTab[activeTab] = notTags.filter(t => t !== tag);
+
+            if (e.altKey) {
+                // alt-click: any state → NOT, unless already NOT → unselected
+                if (!inNot) selectedNotTagsByTab[activeTab].push(tag);
+            } else if (e.shiftKey) {
+                // shift-click: AND → OR, NOT → OR, OR → unselected, unselected → OR
+                if (!inOr) selectedOrTagsByTab[activeTab].push(tag);
             } else {
-                if (inOr) {
-                    // Shift+click OR → deselect
-                    selectedOrTagsByTab[activeTab] = orTags.filter(t => t !== tag);
-                } else if (inAnd) {
-                    // AND → OR
-                    selectedAndTagsByTab[activeTab] = andTags.filter(t => t !== tag);
-                    selectedOrTagsByTab[activeTab]  = [...orTags, tag];
-                } else {
-                    // Unselected → OR
-                    selectedOrTagsByTab[activeTab] = [...orTags, tag];
-                }
+                // plain click: any state → unselected, unselected → AND
+                if (!inAnd && !inOr && !inNot) selectedAndTagsByTab[activeTab].push(tag);
             }
 
             applyFilters(tabNumber);
@@ -275,6 +297,7 @@ export const filterManager = (() => {
         getSelectedTags,
         getAndTags,
         getOrTags,
+        getNotTags,
         setSelectedTags,
         clearSelectedTags,
         applyFilters,

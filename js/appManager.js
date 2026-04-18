@@ -1045,12 +1045,15 @@ resultsSection.innerHTML = `
 
     const andTags = filterManager.getAndTags(charTab);
     const orTags  = filterManager.getOrTags(charTab);
+    const notTags = filterManager.getNotTags(charTab);
 
     const tab9Types      = blockTypeConfig['tab9']?.types || [];
     const andBlockTypes  = andTags.filter(t => tab9Types.includes(t));
     const orBlockTypes   = orTags.filter(t => tab9Types.includes(t));
+    const notBlockTypes  = notTags.filter(t => tab9Types.includes(t));
     const regularAndTags = andTags.filter(t => !tab9Types.includes(t));
     const regularOrTags  = orTags.filter(t => !tab9Types.includes(t));
+    const regularNotTags = notTags.filter(t => !tab9Types.includes(t));
 
     if (regularAndTags.length > 0) {
       filtered = filtered.filter(b =>
@@ -1060,6 +1063,11 @@ resultsSection.innerHTML = `
     if (regularOrTags.length > 0) {
       filtered = filtered.filter(b =>
         regularOrTags.some(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
+      );
+    }
+    if (regularNotTags.length > 0) {
+      filtered = filtered.filter(b =>
+        !regularNotTags.some(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
       );
     }
     if (andBlockTypes.length > 0) {
@@ -1072,6 +1080,12 @@ resultsSection.innerHTML = `
       filtered = filtered.filter(b => {
         const types = Array.isArray(b.blockType) ? b.blockType : (b.blockType ? [b.blockType] : []);
         return orBlockTypes.some(t => types.includes(t));
+      });
+    }
+    if (notBlockTypes.length > 0) {
+      filtered = filtered.filter(b => {
+        const types = Array.isArray(b.blockType) ? b.blockType : (b.blockType ? [b.blockType] : []);
+        return !notBlockTypes.some(t => types.includes(t));
       });
     }
 

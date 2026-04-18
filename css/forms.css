@@ -78,6 +78,7 @@
 
 #block_text_overlay,
 #block_text_edit_overlay {
+    font-size: 13px;
     min-height: 100px;
     padding: 12px;
     resize: vertical;
@@ -187,16 +188,21 @@
 #block_text_edit_overlay ol,
 .block-body ul,
 .block-body ol {
-    margin-right: 0.5em 0;
-    padding-left: 1.5em;
+    margin: 4px 0 0 0;
+    padding-left: 1.25em;
 }
 
 #block_text_overlay li,
 #block_text_edit_overlay li,
 .block-body li {
-    margin-right: 0.25em 0;
-    line-height: 1.6;
-    margin-bottom: 12px;
+    margin: 0 0 3px 0;
+    line-height: 1.5;
+}
+
+#block_text_overlay li:last-child,
+#block_text_edit_overlay li:last-child,
+.block-body li:last-child {
+    margin-bottom: 0;
 }
 
 /* ==================================================================*/

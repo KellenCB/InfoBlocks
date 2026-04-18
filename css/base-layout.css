@@ -352,8 +352,8 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 }
 
 .filter-panel-header .toggle-filter-button svg {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     fill: var(--gray-900);
     stroke: none;
 }
@@ -367,6 +367,8 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     position: relative;
     align-items: flex-start;
     flex-wrap: wrap;
+    column-gap: 5px;
+    row-gap: 6px;
     overflow: auto;
     opacity: 1;
     transition: opacity 0.3s ease-out;
@@ -411,8 +413,8 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 /* ── Open filter button ───────────────────────────────────────────── */
 
 .filter-open-btn {
-    width: 34px;
-    height: 34px;
+    width: 26px;
+    height: 26px;
     background-color: var(--gray-400);
     border: none;
     border-radius: 50%;
@@ -432,8 +434,8 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 }
 
 .filter-open-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     fill: var(--gray-900);
     stroke: none;
     flex-shrink: 0;
@@ -448,7 +450,7 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 }
 
 .filter-and-results:has(.filter-section-wrapper.filter-panel-closed) .filter-open-btn {
-    max-width: 34px;
+    max-width: 26px;
     opacity: 1;
     transform: scale(1);
     pointer-events: auto;
@@ -523,7 +525,7 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     background-color: var(--block-bg);
     border-radius: 10px;
     padding: 10px 15px;
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     position: relative;
     overflow: hidden;
 }
@@ -588,6 +590,12 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     min-width: 0;
     margin-right: 2px;
     text-wrap: balance;
+}
+
+.block-title h4,
+.block-title-minimized h4 {
+    font-size: 15px;
+    letter-spacing: 0.03em;
 }
 
 .block.session-log {
@@ -710,12 +718,11 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     flex-direction: column;
     width: 100%;
     padding: 0px;
-    font-size: 16px;
-    line-height: 2;
+    font-size: 13px;
+    line-height: 1.5;
     color: var(--gray-800);
     font-weight: 400;
-    letter-spacing: 0.01em;
-
+    letter-spacing: 0.00em;
 }
 
 /* ==================================================================*/

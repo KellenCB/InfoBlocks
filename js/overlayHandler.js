@@ -492,6 +492,8 @@ initToolbarForEditor = function(editor) {
         <button type="button" data-action="insertOrderedList" data-tooltip="Ordered List"><i class="fas fa-list-ol"></i></button>
         <button type="button" data-action="increaseFont" data-tooltip="Increase Font"><i class="fas fa-arrow-up"></i></button>
         <select id="font-size-select">
+            <option value="1">10px</option>
+            <option value="2">13px</option>
             <option value="3">16px</option>
             <option value="4">18px</option>
             <option value="5">24px</option>
