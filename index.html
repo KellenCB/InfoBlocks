@@ -690,31 +690,11 @@
 
             <!-- Tab 6: Inventory -->
             <div class="tab-content" id="tab6">
-                <div class="filter-and-results">
-                    <div id="results_section_6" class="results-section">
-                        <div id="results_header" class="results-header"></div>
+                <div class="inventory-layout">
+                    <div class="inventory-list-column">
+                        <div id="results_section_6" class="results-section"></div>
                     </div>
-                    <div class="filter-divider"></div>
-                    <div class="filter-section-wrapper">
-                        <div class="filter-panel-header">
-                            <button id="clear_filters_button_6" class="clear_filters_button" title="Clear filters">✕</button>
-                            <div class="search-container">
-                                <input id="search_input_6" class="search_input" type="text" placeholder="Search by text" />
-                                <button id="clear_search_button_6" class="clear-search"><svg class="clear-icon" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg></button>
-                            </div>
-                            <button class="toggle-filter-button" data-tab="tab6" title="Hide filters">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 18l6-6-6-6"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <div id="filter_section_6" class="filter-section">
-                            <div class="block-type-tags" id="character_type_tags_6"></div>
-                            <div id="all_tags_container">
-                                <div id="dynamic_tags_section_6" class="tag-section"></div>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="inventory-viewer results-section" id="inventory_viewer"></div>
                 </div>
             </div>
 
@@ -904,6 +884,27 @@
             <h2>Add Information Block</h2>
             <!-- Populated dynamically from blockTypeConfig based on active tab -->
             <div class="block-type-tags" id="character_type_tags_add"></div>
+            <div class="inventory-overlay-pill" id="inventory_overlay_options_add" style="display:none;">
+                <label class="inv-toggle inv-toggle-attune">
+                    <input type="checkbox" id="requires_attunement_add" />
+                    <span class="inv-track"><span class="inv-thumb"></span></span>
+                    <span>Requires attunement</span>
+                </label>
+                <button type="button" class="inv-state-btn inv-state-chain" id="attuned_btn_add" title="Attune">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5"/></svg>
+                    <span>Attuned to</span>
+                </button>
+                <span class="inv-pill-divider"></span>
+                <label class="inv-toggle inv-toggle-equip">
+                    <input type="checkbox" id="equipable_add" />
+                    <span class="inv-track"><span class="inv-thumb"></span></span>
+                    <span>Equipable</span>
+                </label>
+                <button type="button" class="inv-state-btn inv-state-hand" id="equipped_btn_add" title="Equip">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5c-.83 0-1.5.67-1.5 1.5v6H10V4c0-.83-.67-1.5-1.5-1.5S7 3.17 7 4v8.5l-1.8-1.9c-.6-.6-1.55-.6-2.15 0-.6.6-.6 1.55 0 2.15l4.2 4.3c1.3 1.35 3.1 2.2 5.1 2.2h1.4c3.87 0 7-3.13 7-7V7c0-.83-.67-1.5-1.5-1.5S18 6.17 18 7v3.5h-.5V5c0-.83-.67-1.5-1.5-1.5S14.5 4.17 14.5 5v4.5h-.5V3c0-.83-.67-1.5-1.5-1.5z"/></svg>
+                    <span>Equipped</span>
+                </button>
+            </div>
             <div class="add_and_edit_inputs">
                 <input type="text" id="title_input_overlay" placeholder="Enter block title here..." />
                 <div id="uses_field_overlay" class="uses-field"></div>
@@ -926,6 +927,27 @@
             <h2>Edit Information Block</h2>
             <!-- Populated dynamically from blockTypeConfig based on active tab -->
             <div class="block-type-tags" id="character_type_tags_edit"></div>
+            <div class="inventory-overlay-pill" id="inventory_overlay_options_edit" style="display:none;">
+                <label class="inv-toggle inv-toggle-attune">
+                    <input type="checkbox" id="requires_attunement_edit" />
+                    <span class="inv-track"><span class="inv-thumb"></span></span>
+                    <span>Requires attunement</span>
+                </label>
+                <button type="button" class="inv-state-btn inv-state-chain" id="attuned_btn_edit" title="Attune">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5"/></svg>
+                    <span>Attuned to</span>
+                </button>
+                <span class="inv-pill-divider"></span>
+                <label class="inv-toggle inv-toggle-equip">
+                    <input type="checkbox" id="equipable_edit" />
+                    <span class="inv-track"><span class="inv-thumb"></span></span>
+                    <span>Equipable</span>
+                </label>
+                <button type="button" class="inv-state-btn inv-state-hand" id="equipped_btn_edit" title="Equip">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5c-.83 0-1.5.67-1.5 1.5v6H10V4c0-.83-.67-1.5-1.5-1.5S7 3.17 7 4v8.5l-1.8-1.9c-.6-.6-1.55-.6-2.15 0-.6.6-.6 1.55 0 2.15l4.2 4.3c1.3 1.35 3.1 2.2 5.1 2.2h1.4c3.87 0 7-3.13 7-7V7c0-.83-.67-1.5-1.5-1.5S18 6.17 18 7v3.5h-.5V5c0-.83-.67-1.5-1.5-1.5S14.5 4.17 14.5 5v4.5h-.5V3c0-.83-.67-1.5-1.5-1.5z"/></svg>
+                    <span>Equipped</span>
+                </button>
+            </div>
             <div class="add_and_edit_inputs">
                 <input type="text" id="title_input_edit_overlay" placeholder="Edit title block" />
                 <div id="uses_field_edit_overlay" class="uses-field"></div>

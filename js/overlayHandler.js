@@ -31,6 +31,113 @@ function populateBlockTypeOverlay(containerId, selectedTypes = [], tabOverride =
     }).join("");
 }
 
+// Item types where "Equipable" auto-checks when selected
+const INVENTORY_AUTO_EQUIPABLE_TYPES = new Set(["Weapons", "Armor & clothing"]);
+
+// Wire the inventory-specific overlay pill (toggles + state buttons).
+// mode = "add" or "edit". Pill is shown only when the overlay targets tab6.
+function setupInventoryOverlayOptions(mode) {
+    const optionsRow   = document.getElementById(`inventory_overlay_options_${mode}`);
+    const requiresEl   = document.getElementById(`requires_attunement_${mode}`);
+    const equipableEl  = document.getElementById(`equipable_${mode}`);
+    const attunedBtn   = document.getElementById(`attuned_btn_${mode}`);
+    const equippedBtn  = document.getElementById(`equipped_btn_${mode}`);
+    const btContainer  = document.getElementById(`character_type_tags_${mode}`);
+    if (!optionsRow || !requiresEl || !equipableEl || !attunedBtn || !equippedBtn || !btContainer) return;
+
+    const overlay = optionsRow.closest('.add-block-overlay, .edit-block-overlay');
+    const activeTab = overlay?.dataset?.activeTab || appManager.getActiveTab();
+
+    if (activeTab !== 'tab6') {
+        optionsRow.style.display = 'none';
+        return;
+    }
+    optionsRow.style.display = '';
+
+    // Reflect the toggle's state → state-button visual on/off + disabled
+    const syncStateButtons = () => {
+        attunedBtn.disabled  = false; // always clickable — click turns toggle on too
+        equippedBtn.disabled = false;
+        attunedBtn.classList.toggle('inv-state-on',  attunedBtn.dataset.on  === 'true');
+        equippedBtn.classList.toggle('inv-state-on', equippedBtn.dataset.on === 'true');
+    };
+
+    // Safety clear: turning the toggle off clears the corresponding state
+    const onRequiresChange = () => {
+        if (!requiresEl.checked) {
+            attunedBtn.dataset.on = 'false';
+        }
+        syncStateButtons();
+    };
+    const onEquipableChange = () => {
+        if (!equipableEl.checked) {
+            equippedBtn.dataset.on = 'false';
+        }
+        equipableEl.dataset.userTouched = 'true';
+        syncStateButtons();
+    };
+
+    // Remove stale listeners (safe: they're keyed to the element)
+    requiresEl.removeEventListener('change', requiresEl._invListener || (()=>{}));
+    equipableEl.removeEventListener('change', equipableEl._invListener || (()=>{}));
+    requiresEl._invListener  = onRequiresChange;
+    equipableEl._invListener = onEquipableChange;
+    requiresEl.addEventListener('change',  onRequiresChange);
+    equipableEl.addEventListener('change', onEquipableChange);
+
+    // State-button click: toggle its state. If its toggle is currently off,
+    // turn that on at the same time.
+    const onAttunedClick = (e) => {
+        e.preventDefault();
+        const turningOn = attunedBtn.dataset.on !== 'true';
+        attunedBtn.dataset.on = turningOn ? 'true' : 'false';
+        if (turningOn && !requiresEl.checked) {
+            requiresEl.checked = true;
+            requiresEl.dispatchEvent(new Event('change'));
+        }
+        syncStateButtons();
+    };
+    const onEquippedClick = (e) => {
+        e.preventDefault();
+        const turningOn = equippedBtn.dataset.on !== 'true';
+        equippedBtn.dataset.on = turningOn ? 'true' : 'false';
+        if (turningOn && !equipableEl.checked) {
+            equipableEl.checked = true;
+            equipableEl.dispatchEvent(new Event('change'));
+        }
+        syncStateButtons();
+    };
+    attunedBtn.removeEventListener('click', attunedBtn._invListener || (()=>{}));
+    equippedBtn.removeEventListener('click', equippedBtn._invListener || (()=>{}));
+    attunedBtn._invListener  = onAttunedClick;
+    equippedBtn._invListener = onEquippedClick;
+    attunedBtn.addEventListener('click',  onAttunedClick);
+    equippedBtn.addEventListener('click', onEquippedClick);
+
+    // Item Type selection may auto-check Equipable
+    const onBlockTypeClick = () => {
+        setTimeout(() => {
+            if (equipableEl.dataset.userTouched === 'true') return;
+            const selected = btContainer.querySelector('.tag-button.selected');
+            if (selected && INVENTORY_AUTO_EQUIPABLE_TYPES.has(selected.dataset.tag)) {
+                equipableEl.checked = true;
+                equipableEl.dispatchEvent(new Event('change'));
+                equipableEl.dataset.userTouched = ''; // keep auto-behaviour
+            } else if (selected) {
+                equipableEl.checked = false;
+                equipableEl.dispatchEvent(new Event('change'));
+                equipableEl.dataset.userTouched = '';
+            }
+        }, 0);
+    };
+    btContainer.removeEventListener('click', btContainer._inventoryTypeListener || (() => {}));
+    btContainer._inventoryTypeListener = onBlockTypeClick;
+    btContainer.addEventListener('click', onBlockTypeClick);
+
+    // Initial sync
+    syncStateButtons();
+}
+
 function initUsesField(overlayElement, storageKeyPrefix, defaultSlots = 5) {
     let usesState = JSON.parse(localStorage.getItem(storageKeyPrefix)) || [];
   
@@ -173,8 +280,10 @@ export const handleSaveBlock = () => {
 
         const usesState = JSON.parse(localStorage.getItem("uses_field_overlay_state") || "[]");
 
-        const blockType = tabBTConfig
-            ? Array.from(document.querySelectorAll('#character_type_tags_add .tag-button.selected')).map(b => b.dataset.tag)
+const blockType = tabBTConfig
+            ? (tabBTConfig.singleSelect
+                ? (document.querySelector('#character_type_tags_add .tag-button.selected')?.dataset.tag || null)
+                : Array.from(document.querySelectorAll('#character_type_tags_add .tag-button.selected')).map(b => b.dataset.tag))
             : null;
 
         const propertiesInput = document.getElementById("properties_input_overlay").value
@@ -182,7 +291,22 @@ export const handleSaveBlock = () => {
             .map(p => p.trim())
             .filter(p => p.length > 0);
 
-        const success = appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, propertiesInput, blockType);
+        // Inventory-specific booleans (tab6 only)
+        let inventoryExtras = null;
+        if (activeTab === 'tab6') {
+            const requiresAttunement = !!document.getElementById('requires_attunement_add')?.checked;
+            const equipable          = !!document.getElementById('equipable_add')?.checked;
+            const attuned            = document.getElementById('attuned_btn_add')?.dataset.on === 'true';
+            const equipped           = document.getElementById('equipped_btn_add')?.dataset.on === 'true';
+            inventoryExtras = {
+                requiresAttunement,
+                equipable,
+                attuned:  requiresAttunement ? attuned  : false,
+                equipped: equipable          ? equipped : false
+            };
+        }
+
+        const success = appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, propertiesInput, blockType, null, null, inventoryExtras);
 
         if (success) {
             console.log("✅ Block saved successfully with tags:", allTags);
@@ -197,6 +321,14 @@ export const handleSaveBlock = () => {
             textElement.dispatchEvent(new Event('input'));
             document.getElementById("tags_input_overlay").value = "";
             document.getElementById("properties_input_overlay").value = "";
+            const reqAdd = document.getElementById('requires_attunement_add');
+            const eqAdd  = document.getElementById('equipable_add');
+            const attBtnAdd = document.getElementById('attuned_btn_add');
+            const eqBtnAdd  = document.getElementById('equipped_btn_add');
+            if (reqAdd) { reqAdd.checked = false; }
+            if (eqAdd)  { eqAdd.checked = false; eqAdd.dataset.userTouched = ''; }
+            if (attBtnAdd) { attBtnAdd.dataset.on = 'false'; attBtnAdd.classList.remove('inv-state-on'); }
+            if (eqBtnAdd)  { eqBtnAdd.dataset.on  = 'false'; eqBtnAdd.classList.remove('inv-state-on'); }
             document.querySelectorAll(".add-block-overlay .tag-button.selected")
                 .forEach(tag => tag.classList.remove("selected"));
             addBlockOverlay.classList.remove("show");
@@ -205,13 +337,7 @@ export const handleSaveBlock = () => {
             delete addBlockOverlay.dataset.activeTab;
 
             // ── Refresh the correct view ──────────────────────────────────────
-            import('./layoutMode.js').then(({ isSplitActive, refreshPanelsShowingTab }) => {
-                if (isSplitActive() && savedPanelSide) {
-                    refreshPanelsShowingTab(savedActiveTab);
-                } else {
-                    appManager.renderBlocks(savedActiveTab);
-                }
-            });
+            filterManager.applyFilters(savedActiveTab.replace('tab', ''));
         } else {
             console.error("❌ Failed to save the block.");
         }
@@ -492,6 +618,8 @@ initToolbarForEditor = function(editor) {
         <button type="button" data-action="insertOrderedList" data-tooltip="Ordered List"><i class="fas fa-list-ol"></i></button>
         <button type="button" data-action="increaseFont" data-tooltip="Increase Font"><i class="fas fa-arrow-up"></i></button>
         <select id="font-size-select">
+            <option value="1">10px</option>
+            <option value="2">13px</option>
             <option value="3">16px</option>
             <option value="4">18px</option>
             <option value="5">24px</option>
@@ -910,7 +1038,8 @@ function initCEPlaceholder(id) {
         attachKeyboardShortcuts, 
         initializeOverlayTagHandlers,
         initializeEventHandlers,
-        populateBlockTypeOverlay   // exported so blockActionsHandler can call it
+        populateBlockTypeOverlay,
+        setupInventoryOverlayOptions
     };
 })();
 

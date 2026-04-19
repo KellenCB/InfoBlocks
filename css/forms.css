@@ -78,6 +78,7 @@
 
 #block_text_overlay,
 #block_text_edit_overlay {
+    font-size: 13px;
     min-height: 100px;
     padding: 12px;
     resize: vertical;
@@ -187,16 +188,21 @@
 #block_text_edit_overlay ol,
 .block-body ul,
 .block-body ol {
-    margin-right: 0.5em 0;
-    padding-left: 1.5em;
+    margin: 4px 0 0 0;
+    padding-left: 1.25em;
 }
 
 #block_text_overlay li,
 #block_text_edit_overlay li,
 .block-body li {
-    margin-right: 0.25em 0;
-    line-height: 1.6;
-    margin-bottom: 12px;
+    margin: 0 0 3px 0;
+    line-height: 1.5;
+}
+
+#block_text_overlay li:last-child,
+#block_text_edit_overlay li:last-child,
+.block-body li:last-child {
+    margin-bottom: 0;
 }
 
 /* ==================================================================*/
@@ -310,4 +316,132 @@
     background-color: var(--color-find-active);
     border-radius: 2px;
     outline: 1px solid var(--color-find-active-outline);
+}
+
+/* ==================================================================*/
+/* ================ INVENTORY OVERLAY PILL ==========================*/
+/* ==================================================================*/
+
+.inventory-overlay-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 14px;
+    background-color: var(--gray-300);
+    border: 1px solid var(--gray-400);
+    border-radius: 22px;
+    margin: 10px auto 4px;
+}
+
+/* ── Toggle switch (requires attunement / equipable) ──────────── */
+
+.inv-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px;
+    color: var(--gray-850);
+    letter-spacing: 0.03em;
+}
+
+.inv-toggle input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+}
+
+.inv-track {
+    width: 40px;
+    height: 22px;
+    border-radius: 11px;
+    background: var(--gray-350);
+    border: 1px solid var(--gray-450);
+    position: relative;
+    flex-shrink: 0;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.inv-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--gray-700);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.inv-toggle input[type="checkbox"]:checked ~ .inv-track .inv-thumb {
+    transform: translateX(18px);
+    background: var(--gray-900);
+}
+
+.inv-toggle-attune input[type="checkbox"]:checked ~ .inv-track {
+    background: color-mix(in srgb, var(--color-cyan) 55%, var(--gray-300));
+    border-color: rgba(6, 173, 228, 0.75);
+    box-shadow: 0 0 10px rgba(6, 173, 228, 0.55),
+                inset 0 0 6px rgba(6, 173, 228, 0.4);
+}
+
+.inv-toggle-equip input[type="checkbox"]:checked ~ .inv-track {
+    background: color-mix(in srgb, #ff8c00 55%, var(--gray-300));
+    border-color: rgba(255, 140, 0, 0.75);
+    box-shadow: 0 0 10px rgba(255, 140, 0, 0.55),
+                inset 0 0 6px rgba(255, 140, 0, 0.4);
+}
+
+/* ── State buttons (Attuned to / Equipped) ────────────────────── */
+
+.inv-state-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    color: var(--gray-550);
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    font-family: inherit;
+    border-radius: 6px;
+    transition: color 0.2s, filter 0.2s;
+}
+
+.inv-state-btn svg { display: block; flex-shrink: 0; }
+.inv-state-btn.inv-state-chain svg { width: 16px; height: 16px; }
+.inv-state-btn.inv-state-hand  svg { width: 18px; height: 18px; }
+
+.inv-state-btn.inv-state-on.inv-state-chain {
+    color: var(--color-cyan);
+    filter: drop-shadow(0 0 6px rgba(6, 173, 228, 0.7));
+}
+.inv-state-btn.inv-state-on.inv-state-hand {
+    color: #ff8c00;
+    filter: drop-shadow(0 0 6px rgba(255, 140, 0, 0.7));
+}
+
+/* ── Divider ──────────────────────────────────────────────────── */
+
+.inv-pill-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--gray-400);
+    flex-shrink: 0;
+}
+
+/* ── Layout tweak so the pill centres in both overlays ────────── */
+
+.add-block-overlay .inventory-overlay-pill,
+.edit-block-overlay .inventory-overlay-pill {
+    display: inline-flex;
+}
+.add-block-form,
+.edit-block-form {
+    text-align: center;
 }

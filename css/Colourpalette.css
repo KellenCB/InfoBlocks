@@ -33,6 +33,28 @@
     --color-blue: #2d81ff;
     --color-cyan: #06ade4;
 
+    /* ── Block States ────────────────────────────────────────────── */
+
+    --block-bg-pinned-base: color-mix(in srgb, var(--color-blue) 12%, var(--gray-300));
+    --block-bg-pinned-highlight: rgba(45, 129, 255, 0.35);
+    --block-border-pinned: rgba(45, 129, 255, 0.25);
+
+    --block-bg-selected-base: color-mix(in srgb, var(--gray-900) 8%, var(--gray-300));
+    --block-bg-selected-highlight: rgba(255, 255, 255, 0.25);
+    --block-border-selected: rgba(255, 255, 255, 0.22);
+
+    --block-bg-equipped-base: color-mix(in srgb, #ff8c00 20%, var(--gray-300));
+    --block-bg-equipped-highlight: rgba(255, 140, 0, 0.55);
+    --block-border-equipped: rgba(255, 140, 0, 0.42);
+
+    --block-bg-attuned-base: color-mix(in srgb, var(--color-cyan) 18%, var(--gray-300));
+    --block-bg-attuned-highlight: rgba(6, 173, 228, 0.48);
+    --block-border-attuned: rgba(6, 173, 228, 0.38);
+
+    --block-bg-both-base: color-mix(in srgb, #a855f7 20%, var(--gray-300));
+    --block-bg-both-highlight: rgba(168, 85, 247, 0.55);
+    --block-border-both: rgba(168, 85, 247, 0.42);
+                
     /* ── Inventory Colours ───────────────────────────────────────── */
 
     --color-gold:   rgba(255, 215, 0, 0.5);
@@ -53,19 +75,23 @@
     --part-color:           #CDF564;
     --action-color:         #07f371;
     --ability-color:        #bf5eff;
-    --damage-color:         #F037A5;
+    --range-color:          #2b7bf1;
     --condition-color:      #ffa927;
-    --spell-color:          #2b7bf1;
     --spellLevel-color:     #49c1e6;
     --infusion-color:       #49c1e6;
     --attribute-color:      #FF4632;
     --charges-color:        #43ffef;
-    --itemType-color:       #ff7f00;
-    --magicItemType-color:  #07f371;
-    --magicItemBonus-color: #F037A5;
-    --equippedCheck-color:  #FF4632;
+    --itemCategory-color:   var(--characterType-color);
 
    --or-selected-opacity: 50%;
+   --tag-bg-opacity: 18%;
+
+    /* ── Attunement Chain & Tag Colours ──────────────────────────── */
+
+    --chain-attuned-color:    var(--color-cyan);
+    --chain-unattuned-color:  var(--gray-550);
+    --hand-equipped-color:    var(--color-orange);
+    --hand-unequipped-color:  var(--gray-550);
 
     /* ── Circle Colour ───────────────────────────────────────────── */
 

@@ -20,14 +20,6 @@ export const categoryTags = {
         tabs: ["tab9"]
     },
 
-    
-    //.spell_type: {
-    //    label: "Spell Type",
-    //    tags: ["Abjuration", "Conjuration", "Divination", "Enchantment", "Evocation", "Illusion", "Necromancy", "Transmutation", "Concerntration", "Ritual"], 
-    //    className: "tag-spellType",
-    //    tabs: ["tab9"]
-    //},
-
     action_type: {
         label: "Action Type",
         tags: ["Action", "Reaction", "Bonus action", "Free action", "Check", "Save"], 
@@ -35,17 +27,17 @@ export const categoryTags = {
         tabs: ["tab9"]
     },
 
-    ability_type: {
-        label: "Ability Type",
-        tags: ["Buff", "Debuff", "Heal", "Movement", "Ranged", "Melee", "Spell", "Utility", "AC"],
+    effect_type: {
+        label: "Effect",
+        tags: ["Buff", "Debuff", "Heal", "Damage", "Utility", "Control", "Movement", "AC"],
         className: "tag-abilityType",
         tabs: ["tab9"]
     },
 
-    damage_type: {
-        label: "Damage Type",
-        tags: ["Arcane", "Acid", "Bludgeoning", "Cold", "Fire", "Force", "Frost", "Lightning", "Necrotic", "Piercing", "Poison", "Psychic", "Radiant", "Slashing", "Thunder"], 
-        className: "tag-damageType",
+    range_type: {
+        label: "Range",
+        tags: ["Melee", "Ranged", "Area", "Self", "Touch"],
+        className: "tag-rangeType",
         tabs: ["tab9"]
     },
 
@@ -62,34 +54,6 @@ export const categoryTags = {
         className: "tag-attributeType",
         tabs: ["tab9"]
     },
-
-    item_type: {
-        label: "Item Type",
-        tags: ["Weapon", "Armor", "Shield", "Potion", "Scroll", "Ring", "Rod", "Wand", "Staff"], 
-        className: "tag-itemType",
-        tabs: ["tab6"]
-    },
-
-    magicItem_type: {
-        label: "Rarity",
-        tags: ["Common", "Uncommon", "Rare", "Very Rare", "Legendary", "Artifact", "Cursed", "Sentient"], 
-        className: "tag-magicItemType",
-        tabs: ["tab6"]
-    },
-
-    magicItem_bonus: {
-        label: "Bonus",
-        tags: ["+1", "+2", "+3", "Attunement"], 
-        className: "tag-magicItemBonus",
-        tabs: ["tab6"]
-    },
-
-    equipped_check: {
-        label: "Status",
-        tags: ["Equipped", "Attuned"], 
-        className: "tag-equippedCheck",
-        tabs: ["tab6"] 
-    },
 };
 
 export const blockTypeConfig = {
@@ -97,8 +61,14 @@ export const blockTypeConfig = {
         types: ["Book", "Map", "Quest", "Other"],
         className: "tag-characterType"
     },
+    tab6: {
+        types: ["Consumables", "Weapons", "Armor & clothing", "Magic & curiosities", "Tools", "Scrap & parts", "Keys", "Documents"],
+        className: "tag-itemCategory",
+        singleSelect: true,
+        required: true
+    },
     tab9: {
-        types: ["Hazard", "Crank", "Spell", "Magic Item"],
+        types: ["Hazard", "Crank", "Feat", "Suit", "Spell", "Magic Item"],
         className: "tag-characterType"
     }
 };

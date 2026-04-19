@@ -96,12 +96,29 @@ export const saveEditHandler = () => {
         .map(p => p.trim())
         .filter(p => p.length > 0);
 
-    const blockType = tabBTConfig
-        ? Array.from(document.querySelectorAll('#character_type_tags_edit .tag-button.selected')).map(b => b.dataset.tag)
+const blockType = tabBTConfig
+        ? (tabBTConfig.singleSelect
+            ? (document.querySelector('#character_type_tags_edit .tag-button.selected')?.dataset.tag || null)
+            : Array.from(document.querySelectorAll('#character_type_tags_edit .tag-button.selected')).map(b => b.dataset.tag))
         : null;
 
+    // Inventory-specific booleans (tab6 only) — carry through safety clears
+    let inventoryExtras = null;
+    if (activeTab === 'tab6') {
+        const requiresAttunement = !!document.getElementById('requires_attunement_edit')?.checked;
+        const equipable          = !!document.getElementById('equipable_edit')?.checked;
+        const attuned            = document.getElementById('attuned_btn_edit')?.dataset.on === 'true';
+        const equipped           = document.getElementById('equipped_btn_edit')?.dataset.on === 'true';
+        inventoryExtras = {
+            requiresAttunement,
+            equipable,
+            attuned:  requiresAttunement ? attuned  : false,
+            equipped: equipable          ? equipped : false
+        };
+    }
+
     appManager.saveBlock(
-        activeTab, titleInput, textInput, allTags, usesState, propertiesInput, blockType, blockId, blocks[blockIndex].timestamp
+        activeTab, titleInput, textInput, allTags, usesState, propertiesInput, blockType, blockId, blocks[blockIndex].timestamp, inventoryExtras
     );
     console.log(`✅ Block updated in ${activeTab} with tags:`, allTags);
 
@@ -113,13 +130,7 @@ export const saveEditHandler = () => {
     delete editOverlay.dataset.blockId;
 
     // ── Refresh the correct view ──────────────────────────────────────────────
-    import('./layoutMode.js').then(({ isSplitActive, refreshPanelsShowingTab }) => {
-        if (isSplitActive()) {
-            refreshPanelsShowingTab(activeTab);
-        } else {
-            filterManager.applyFilters(activeTab.replace('tab', ''));
-        }
-    });
+    filterManager.applyFilters(activeTab.replace('tab', ''));
 };
 
 export let selectedFilterTags = [];
@@ -179,7 +190,22 @@ export const blockActionsHandler = (() => {
 
         if (target.classList.contains("duplicate-button")) {
             const blockTags = Array.isArray(block.tags) ? [...block.tags] : [];
-            appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.properties || [], block.blockType || null);
+            // For tab6, also carry through the inventory booleans so the copy
+            // matches the original's state
+            let inventoryExtras = null;
+            if (activeTab === 'tab6') {
+                inventoryExtras = {
+                    requiresAttunement: block.requiresAttunement === true,
+                    equipable:          block.equipable === true,
+                    attuned:            block.attuned === true,
+                    equipped:           block.equipped === true
+                };
+            }
+            const result = appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.properties || [], block.blockType || null, null, null, inventoryExtras);
+            // On tab6, auto-select the newly created copy
+            if (activeTab === 'tab6' && typeof result === 'string') {
+                appManager.setActiveInventoryBlock(result);
+            }
             reapplySearchAndFilters(activeTab);
 
         } else if (target.classList.contains("edit-button")) {
@@ -223,8 +249,29 @@ export const blockActionsHandler = (() => {
             overlayHandler.initializeOverlayTagHandlers("predefined_tags_edit", block.tags);
 
             // Populate block type buttons for this tab from config, then open overlay
-            overlayHandler.populateBlockTypeOverlay("character_type_tags_edit");
+overlayHandler.populateBlockTypeOverlay("character_type_tags_edit");
 
+            // Inventory pill — show, hide, and hydrate from the block
+            const reqEdit = document.getElementById('requires_attunement_edit');
+            const eqEdit  = document.getElementById('equipable_edit');
+            const attBtnEdit = document.getElementById('attuned_btn_edit');
+            const eqBtnEdit  = document.getElementById('equipped_btn_edit');
+            if (activeTab === 'tab6') {
+                if (reqEdit) reqEdit.checked = !!block.requiresAttunement;
+                if (eqEdit)  {
+                    eqEdit.checked = !!block.equipable;
+                    eqEdit.dataset.userTouched = 'true';
+                }
+                if (attBtnEdit) attBtnEdit.dataset.on = block.attuned  === true ? 'true' : 'false';
+                if (eqBtnEdit)  eqBtnEdit.dataset.on  = block.equipped === true ? 'true' : 'false';
+            } else {
+                if (reqEdit) reqEdit.checked = false;
+                if (eqEdit)  { eqEdit.checked = false; eqEdit.dataset.userTouched = ''; }
+                if (attBtnEdit) attBtnEdit.dataset.on = 'false';
+                if (eqBtnEdit)  eqBtnEdit.dataset.on  = 'false';
+            }
+            overlayHandler.setupInventoryOverlayOptions("edit");
+            
             setTimeout(() => {
                 // Re-apply selected state for regular tags
                 document.querySelectorAll(".edit-block-overlay .tag-button").forEach(tagBtn => {
