@@ -8,18 +8,13 @@
 .tag-accordion-group.tag-partType       { --accordion-color: var(--part-color); }
 .tag-accordion-group.tag-actionType     { --accordion-color: var(--action-color); }
 .tag-accordion-group.tag-abilityType    { --accordion-color: var(--ability-color); }
-.tag-accordion-group.tag-damageType     { --accordion-color: var(--damage-color); }
+.tag-accordion-group.tag-rangeType      { --accordion-color: var(--range-color); }
 .tag-accordion-group.tag-conditionType  { --accordion-color: var(--condition-color); }
-.tag-accordion-group.tag-spellType      { --accordion-color: var(--spell-color); }
 .tag-accordion-group.tag-spellLevel     { --accordion-color: var(--spellLevel-color); }
 .tag-accordion-group.tag-infusion       { --accordion-color: var(--infusion-color); }
 .tag-accordion-group.tag-attributeType  { --accordion-color: var(--attribute-color); }
 .tag-accordion-group.tag-Charges        { --accordion-color: var(--charges-color); }
-.tag-accordion-group.tag-itemType       { --accordion-color: var(--itemType-color); }
-.tag-accordion-group.tag-magicItemType  { --accordion-color: var(--magicItemType-color); }
-.tag-accordion-group.tag-magicItemBonus { --accordion-color: var(--magicItemBonus-color); }
-.tag-accordion-group.tag-equippedCheck  { --accordion-color: var(--equippedCheck-color); }
-
+.tag-accordion-group.tag-itemCategory   { --accordion-color: var(--itemCategory-color); }
 
 /* ==================================================================*/
 /* ========================== TAG BUTTON ============================*/
@@ -63,18 +58,13 @@
 .tag-partType                   { --tag-color: var(--part-color); }
 .tag-actionType                 { --tag-color: var(--action-color); }
 .tag-abilityType                { --tag-color: var(--ability-color); }
-.tag-damageType                 { --tag-color: var(--damage-color); }
+.tag-rangeType                  { --tag-color: var(--range-color); }
 .tag-conditionType              { --tag-color: var(--condition-color); }
-.tag-spellType                  { --tag-color: var(--spell-color); }
 .tag-spellLevel                 { --tag-color: var(--spellLevel-color); }
 .tag-infusion                   { --tag-color: var(--infusion-color); }
 .tag-attributeType              { --tag-color: var(--attribute-color); }
 .tag-Charges                    { --tag-color: var(--charges-color); }
-.tag-button.tag-itemType        { --tag-color: var(--itemType-color); }
-.tag-button.tag-magicItemType   { --tag-color: var(--magicItemType-color); }
-.tag-button.tag-magicItemBonus  { --tag-color: var(--magicItemBonus-color); }
-.tag-button.tag-equippedCheck   { --tag-color: var(--equippedCheck-color); }
-
+.tag-button.tag-itemCategory    { --tag-color: var(--itemCategory-color); }
 
 /* ==================================================================*/
 /* ======================= AND-SELECTED STATE =======================*/

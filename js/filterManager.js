@@ -194,10 +194,12 @@ export const filterManager = (() => {
             if (
                 !target.classList.contains('tag-button') ||
                 target.closest('.add-block-overlay') ||
-                target.closest('.edit-block-overlay')
+                target.closest('.edit-block-overlay') ||
+                target.closest('.block.condensed')
             ) return;
 
-            const activeTab = document.querySelector('.tab-button.active')?.dataset.tab || 'tab4';
+            const tabContent = target.closest('.tab-content');
+            const activeTab = tabContent?.id || document.querySelector('.tab-button.active')?.dataset.tab || 'tab4';
             const tabNumber = activeTab.replace('tab', '');
             const tag = target.dataset.tag?.trim();
             if (!tag) return;
@@ -260,6 +262,9 @@ export const filterManager = (() => {
     };
 
     // ── Overlay tag clicks — toggle only, no filtering ────────────────────────
+    // If the clicked button is inside an overlay's block-type-tags container
+    // AND the tab's blockTypeConfig has singleSelect: true, clicking one
+    // button deselects any other block-type button in the same container.
     const handleOverlayTagClick = () => {
         document.addEventListener('click', e => {
             const target = e.target;
@@ -268,6 +273,26 @@ export const filterManager = (() => {
                 (target.closest('.add-block-overlay') || target.closest('.edit-block-overlay'))
             ) {
                 e.stopPropagation();
+
+                const btContainer = target.closest('.block-type-tags');
+                if (btContainer) {
+                    // Determine active tab for the overlay (add or edit)
+                    const overlay = target.closest('.add-block-overlay, .edit-block-overlay');
+                    const activeTab = overlay?.dataset?.activeTab
+                        || document.querySelector('.tab-button.active')?.dataset.tab
+                        || 'tab4';
+                    const cfg = blockTypeConfig[activeTab];
+                    if (cfg && cfg.singleSelect) {
+                        const wasSelected = target.classList.contains('selected');
+                        // Clear every sibling block-type button, then flip the clicked one
+                        btContainer.querySelectorAll('.tag-button.selected')
+                            .forEach(b => b.classList.remove('selected'));
+                        if (!wasSelected) target.classList.add('selected');
+                        return;
+                    }
+                }
+
+                // Default (existing) behaviour — plain toggle
                 target.classList.toggle('selected');
             }
         }, true);

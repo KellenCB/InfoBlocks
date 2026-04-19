@@ -693,7 +693,535 @@ export const appManager = (() => {
       attachDynamicTooltips();
       initScrollFades('.results-section', null, '--results-fade-opacity', '_scrollFadeHandler');
       document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab7' } }));
-  };  let renderAbortController = null;
+  };
+
+/* ==================================================================*/
+/* ======================= INVENTORY RENDER =========================*/
+/* ==================================================================*/
+
+  const INVENTORY_SECTION_ORDER = [
+      "Consumables",
+      "Weapons",
+      "Armor & clothing",
+      "Magic & curiosities",
+      "Tools",
+      "Scrap & parts",
+      "Keys",
+      "Documents"
+  ];
+
+  // Which item types auto-check "equipable" in the overlay
+  const INVENTORY_AUTO_EQUIPABLE_TYPES = new Set(["Weapons", "Armor & clothing"]);
+
+  // Currently-active block in the viewer
+  let activeInventoryBlockId = null;
+
+  const getInventoryAttunementMax = () => {
+      const raw = localStorage.getItem('tab6_attunement_max');
+      const n = parseInt(raw, 10);
+      return Number.isFinite(n) && n >= 0 ? n : 3;
+  };
+
+  const setInventoryAttunementMax = (n) => {
+      const v = Math.max(0, parseInt(n, 10) || 0);
+      localStorage.setItem('tab6_attunement_max', String(v));
+  };
+
+  // Toggle attuned state. Safety: can only be true if requiresAttunement.
+  const toggleInventoryAttuned = (blockId) => {
+      const blocks = getBlocks('tab6');
+      const idx = blocks.findIndex(b => b.id === blockId);
+      if (idx === -1) return;
+      if (!blocks[idx].requiresAttunement) return;
+      blocks[idx].attuned = !blocks[idx].attuned;
+      localStorage.setItem('userBlocks_tab6', JSON.stringify(blocks));
+      import('./filterManager.js').then(({ filterManager }) => {
+          filterManager.applyFilters('6');
+      });
+  };
+
+  // External setter used by duplicate-block flow to auto-select the copy
+  const setActiveInventoryBlock = (id) => { activeInventoryBlockId = id; };
+
+  // Toggle equipped state. Safety: can only be true if equipable.
+  const toggleInventoryEquipped = (blockId) => {
+      const blocks = getBlocks('tab6');
+      const idx = blocks.findIndex(b => b.id === blockId);
+      if (idx === -1) return;
+      if (!blocks[idx].equipable) return;
+      blocks[idx].equipped = !blocks[idx].equipped;
+      localStorage.setItem('userBlocks_tab6', JSON.stringify(blocks));
+      import('./filterManager.js').then(({ filterManager }) => {
+          filterManager.applyFilters('6');
+      });
+  };
+
+  const isInventorySectionCollapsed = (key) =>
+      localStorage.getItem(`tab6_section_collapsed_${key}`) === 'true';
+
+  const setInventorySectionCollapsed = (key, collapsed) =>
+      localStorage.setItem(`tab6_section_collapsed_${key}`, collapsed ? 'true' : 'false');
+
+  const buildInventorySectionHeader = (title, count, key) => {
+      const collapsed = isInventorySectionCollapsed(key);
+      return `
+          <div class="inventory-section-header${collapsed ? ' inventory-collapsed' : ''}" data-section-key="${key}">
+              <div class="inventory-section-left">
+                  <h3 class="inventory-section-title">${title}</h3>
+                  <span class="inventory-section-count">${count}</span>
+              </div>
+          </div>
+      `;
+  };
+
+  const buildInventorySubLabel = (label, key) => {
+      const collapsed = isInventorySectionCollapsed(key);
+      return `<p class="inventory-sub-label${collapsed ? ' inventory-collapsed' : ''}" data-section-key="${key}">${label}</p>`;
+  };
+
+  // Each rendered inventory block is always minimized, clickable into viewer.
+  const renderInventoryBlock = (block) => {
+      const activeClass   = (block.id === activeInventoryBlockId) ? ' inventory-block-active' : '';
+      const equippedClass = (block.equipped === true) ? ' inventory-block-equipped' : '';
+      const attunedClass  = (block.attuned === true)  ? ' inventory-block-attuned'  : '';
+      const html = blockTemplate({ ...block, viewState: 'minimized' }, 'tab6');
+      return html.replace(
+          /<div class="block ([^"]+)" data-id="([^"]+)">/,
+          `<div class="block $1${activeClass}${equippedClass}${attunedClass}" data-id="$2">`
+      );
+  };
+
+  const renderInventoryViewer = (blockId) => {
+      const viewer = document.getElementById('inventory_viewer');
+      if (!viewer) return;
+
+      if (!blockId) {
+          viewer.innerHTML = '<p class="inventory-viewer-placeholder">Select an item to view</p>';
+          return;
+      }
+
+      const blocks = getBlocks('tab6');
+      const block  = blocks.find(b => b.id === blockId);
+      if (!block) {
+          viewer.innerHTML = '<p class="inventory-viewer-placeholder">Select an item to view</p>';
+          return;
+      }
+
+      activeInventoryBlockId = blockId;
+
+      // Body HTML transforms (same as blockTemplate)
+      let bodyHTML = block.text || '';
+      bodyHTML = bodyHTML
+          .replace(/<div[^>]*>/gi, '')
+          .replace(/^(&nbsp;|\s)+/gi, '')
+          .replace(/<\/div>/gi, '<br>')
+          .replace(/<p[^>]*>/gi, '')
+          .replace(/<\/p>/gi, '<br>')
+          .trim();
+
+      const propertiesHTML = (block.properties && block.properties.length > 0)
+          ? `<div class="inventory-viewer-properties">${block.properties.map(p =>
+              `<span class="block-property">${p}</span>`
+            ).join("")}</div>`
+          : "";
+
+      const usesHTML = (block.uses && block.uses.length > 0)
+          ? `<div class="block-uses" style="margin-bottom:12px;">${block.uses.map((state, idx) =>
+              `<span class="circle ${state ? 'unfilled' : ''}" onclick="toggleBlockUse('${block.id}', ${idx}, event, this)"></span>`
+            ).join("")}</div>`
+          : "";
+
+      const newContentHTML = `
+          <div class="inventory-viewer-content">
+              <div class="inventory-viewer-header">
+                  <h4 class="inventory-viewer-title">${block.title}</h4>
+                  <div class="block-actions">
+                      <div class="block-actions-menu">
+                          <div class="block-actions-reveal">
+                              <button class="action-button remove-button red-button" data-id="${block.id}" title="Remove">×</button>
+                              <button class="action-button duplicate-button blue-button" data-id="${block.id}" title="Copy">❐</button>
+                              <button class="action-button edit-button orange-button" data-id="${block.id}" title="Edit">✎</button>
+                          </div>
+                          <button class="actions-trigger" title="Actions">···</button>
+                      </div>
+                  </div>
+              </div>
+              ${propertiesHTML}
+              ${usesHTML}
+              <div class="inventory-viewer-body">${bodyHTML}</div>
+          </div>
+      `;
+
+      // If there's existing content, fade it out, then swap; otherwise just swap
+      const existing = viewer.querySelector('.inventory-viewer-content, .inventory-viewer-placeholder');
+      const doSwap = () => {
+          viewer.innerHTML = newContentHTML;
+          // Force reflow so the new content's 0 → 1 transition fires
+          const fresh = viewer.querySelector('.inventory-viewer-content');
+          if (fresh) {
+              fresh.style.opacity = '0';
+              void fresh.offsetWidth;
+              fresh.style.opacity = '';
+          }
+          applyInlineDiceRolls(viewer, 'tab6');
+          document.querySelectorAll('#results_section_6 .block').forEach(b => {
+              b.classList.toggle('inventory-block-active', b.getAttribute('data-id') === blockId);
+          });
+      };
+      if (existing && existing.classList.contains('inventory-viewer-content')) {
+          existing.classList.add('fading');
+          setTimeout(doSwap, 200);
+      } else {
+          doSwap();
+      }
+      return;
+
+  };
+
+  const renderInventory = (filteredBlocks = null) => {
+      const resultsSection = document.getElementById('results_section_6');
+      if (!resultsSection) return;
+
+      const allBlocks     = getBlocks('tab6');
+      const displayBlocks = filteredBlocks || allBlocks;
+
+      const attunedCount = allBlocks.filter(b => b.attuned === true).length;
+      const attunedMax   = getInventoryAttunementMax();
+      const overAttuned  = attunedCount > attunedMax;
+
+      // Coin pouches
+      const pouches = [
+          { id: 'perm1', cls: 'gold-bg',   defaultValue: '00' },
+          { id: 'perm2', cls: 'silver-bg', defaultValue: '00' },
+          { id: 'perm3', cls: 'copper-bg', defaultValue: '00' },
+      ];
+      const pouchesHTML = pouches.map(({ id, cls, defaultValue }) => {
+          const v = localStorage.getItem(`permanentItem_${id}`) || defaultValue;
+          return `<div class="block minimized permanent-block ${cls}" data-id="${id}"><h4 class="permanent-title" contenteditable="true">${v}</h4></div>`;
+      }).join('');
+
+      const chainSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5"/></svg>`;
+      const attunePillHTML = `
+          <div class="inventory-attune-wrap">
+              <span class="inventory-attune-label">Attuned</span>
+              <span class="inventory-attune-pill${overAttuned ? ' over' : ''}">
+                  ${chainSVG}
+                  <span class="inventory-attune-current">${attunedCount}</span>
+                  <span class="inventory-attune-sep">/</span>
+                  <span class="inventory-attune-max" contenteditable="true" data-storage-key="tab6_attunement_max">${attunedMax}</span>
+              </span>
+          </div>
+      `;
+
+      // Results section layout: search row + sort/add controls + top bar + sections
+      resultsSection.innerHTML = `
+          <div class="inventory-search-row">
+              <div class="search-container">
+                  <input id="search_input_6" class="search_input" type="text" placeholder="Search..." />
+                  <button id="clear_search_button_6" class="clear-search">
+                      <svg class="clear-icon" viewBox="0 0 24 24" fill="none">
+                          <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
+                          <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
+                      </svg>
+                  </button>
+              </div>
+              <button id="results-sort-btn_6" class="results-settings">
+                  <img src="./images/Sort_Icon.svg" alt="Sort icon">
+              </button>
+              <div id="sort-dropdown_6" class="sort-dropdown hidden">
+                  <button class="sort-item" data-sort="newest">Newest</button>
+                  <button class="sort-item" data-sort="oldest">Oldest</button>
+                  <button class="sort-item" data-sort="alpha">A‑Z</button>
+                  <button class="sort-item" data-sort="unalpha">Z-A</button>
+              </div>
+              <button id="add_block_button" class="add-block-button green-button">+</button>
+          </div>
+          <div class="inventory-top-bar">
+              <div class="inventory-pouches">${pouchesHTML}</div>
+              ${attunePillHTML}
+          </div>
+          <div id="inventory-sections-host"></div>
+      `;
+
+      const host = document.getElementById('inventory-sections-host');
+
+      // Equipped / Attuned section (top) — grouped by Item Type in the same
+      // order as the main sections below
+      const topSectionBlocks = displayBlocks.filter(b => b.equipped === true || b.attuned === true);
+      if (topSectionBlocks.length > 0) {
+          const sortedTopBlocks = [];
+          INVENTORY_SECTION_ORDER.forEach(typeName => {
+              topSectionBlocks
+                  .filter(b => b.blockType === typeName)
+                  .forEach(b => sortedTopBlocks.push(b));
+          });
+          // Any unrecognised types go at the end, preserving input order
+          topSectionBlocks
+              .filter(b => !INVENTORY_SECTION_ORDER.includes(b.blockType))
+              .forEach(b => sortedTopBlocks.push(b));
+
+          const topKey = 'equipped-attuned';
+          host.insertAdjacentHTML('beforeend', buildInventorySubLabel('Equipped / Attuned', topKey));
+          const row = document.createElement('div');
+          row.className = 'inventory-row';
+          if (isInventorySectionCollapsed(topKey)) row.classList.add('inventory-collapsed');
+          row.dataset.sectionKey = topKey;
+          row.innerHTML = `<div class="inventory-row-inner">${sortedTopBlocks.map(b => renderInventoryBlock(b)).join('')}</div>`;
+          host.appendChild(row);
+      }
+
+      // Item Type sections
+      INVENTORY_SECTION_ORDER.forEach(typeName => {
+          const typeBlocks = displayBlocks.filter(b => b.blockType === typeName);
+          if (typeBlocks.length === 0) return;
+          const key = typeName;
+          host.insertAdjacentHTML('beforeend', buildInventorySectionHeader(typeName, typeBlocks.length, key));
+          const row = document.createElement('div');
+          row.className = 'inventory-row';
+          if (isInventorySectionCollapsed(key)) row.classList.add('inventory-collapsed');
+          row.dataset.sectionKey = key;
+          row.innerHTML = `<div class="inventory-row-inner">${typeBlocks.map(b => renderInventoryBlock(b)).join('')}</div>`;
+          host.appendChild(row);
+      });
+
+      const uncategorised = displayBlocks.filter(b =>
+          !INVENTORY_SECTION_ORDER.includes(b.blockType)
+      );
+      if (uncategorised.length > 0) {
+          const uncatKey = 'uncategorised';
+          host.insertAdjacentHTML('beforeend', buildInventorySectionHeader('Uncategorised', uncategorised.length, uncatKey));
+          const row = document.createElement('div');
+          row.className = 'inventory-row';
+          if (isInventorySectionCollapsed(uncatKey)) row.classList.add('inventory-collapsed');
+          row.dataset.sectionKey = uncatKey;
+          row.innerHTML = `<div class="inventory-row-inner">${uncategorised.map(b => renderInventoryBlock(b)).join('')}</div>`;
+          host.appendChild(row);
+      }
+
+      if (displayBlocks.length === 0) {
+          const p = document.createElement('p');
+          p.classList.add('results-placeholder');
+          p.textContent = 'Use the + button to add items here…';
+          p.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0.25;';
+          resultsSection.appendChild(p);
+      }
+
+      wireInventoryHeaderControls();
+
+      // Wire search input — preserve value/focus/caret across re-renders
+      const searchInput = document.getElementById('search_input_6');
+      const clearSearchBtn = document.getElementById('clear_search_button_6');
+      if (searchInput) {
+          // Restore previous value if this is a re-render during typing
+          const preservedValue = window._inventorySearchState?.value || '';
+          const hadFocus = window._inventorySearchState?.hadFocus || false;
+          const caretPos = window._inventorySearchState?.caretPos ?? preservedValue.length;
+          if (preservedValue) searchInput.value = preservedValue;
+          if (hadFocus) {
+              searchInput.focus();
+              try { searchInput.setSelectionRange(caretPos, caretPos); } catch (_) {}
+          }
+
+          const capture = () => {
+              window._inventorySearchState = {
+                  value: searchInput.value,
+                  hadFocus: document.activeElement === searchInput,
+                  caretPos: searchInput.selectionStart
+              };
+          };
+
+          setupSearchInput(
+              searchInput,
+              clearSearchBtn,
+              () => {
+                  capture();
+                  import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('6'));
+              },
+              () => {
+                  window._inventorySearchState = { value: '', hadFocus: true, caretPos: 0 };
+                  import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('6'));
+              }
+          );
+      }
+
+      // Coin pouches blur save
+      resultsSection.querySelectorAll('.permanent-title').forEach(titleEl => {
+          titleEl.addEventListener('blur', () => {
+              const blockId = titleEl.parentElement.getAttribute('data-id');
+              localStorage.setItem(`permanentItem_${blockId}`, titleEl.textContent.trim());
+          });
+      });
+
+      // Attunement max editable
+      const maxEl = resultsSection.querySelector('.inventory-attune-max');
+      if (maxEl) {
+          const commit = () => {
+              const n = parseInt(maxEl.textContent.trim(), 10);
+              if (!Number.isFinite(n) || n < 0) {
+                  maxEl.textContent = String(getInventoryAttunementMax());
+                  return;
+              }
+              setInventoryAttunementMax(n);
+              renderInventory(filteredBlocks);
+          };
+          maxEl.addEventListener('blur', commit);
+          maxEl.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') { e.preventDefault(); maxEl.blur(); }
+              if (e.key === 'Escape') {
+                  maxEl.textContent = String(getInventoryAttunementMax());
+                  maxEl.blur();
+              }
+          });
+      }
+
+      // Chain-icon click → toggle attuned
+      resultsSection.querySelectorAll('.block-attune-chain').forEach(el => {
+          el.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const id = el.getAttribute('data-id');
+              if (id) toggleInventoryAttuned(id);
+          });
+      });
+
+      // Hand-icon click → toggle equipped
+      resultsSection.querySelectorAll('.block-equip-hand').forEach(el => {
+          el.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const id = el.getAttribute('data-id');
+              if (id) toggleInventoryEquipped(id);
+          });
+      });
+
+      // Block click → open in viewer, or deselect if already selected
+      resultsSection.querySelectorAll('.block:not(.permanent-block)').forEach(blockEl => {
+          blockEl.addEventListener('click', (e) => {
+              if (e.target.closest('.block-actions')  ||
+                  e.target.closest('.actions-trigger') ||
+                  e.target.closest('.pin-button')      ||
+                  e.target.closest('.block-attune-chain') ||
+                  e.target.closest('.block-equip-hand')) return;
+              if (e.target.classList.contains('circle')) return;
+              const id = blockEl.getAttribute('data-id');
+              if (!id) return;
+              if (id === activeInventoryBlockId) {
+                  // Deselect with fade
+                  activeInventoryBlockId = null;
+                  document.querySelectorAll('#results_section_6 .block').forEach(b => {
+                      b.classList.remove('inventory-block-active');
+                  });
+                  const viewer = document.getElementById('inventory_viewer');
+                  const existing = viewer?.querySelector('.inventory-viewer-content');
+                  const clear = () => {
+                      if (viewer) viewer.innerHTML = '<p class="inventory-viewer-placeholder">Select an item to view</p>';
+                  };
+                  if (existing) {
+                      existing.classList.add('fading');
+                      setTimeout(clear, 400);
+                  } else {
+                      clear();
+                  }
+              } else {
+                  renderInventoryViewer(id);
+              }
+          });
+
+          // Paired hover — light up every rendered copy of the same block
+          const id = blockEl.getAttribute('data-id');
+          blockEl.addEventListener('mouseenter', () => {
+              if (!id) return;
+              resultsSection.querySelectorAll(`.block[data-id="${id}"]`).forEach(el => {
+                  if (el !== blockEl) el.classList.add('inventory-hover-pair');
+              });
+          });
+          blockEl.addEventListener('mouseleave', () => {
+              if (!id) return;
+              resultsSection.querySelectorAll(`.block[data-id="${id}"]`).forEach(el => {
+                  el.classList.remove('inventory-hover-pair');
+              });
+          });
+      });
+
+      // Render viewer for the currently-active block, if it's still present.
+      // Otherwise leave the viewer empty — no auto-select.
+      const viewer = document.getElementById('inventory_viewer');
+      const stillPresent = activeInventoryBlockId &&
+          displayBlocks.find(b => b.id === activeInventoryBlockId);
+      if (stillPresent) {
+          renderInventoryViewer(activeInventoryBlockId);
+      } else {
+          activeInventoryBlockId = null;
+          if (viewer) viewer.innerHTML = '<p class="inventory-viewer-placeholder">Select an item to view</p>';
+      }
+
+      // Section header click → toggle collapse
+      host.querySelectorAll('.inventory-section-header, .inventory-sub-label').forEach(headerEl => {
+          headerEl.addEventListener('click', () => {
+              const key = headerEl.dataset.sectionKey;
+              if (!key) return;
+              const row = host.querySelector(`.inventory-row[data-section-key="${key}"]`);
+              const nowCollapsed = !headerEl.classList.contains('inventory-collapsed');
+              headerEl.classList.toggle('inventory-collapsed', nowCollapsed);
+              if (row) row.classList.toggle('inventory-collapsed', nowCollapsed);
+              setInventorySectionCollapsed(key, nowCollapsed);
+          });
+      });
+
+      applyInlineDiceRolls(resultsSection, 'tab6');
+      attachDynamicTooltips();
+      initScrollFades('.results-section', null, '--results-fade-opacity', '_scrollFadeHandler');
+      document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab6' } }));
+  };
+
+  const wireInventoryHeaderControls = () => {
+      const sortBtn      = document.getElementById('results-sort-btn_6');
+      const sortDropdown = document.getElementById('sort-dropdown_6');
+      const addBtn       = document.getElementById('add_block_button');
+
+      if (!sortBtn || !sortDropdown) return;
+
+      const closeAll = () => {
+          sortDropdown.classList.add('hidden');
+      };
+
+      sortBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          const wasOpen = !sortDropdown.classList.contains('hidden');
+          closeAll();
+          if (!wasOpen) {
+              const rect = sortBtn.getBoundingClientRect();
+              sortDropdown.style.top  = `${rect.bottom + 5}px`;
+              sortDropdown.style.left = `${rect.left}px`;
+              sortDropdown.classList.remove('hidden');
+          }
+      });
+
+      document.addEventListener('click', closeAll, { once: true });
+
+      const savedSort = localStorage.getItem('activeSortOrder_tab6') || 'newest';
+      sortDropdown.querySelectorAll('.sort-item').forEach(item => {
+          const mode = item.dataset.sort;
+          item.classList.toggle('selected', mode === savedSort);
+          item.addEventListener('click', e => {
+              e.stopPropagation();
+              localStorage.setItem('activeSortOrder_tab6', mode);
+              closeAll();
+              import('./filterManager.js').then(({ filterManager }) => {
+                  filterManager.applyFilters('6');
+              });
+          });
+      });
+
+      if (addBtn) {
+          addBtn.onclick = () => {
+              overlayHandler.initializeOverlayTagHandlers('add_block_overlay_tags');
+              const overlay = document.querySelector('.add-block-overlay');
+              if (overlay) overlay.dataset.activeTab = 'tab6';
+              overlay?.classList.add('show');
+          };
+      }
+  };
+
+  let renderAbortController = null;
 
 /* ==================================================================*/
 /* ============================= BLOCKS =============================*/
@@ -727,9 +1255,15 @@ export const appManager = (() => {
       tab = "tab4";
     }
 
-        // ── Session Log has its own render path ──────────────────────────
+// ── Session Log has its own render path ──────────────────────────
     if (tab === 'tab7') {
         renderSessionLog(filteredBlocks);
+        return;
+    }
+
+        // ── Inventory has its own sectioned render path ───────────────────
+    if (tab === 'tab6') {
+        renderInventory(filteredBlocks);
         return;
     }
 
@@ -915,11 +1449,20 @@ resultsSection.innerHTML = `
     document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`)
       .forEach(blockEl => {
         blockEl.addEventListener("click", function(e) {
-          const validTargets = ['.block', '.block-header', '.block-header-left'];
-          const isEmptySpace = validTargets.some(sel =>
-            e.target === blockEl.querySelector(sel) || e.target === blockEl
-          );
-          if (!isEmptySpace) return;
+          // Action buttons (pin, edit, duplicate, remove, ⋯ trigger) handle their own clicks
+          if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
+          // Interactive circles (uses) handle their own clicks
+          if (e.target.classList.contains('circle')) return;
+
+          // For condensed blocks: click anywhere expands
+          // For expanded blocks: only empty space collapses (tags/text remain interactive)
+          if (!blockEl.classList.contains('condensed')) {
+            const validTargets = ['.block', '.block-header', '.block-header-left'];
+            const isEmptySpace = validTargets.some(sel =>
+              e.target === blockEl.querySelector(sel) || e.target === blockEl
+            );
+            if (!isEmptySpace) return;
+          }
 
           const blockId    = blockEl.getAttribute("data-id");
           const blocksArr  = getBlocks(tab);
@@ -1126,19 +1669,26 @@ resultsSection.innerHTML = `
       ()      => { state.query = '';    refilterQr(charTab); }
     );
 
-    // Delegated listener on blocks area — expand/collapse only; tag clicks handled by filterManager
+    // Delegated listener on blocks area — expand/collapse only
     blocksDiv?.addEventListener('click', e => {
-      if (e.target.closest('.tag-button[data-tag]')) return;
-
-      // Expand / collapse block on header / empty space click
       const blockEl = e.target.closest('.block[data-qr-id]');
       if (!blockEl) return;
-      const validTargets = ['.block', '.block-header', '.block-header-left', '.block-title'];
-      const isEmptySpace = validTargets.some(sel => {
-        const node = blockEl.querySelector(sel);
-        return e.target === blockEl || e.target === node;
-      });
-      if (!isEmptySpace) return;
+
+      // Action buttons and uses circles handle their own clicks
+      if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
+      if (e.target.classList.contains('circle')) return;
+
+      // For condensed blocks: click anywhere expands (tags are non-interactive)
+      // For expanded blocks: only empty space collapses
+      if (!blockEl.classList.contains('condensed')) {
+        if (e.target.closest('.tag-button[data-tag]')) return;
+        const validTargets = ['.block', '.block-header', '.block-header-left', '.block-title'];
+        const isEmptySpace = validTargets.some(sel => {
+          const node = blockEl.querySelector(sel);
+          return e.target === blockEl || e.target === node;
+        });
+        if (!isEmptySpace) return;
+      }
 
       const id    = blockEl.dataset.qrId;
       const block = getBlocks('tab9').find(b => b.id === id);
@@ -1318,13 +1868,14 @@ resultsSection.innerHTML = `
 /* ======================== DATA MANAGEMENT ========================*/
 /* =================================================================*/
 
-  const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType = null, blockId = null, timestamp = null) => {
+  const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType = null, blockId = null, timestamp = null, inventoryExtras = null) => {
     if (!blockTitle || (tab !== "tab6" && !text)) {
       console.error(tab === "tab6" ? "❌ Block title is required for Tab 6" : "❌ Block title and text are required");
       return false;
     }
 
     let userBlocks = getBlocks(tab);
+    let newId = null;
 
     if (blockId) {
       const blockIndex = userBlocks.findIndex(block => block.id === blockId);
@@ -1332,7 +1883,8 @@ resultsSection.innerHTML = `
         userBlocks[blockIndex] = {
           ...userBlocks[blockIndex],
           title: blockTitle, text, tags, uses, properties, blockType,
-          timestamp: userBlocks[blockIndex].timestamp || Date.now()
+          timestamp: userBlocks[blockIndex].timestamp || Date.now(),
+          ...(inventoryExtras || {})
         };
       } else {
         console.error(`❌ Block with ID "${blockId}" not found in tab ${tab}.`);
@@ -1347,19 +1899,21 @@ resultsSection.innerHTML = `
         return predefined || (tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase());
       });
 
+      newId = crypto.randomUUID();
       userBlocks.unshift({
-        id: crypto.randomUUID(),
+        id: newId,
         title: blockTitle, text,
         tags: formattedTags,
         uses, properties,
         blockType: blockType || null,
         timestamp: timestamp || Date.now(),
-        viewState: "expanded"
+        viewState: "expanded",
+        ...(inventoryExtras || {})
       });
     }
 
     localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(userBlocks));
-    return true;
+    return blockId ? true : newId;
   };
 
   const removeBlock = (blockId, tabOverride = null) => {
@@ -1473,5 +2027,6 @@ resultsSection.innerHTML = `
     restoreBlock,
     clearFilters,
     clearData,
+    setActiveInventoryBlock,
   };
 })();
