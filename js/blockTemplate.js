@@ -255,6 +255,28 @@ export const blockTemplate = (block, tab = "tab4") => {
                 ${tagSectionsHTML}
                 ${ hasBody ? `<div class="block-body"><span>${bodyHTML}</span></div>` : "" }
             `;
+        } else if (isTab3Book) {
+            const bookIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 4.5A2.5 2.5 0 0 0 6.5 7H20"/></svg>`;
+            const usesHTML = block.uses
+                ? block.uses.map((state, idx) =>
+                    `<span class="circle ${state ? 'unfilled' : ''}" onclick="toggleBlockUse('${block.id}', ${idx}, event, this)"></span>`
+                  ).join("")
+                : "";
+            content = `
+                <div class="block-header">
+                    <div class="block-header-left">
+                        <div class="book-card-thumb">${bookIconSVG}</div>
+                        <div class="book-card-text${bookDescription ? '' : ' book-card-text-no-desc'}">
+                            <div class="book-card-title"><h4>${block.title}</h4></div>
+                            ${bookDescription ? `<div class="book-card-description">${bookDescription}</div>` : ''}
+                        </div>
+                        ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
+                    </div>
+                    ${tab6ActionMenu}
+                </div>
+                ${tagSectionsHTML}
+                ${ hasBody ? `<div class="block-body"><span>${bodyHTML}</span></div>` : "" }
+            `;
         } else {
             const usesHTML = block.uses
                 ? block.uses.map((state, idx) =>

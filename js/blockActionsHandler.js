@@ -203,6 +203,79 @@ export const blockActionsHandler = (() => {
     
     document.addEventListener("DOMContentLoaded", initUndoLastDelete);
 
+    // ── Delete confirmation popup (replaces the full-screen overlay) ──
+    const showDeletePopup = (blockId, clickEvent) => {
+        document.getElementById('delete-confirm-popup')?.remove();
+
+        const popup = document.createElement('div');
+        popup.id = 'delete-confirm-popup';
+        popup.className = 'delete-confirm-popup';
+        popup.innerHTML = `
+            <span class="delete-confirm-message">Are you sure you want<br>to delete this block?</span>
+            <div class="delete-confirm-buttons">
+                <button class="delete-confirm-yes"><span>Yes</span></button>
+                <button class="delete-confirm-no">No</button>
+            </div>
+        `;
+        document.body.appendChild(popup);
+
+        // Position above the click point
+        const popupRect = popup.getBoundingClientRect();
+        let top  = clickEvent.clientY - popupRect.height - 10;
+        let left = clickEvent.clientX - (popupRect.width / 2);
+
+        if (top < 4) top = clickEvent.clientY + 14;
+        if (left < 4) left = 4;
+        if (left + popupRect.width > window.innerWidth - 4) {
+            left = window.innerWidth - popupRect.width - 4;
+        }
+
+        popup.style.top  = `${top}px`;
+        popup.style.left = `${left}px`;
+        popup.classList.add('visible');
+
+        const dismiss = () => {
+            popup.classList.remove('visible');
+            setTimeout(() => popup.remove(), 400);
+            document.removeEventListener('mousedown', onOutside);
+        };
+        const onOutside = (e) => {
+            if (!popup.contains(e.target)) dismiss();
+        };
+        setTimeout(() => document.addEventListener('mousedown', onOutside), 0);
+
+        // Yes button: must hover for 0.5s before it becomes clickable
+        const yesBtn = popup.querySelector('.delete-confirm-yes');
+        let yesArmed = false;
+        let armTimer = null;
+
+        yesBtn.addEventListener('mouseenter', () => {
+            yesArmed = false;
+            yesBtn.classList.remove('armed');
+            armTimer = setTimeout(() => {
+                yesArmed = true;
+                yesBtn.classList.add('armed');
+            }, 500);
+        });
+
+        yesBtn.addEventListener('mouseleave', () => {
+            clearTimeout(armTimer);
+            yesArmed = false;
+            yesBtn.classList.remove('armed');
+        });
+
+        yesBtn.addEventListener('click', () => {
+            if (!yesArmed) return;
+            const deletedTab   = appManager.getActiveTab();
+            const deletedBlock = appManager.removeBlock(blockId);
+            lastDeletedBlock   = { tab: deletedTab, block: deletedBlock };
+            reapplySearchAndFilters();
+            dismiss();
+        });
+
+        popup.querySelector('.delete-confirm-no').addEventListener('click', dismiss);
+    };
+
     const handleBlockActions = (event) => {
         const target  = event.target.closest('.action-button') || event.target;
         const blockId = target.getAttribute("data-id");
@@ -263,12 +336,9 @@ export const blockActionsHandler = (() => {
             if (activeTab === 'tab6' && typeof result === 'string') {
                 appManager.setActiveInventoryBlock(result);
             }
-            // On tab3, auto-select Book copies in the viewer
+            // On tab3, auto-select the duplicate in the viewer (wide mode)
             if (activeTab === 'tab3' && typeof result === 'string') {
-                const blockTypesArr = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
-                if (blockTypesArr.includes('Book')) {
-                    appManager.setActiveNotesBlock(result);
-                }
+                appManager.setActiveNotesBlock(result);
             }
             reapplySearchAndFilters(activeTab);
 
@@ -362,9 +432,7 @@ overlayHandler.populateBlockTypeOverlay("character_type_tags_edit");
             document.querySelector(".edit-block-overlay").classList.add("show");
 
         } else if (target.classList.contains("remove-button")) {
-            pendingDeleteBlockId = blockId;
-            const overlay = document.querySelector(".remove-block-overlay");
-            overlay && overlay.classList.add("show");
+            showDeletePopup(blockId, event);
         }
     };  
 

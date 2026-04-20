@@ -2445,6 +2445,150 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     opacity: 0.75;
 }
 
+/* ── Map link confirmation popup ───────────────────────────── */
+
+.map-link-popup {
+    position: fixed;
+    z-index: 100000;
+    background: var(--gray-200);
+    border: 1px solid var(--gray-500);
+    border-radius: 8px;
+    padding: 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+}
+
+.map-link-popup.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.map-link-popup-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    color: var(--color-blue);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+}
+
+.map-link-popup-action:hover {
+    background: var(--gray-400);
+}
+
+.map-link-popup-action svg {
+    flex-shrink: 0;
+    stroke: currentColor;
+}
+
+/* ── Delete confirmation popup ─────────────────────────────── */
+
+.delete-confirm-popup {
+    position: fixed;
+    z-index: 100000;
+    background: rgba(34, 34, 34, 0.8);
+    border-radius: 8px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+    min-width: 180px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.delete-confirm-popup.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.delete-confirm-message {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-900);
+    text-align: center;
+    line-height: 1.4;
+}
+
+.delete-confirm-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.delete-confirm-buttons button {
+    padding: 7px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    width: 100%;
+}
+
+.delete-confirm-yes {
+    position: relative;
+    overflow: hidden;
+    background: #a33535;
+    color: #fff;
+    cursor: default;
+}
+
+.delete-confirm-yes span {
+    position: relative;
+    z-index: 1;
+}
+
+.delete-confirm-yes::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: var(--color-red);
+    border-radius: 0;
+    transition: width 0.25s ease-in;
+}
+
+.delete-confirm-yes:hover::after {
+    width: 100%;
+    transition: width 0.5s linear;
+}
+
+.delete-confirm-yes.armed {
+    cursor: pointer;
+}
+
+.delete-confirm-no {
+    background: var(--gray-400);
+    color: var(--gray-900);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.delete-confirm-no:hover {
+    background: var(--gray-500);
+}
+
 /* ============================================================== */
 /* ============ TAB3 NOTES SPLIT LAYOUT (list + viewer) ========= */
 /* ============================================================== */
@@ -2569,15 +2713,51 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .block.notes-block-active {
     background-color: var(--block-bg-selected-base);
     background-image: radial-gradient(90% 110% at 50% 0%, var(--block-bg-selected-highlight) 0%, transparent 100%);
-    border: 1px solid var(--block-border-selected);
 }
 
 #results_section_3 .block:not(.permanent-block) {
-    transition: background-color 0.2s ease, border-color 0.2s ease;
+    transition: background-color 0.2s ease;
 }
 
 #results_section_3 .block:not(.permanent-block):hover {
     cursor: pointer;
+}
+
+/* ── Notes wide mode: viewer always visible ────────────────── */
+
+.notes-layout.notes-wide-mode {
+    gap: 15px;
+}
+
+.notes-layout.notes-wide-mode .notes-list-column {
+    width: 50%;
+}
+
+.notes-layout.notes-wide-mode .notes-viewer {
+    width: 50%;
+    padding: 15px 18px;
+    opacity: 1;
+    overflow-y: auto;
+}
+
+/* In wide mode the viewer is always visible, so the slide-in
+   class should not further alter widths. */
+.notes-layout.notes-wide-mode.notes-viewer-open .notes-list-column {
+    width: 50%;
+}
+
+.notes-layout.notes-wide-mode.notes-viewer-open .notes-viewer {
+    width: 50%;
+}
+
+/* ── Notes narrow mode: viewer completely hidden ───────────── */
+
+.notes-layout:not(.notes-wide-mode) .notes-viewer {
+    display: none !important;
+}
+
+.notes-layout:not(.notes-wide-mode) .notes-list-column {
+    width: 100% !important;
 }
 
 /* ============================================================== */

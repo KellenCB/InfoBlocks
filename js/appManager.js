@@ -1241,8 +1241,65 @@ export const appManager = (() => {
   const setTab3SectionCollapsed = (key, collapsed) =>
       localStorage.setItem(`tab3_section_collapsed_${key}`, collapsed ? 'true' : 'false');
 
-  // Currently-active block in the notes viewer (Books only)
+  // Currently-active block in the notes viewer
   let activeNotesBlockId = null;
+
+  // ── Notes wide/narrow responsive mode ──────────────────────────
+  const NOTES_WIDE_BREAKPOINT = 700;
+  let notesWideMode = false;
+  let notesResizeObserver = null;
+
+  const initNotesResizeObserver = () => {
+      if (notesResizeObserver) return;
+      const layout = document.querySelector('.notes-layout');
+      if (!layout) return;
+
+      // Set initial mode synchronously so the first render is correct
+      notesWideMode = layout.offsetWidth >= NOTES_WIDE_BREAKPOINT;
+      layout.classList.toggle('notes-wide-mode', notesWideMode);
+
+      notesResizeObserver = new ResizeObserver(entries => {
+          const width = entries[0].contentRect.width;
+          const wasWide = notesWideMode;
+          notesWideMode = width >= NOTES_WIDE_BREAKPOINT;
+          layout.classList.toggle('notes-wide-mode', notesWideMode);
+
+          if (wasWide !== notesWideMode) {
+              const blocks = getBlocks('tab3');
+              if (notesWideMode) {
+                  // Narrow → wide: move inline-expanded block to viewer
+                  let blockToView = null;
+                  blocks.forEach(b => {
+                      if (b.viewState === 'expanded') {
+                          blockToView = b.id;
+                          b.viewState = 'condensed';
+                      }
+                  });
+                  if (blockToView) {
+                      localStorage.setItem('userBlocks_tab3', JSON.stringify(blocks));
+                      activeNotesBlockId = blockToView;
+                  }
+              } else {
+                  // Wide → narrow: move viewer block to inline-expanded
+                  if (activeNotesBlockId) {
+                      const block = blocks.find(b => b.id === activeNotesBlockId);
+                      if (block && getTab3BlockType(block) !== 'Map') {
+                          blocks.forEach(b => {
+                              if (b.viewState === 'expanded') b.viewState = 'condensed';
+                          });
+                          block.viewState = 'expanded';
+                          localStorage.setItem('userBlocks_tab3', JSON.stringify(blocks));
+                      }
+                      activeNotesBlockId = null;
+                  }
+              }
+              import('./filterManager.js').then(({ filterManager }) => {
+                  filterManager.applyFilters('3');
+              });
+          }
+      });
+      notesResizeObserver.observe(layout);
+  };
 
   // External setter used by duplicate-block flow to auto-select the copy
   const setActiveNotesBlock = (id) => { activeNotesBlockId = id; };
@@ -1312,25 +1369,110 @@ export const appManager = (() => {
       `;
   };
 
-  // ── Close the notes viewer (slide out) ──────────────────────────
+  // ── Close the notes viewer ──────────────────────────────────────
   const closeNotesViewer = () => {
       const wasActive = activeNotesBlockId;
       activeNotesBlockId = null;
       const layout = document.querySelector('.notes-layout');
       const viewer = document.getElementById('notes_viewer');
-      if (layout) layout.classList.remove('notes-viewer-open');
+
       document.querySelectorAll('#results_section_3 .block').forEach(b => {
           b.classList.remove('notes-block-active');
       });
-      // Clear viewer content after slide-out transition
-      if (viewer && wasActive) {
-          setTimeout(() => {
-              if (!activeNotesBlockId) viewer.innerHTML = '';
-          }, 300);
+
+      if (notesWideMode) {
+          // Wide mode: keep viewer visible, show placeholder
+          if (viewer) viewer.innerHTML = '<p class="notes-viewer-placeholder">Select an item to view</p>';
+      } else {
+          // Narrow mode: slide out
+          if (layout) layout.classList.remove('notes-viewer-open');
+          if (viewer && wasActive) {
+              setTimeout(() => {
+                  if (!activeNotesBlockId) viewer.innerHTML = '';
+              }, 300);
+          }
       }
   };
 
-  // ── Render a Book into the notes viewer (slide in) ──────────────
+  // ── Map link confirmation popup ─────────────────────────────────
+  const showMapLinkPopup = (url, clickEvent) => {
+      // Remove any existing popup
+      document.getElementById('map-link-popup')?.remove();
+
+      const popup = document.createElement('div');
+      popup.id = 'map-link-popup';
+      popup.className = 'map-link-popup';
+
+      const linkSVG = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
+
+      popup.innerHTML = `
+          <a class="map-link-popup-action" href="${url}" target="_blank" rel="noopener">
+              ${linkSVG}
+              <span>Open in new tab</span>
+          </a>
+      `;
+      document.body.appendChild(popup);
+
+      // Position above the click point
+      const popupRect = popup.getBoundingClientRect();
+      let top  = clickEvent.clientY - popupRect.height - 10;
+      let left = clickEvent.clientX - (popupRect.width / 2);
+
+      // Keep within viewport
+      if (top < 4) top = clickEvent.clientY + 14;
+      if (left < 4) left = 4;
+      if (left + popupRect.width > window.innerWidth - 4) {
+          left = window.innerWidth - popupRect.width - 4;
+      }
+
+      popup.style.top  = `${top}px`;
+      popup.style.left = `${left}px`;
+      popup.classList.add('visible');
+
+      // Dismiss helpers
+      let fadeTimer = null;
+      const dismiss = () => {
+          clearTimeout(fadeTimer);
+          popup.classList.remove('visible');
+          setTimeout(() => popup.remove(), 400);
+          document.removeEventListener('mousedown', onOutside);
+          document.removeEventListener('mousemove', onFirstMove);
+      };
+      const startFadeTimer = () => {
+          clearTimeout(fadeTimer);
+          fadeTimer = setTimeout(dismiss, 600);
+      };
+      const cancelFadeTimer = () => clearTimeout(fadeTimer);
+
+      // Dismiss on outside click
+      const onOutside = (e) => {
+          if (!popup.contains(e.target)) dismiss();
+      };
+      setTimeout(() => document.addEventListener('mousedown', onOutside), 0);
+
+      // Dismiss after link is clicked
+      popup.querySelector('a').addEventListener('click', () => {
+          setTimeout(dismiss, 100);
+      });
+
+      // Hover: cancel timer while hovering, restart when leaving
+      popup.addEventListener('mouseenter', cancelFadeTimer);
+      popup.addEventListener('mouseleave', startFadeTimer);
+
+      // Start fade timer once the mouse first moves away from the click area
+      const onFirstMove = (e) => {
+          const r = popup.getBoundingClientRect();
+          const pad = 12;
+          if (e.clientX < r.left - pad || e.clientX > r.right + pad ||
+              e.clientY < r.top - pad  || e.clientY > r.bottom + pad) {
+              startFadeTimer();
+              document.removeEventListener('mousemove', onFirstMove);
+          }
+      };
+      setTimeout(() => document.addEventListener('mousemove', onFirstMove), 50);
+  };
+
+  // ── Render a block into the notes viewer ─────────────────────────
   const renderNotesViewer = (blockId) => {
       const viewer = document.getElementById('notes_viewer');
       const layout = document.querySelector('.notes-layout');
@@ -1350,17 +1492,14 @@ export const appManager = (() => {
 
       activeNotesBlockId = blockId;
 
-      // Slide open
-      if (layout) layout.classList.add('notes-viewer-open');
+      // In narrow mode, slide open (wide mode CSS keeps viewer always visible)
+      if (!notesWideMode && layout) layout.classList.add('notes-viewer-open');
 
       // Render the block expanded — blockTemplate handles body, tags, and
       // includes the .block-actions menu with edit/duplicate/remove buttons.
       const blockHTML = blockTemplate({ ...block, viewState: 'expanded' }, 'tab3');
 
-      const closeBtnSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-      const closeBtnHTML = `<button class="notes-viewer-close-btn" title="Close">${closeBtnSVG}</button>`;
-
-      const newContentHTML = `<div class="notes-viewer-content">${closeBtnHTML}${blockHTML}</div>`;
+      const newContentHTML = `<div class="notes-viewer-content">${blockHTML}</div>`;
 
       const existing = viewer.querySelector('.notes-viewer-content, .notes-viewer-placeholder');
       const doSwap = () => {
@@ -1375,8 +1514,6 @@ export const appManager = (() => {
           document.querySelectorAll('#results_section_3 .block').forEach(b => {
               b.classList.toggle('notes-block-active', b.getAttribute('data-id') === blockId);
           });
-          // Wire close button
-          viewer.querySelector('.notes-viewer-close-btn')?.addEventListener('click', closeNotesViewer);
       };
       if (existing && existing.classList.contains('notes-viewer-content')) {
           existing.classList.add('fading');
@@ -1390,6 +1527,8 @@ export const appManager = (() => {
   const renderNotes = (filteredBlocks = null) => {
       const resultsSection = document.getElementById('results_section_3');
       if (!resultsSection) return;
+
+      initNotesResizeObserver();
 
       const allBlocks        = getBlocks('tab3');
       const prelocationFiltered = (filteredBlocks || allBlocks);
@@ -1427,15 +1566,19 @@ export const appManager = (() => {
       const host = document.getElementById('tab3-sections-host');
 
       // ── List block renderer ──────────────────────────────────────
-      // Quest/Note: respect persisted viewState (expand inline).
-      // Map/Book: always condensed in the list.
-      // Only Books get the active-highlight class.
+      // Wide mode: all blocks condensed; clicked block shown in viewer.
+      // Narrow mode: non-Map blocks can expand inline (accordion).
       const renderNotesListBlock = (b) => {
           const type = getTab3BlockType(b);
-          const listViewState = (type === 'Quest' || type === 'Notes')
-              ? (b.viewState || 'condensed')
-              : 'condensed';
-          const activeClass = (type === 'Book' && b.id === activeNotesBlockId) ? ' notes-block-active' : '';
+          let listViewState;
+          if (notesWideMode) {
+              // Wide: always condensed in list, viewer shows detail
+              listViewState = 'condensed';
+          } else {
+              // Narrow: all non-Map types can expand inline
+              listViewState = (type === 'Map') ? 'condensed' : (b.viewState || 'condensed');
+          }
+          const activeClass = (b.id === activeNotesBlockId) ? ' notes-block-active' : '';
           const html = blockTemplate({ ...b, viewState: listViewState }, 'tab3');
           return html.replace(
               /<div class="block ([^"]+)" data-id="([^"]+)">/,
@@ -1538,40 +1681,40 @@ export const appManager = (() => {
 
               const type = getTab3BlockType(targetBlock);
 
-              // ── Map: entire card opens URL in new tab ────────────
+              // ── Map: show popup to open URL in new tab ──────────
               if (type === 'Map') {
-                  if (targetBlock.url) window.open(targetBlock.url, '_blank', 'noopener');
-                  closeNotesViewer();
+                  if (targetBlock.url) showMapLinkPopup(targetBlock.url, e);
                   return;
               }
 
-              // ── Book: open/close/swap viewer ─────────────────────
-              if (type === 'Book') {
+              if (notesWideMode) {
+                  // ── Wide mode: open/close/swap viewer for any type ──
                   if (id === activeNotesBlockId) {
                       closeNotesViewer();
                   } else {
                       renderNotesViewer(id);
                   }
-                  return;
-              }
-
-              // ── Quest / Notes: toggle inline expansion ───────────
-              closeNotesViewer();
-
-              // For expanded blocks, only collapse via the dedicated header tap handler below
-              if (!blockEl.classList.contains('condensed')) return;
-
-              if (targetBlock.viewState === 'expanded') {
-                  targetBlock.viewState = 'condensed';
               } else {
-                  targetBlock.viewState = 'expanded';
+                  // ── Narrow mode: accordion inline expansion ─────────
+                  // For expanded blocks, only collapse via header tap
+                  if (!blockEl.classList.contains('condensed')) return;
+
+                  // Accordion: collapse any other expanded block first
+                  blocksArr.forEach(b => {
+                      if (b.id !== id && b.viewState === 'expanded') {
+                          b.viewState = 'condensed';
+                      }
+                  });
+
+                  targetBlock.viewState = targetBlock.viewState === 'expanded'
+                      ? 'condensed' : 'expanded';
+
+                  localStorage.setItem('userBlocks_tab3', JSON.stringify(blocksArr));
+
+                  import('./filterManager.js').then(({ filterManager }) => {
+                      filterManager.applyFilters('3');
+                  });
               }
-
-              localStorage.setItem('userBlocks_tab3', JSON.stringify(blocksArr));
-
-              import('./filterManager.js').then(({ filterManager }) => {
-                  filterManager.applyFilters('3');
-              });
           });
       });
 
@@ -1601,6 +1744,8 @@ export const appManager = (() => {
           headerEl.addEventListener('mouseup', (e) => {
               if (!mdFired) return;
               mdFired = false;
+              // Wide mode: blocks don't expand inline, nothing to collapse
+              if (notesWideMode) return;
               const blockEl = headerEl.closest('.block');
               if (!blockEl || blockEl.classList.contains('condensed')) return;
               const dx = Math.abs(e.clientX - mdX);
@@ -1614,7 +1759,7 @@ export const appManager = (() => {
               if (!targetBlock) return;
 
               const type = getTab3BlockType(targetBlock);
-              if (type !== 'Quest' && type !== 'Notes') return;
+              if (type === 'Map') return;
 
               targetBlock.viewState = 'condensed';
               localStorage.setItem('userBlocks_tab3', JSON.stringify(blocksArr));
@@ -1642,19 +1787,54 @@ export const appManager = (() => {
       document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab3' } }));
       initQuestStatusDropdown();
 
-      // ── Viewer: only for Books, slide-in ─────────────────────────
+      // ── Wire quest status pill clicks in the viewer too ──────────
+      const notesViewerEl = document.getElementById('notes_viewer');
+      if (notesViewerEl && !notesViewerEl._questPillDelegationBound) {
+          notesViewerEl.addEventListener('click', (e) => {
+              const pill = e.target.closest('.quest-status-pill');
+              if (!pill) return;
+              e.stopPropagation();
+              const dropdown = document.getElementById('quest-status-dropdown');
+              if (!dropdown) return;
+              const rect = pill.getBoundingClientRect();
+              dropdown.style.top  = `${rect.bottom + 5}px`;
+              dropdown.style.left = `${rect.left}px`;
+              dropdown.dataset.blockId = pill.dataset.id;
+              const currentStatus = pill.dataset.status;
+              dropdown.querySelectorAll('.quest-status-item').forEach(it => {
+                  it.classList.toggle('selected', it.dataset.status === currentStatus);
+              });
+              dropdown.classList.remove('hidden');
+              setTimeout(() => {
+                  const closeDropdown = () => dropdown.classList.add('hidden');
+                  document.addEventListener('click', closeDropdown, { once: true });
+              }, 0);
+          });
+          notesViewerEl._questPillDelegationBound = true;
+      }
+
+      // ── Viewer: mode-dependent ────────────────────────────────────
       const viewer = document.getElementById('notes_viewer');
-      const stillPresent = activeNotesBlockId &&
-          displayBlocks.find(b => b.id === activeNotesBlockId);
-      if (stillPresent) {
-          const activeBlock = displayBlocks.find(b => b.id === activeNotesBlockId);
-          if (getTab3BlockType(activeBlock) === 'Book') {
+      if (notesWideMode) {
+          // Wide mode: viewer is always visible
+          const stillPresent = activeNotesBlockId &&
+              displayBlocks.find(b => b.id === activeNotesBlockId);
+          if (stillPresent) {
               renderNotesViewer(activeNotesBlockId);
           } else {
-              closeNotesViewer();
+              if (activeNotesBlockId) activeNotesBlockId = null;
+              if (viewer) viewer.innerHTML = '<p class="notes-viewer-placeholder">Select an item to view</p>';
+              document.querySelectorAll('#results_section_3 .block').forEach(b => {
+                  b.classList.remove('notes-block-active');
+              });
           }
       } else {
-          if (activeNotesBlockId) closeNotesViewer();
+          // Narrow mode: viewer hidden by CSS — just clean up state
+          if (activeNotesBlockId) {
+              activeNotesBlockId = null;
+              const layout = document.querySelector('.notes-layout');
+              if (layout) layout.classList.remove('notes-viewer-open');
+          }
           if (viewer) viewer.innerHTML = '';
       }
   };
