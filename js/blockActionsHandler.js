@@ -293,9 +293,22 @@ export const blockActionsHandler = (() => {
             const blocks = appManager.getBlocks(activeTab);
             const idx    = blocks.findIndex(b => b.id === blockId);
             if (idx !== -1) {
-                blocks[idx].pinned = !blocks[idx].pinned;
+                const nowPinned = !blocks[idx].pinned;
+                blocks[idx].pinned = nowPinned;
                 localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
-                reapplySearchAndFilters(activeTab);   // ← was reapplySearchAndFilters()
+
+                // Maintain pinned order — new pins go to end, unpins are removed
+                const orderKey = `pinnedBlockOrder_${activeTab}`;
+                const order = JSON.parse(localStorage.getItem(orderKey) || '[]');
+                if (nowPinned) {
+                    if (!order.includes(blockId)) order.push(blockId);
+                } else {
+                    const filtered = order.filter(id => id !== blockId);
+                    localStorage.setItem(orderKey, JSON.stringify(filtered));
+                }
+                if (nowPinned) localStorage.setItem(orderKey, JSON.stringify(order));
+
+                reapplySearchAndFilters(activeTab);
             }
             return;
         }

@@ -156,6 +156,99 @@ export const appManager = (() => {
   let pendingEditMode         = false;
   let sessionListCollapsed    = localStorage.getItem('sessionListCollapsed') === 'true';
 
+  // ── Block expand/collapse animation ─────────────────────────────
+  let pendingBlockAnim = null;
+
+  const setPendingBlockAnim = (blockId, oldHeight) => {
+      pendingBlockAnim = { blockId, oldHeight };
+  };
+
+  const applyPendingBlockAnim = () => {
+      if (!pendingBlockAnim) return;
+      const { blockId, oldHeight } = pendingBlockAnim;
+      pendingBlockAnim = null;
+
+      const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
+      if (!blockEl) return;
+
+      const newHeight = blockEl.scrollHeight;
+      if (Math.abs(newHeight - oldHeight) < 2) return;
+
+      const isExpanding = newHeight > oldHeight;
+
+      // Apply initial state synchronously — no rAF, so the browser
+      // never paints the block at its natural size
+      blockEl.style.height = oldHeight + 'px';
+      blockEl.style.overflow = 'hidden';
+      blockEl.style.transition = 'none';
+
+      // On expand: fade in everything except the header
+      const fadeEls = isExpanding
+          ? [...blockEl.children].filter(el => !el.classList.contains('block-header'))
+          : [];
+      fadeEls.forEach(el => {
+          el.style.opacity = '0';
+          el.style.transition = 'none';
+      });
+
+      void blockEl.offsetHeight; // force reflow to commit initial state
+
+      // Now set transition and target — browser animates from initial to target
+      blockEl.style.transition = 'height 0.5s ease';
+      blockEl.style.height = newHeight + 'px';
+
+      fadeEls.forEach(el => {
+          el.style.transition = 'opacity 0.4s ease 0.1s';
+          el.style.opacity = '1';
+      });
+
+      const cleanup = () => {
+          blockEl.style.height = '';
+          blockEl.style.overflow = '';
+          blockEl.style.transition = '';
+          fadeEls.forEach(el => {
+              el.style.opacity = '';
+              el.style.transition = '';
+          });
+      };
+      blockEl.addEventListener('transitionend', cleanup, { once: true });
+      setTimeout(cleanup, 600);
+  };
+
+  // Collapse animation: shrink height + fade content simultaneously on the
+  // CURRENT expanded DOM, then call back to re-render once done.
+  const animateBlockCollapse = (blockEl, callback) => {
+      const headerEl = blockEl.querySelector('.block-header');
+      if (!headerEl) { callback(); return; }
+
+      const oldHeight = blockEl.offsetHeight;
+      const cs = getComputedStyle(blockEl);
+      const targetHeight = headerEl.offsetHeight
+          + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)
+          + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+
+      const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
+
+      // Set initial state
+      blockEl.style.height = oldHeight + 'px';
+      blockEl.style.overflow = 'hidden';
+      blockEl.style.transition = 'none';
+      fadeEls.forEach(el => { el.style.transition = 'none'; });
+      void blockEl.offsetHeight;
+
+      // Animate simultaneously
+      blockEl.style.transition = 'height 0.5s ease';
+      blockEl.style.height = targetHeight + 'px';
+      fadeEls.forEach(el => {
+          el.style.transition = 'opacity 0.35s ease';
+          el.style.opacity = '0';
+      });
+
+      setTimeout(() => {
+          callback();
+      }, 520);
+  };
+
 /* ==================================================================*/
 /* ============================== TAGS ==============================*/
 /* ==================================================================*/
@@ -1709,6 +1802,7 @@ export const appManager = (() => {
                   targetBlock.viewState = targetBlock.viewState === 'expanded'
                       ? 'condensed' : 'expanded';
 
+                  setPendingBlockAnim(id, blockEl.offsetHeight);
                   localStorage.setItem('userBlocks_tab3', JSON.stringify(blocksArr));
 
                   import('./filterManager.js').then(({ filterManager }) => {
@@ -1763,8 +1857,10 @@ export const appManager = (() => {
 
               targetBlock.viewState = 'condensed';
               localStorage.setItem('userBlocks_tab3', JSON.stringify(blocksArr));
-              import('./filterManager.js').then(({ filterManager }) => {
-                  filterManager.applyFilters('3');
+              animateBlockCollapse(blockEl, () => {
+                  import('./filterManager.js').then(({ filterManager }) => {
+                      filterManager.applyFilters('3');
+                  });
               });
           });
       });
@@ -1837,6 +1933,8 @@ export const appManager = (() => {
           }
           if (viewer) viewer.innerHTML = '';
       }
+
+      applyPendingBlockAnim();
   };
 
   // ── Wire the add button in the results header ───────────────────
@@ -1957,6 +2055,160 @@ export const appManager = (() => {
   const getQrState = (charTab) => {
     if (!qrState[charTab]) qrState[charTab] = { query: '', expandedIds: new Set() };
     return qrState[charTab];
+  };
+
+  // ── Pinned-block drag-to-reorder (pointer events for touch + mouse) ──
+  // The pin button doubles as the drag handle: click = unpin, drag = reorder.
+  // A 4px movement threshold distinguishes the two gestures.
+  const PINNED_DRAG_THRESHOLD = 4;
+
+  const initPinnedDragReorder = (zone) => {
+      if (!zone || zone.querySelectorAll('.block.pinned').length < 2) return;
+
+      let dragState = null;
+
+      zone.addEventListener('pointerdown', (e) => {
+          const pinBtn = e.target.closest('.pin-button');
+          if (!pinBtn) return;
+          const block = pinBtn.closest('.block.pinned');
+          if (!block) return;
+
+          e.preventDefault();
+
+          dragState = {
+              block,
+              pinBtn,
+              startX: e.clientX,
+              startY: e.clientY,
+              didDrag: false,
+              placeholder: null,
+              pointerId: e.pointerId
+          };
+
+          zone.setPointerCapture(e.pointerId);
+      });
+
+      zone.addEventListener('pointermove', (e) => {
+          if (!dragState) return;
+          const { block, startX, startY } = dragState;
+
+          if (!dragState.didDrag) {
+              const dx = Math.abs(e.clientX - startX);
+              const dy = Math.abs(e.clientY - startY);
+              if (dx < PINNED_DRAG_THRESHOLD && dy < PINNED_DRAG_THRESHOLD) return;
+
+              // Crossed threshold — enter drag mode
+              dragState.didDrag = true;
+
+              const rect = block.getBoundingClientRect();
+
+              const placeholder = document.createElement('div');
+              placeholder.className = 'pinned-drag-placeholder';
+              placeholder.style.height = rect.height + 'px';
+              block.parentNode.insertBefore(placeholder, block);
+              dragState.placeholder = placeholder;
+
+              dragState.offsetY = e.clientY - rect.top;
+              dragState.offsetX = e.clientX - rect.left;
+              dragState.lastInsertBefore = undefined;
+
+              // Move block to body with fixed positioning so it doesn't
+              // affect the zone's scroll height
+              block.classList.add('dragging');
+              block.style.width = rect.width + 'px';
+              block.style.position = 'fixed';
+              block.style.top = rect.top + 'px';
+              block.style.left = rect.left + 'px';
+              block.style.zIndex = '100000';
+              block.style.margin = '0';
+              document.body.appendChild(block);
+          }
+
+          // Already in drag mode — reposition (viewport coords)
+          block.style.top = (e.clientY - dragState.offsetY) + 'px';
+
+          const siblings = [...zone.querySelectorAll('.block.pinned:not(.dragging)')];
+          const dragMidY = e.clientY;
+          let insertBefore = null;
+          for (const sib of siblings) {
+              const sibRect = sib.getBoundingClientRect();
+              if (dragMidY < sibRect.top + sibRect.height * 0.35) {
+                  insertBefore = sib;
+                  break;
+              }
+          }
+
+          // Only animate when the insertion point actually changes
+          if (insertBefore !== dragState.lastInsertBefore) {
+              dragState.lastInsertBefore = insertBefore;
+
+              // FLIP: capture old positions
+              const oldPositions = siblings.map(sib => ({
+                  el: sib,
+                  top: sib.getBoundingClientRect().top
+              }));
+
+              // Move placeholder to new position
+              if (insertBefore) {
+                  zone.insertBefore(dragState.placeholder, insertBefore);
+              } else {
+                  zone.appendChild(dragState.placeholder);
+              }
+
+              // FLIP: animate from old to new positions
+              oldPositions.forEach(({ el, top: oldTop }) => {
+                  const newTop = el.getBoundingClientRect().top;
+                  const delta = oldTop - newTop;
+                  if (Math.abs(delta) > 1) {
+                      el.style.transition = 'none';
+                      el.style.transform = `translateY(${delta}px)`;
+                      void el.offsetHeight;
+                      el.style.transition = 'transform 0.2s ease';
+                      el.style.transform = '';
+                  }
+              });
+          }
+      });
+
+      const endDrag = () => {
+          if (!dragState) return;
+          const { block, placeholder, didDrag } = dragState;
+
+          if (didDrag && placeholder) {
+              // Move block back into the zone from document.body
+              zone.insertBefore(block, placeholder);
+              placeholder.remove();
+
+              block.classList.remove('dragging');
+              block.style.position = '';
+              block.style.top = '';
+              block.style.left = '';
+              block.style.width = '';
+              block.style.zIndex = '';
+              block.style.margin = '';
+
+              // Clean up any residual FLIP styles on siblings
+              zone.querySelectorAll('.block.pinned').forEach(b => {
+                  b.style.transform = '';
+                  b.style.transition = '';
+              });
+
+              const newOrder = [...zone.querySelectorAll('.block.pinned')]
+                  .map(b => b.getAttribute('data-id'));
+              localStorage.setItem('pinnedBlockOrder_tab9', JSON.stringify(newOrder));
+
+              // Eat the subsequent click so it doesn't unpin the block
+              document.addEventListener('click', (ev) => {
+                  ev.stopPropagation();
+                  ev.preventDefault();
+              }, { capture: true, once: true });
+          }
+
+          dragState = null;
+      };
+
+      zone.addEventListener('pointerup', endDrag);
+      zone.addEventListener('pointercancel', endDrag);
   };
 
   const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
@@ -2136,11 +2388,23 @@ resultsSection.innerHTML = `
     const pinnedBlocks  = allBlocks.filter(b => b.pinned);
     const displayBlocks = (filteredBlocks || allBlocks).filter(b => !b.pinned);
 
+    // Sort pinned blocks by their saved manual order
+    const pinnedOrder = JSON.parse(localStorage.getItem(`pinnedBlockOrder_${tab}`) || '[]');
+    pinnedBlocks.sort((a, b) => {
+        const ai = pinnedOrder.indexOf(a.id);
+        const bi = pinnedOrder.indexOf(b.id);
+        if (ai === -1 && bi === -1) return 0;
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+    });
+
     console.log(`📦 Blocks to render for ${tab}:`, displayBlocks);
 
     if (pinnedBlocks.length > 0) {
       const pinnedHTML = pinnedBlocks.map(b => blockTemplate(b, tab)).join('');
       resultsSection.insertAdjacentHTML('beforeend', `<div class="pinned-blocks-zone-wrapper"><div class="pinned-blocks-zone">${pinnedHTML}</div></div>`);
+      initPinnedDragReorder(resultsSection.querySelector('.pinned-blocks-zone'));
     }
 
     if (displayBlocks.length === 0 && pinnedBlocks.length === 0) {
@@ -2191,7 +2455,9 @@ resultsSection.innerHTML = `
           const targetBlock = blocksArr.find(b => b.id === blockId);
           if (!targetBlock) return;
 
-          if (targetBlock.viewState === "expanded") {
+          const isCollapsing = targetBlock.viewState === "expanded";
+
+          if (isCollapsing) {
             const activeState = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
             targetBlock.viewState = activeState;
           } else {
@@ -2200,10 +2466,18 @@ resultsSection.innerHTML = `
 
           localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
 
-          // Re-run filters through filterManager so OR/AND state and search are preserved
-          import('./filterManager.js').then(({ filterManager }) => {
-            filterManager.applyFilters(tabSuffix);
-          });
+          const doRerender = () => {
+              import('./filterManager.js').then(({ filterManager }) => {
+                  filterManager.applyFilters(tabSuffix);
+              });
+          };
+
+          if (isCollapsing) {
+              animateBlockCollapse(blockEl, doRerender);
+          } else {
+              setPendingBlockAnim(blockId, blockEl.offsetHeight);
+              doRerender();
+          }
         });
       });
 
@@ -2221,6 +2495,8 @@ resultsSection.innerHTML = `
         if (tabEl && tabEl.style.display !== 'none') renderQuickRef(charTab);
       });
     }
+
+    applyPendingBlockAnim();
   };
 
   /* ==================================================================*/

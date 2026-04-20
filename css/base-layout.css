@@ -2005,6 +2005,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    position: relative;
 }
 
 .block.pinned {
@@ -2016,6 +2017,37 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 
 .block.pinned:not(.minimized)::after {
     display: none;
+}
+
+/* ── Pin button as drag handle on pinned blocks ────────────── */
+
+.block.pinned .pin-button {
+    cursor: grab;
+    touch-action: none;
+}
+
+.block.pinned .pin-button:active {
+    cursor: grabbing;
+}
+
+/* ── Dragging state ────────────────────────────────────────── */
+
+.block.pinned.dragging {
+    opacity: 0.85;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    pointer-events: none;
+    z-index: 100;
+}
+
+.pinned-drag-placeholder {
+    background: var(--gray-400);
+    border-radius: 10px;
+    opacity: 0.3;
+    margin-bottom: 8px;
+}
+
+.pinned-drag-placeholder:last-child {
+    margin-bottom: 0;
 }
 
 /* ==================================================================*/
@@ -2508,7 +2540,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     transform: translateY(4px);
     transition: opacity 0.4s ease, transform 0.4s ease;
     pointer-events: none;
-    min-width: 180px;
+    min-width: 200px;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
 }
@@ -2873,6 +2905,16 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     padding: 0;
     border: none;
     background: transparent;
+    overflow: visible;
+    border-radius: 0;
+}
+
+.notes-viewer-content .block.expanded::after {
+    display: none;
+}
+
+.notes-viewer::after {
+    display: none !important;
 }
 
 /* ============================================================== */
@@ -2958,18 +3000,18 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 /* ============ TAB3 NOTES CARD THUMB + DESCRIPTION ============= */
 /* ============================================================== */
 
-.block:not(.quest-block):not(.map-block):not(.book-block).condensed,
-.block:not(.quest-block):not(.map-block):not(.book-block).expanded {
+#tab3 .block:not(.quest-block):not(.map-block):not(.book-block).condensed,
+#tab3 .block:not(.quest-block):not(.map-block):not(.book-block).expanded {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.block:not(.quest-block):not(.map-block):not(.book-block) .block-header {
+#tab3 .block:not(.quest-block):not(.map-block):not(.book-block) .block-header {
     align-items: center;
 }
 
-.block:not(.quest-block):not(.map-block):not(.book-block) .block-header-left {
+#tab3 .block:not(.quest-block):not(.map-block):not(.book-block) .block-header-left {
     display: flex;
     align-items: center;
     gap: 12px;

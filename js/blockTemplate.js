@@ -170,8 +170,9 @@ export const blockTemplate = (block, tab = "tab4") => {
         ? `<span class="block-equip-hand ${block.equipped ? 'equipped' : 'unequipped'}" data-id="${block.id}" title="${block.equipped ? 'Equipped (click to unequip)' : 'Not equipped (click to equip)'}">${EQUIPPED_HAND_SVG}</span>`
         : "";
 
-    // Pin button — omit on tab6 (replaced by the equipped hand) and on tab3 (no pinning in Quests & Notes)
-    const pinButtonHTML = (viewState !== 'session-log' && !isTab6 && !isTab3)
+    // Pin button — only on tab9
+    const isTab9 = tab === 'tab9';
+    const pinButtonHTML = (viewState !== 'session-log' && isTab9)
         ? `<button class="action-button pin-button${block.pinned ? ' pin-active' : ''}" data-id="${block.id}" title="${block.pinned ? 'Unpin' : 'Pin'}">
                 <img src="images/${block.pinned ? 'Pin_Icon_Blue' : 'Pin_Icon'}.svg" alt="Pin" />
            </button>`
