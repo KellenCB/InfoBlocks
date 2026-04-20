@@ -232,6 +232,36 @@ export function toggleBlockUse(blockId, idx, event, element) {
 }
 window.toggleBlockUse = toggleBlockUse;
 
+export function toggleObjective(blockId, idx, event, element) {
+  event.stopPropagation();
+
+  const blocks = JSON.parse(localStorage.getItem('userBlocks_tab3')) || [];
+  const block = blocks.find(b => b.id === blockId);
+  if (!block || !Array.isArray(block.objectives) || !block.objectives[idx]) return;
+
+  block.objectives[idx].done = !block.objectives[idx].done;
+  localStorage.setItem('userBlocks_tab3', JSON.stringify(blocks));
+
+  // Update the objective row in place
+  element.classList.toggle('done', block.objectives[idx].done);
+
+  // Update progress bar + count inside the same block (expanded AND mini progress)
+  const blockEl = element.closest('.block');
+  if (blockEl) {
+    const total = block.objectives.length;
+    const done  = block.objectives.filter(o => o.done).length;
+    const pct   = total > 0 ? (done / total) * 100 : 0;
+
+    blockEl.querySelectorAll('.quest-progress-fill').forEach(fill => {
+      fill.style.width = `${pct}%`;
+    });
+    blockEl.querySelectorAll('.quest-progress-count').forEach(count => {
+      count.textContent = `${done} / ${total}`;
+    });
+  }
+}
+window.toggleObjective = toggleObjective;
+
 // ==============================
 // Suit Uses Circle Section
 // ==============================

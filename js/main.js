@@ -339,6 +339,78 @@ function migrateTab5ToTab3() {
 /* ============= BLOCK TYPE FILTER BUTTONS (from config) =============*/
 /* ===================================================================*/
 
+function migrateTab3Schema() {
+    if (localStorage.getItem("migration_tab3_schema_done")) return;
+
+    console.log("🔄 Running tab3 schema migration...");
+
+    const raw = localStorage.getItem("userBlocks_tab3");
+    if (raw) {
+        try {
+            const blocks = JSON.parse(raw);
+            if (Array.isArray(blocks)) {
+                blocks.forEach(block => {
+                    // 1. Normalize blockType to array
+                    if (!Array.isArray(block.blockType)) {
+                        block.blockType = block.blockType ? [block.blockType] : [];
+                    }
+
+                    // 2. Rename "Other" → "Notes"
+                    block.blockType = block.blockType.map(t => t === "Other" ? "Notes" : t);
+
+                    // 3. Add location field on every tab3 block (null = no location)
+                    if (!('location' in block)) {
+                        block.location = null;
+                    }
+
+                    // 4. Quest-specific fields
+                    if (block.blockType.includes("Quest")) {
+                        if (!('status' in block)) {
+                            block.status = "active";
+                        }
+                        if (!('objectives' in block)) {
+                            const parsed = parseObjectivesFromText(block.text);
+                            block.objectives   = parsed.objectives;
+                            block.text         = parsed.remainingText;
+                        }
+                    }
+                });
+
+                localStorage.setItem("userBlocks_tab3", JSON.stringify(blocks));
+                console.log(`✅ Migrated ${blocks.length} tab3 blocks (rename, location, quest fields)`);
+            }
+        } catch (e) {
+            console.error("❌ Failed to migrate tab3 schema:", e);
+        }
+    }
+
+    localStorage.setItem("migration_tab3_schema_done", "true");
+    console.log("✅ Tab3 schema migration complete.");
+}
+
+function parseObjectivesFromText(text) {
+    if (!text || typeof text !== "string") {
+        return { objectives: [], remainingText: text || "" };
+    }
+
+    const tmp = document.createElement("div");
+    tmp.innerHTML = text;
+
+    const objectives = [];
+    tmp.querySelectorAll("ul, ol").forEach(list => {
+        list.querySelectorAll("li").forEach(li => {
+            const itemText = (li.textContent || "").trim();
+            if (itemText) objectives.push({ text: itemText, done: false });
+        });
+        list.remove();
+    });
+
+    return {
+        objectives,
+        remainingText: tmp.innerHTML.trim()
+    };
+}
+
 // Populate the block-type-tags filter divs in each tab's filter panel
 // and wire up their click handlers — driven entirely by blockTypeConfig.
 function initBlockTypeFilterButtons() {
@@ -375,7 +447,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Restore filter section visibility for each tab
-    [3, 4, 6, 7, 8, 9].forEach(num => {
+    [4, 6, 7, 8, 9].forEach(num => {
         const tabId = `tab${num}`;
         const saved = localStorage.getItem(`filterVisible_${tabId}`);
         if (saved === "false") {
@@ -549,7 +621,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // clearFiltersButton is handled by the module-level clearFilters listener below.
     }
             
-    [3, 4, 6, 7, 8, 9].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
+    [4, 6, 7, 8, 9].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
 
     appManager.renderBlocks(activeTabId);
 });
@@ -608,7 +680,7 @@ document.querySelectorAll(".clear_filters_button").forEach(button => {
 const initializeDynamicTags = () => {
     console.log("Initializing dynamic tags and overlays");
 
-    [3, 4, 6, 7, 8, 9].forEach(tabNumber => {
+    [4, 6, 7, 8, 9].forEach(tabNumber => {
         const tagsSection = document.getElementById(`dynamic_tags_section_${tabNumber}`);
         if (!tagsSection) return;
 
@@ -935,7 +1007,9 @@ window.onload = async () => {
 
     // Run migrations before anything else
     migrateToTab9();
+    migrateToTab9();
     migrateTab5ToTab3();
+    migrateTab3Schema();
 
     initOverlayCancelButtons();
 

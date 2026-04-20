@@ -1,6 +1,6 @@
 import { appManager } from './appManager.js';
 import { filterManager } from './filterManager.js';
-import { categoryTags, blockTypeConfig } from './tagConfig.js';
+import { categoryTags, blockTypeConfig, BOOK_ACCENT_COLORS, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
 
 // Returns the correct tab for an overlay save operation.
 // In split view the overlay carries data-active-tab; otherwise fall back to
@@ -138,6 +138,235 @@ function setupInventoryOverlayOptions(mode) {
     syncStateButtons();
 }
 
+// ── Tab3 book overlay helpers ─────────────────────────────────────
+// Renders the accent-colour swatches for a given mode ('add' or 'edit'),
+// marks the currently-selected one, and wires click-to-select. Selection
+// is read back at save time from the .book-accent-swatch.selected button.
+function renderBookAccentSwatches(mode, selectedId) {
+    const container = document.getElementById(`book_accent_swatches_${mode}`);
+    if (!container) return;
+
+    const currentId = selectedId || DEFAULT_BOOK_ACCENT;
+
+    container.innerHTML = BOOK_ACCENT_COLORS.map(c => `
+        <button type="button"
+            class="book-accent-swatch${c.id === currentId ? ' selected' : ''}"
+            data-color-id="${c.id}"
+            style="background-color:${c.hex};"
+            title="${c.label}"
+            aria-label="${c.label}"></button>
+    `).join('');
+
+    // Re-bind click delegation (replace listener to avoid duplicates)
+    container.removeEventListener('click', container._swatchListener || (()=>{}));
+    const onSwatchClick = (e) => {
+        const btn = e.target.closest('.book-accent-swatch');
+        if (!btn) return;
+        e.preventDefault();
+        container.querySelectorAll('.book-accent-swatch').forEach(s => s.classList.remove('selected'));
+        btn.classList.add('selected');
+    };
+    container._swatchListener = onSwatchClick;
+    container.addEventListener('click', onSwatchClick);
+}
+
+// ── Tab3 quest overlay UI ─────────────────────────────────────────
+// Shown only when the overlay targets tab3. Status + Objectives fields
+// within it are shown only when the selected block type is Quest.
+function setupQuestOverlayOptions(mode) {
+    const container = document.getElementById(`quest_overlay_options_${mode}`);
+    if (!container) return;
+
+    const overlay   = container.closest('.add-block-overlay, .edit-block-overlay');
+    const activeTab = overlay?.dataset?.activeTab || appManager.getActiveTab();
+
+    if (activeTab !== 'tab3') {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = '';
+
+    const locationInput      = document.getElementById(`location_input_${mode}`);
+    const descriptionInput   = document.getElementById(`description_input_${mode}`);
+    const urlInput           = document.getElementById(`url_input_${mode}`);
+    const statusButtonsRow   = document.getElementById(`status_buttons_${mode}`);
+    const objectivesEditor   = document.getElementById(`objectives_editor_${mode}`);
+    const addObjectiveBtn    = document.getElementById(`add_objective_btn_${mode}`);
+    const blockTypeContainer = document.getElementById(`character_type_tags_${mode}`);
+        const questOnlyFields    = container.querySelectorAll('.quest-only-field');
+    const bookOnlyFields     = container.querySelectorAll('.book-only-field');
+    const descOnlyFields     = container.querySelectorAll('.desc-only-field');
+    const mapOnlyFields      = container.querySelectorAll('.map-only-field');
+
+
+    if (!locationInput || !statusButtonsRow || !objectivesEditor || !addObjectiveBtn || !blockTypeContainer) return;
+
+    // Load current block on edit
+    let currentBlock = null;
+    if (mode === 'edit') {
+        const blockId = overlay?.dataset?.blockId;
+        if (blockId) {
+            const blocks = appManager.getBlocks(activeTab);
+            currentBlock = blocks.find(b => b.id === blockId) || null;
+        }
+    }
+
+    // Hydrate fields
+    locationInput.value = currentBlock?.location || '';
+    if (descriptionInput) descriptionInput.value = currentBlock?.description || '';
+    if (urlInput)         urlInput.value         = currentBlock?.url || '';
+    renderBookAccentSwatches(mode, currentBlock?.bookColor);
+
+    const currentStatus = currentBlock?.status || 'active';
+    statusButtonsRow.querySelectorAll('.quest-status-pill').forEach(pill => {
+        pill.classList.toggle('selected', pill.dataset.status === currentStatus);
+    });
+
+    const renderObjectiveRow = (text = '', done = false) => {
+        const row = document.createElement('div');
+        row.className = 'quest-objective-editor-row';
+        row.dataset.done = done ? 'true' : 'false';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'quest-objective-input';
+        input.placeholder = 'Objective…';
+        input.value = text;
+        row.appendChild(input);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'quest-objective-remove';
+        removeBtn.title = 'Remove';
+        removeBtn.textContent = '×';
+        row.appendChild(removeBtn);
+
+        return row;
+    };
+
+    objectivesEditor.innerHTML = '';
+    const existing = currentBlock?.objectives;
+    if (Array.isArray(existing)) {
+        existing.forEach(o => {
+            objectivesEditor.appendChild(renderObjectiveRow(o.text || '', !!o.done));
+        });
+    }
+
+    // Status pill selection (mutual exclusion)
+    statusButtonsRow.removeEventListener('click', statusButtonsRow._questListener || (()=>{}));
+    const onStatusClick = (e) => {
+        const pill = e.target.closest('.quest-status-pill');
+        if (!pill) return;
+        e.preventDefault();
+        statusButtonsRow.querySelectorAll('.quest-status-pill').forEach(p => p.classList.remove('selected'));
+        pill.classList.add('selected');
+    };
+    statusButtonsRow._questListener = onStatusClick;
+    statusButtonsRow.addEventListener('click', onStatusClick);
+
+    // Add-objective button
+    addObjectiveBtn.removeEventListener('click', addObjectiveBtn._questListener || (()=>{}));
+    const onAddObjective = (e) => {
+        e.preventDefault();
+        const row = renderObjectiveRow('', false);
+        objectivesEditor.appendChild(row);
+        row.querySelector('.quest-objective-input').focus();
+    };
+    addObjectiveBtn._questListener = onAddObjective;
+    addObjectiveBtn.addEventListener('click', onAddObjective);
+
+    // Editor delegation: remove row + Enter to add new row
+    objectivesEditor.removeEventListener('click',   objectivesEditor._questClickListener || (()=>{}));
+    objectivesEditor.removeEventListener('keydown', objectivesEditor._questKeyListener   || (()=>{}));
+    const onEditorClick = (e) => {
+        const rmBtn = e.target.closest('.quest-objective-remove');
+        if (!rmBtn) return;
+        e.preventDefault();
+        rmBtn.closest('.quest-objective-editor-row')?.remove();
+    };
+    const onEditorKey = (e) => {
+        if (e.key !== 'Enter' || !e.target.classList.contains('quest-objective-input')) return;
+        e.preventDefault();
+        const row = renderObjectiveRow('', false);
+        e.target.closest('.quest-objective-editor-row').after(row);
+        row.querySelector('.quest-objective-input').focus();
+    };
+    objectivesEditor._questClickListener = onEditorClick;
+    objectivesEditor._questKeyListener   = onEditorKey;
+    objectivesEditor.addEventListener('click',   onEditorClick);
+    objectivesEditor.addEventListener('keydown', onEditorKey);
+
+    // Show/hide Quest/Book/Map-only fields based on selected block type
+    const editorWrapper = overlay.querySelector('.editor-toolbar-wrapper');
+    const updateQuestOnlyVisibility = () => {
+        const selectedTypes = Array.from(
+            blockTypeContainer.querySelectorAll('.tag-button.selected')
+        ).map(b => b.dataset.tag);
+        const showQuestFields = selectedTypes.includes('Quest');
+        const showBookFields  = selectedTypes.includes('Book');
+        const showDescFields  = selectedTypes.includes('Book') || selectedTypes.includes('Notes');
+        const showMapFields   = selectedTypes.includes('Map');
+        questOnlyFields.forEach(f => {
+            f.style.display = showQuestFields ? '' : 'none';
+        });
+        bookOnlyFields.forEach(f => {
+            f.style.display = showBookFields ? '' : 'none';
+        });
+        descOnlyFields.forEach(f => {
+            f.style.display = showDescFields ? '' : 'none';
+        });
+        mapOnlyFields.forEach(f => {
+            f.style.display = showMapFields ? '' : 'none';
+        });
+
+        // Maps have no body text — hide editor when Map is selected
+        if (editorWrapper) editorWrapper.style.display = showMapFields ? 'none' : '';
+    };
+
+    // Enforce single-select + visibility via MutationObserver on each button's
+    // class attribute. Necessary because filterManager's document-level capture
+    // listener calls stopPropagation(), which prevents click handlers on this
+    // container from ever firing.
+    if (blockTypeContainer._questClassObserver) {
+        blockTypeContainer._questClassObserver.disconnect();
+    }
+    const classObserver = new MutationObserver((mutations) => {
+        for (const mut of mutations) {
+            if (mut.type !== 'attributes' || mut.attributeName !== 'class') continue;
+            const t = mut.target;
+            if (!(t instanceof Element)) continue;
+            if (t.classList.contains('tag-button') && t.classList.contains('selected')) {
+                blockTypeContainer.querySelectorAll('.tag-button.selected').forEach(b => {
+                    if (b !== t) b.classList.remove('selected');
+                });
+            }
+        }
+        updateQuestOnlyVisibility();
+    });
+    blockTypeContainer._questClassObserver = classObserver;
+
+    const observeButtons = () => {
+        blockTypeContainer.querySelectorAll('.tag-button').forEach(btn => {
+            classObserver.observe(btn, { attributes: true, attributeFilter: ['class'] });
+        });
+    };
+    observeButtons();
+
+    // Watch for button repopulation (populateBlockTypeOverlay replaces innerHTML)
+    if (blockTypeContainer._questTypeObserver) {
+        blockTypeContainer._questTypeObserver.disconnect();
+    }
+    const childObserver = new MutationObserver(() => {
+        observeButtons();
+        updateQuestOnlyVisibility();
+    });
+    childObserver.observe(blockTypeContainer, { childList: true });
+    blockTypeContainer._questTypeObserver = childObserver;
+
+    // Initial pass (delay to run after blockActionsHandler's setTimeout 100 sets selected state on edit)
+    setTimeout(updateQuestOnlyVisibility, 150);
+}
+
 function initUsesField(overlayElement, storageKeyPrefix, defaultSlots = 5) {
     let usesState = JSON.parse(localStorage.getItem(storageKeyPrefix)) || [];
   
@@ -223,14 +452,17 @@ export const handleSaveBlock = () => {
         const titleInput   = titleElement?.value.trim()  || "";
         const textInput    = textElement?.innerHTML.trim() || "";
 
-        if (
-            titleInput === "" ||
-            (activeTab !== "tab6" && textInput === "")
-        ) {
-            alert(activeTab === "tab6"
-                ? "A title is required."
-                : "All fields (Title and Text) are required."
-            );
+        const selTypeBtnAdd = document.querySelector('#character_type_tags_add .tag-button.selected');
+        const isTab3QuestAdd = activeTab === 'tab3' && selTypeBtnAdd?.dataset.tag === 'Quest';
+        const isTab3MapAdd   = activeTab === 'tab3' && selTypeBtnAdd?.dataset.tag === 'Map';
+        const textOptionalAdd = activeTab === "tab6" || isTab3QuestAdd || isTab3MapAdd;
+
+        if (titleInput === "") {
+            alert("A title is required.");
+            return;
+        }
+        if (!textOptionalAdd && textInput === "") {
+            alert("Title and text are required.");
             return;
         }
 
@@ -280,7 +512,7 @@ export const handleSaveBlock = () => {
 
         const usesState = JSON.parse(localStorage.getItem("uses_field_overlay_state") || "[]");
 
-const blockType = tabBTConfig
+    const blockType = tabBTConfig
             ? (tabBTConfig.singleSelect
                 ? (document.querySelector('#character_type_tags_add .tag-button.selected')?.dataset.tag || null)
                 : Array.from(document.querySelectorAll('#character_type_tags_add .tag-button.selected')).map(b => b.dataset.tag))
@@ -306,7 +538,45 @@ const blockType = tabBTConfig
             };
         }
 
-        const success = appManager.saveBlock(activeTab, titleInput, textInput, allTags, usesState, propertiesInput, blockType, null, null, inventoryExtras);
+        // Tab3-specific fields (location + quest state)
+        let tab3Extras = null;
+        if (activeTab === 'tab3') {
+            const loc = document.getElementById('location_input_add')?.value.trim();
+            tab3Extras = { location: loc || null };
+
+            const blockTypesArr = Array.isArray(blockType) ? blockType : (blockType ? [blockType] : []);
+            if (blockTypesArr.includes('Quest')) {
+                const selPill = document.querySelector('#status_buttons_add .quest-status-pill.selected');
+                tab3Extras.status = selPill?.dataset.status || 'active';
+
+                const rows = document.querySelectorAll('#objectives_editor_add .quest-objective-editor-row');
+                tab3Extras.objectives = Array.from(rows).map(row => ({
+                    text: row.querySelector('.quest-objective-input')?.value.trim() || '',
+                    done: row.dataset.done === 'true'
+                })).filter(o => o.text !== '');
+            }
+            if (blockTypesArr.includes('Book')) {
+                const descAdd   = document.getElementById('description_input_add')?.value.trim() || '';
+                const selSwatch = document.querySelector('#book_accent_swatches_add .book-accent-swatch.selected');
+                tab3Extras.description = descAdd;
+                tab3Extras.bookColor   = selSwatch?.dataset.colorId || DEFAULT_BOOK_ACCENT;
+            }
+            if (blockTypesArr.includes('Notes')) {
+                const descAdd = document.getElementById('description_input_add')?.value.trim() || '';
+                tab3Extras.description = descAdd;
+            }
+            if (blockTypesArr.includes('Map')) {
+                const urlAdd = document.getElementById('url_input_add')?.value.trim() || '';
+                if (!urlAdd) {
+                    alert('A link URL is required for Map blocks.');
+                    return;
+                }
+                tab3Extras.url = urlAdd;
+            }
+        }
+
+        const textForSave = isTab3MapAdd ? '' : textInput;
+        const success = appManager.saveBlock(activeTab, titleInput, textForSave, allTags, usesState, propertiesInput, blockType, null, null, inventoryExtras, tab3Extras);
 
         if (success) {
             console.log("✅ Block saved successfully with tags:", allTags);
@@ -577,24 +847,30 @@ export const overlayHandler = (() => {
         observeOverlay(addBlockOverlay);
         observeOverlay(editBlockOverlay);
 
-        // Populate block type buttons whenever the add overlay opens
+        // Toggle per-tab UI bits that depend on which tab the overlay was opened from
+        const toggleUsesField = (overlay, fieldId) => {
+            const activeTab = overlay.dataset.activeTab || appManager.getActiveTab();
+            const usesField = document.getElementById(fieldId);
+            if (usesField) usesField.style.display = (activeTab === 'tab3') ? 'none' : '';
+        };
+
+        // Populate block type buttons + toggle per-tab UI whenever the add overlay opens
         if (addBlockOverlay) {
             const addObserver = new MutationObserver(() => {
                 if (addBlockOverlay.classList.contains("show")) {
                     populateBlockTypeOverlay("character_type_tags_add");
+                    toggleUsesField(addBlockOverlay, 'uses_field_overlay');
                 }
             });
             addObserver.observe(addBlockOverlay, { attributes: true, attributeFilter: ["class"] });
         }
 
-        // Populate block type buttons whenever the edit overlay opens
-        // (selected types are applied later by blockActionsHandler after it knows the block)
+        // Toggle per-tab UI whenever the edit overlay opens
+        // (block type buttons + selected state are handled by blockActionsHandler)
         if (editBlockOverlay) {
             const editObserver = new MutationObserver(() => {
                 if (editBlockOverlay.classList.contains("show")) {
-                    // selectedTypes are set by blockActionsHandler — here we just ensure
-                    // the buttons exist with the right set for the active tab.
-                    // Do NOT reset selected state here; blockActionsHandler sets it.
+                    toggleUsesField(editBlockOverlay, 'uses_field_edit_overlay');
                 }
             });
             editObserver.observe(editBlockOverlay, { attributes: true, attributeFilter: ["class"] });
@@ -1039,7 +1315,8 @@ function initCEPlaceholder(id) {
         initializeOverlayTagHandlers,
         initializeEventHandlers,
         populateBlockTypeOverlay,
-        setupInventoryOverlayOptions
+        setupInventoryOverlayOptions,
+        setupQuestOverlayOptions
     };
 })();
 

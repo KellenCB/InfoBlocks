@@ -20,6 +20,8 @@ export function initDragToScroll() {
     let startX, startY, scrollEl, initScrollLeft, initScrollTop;
 
     document.addEventListener('mousedown', e => {
+        // Don't hijack drag on text-selectable content
+        if (e.target.closest('.block-body, .block-title, .notes-card-description, .quest-objective-text')) return;
         const el = e.target.closest(
             '.pinned-blocks-zone, .results-section:not(.character-sheet-results), .filter-section, .saving-throws-and-skills-column-wrapper, ' +
             '.qr-blocks-scroll, .qr-tags-scroll, .session-log-viewer, .roll-results'
@@ -1221,6 +1223,540 @@ export const appManager = (() => {
       }
   };
 
+/* ==================================================================*/
+  /* ======================= NOTES / TAB3 RENDER ======================*/
+  /* ==================================================================*/
+
+  const TAB3_SECTION_ORDER  = ["Quest", "Map", "Book", "Notes"];
+  const TAB3_SECTION_LABELS = {
+      "Quest": "Quests",
+      "Map":   "Maps",
+      "Book":  "Books",
+      "Notes": "Notes"
+  };
+
+  const isTab3SectionCollapsed = (key) =>
+      localStorage.getItem(`tab3_section_collapsed_${key}`) === 'true';
+
+  const setTab3SectionCollapsed = (key, collapsed) =>
+      localStorage.setItem(`tab3_section_collapsed_${key}`, collapsed ? 'true' : 'false');
+
+  // Currently-active block in the notes viewer (Books only)
+  let activeNotesBlockId = null;
+
+  // External setter used by duplicate-block flow to auto-select the copy
+  const setActiveNotesBlock = (id) => { activeNotesBlockId = id; };
+
+  // Helper: get first block type from a block
+  const getTab3BlockType = (b) => {
+      if (Array.isArray(b.blockType) && b.blockType.length > 0) return b.blockType[0];
+      return b.blockType || null;
+  };
+
+  const buildTab3SectionHeader = (title, count, key) => {
+      const collapsed = isTab3SectionCollapsed(key);
+      return `
+          <div class="tab3-section-header${collapsed ? ' tab3-collapsed' : ''}" data-section-key="${key}">
+              <div class="tab3-section-left">
+                  <h3 class="tab3-section-title">${title}</h3>
+                  <span class="tab3-section-count">${count}</span>
+              </div>
+          </div>
+      `;
+  };
+
+  // Location helpers — blank/null/"N/A" all bucket under the same "N/A" key
+  const TAB3_NA_LOCATION_KEY = 'N/A';
+  const normalizeLocation = (loc) => {
+      if (loc === null || loc === undefined) return TAB3_NA_LOCATION_KEY;
+      const s = String(loc).trim();
+      if (s === '' || s.toLowerCase() === 'n/a') return TAB3_NA_LOCATION_KEY;
+      return s;
+  };
+
+  const getTab3ActiveLocation = () => localStorage.getItem('tab3_active_location') || '';
+  const setTab3ActiveLocation = (loc) => {
+      if (loc) localStorage.setItem('tab3_active_location', loc);
+      else     localStorage.removeItem('tab3_active_location');
+  };
+
+  const buildTab3LocationPillsHTML = (counts, activeLocation) => {
+      if (counts.size === 0) return '';
+
+      // Sort: alpha, N/A last
+      const entries = Array.from(counts.entries()).sort((a, b) => {
+          if (a[0] === TAB3_NA_LOCATION_KEY) return 1;
+          if (b[0] === TAB3_NA_LOCATION_KEY) return -1;
+          return a[0].localeCompare(b[0]);
+      });
+
+      const total = Array.from(counts.values()).reduce((s, n) => s + n, 0);
+      const allPill = `<button class="tab3-location-pill${activeLocation === '' ? ' selected' : ''}" data-location="">All · ${total}</button>`;
+
+      const pills = entries.map(([loc, count]) =>
+          `<button class="tab3-location-pill${activeLocation === loc ? ' selected' : ''}" data-location="${loc}">${loc} · ${count}</button>`
+      ).join('');
+
+      const pinSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`;
+
+      return `
+          <div class="tab3-location-row">
+              <div class="tab3-location-header">
+                  ${pinSVG}
+                  <span class="tab3-location-label">Location</span>
+              </div>
+              <div class="tab3-location-pills">
+                  ${allPill}${pills}
+              </div>
+          </div>
+      `;
+  };
+
+  // ── Close the notes viewer (slide out) ──────────────────────────
+  const closeNotesViewer = () => {
+      const wasActive = activeNotesBlockId;
+      activeNotesBlockId = null;
+      const layout = document.querySelector('.notes-layout');
+      const viewer = document.getElementById('notes_viewer');
+      if (layout) layout.classList.remove('notes-viewer-open');
+      document.querySelectorAll('#results_section_3 .block').forEach(b => {
+          b.classList.remove('notes-block-active');
+      });
+      // Clear viewer content after slide-out transition
+      if (viewer && wasActive) {
+          setTimeout(() => {
+              if (!activeNotesBlockId) viewer.innerHTML = '';
+          }, 300);
+      }
+  };
+
+  // ── Render a Book into the notes viewer (slide in) ──────────────
+  const renderNotesViewer = (blockId) => {
+      const viewer = document.getElementById('notes_viewer');
+      const layout = document.querySelector('.notes-layout');
+      if (!viewer) return;
+
+      if (!blockId) {
+          closeNotesViewer();
+          return;
+      }
+
+      const blocks = getBlocks('tab3');
+      const block  = blocks.find(b => b.id === blockId);
+      if (!block) {
+          closeNotesViewer();
+          return;
+      }
+
+      activeNotesBlockId = blockId;
+
+      // Slide open
+      if (layout) layout.classList.add('notes-viewer-open');
+
+      // Render the block expanded — blockTemplate handles body, tags, and
+      // includes the .block-actions menu with edit/duplicate/remove buttons.
+      const blockHTML = blockTemplate({ ...block, viewState: 'expanded' }, 'tab3');
+
+      const closeBtnSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+      const closeBtnHTML = `<button class="notes-viewer-close-btn" title="Close">${closeBtnSVG}</button>`;
+
+      const newContentHTML = `<div class="notes-viewer-content">${closeBtnHTML}${blockHTML}</div>`;
+
+      const existing = viewer.querySelector('.notes-viewer-content, .notes-viewer-placeholder');
+      const doSwap = () => {
+          viewer.innerHTML = newContentHTML;
+          const fresh = viewer.querySelector('.notes-viewer-content');
+          if (fresh) {
+              fresh.style.opacity = '0';
+              void fresh.offsetWidth;
+              fresh.style.opacity = '';
+          }
+          applyInlineDiceRolls(viewer, 'tab3');
+          document.querySelectorAll('#results_section_3 .block').forEach(b => {
+              b.classList.toggle('notes-block-active', b.getAttribute('data-id') === blockId);
+          });
+          // Wire close button
+          viewer.querySelector('.notes-viewer-close-btn')?.addEventListener('click', closeNotesViewer);
+      };
+      if (existing && existing.classList.contains('notes-viewer-content')) {
+          existing.classList.add('fading');
+          setTimeout(doSwap, 200);
+      } else {
+          doSwap();
+      }
+  };
+
+  // ── Main render function for tab3 ───────────────────────────────
+  const renderNotes = (filteredBlocks = null) => {
+      const resultsSection = document.getElementById('results_section_3');
+      if (!resultsSection) return;
+
+      const allBlocks        = getBlocks('tab3');
+      const prelocationFiltered = (filteredBlocks || allBlocks);
+
+      // Count blocks per location
+      const locationCounts = new Map();
+      prelocationFiltered.forEach(b => {
+          const loc = normalizeLocation(b.location);
+          locationCounts.set(loc, (locationCounts.get(loc) || 0) + 1);
+      });
+
+      // Clear stale active location if it no longer matches any blocks
+      let activeLocation = getTab3ActiveLocation();
+      if (activeLocation && !locationCounts.has(activeLocation)) {
+          setTab3ActiveLocation('');
+          activeLocation = '';
+      }
+
+      // Apply location filter
+      const displayBlocks = activeLocation
+          ? prelocationFiltered.filter(b => normalizeLocation(b.location) === activeLocation)
+          : prelocationFiltered;
+
+      // Header — just the add button (sort/view dropdowns removed in 9a)
+      resultsSection.innerHTML = `
+          <div id="results_header_3" class="results-header">
+            <div id="header-controls_3" class="header-controls">
+              <button id="add_block_button" class="add-block-button green-button">+</button>
+            </div>
+          </div>
+          ${buildTab3LocationPillsHTML(locationCounts, activeLocation)}
+          <div id="tab3-sections-host"></div>
+      `;
+
+      const host = document.getElementById('tab3-sections-host');
+
+      // ── List block renderer ──────────────────────────────────────
+      // Quest/Note: respect persisted viewState (expand inline).
+      // Map/Book: always condensed in the list.
+      // Only Books get the active-highlight class.
+      const renderNotesListBlock = (b) => {
+          const type = getTab3BlockType(b);
+          const listViewState = (type === 'Quest' || type === 'Notes')
+              ? (b.viewState || 'condensed')
+              : 'condensed';
+          const activeClass = (type === 'Book' && b.id === activeNotesBlockId) ? ' notes-block-active' : '';
+          const html = blockTemplate({ ...b, viewState: listViewState }, 'tab3');
+          return html.replace(
+              /<div class="block ([^"]+)" data-id="([^"]+)">/,
+              `<div class="block $1${activeClass}" data-id="$2">`
+          );
+      };
+
+      // ── Group blocks by type into sections ───────────────────────
+      const blocksByType = {};
+      TAB3_SECTION_ORDER.forEach(t => { blocksByType[t] = []; });
+      const uncategorised = [];
+
+      displayBlocks.forEach(b => {
+          const t = getTab3BlockType(b);
+          if (t && blocksByType[t]) blocksByType[t].push(b);
+          else uncategorised.push(b);
+      });
+
+      TAB3_SECTION_ORDER.forEach(typeName => {
+          const sectionBlocks = blocksByType[typeName];
+          if (sectionBlocks.length === 0) return;
+
+          host.insertAdjacentHTML('beforeend',
+              buildTab3SectionHeader(TAB3_SECTION_LABELS[typeName], sectionBlocks.length, typeName));
+
+          const sectionDiv = document.createElement('div');
+          sectionDiv.className = 'tab3-section';
+          if (typeName === 'Map')  sectionDiv.classList.add('tab3-section-maps');
+          if (typeName === 'Book') sectionDiv.classList.add('tab3-section-books');
+          if (isTab3SectionCollapsed(typeName)) sectionDiv.classList.add('tab3-collapsed');
+          sectionDiv.dataset.sectionKey = typeName;
+          const blockHTML = sectionBlocks.map(renderNotesListBlock).join('');
+          sectionDiv.innerHTML = `<div class="tab3-section-inner">${blockHTML}</div>`;
+          host.appendChild(sectionDiv);
+      });
+
+      if (uncategorised.length > 0) {
+          host.insertAdjacentHTML('beforeend',
+              buildTab3SectionHeader('Uncategorised', uncategorised.length, 'uncategorised'));
+          const sectionDiv = document.createElement('div');
+          sectionDiv.className = 'tab3-section';
+          if (isTab3SectionCollapsed('uncategorised')) sectionDiv.classList.add('tab3-collapsed');
+          sectionDiv.dataset.sectionKey = 'uncategorised';
+          sectionDiv.innerHTML = uncategorised.map(renderNotesListBlock).join('');
+          host.appendChild(sectionDiv);
+      }
+
+      if (displayBlocks.length === 0) {
+          const p = document.createElement('p');
+          p.classList.add('results-placeholder');
+          p.textContent = activeLocation
+              ? `No blocks tagged with location "${activeLocation}".`
+              : 'Use the + button to add items here…';
+          p.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0.25;';
+          resultsSection.appendChild(p);
+      }
+
+      wireNotesHeaderControls();
+
+      // ── Section header collapse ──────────────────────────────────
+      host.querySelectorAll('.tab3-section-header').forEach(headerEl => {
+          headerEl.addEventListener('click', () => {
+              const key = headerEl.dataset.sectionKey;
+              if (!key) return;
+              const sec = host.querySelector(`.tab3-section[data-section-key="${key}"]`);
+              const nowCollapsed = !headerEl.classList.contains('tab3-collapsed');
+              headerEl.classList.toggle('tab3-collapsed', nowCollapsed);
+              if (sec) sec.classList.toggle('tab3-collapsed', nowCollapsed);
+              setTab3SectionCollapsed(key, nowCollapsed);
+          });
+      });
+
+      // ── Location pill click ──────────────────────────────────────
+      resultsSection.querySelectorAll('.tab3-location-pill').forEach(pill => {
+          pill.addEventListener('click', () => {
+              setTab3ActiveLocation(pill.dataset.location || '');
+              import('./filterManager.js').then(({ filterManager }) => {
+                  filterManager.applyFilters('3');
+              });
+          });
+      });
+
+
+
+      // ── Block click routing (by type) ────────────────────────────
+      resultsSection.querySelectorAll('.block:not(.permanent-block)').forEach(blockEl => {
+          blockEl.addEventListener('click', function(e) {
+              if (e.target.closest('.block-actions')   ||
+                  e.target.closest('.actions-trigger')  ||
+                  e.target.closest('.quest-status-pill') ||
+                  e.target.closest('.quest-objective')) return;
+              if (e.target.classList.contains('circle')) return;
+
+              const id = blockEl.getAttribute('data-id');
+              if (!id) return;
+
+              const blocksArr   = getBlocks('tab3');
+              const targetBlock = blocksArr.find(b => b.id === id);
+              if (!targetBlock) return;
+
+              const type = getTab3BlockType(targetBlock);
+
+              // ── Map: entire card opens URL in new tab ────────────
+              if (type === 'Map') {
+                  if (targetBlock.url) window.open(targetBlock.url, '_blank', 'noopener');
+                  closeNotesViewer();
+                  return;
+              }
+
+              // ── Book: open/close/swap viewer ─────────────────────
+              if (type === 'Book') {
+                  if (id === activeNotesBlockId) {
+                      closeNotesViewer();
+                  } else {
+                      renderNotesViewer(id);
+                  }
+                  return;
+              }
+
+              // ── Quest / Notes: toggle inline expansion ───────────
+              closeNotesViewer();
+
+              // For expanded blocks, only collapse via the dedicated header tap handler below
+              if (!blockEl.classList.contains('condensed')) return;
+
+              if (targetBlock.viewState === 'expanded') {
+                  targetBlock.viewState = 'condensed';
+              } else {
+                  targetBlock.viewState = 'expanded';
+              }
+
+              localStorage.setItem('userBlocks_tab3', JSON.stringify(blocksArr));
+
+              import('./filterManager.js').then(({ filterManager }) => {
+                  filterManager.applyFilters('3');
+              });
+          });
+      });
+
+      // Track drag vs click on expanded blocks (for text selection)
+      resultsSection.querySelectorAll('.block:not(.permanent-block)').forEach(blockEl => {
+          let startX, startY;
+          blockEl.addEventListener('mousedown', (e) => {
+              startX = e.clientX;
+              startY = e.clientY;
+              blockEl._wasDrag = false;
+          });
+          blockEl.addEventListener('mouseup', (e) => {
+              const dx = Math.abs(e.clientX - startX);
+              const dy = Math.abs(e.clientY - startY);
+              blockEl._wasDrag = (dx > 4 || dy > 4);
+          });
+      });
+
+      // ── Header tap to collapse expanded blocks ───────────────────
+      resultsSection.querySelectorAll('.block:not(.permanent-block) .block-header').forEach(headerEl => {
+          let mdX, mdY, mdFired = false;
+          headerEl.addEventListener('mousedown', (e) => {
+              mdX = e.clientX;
+              mdY = e.clientY;
+              mdFired = true;
+          });
+          headerEl.addEventListener('mouseup', (e) => {
+              if (!mdFired) return;
+              mdFired = false;
+              const blockEl = headerEl.closest('.block');
+              if (!blockEl || blockEl.classList.contains('condensed')) return;
+              const dx = Math.abs(e.clientX - mdX);
+              const dy = Math.abs(e.clientY - mdY);
+              if (dx > 4 || dy > 4) return;
+              if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
+
+              const id = blockEl.getAttribute('data-id');
+              const blocksArr = getBlocks('tab3');
+              const targetBlock = blocksArr.find(b => b.id === id);
+              if (!targetBlock) return;
+
+              const type = getTab3BlockType(targetBlock);
+              if (type !== 'Quest' && type !== 'Notes') return;
+
+              targetBlock.viewState = 'condensed';
+              localStorage.setItem('userBlocks_tab3', JSON.stringify(blocksArr));
+              import('./filterManager.js').then(({ filterManager }) => {
+                  filterManager.applyFilters('3');
+              });
+          });
+      });
+
+      // ── Click on empty list space → close viewer ─────────────────
+      resultsSection.addEventListener('click', (e) => {
+          if (!e.target.closest('.block') &&
+              !e.target.closest('.tab3-section-header') &&
+              !e.target.closest('.tab3-location-pill') &&
+              !e.target.closest('.results-header') &&
+              !e.target.closest('.add-block-button')) {
+              closeNotesViewer();
+          }
+      });
+
+      applyInlineDiceRolls(resultsSection, 'tab3');
+      updateTags();
+      attachDynamicTooltips();
+      initScrollFades('.results-section', null, '--results-fade-opacity', '_scrollFadeHandler');
+      document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab3' } }));
+      initQuestStatusDropdown();
+
+      // ── Viewer: only for Books, slide-in ─────────────────────────
+      const viewer = document.getElementById('notes_viewer');
+      const stillPresent = activeNotesBlockId &&
+          displayBlocks.find(b => b.id === activeNotesBlockId);
+      if (stillPresent) {
+          const activeBlock = displayBlocks.find(b => b.id === activeNotesBlockId);
+          if (getTab3BlockType(activeBlock) === 'Book') {
+              renderNotesViewer(activeNotesBlockId);
+          } else {
+              closeNotesViewer();
+          }
+      } else {
+          if (activeNotesBlockId) closeNotesViewer();
+          if (viewer) viewer.innerHTML = '';
+      }
+  };
+
+  // ── Wire the add button in the results header ───────────────────
+  const wireNotesHeaderControls = () => {
+      const addBtn = document.getElementById('add_block_button');
+      if (addBtn) {
+          addBtn.onclick = () => {
+              overlayHandler.initializeOverlayTagHandlers('add_block_overlay_tags');
+              const overlay = document.querySelector('.add-block-overlay');
+              if (overlay) overlay.dataset.activeTab = 'tab3';
+              overlay?.classList.add('show');
+              setTimeout(() => {
+                  overlayHandler.setupQuestOverlayOptions('add');
+                  // Pre-select "Notes" as the default block type
+                  if (!document.querySelector('#character_type_tags_add .tag-button.selected')) {
+                      document.querySelector('#character_type_tags_add .tag-button[data-tag="Notes"]')
+                          ?.classList.add('selected');
+                  }
+              }, 0);
+          };
+      }
+  };
+
+  const initQuestStatusDropdown = () => {
+      const resultsSection = document.getElementById('results_section_3');
+      if (!resultsSection) return;
+
+      // Create the shared dropdown once, attached to document.body so it can
+      // overlay blocks (which have overflow:hidden)
+      let dropdown = document.getElementById('quest-status-dropdown');
+      if (!dropdown) {
+          dropdown = document.createElement('div');
+          dropdown.id = 'quest-status-dropdown';
+          dropdown.className = 'quest-status-dropdown hidden';
+          dropdown.innerHTML = `
+              <button class="quest-status-item" data-status="active">Active</button>
+              <button class="quest-status-item" data-status="on hold">On hold</button>
+              <button class="quest-status-item" data-status="not started">Not started</button>
+              <button class="quest-status-item" data-status="completed">Completed</button>
+              <button class="quest-status-item" data-status="failed">Failed</button>
+          `;
+          document.body.appendChild(dropdown);
+      }
+
+      const closeDropdown = () => dropdown.classList.add('hidden');
+
+      // Dropdown item click → update status + re-render (bound once)
+      if (!dropdown._itemClickBound) {
+          dropdown.addEventListener('click', (e) => {
+              const item = e.target.closest('.quest-status-item');
+              if (!item) return;
+              e.stopPropagation();
+
+              const newStatus = item.dataset.status;
+              const blockId   = dropdown.dataset.blockId;
+              if (!blockId) { closeDropdown(); return; }
+
+              const blocks = JSON.parse(localStorage.getItem('userBlocks_tab3')) || [];
+              const block  = blocks.find(b => b.id === blockId);
+              if (!block) { closeDropdown(); return; }
+
+              block.status = newStatus;
+              localStorage.setItem('userBlocks_tab3', JSON.stringify(blocks));
+              closeDropdown();
+
+              import('./filterManager.js').then(({ filterManager }) => {
+                  filterManager.applyFilters('3');
+              });
+          });
+          dropdown._itemClickBound = true;
+      }
+
+      // Status pill click → position + open dropdown (bound once per resultsSection)
+      if (!resultsSection._questPillDelegationBound) {
+          resultsSection.addEventListener('click', (e) => {
+              const pill = e.target.closest('.quest-status-pill');
+              if (!pill) return;
+              e.stopPropagation();
+
+              const rect = pill.getBoundingClientRect();
+              dropdown.style.top  = `${rect.bottom + 5}px`;
+              dropdown.style.left = `${rect.left}px`;
+              dropdown.dataset.blockId = pill.dataset.id;
+
+              const currentStatus = pill.dataset.status;
+              dropdown.querySelectorAll('.quest-status-item').forEach(it => {
+                  it.classList.toggle('selected', it.dataset.status === currentStatus);
+              });
+
+              dropdown.classList.remove('hidden');
+
+              // One-shot close on next outside click
+              setTimeout(() => {
+                  document.addEventListener('click', closeDropdown, { once: true });
+              }, 0);
+          });
+          resultsSection._questPillDelegationBound = true;
+      }
+  };
+
   let renderAbortController = null;
 
 /* ==================================================================*/
@@ -1270,6 +1806,12 @@ export const appManager = (() => {
         // ── Character sheet tabs get the quick-ref panel ──────────────────
     if (QR_CHAR_TABS.has(tab)) {
         renderQuickRef(tab);
+        return;
+    }
+
+            // ── Notes has its own sectioned render path ───────────────────────
+    if (tab === 'tab3') {
+        renderNotes(filteredBlocks);
         return;
     }
 
@@ -1868,9 +2410,11 @@ resultsSection.innerHTML = `
 /* ======================== DATA MANAGEMENT ========================*/
 /* =================================================================*/
 
-  const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType = null, blockId = null, timestamp = null, inventoryExtras = null) => {
-    if (!blockTitle || (tab !== "tab6" && !text)) {
-      console.error(tab === "tab6" ? "❌ Block title is required for Tab 6" : "❌ Block title and text are required");
+const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType = null, blockId = null, timestamp = null, inventoryExtras = null, tab3Extras = null) => {
+    const blockTypesArr = Array.isArray(blockType) ? blockType : (blockType ? [blockType] : []);
+    const textOptional  = tab === "tab6" || (tab === "tab3" && (blockTypesArr.includes("Quest") || blockTypesArr.includes("Map")));
+    if (!blockTitle || (!textOptional && !text)) {
+      console.error(textOptional ? "❌ Block title is required" : "❌ Block title and text are required");
       return false;
     }
 
@@ -1884,7 +2428,8 @@ resultsSection.innerHTML = `
           ...userBlocks[blockIndex],
           title: blockTitle, text, tags, uses, properties, blockType,
           timestamp: userBlocks[blockIndex].timestamp || Date.now(),
-          ...(inventoryExtras || {})
+          ...(inventoryExtras || {}),
+          ...(tab3Extras || {})
         };
       } else {
         console.error(`❌ Block with ID "${blockId}" not found in tab ${tab}.`);
@@ -1908,7 +2453,8 @@ resultsSection.innerHTML = `
         blockType: blockType || null,
         timestamp: timestamp || Date.now(),
         viewState: "expanded",
-        ...(inventoryExtras || {})
+        ...(inventoryExtras || {}),
+        ...(tab3Extras || {})
       });
     }
 
@@ -1935,7 +2481,7 @@ resultsSection.innerHTML = `
     localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(userBlocks));
     return true;
   };
-
+  
 /* ==================================================================*/
 /* =========================== TOOLTIPS =============================*/
 /* ==================================================================*/
@@ -2028,5 +2574,6 @@ resultsSection.innerHTML = `
     clearFilters,
     clearData,
     setActiveInventoryBlock,
+    setActiveNotesBlock,
   };
 })();

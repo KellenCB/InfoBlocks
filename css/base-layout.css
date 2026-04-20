@@ -2017,3 +2017,827 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .block.pinned:not(.minimized)::after {
     display: none;
 }
+
+/* ==================================================================*/
+/* ===================== TAB3 (NOTES) SECTIONS ======================*/
+/* ==================================================================*/
+
+.tab3-section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 18px 2px 10px 2px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.tab3-section-header::after {
+    content: '▾';
+    font-size: 14px;
+    margin-left: 4px;
+    color: var(--gray-700);
+    transition: transform 0.2s ease;
+    display: inline-block;
+}
+
+.tab3-section-header.tab3-collapsed::after {
+    transform: rotate(-90deg);
+}
+
+.tab3-section-left {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.tab3-section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gray-700);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.tab3-section-count {
+    font-size: 11px;
+    color: var(--gray-700);
+    font-weight: 500;
+    letter-spacing: 0.15em;
+}
+
+.tab3-section {
+    display: grid;
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transition: grid-template-rows 0.5s ease-in-out, opacity 0.5s ease-in, margin 0.5s ease-in-out;
+    overflow: hidden;
+}
+
+.tab3-section.tab3-collapsed {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    pointer-events: none;
+    transition: grid-template-rows 0.5s ease-in-out, opacity 0.4s ease-out, margin 0.5s ease-in-out;
+}
+
+.tab3-section-inner {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ==================================================================*/
+/* ======================= TAB3 QUEST BLOCKS ========================*/
+/* ==================================================================*/
+
+.block.quest-block.status-completed    { opacity: 0.55; }
+
+.block.quest-block.status-completed .block-title h4 {
+    text-decoration: line-through;
+    text-decoration-color: var(--gray-600);
+}
+
+/* ── Meta row (status pill + location pill) ────────────────────── */
+
+.quest-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px 0 10px;
+}
+
+/* ── Status pill ──────────────────────────────────────────────── */
+
+.quest-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 4px 10px 4px 9px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background: rgba(228, 224, 224, 0.12);
+    color: var(--gray-800);
+    transition: background 0.15s ease;
+}
+
+.quest-status-pill:hover { background: rgba(228, 224, 224, 0.18); }
+
+.quest-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+}
+
+.quest-status-pill.status-active       { background: rgba(76, 175, 80, 0.18); color: #7ED37F; }
+.quest-status-pill.status-on-hold      { background: rgba(244, 162, 97, 0.18); color: var(--color-orange); }
+.quest-status-pill.status-not-started  { background: rgba(228, 224, 224, 0.10); color: var(--gray-800); }
+.quest-status-pill.status-completed    { background: rgba(6, 173, 228, 0.18); color: var(--color-cyan); }
+.quest-status-pill.status-failed       { background: rgba(255, 107, 107, 0.18); color: var(--color-red); }
+
+.quest-status-pill.status-active:hover       { background: rgba(76, 175, 80, 0.28); }
+.quest-status-pill.status-on-hold:hover      { background: rgba(244, 162, 97, 0.28); }
+.quest-status-pill.status-not-started:hover  { background: rgba(228, 224, 224, 0.18); }
+.quest-status-pill.status-completed:hover    { background: rgba(6, 173, 228, 0.28); }
+.quest-status-pill.status-failed:hover       { background: rgba(255, 107, 107, 0.28); }
+
+/* ── Location pill ────────────────────────────────────────────── */
+
+.quest-location-pill {
+    display: inline-flex;
+    align-items: center;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 4px 10px;
+    border-radius: 10px;
+    background: rgba(228, 224, 224, 0.10);
+    color: var(--gray-800);
+}
+
+/* ── Progress bar ─────────────────────────────────────────────── */
+
+.quest-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.quest-progress.mini {
+    margin-bottom: 0;
+    flex-shrink: 0;
+    margin-left: auto;
+    margin-right: 8px;
+}
+
+.quest-progress-track {
+    flex: 1;
+    height: 4px;
+    background: var(--gray-150);
+    border-radius: 2px;
+    overflow: hidden;
+    min-width: 40px;
+}
+
+.quest-progress.mini .quest-progress-track {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 3px;
+}
+
+.quest-progress-fill {
+    height: 100%;
+    background: var(--gray-700);
+    transition: width 0.3s ease;
+}
+
+.block.quest-block.status-active       .quest-progress-fill { background: var(--color-green); }
+.block.quest-block.status-on-hold      .quest-progress-fill { background: var(--color-orange); }
+.block.quest-block.status-not-started  .quest-progress-fill { background: var(--gray-600); }
+.block.quest-block.status-completed    .quest-progress-fill { background: var(--color-cyan); }
+.block.quest-block.status-failed       .quest-progress-fill { background: var(--color-red); }
+
+.quest-progress-count {
+    font-size: 11px;
+    color: var(--gray-700);
+    min-width: 32px;
+    text-align: right;
+}
+
+.quest-progress.mini .quest-progress-count {
+    font-size: 10px;
+    min-width: 26px;
+}
+
+/* ── Objectives list ─────────────────────────────────────────── */
+
+.quest-objectives {
+    font-size: 13px;
+    line-height: 1.55;
+    width: fit-content;
+}
+
+
+
+
+.quest-objective {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 3px 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.quest-objective-checkbox {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    border-radius: 3px;
+    border: 1.5px solid var(--gray-700);
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.quest-objective-tick {
+    width: 9px;
+    height: 9px;
+    stroke: var(--gray-150);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.quest-objective.done .quest-objective-checkbox {
+    background: var(--color-green);
+    border-color: var(--color-green);
+}
+
+.quest-objective.done .quest-objective-tick { opacity: 1; }
+
+.quest-objective.done .quest-objective-text {
+    color: var(--gray-700);
+    text-decoration: line-through;
+}
+
+.quest-objectives-empty {
+    font-size: 12px;
+    color: var(--gray-700);
+    font-style: italic;
+    padding: 4px 0;
+}
+
+/* ── Status dropdown (shared) ────────────────────────────────── */
+
+.quest-status-dropdown {
+    position: fixed;
+    z-index: 10000;
+    background: var(--gray-300);
+    border: 1px solid var(--gray-450);
+    border-radius: 8px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 140px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+.quest-status-dropdown.hidden { display: none; }
+
+.quest-status-item {
+    background: transparent;
+    border: none;
+    color: var(--gray-850);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 5px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.quest-status-item:hover { background: var(--gray-400); }
+
+.quest-status-item.selected {
+    background: var(--gray-450);
+    color: var(--gray-900);
+}
+
+/* ==================================================================*/
+/* ==================== TAB3 LOCATION PILL ROW ======================*/
+/* ==================================================================*/
+
+.tab3-location-row {
+    margin: 4px 0 14px;
+}
+
+.tab3-location-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 0 2px;
+    color: var(--gray-700);
+}
+
+.tab3-location-label {
+    font-size: 10px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+.tab3-location-pills {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.tab3-location-pills::-webkit-scrollbar { display: none; }
+
+.tab3-location-pill {
+    padding: 5px 12px;
+    background: rgba(228, 224, 224, 0.06);
+    color: var(--gray-800);
+    border: 1px solid transparent;
+    border-radius: 14px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.tab3-location-pill:hover {
+    background: rgba(228, 224, 224, 0.12);
+}
+
+.tab3-location-pill.selected {
+    background: rgba(228, 224, 224, 0.25);
+    color: var(--gray-900);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ==================================================================*/
+/* ========================= TAB3 MAP CARDS =========================*/
+/* ==================================================================*/
+
+.block.map-block.condensed {
+    cursor: pointer;
+}
+
+.block.map-block.condensed::after {
+    display: none;
+}
+
+.block.map-block.condensed .block-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.map-card-thumb {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    background: var(--gray-400);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-700);
+}
+
+.map-card-thumb svg {
+    width: 22px;
+    height: 22px;
+}
+
+.map-card-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 12px;
+    gap: 2px;
+}
+
+.map-card-title h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-900);
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.map-card-url {
+    font-size: 11px;
+    color: var(--color-blue);
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.75;
+}
+
+/* ============================================================== */
+/* ============ TAB3 NOTES SPLIT LAYOUT (list + viewer) ========= */
+/* ============================================================== */
+
+.notes-layout {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.notes-list-column {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    flex-shrink: 0;
+    min-height: 0;
+    overflow: hidden;
+    transition: width 250ms ease-out;
+}
+
+.notes-list-column .results-section {
+    flex: 1;
+    min-height: 0;
+    padding: 0 5px 0 0;
+}
+
+/* ── Viewer (hidden by default, slides in for Books) ────────── */
+
+.notes-viewer {
+    display: flex;
+    flex-direction: column;
+    width: 0;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+    opacity: 0;
+    position: relative;
+    background-color: var(--gray-300);
+    border-radius: 10px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    transition: width 250ms ease-out, padding 250ms ease-out, opacity 200ms ease-out 50ms;
+}
+
+.notes-viewer::-webkit-scrollbar { display: none; }
+
+/* ── Viewer open state (toggled via JS .notes-viewer-open) ──── */
+
+.notes-layout.notes-viewer-open {
+    gap: 15px;
+}
+
+.notes-layout.notes-viewer-open .notes-list-column {
+    width: 50%;
+}
+
+.notes-layout.notes-viewer-open .notes-viewer {
+    width: 50%;
+    padding: 15px 18px;
+    opacity: 1;
+    overflow-y: auto;
+}
+
+/* ── Viewer content ─────────────────────────────────────────── */
+
+.notes-viewer-content {
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.notes-viewer-content.fading {
+    opacity: 0;
+}
+
+.notes-viewer-placeholder {
+    margin: auto;
+    color: var(--gray-700);
+    opacity: 0.4;
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
+}
+
+/* ── Viewer close button ────────────────────────────────────── */
+
+.notes-viewer-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background-color: var(--gray-400);
+    color: var(--gray-800);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    z-index: 2;
+    transition: background-color 0.2s, opacity 0.2s;
+    opacity: 0.6;
+}
+
+.notes-viewer-close-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.notes-viewer-close-btn:hover {
+    background-color: var(--color-red);
+    opacity: 1;
+}
+
+/* ── Selected-state highlight on Book cards in list ─────────── */
+
+.block.notes-block-active {
+    background-color: var(--block-bg-selected-base);
+    background-image: radial-gradient(90% 110% at 50% 0%, var(--block-bg-selected-highlight) 0%, transparent 100%);
+    border: 1px solid var(--block-border-selected);
+}
+
+#results_section_3 .block:not(.permanent-block) {
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+#results_section_3 .block:not(.permanent-block):hover {
+    cursor: pointer;
+}
+
+/* ============================================================== */
+/* ============ BOOK ACCENT COLOUR SWATCHES (overlay) =========== */
+/* ============================================================== */
+
+.book-accent-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    padding: 4px 0;
+}
+
+.book-accent-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.book-accent-swatch:hover {
+    transform: scale(1.08);
+}
+
+.book-accent-swatch.selected {
+    border-color: var(--gray-900);
+    box-shadow: 0 0 0 2px var(--gray-300), 0 0 0 4px var(--gray-900);
+}
+
+/* ============================================================== */
+/* ============ TAB3 BOOK CARD (condensed list view) ============ */
+/* ============================================================== */
+
+/* The book card itself — horizontal row: accent stripe | icon | text */
+.block.book-block.condensed {
+    cursor: pointer;
+}
+
+.block.book-block.condensed::after {
+    display: none;
+}
+
+.block.book-block.condensed .block-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.book-card-thumb {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    background-color: color-mix(in srgb, var(--book-accent, #f4a261) 18%, var(--gray-400));
+    color: var(--book-accent, #f4a261);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.book-card-thumb svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* Text column — title on top, description below; centred if no description */
+.book-card-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 12px;
+    gap: 2px;
+}
+
+.book-card-text-no-desc {
+    justify-content: center;
+}
+
+.book-card-title h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-900);
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.book-card-description {
+    font-size: 12px;
+    color: var(--gray-700);
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ============================================================== */
+/* ============ BOOK VIEWER ACCENT STRIPE (expanded) ============ */
+/* ============================================================== */
+
+.notes-viewer-content .block.expanded {
+    padding: 0;
+    border: none;
+    background: transparent;
+}
+
+/* ============================================================== */
+/* ============ TAB3 — HIDE CUSTOM-TAGS INPUT =================== */
+/* ============================================================== */
+
+/* Tab3 has no user-defined tags — hide the custom-tags input AND the dynamic
+   tags container (which would otherwise take padding height while empty). */
+.add-block-overlay[data-active-tab="tab3"]  .user-tags-input,
+.edit-block-overlay[data-active-tab="tab3"] .user-tags-input,
+.add-block-overlay[data-active-tab="tab3"]  .overlay-tags,
+.edit-block-overlay[data-active-tab="tab3"] .overlay-tags,
+.add-block-overlay[data-active-tab="tab3"]  #properties_input_overlay,
+.edit-block-overlay[data-active-tab="tab3"] #properties_input_edit_overlay {
+    display: none;
+}
+
+/* ============================================================== */
+/* ============ TAB3 QUEST CARD THUMB (status-colored) ========== */
+/* ============================================================== */
+
+.block.quest-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.block.quest-block .block-header {
+    align-items: center;
+}
+
+.block.quest-block .block-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.block.quest-block .quest-progress {
+    margin: 0;
+}
+.quest-card-thumb {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-400);
+    color: var(--gray-700);
+}
+
+.quest-card-thumb svg {
+    width: 22px;
+    height: 22px;
+}
+
+.block.quest-block.status-active       .quest-card-thumb { background: rgba(76, 175, 80, 0.15); color: #4CAF50; }
+.block.quest-block.status-on-hold      .quest-card-thumb { background: rgba(244, 162, 97, 0.15); color: #f4a261; }
+.block.quest-block.status-not-started  .quest-card-thumb { background: var(--gray-400); color: var(--gray-700); }
+.block.quest-block.status-completed    .quest-card-thumb { background: rgba(6, 173, 228, 0.15); color: #06ade4; }
+.block.quest-block.status-failed       .quest-card-thumb { background: rgba(255, 107, 107, 0.15); color: #ff6b6b; }
+
+.quest-card-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.quest-card-text .block-title h4 {
+    margin: 0;
+}
+
+.quest-card-text .quest-meta-row {
+    margin: 0;
+}
+
+/* ============================================================== */
+/* ============ TAB3 NOTES CARD THUMB + DESCRIPTION ============= */
+/* ============================================================== */
+
+.block:not(.quest-block):not(.map-block):not(.book-block).condensed,
+.block:not(.quest-block):not(.map-block):not(.book-block).expanded {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.block:not(.quest-block):not(.map-block):not(.book-block) .block-header {
+    align-items: center;
+}
+
+.block:not(.quest-block):not(.map-block):not(.book-block) .block-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+.notes-card-thumb {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-400);
+    color: var(--gray-700);
+}
+
+.notes-card-thumb svg {
+    width: 22px;
+    height: 22px;
+}
+
+.notes-card-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+}
+
+.notes-card-text-no-desc {
+    justify-content: center;
+}
+
+.notes-card-text .block-title h4 {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.notes-card-description {
+    font-size: 12px;
+    color: var(--gray-700);
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

@@ -1,7 +1,7 @@
 let isEditing = false;
 let currentEditingBlockId = null;
 
-import { categoryTags, blockTypeConfig } from './tagConfig.js';
+import { categoryTags, blockTypeConfig, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
 import { filterManager } from './filterManager.js';
 import { appManager } from './appManager.js';
 import { overlayHandler, getOverlayTargetTab } from './overlayHandler.js';
@@ -67,15 +67,17 @@ export const saveEditHandler = () => {
         return tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
     });
 
-    if (
-        !titleInput ||
-        (activeTab !== "tab6" && !textInput)
-    ) {
-        alert(
-            activeTab === "tab6"
-                ? "A title is required."
-                : "All fields (Title and Text) are required."
-        );
+    const selTypeBtnEdit = document.querySelector('#character_type_tags_edit .tag-button.selected');
+    const isTab3QuestEdit = activeTab === 'tab3' && selTypeBtnEdit?.dataset.tag === 'Quest';
+    const isTab3MapEdit   = activeTab === 'tab3' && selTypeBtnEdit?.dataset.tag === 'Map';
+    const textOptionalEdit = activeTab === "tab6" || isTab3QuestEdit || isTab3MapEdit;
+
+    if (!titleInput) {
+        alert("A title is required.");
+        return;
+    }
+    if (!textOptionalEdit && !textInput) {
+        alert("Title and text are required.");
         return;
     }
 
@@ -117,8 +119,45 @@ const blockType = tabBTConfig
         };
     }
 
+    // Tab3-specific fields (location + quest state + book state)
+    let tab3Extras = null;
+    if (activeTab === 'tab3') {
+        const loc = document.getElementById('location_input_edit')?.value.trim();
+        tab3Extras = { location: loc || null };
+
+        const blockTypesArr = Array.isArray(blockType) ? blockType : (blockType ? [blockType] : []);
+        if (blockTypesArr.includes('Quest')) {
+            const selPill = document.querySelector('#status_buttons_edit .quest-status-pill.selected');
+            tab3Extras.status = selPill?.dataset.status || 'active';
+
+            const rows = document.querySelectorAll('#objectives_editor_edit .quest-objective-editor-row');
+            tab3Extras.objectives = Array.from(rows).map(row => ({
+                text: row.querySelector('.quest-objective-input')?.value.trim() || '',
+                done: row.dataset.done === 'true'
+            })).filter(o => o.text !== '');
+        }
+        if (blockTypesArr.includes('Book')) {
+            const descEdit  = document.getElementById('description_input_edit')?.value.trim() || '';
+            const selSwatch = document.querySelector('#book_accent_swatches_edit .book-accent-swatch.selected');
+            tab3Extras.description = descEdit;
+            tab3Extras.bookColor   = selSwatch?.dataset.colorId || DEFAULT_BOOK_ACCENT;
+        }
+        if (blockTypesArr.includes('Notes')) {
+            const descEdit = document.getElementById('description_input_edit')?.value.trim() || '';
+            tab3Extras.description = descEdit;
+        }
+        if (blockTypesArr.includes('Map')) {
+            const urlEdit = document.getElementById('url_input_edit')?.value.trim() || '';
+            if (!urlEdit) {
+                alert('A link URL is required for Map blocks.');
+                return;
+            }
+            tab3Extras.url = urlEdit;
+        }
+    }
+
     appManager.saveBlock(
-        activeTab, titleInput, textInput, allTags, usesState, propertiesInput, blockType, blockId, blocks[blockIndex].timestamp, inventoryExtras
+        activeTab, titleInput, textInput, allTags, usesState, propertiesInput, blockType, blockId, blocks[blockIndex].timestamp, inventoryExtras, tab3Extras
     );
     console.log(`✅ Block updated in ${activeTab} with tags:`, allTags);
 
@@ -190,8 +229,7 @@ export const blockActionsHandler = (() => {
 
         if (target.classList.contains("duplicate-button")) {
             const blockTags = Array.isArray(block.tags) ? [...block.tags] : [];
-            // For tab6, also carry through the inventory booleans so the copy
-            // matches the original's state
+            // For tab6, carry through the inventory booleans
             let inventoryExtras = null;
             if (activeTab === 'tab6') {
                 inventoryExtras = {
@@ -201,10 +239,36 @@ export const blockActionsHandler = (() => {
                     equipped:           block.equipped === true
                 };
             }
-            const result = appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.properties || [], block.blockType || null, null, null, inventoryExtras);
-            // On tab6, auto-select the newly created copy
+            // For tab3, carry through all type-specific fields
+            let tab3Extras = null;
+            if (activeTab === 'tab3') {
+                tab3Extras = { location: block.location || null };
+                const blockTypesArr = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+                if (blockTypesArr.includes('Quest')) {
+                    tab3Extras.status = block.status || 'active';
+                    tab3Extras.objectives = Array.isArray(block.objectives)
+                        ? block.objectives.map(o => ({ text: o.text || '', done: false }))
+                        : [];
+                }
+                if (blockTypesArr.includes('Book')) {
+                    tab3Extras.description = block.description || '';
+                    tab3Extras.bookColor   = block.bookColor || 'orange';
+                }
+                if (blockTypesArr.includes('Notes')) {
+                    tab3Extras.description = block.description || '';
+                }
+            }
+            const result = appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.properties || [], block.blockType || null, null, null, inventoryExtras, tab3Extras);
+            // On tab6, auto-select the newly created copy in the viewer
             if (activeTab === 'tab6' && typeof result === 'string') {
                 appManager.setActiveInventoryBlock(result);
+            }
+            // On tab3, auto-select Book copies in the viewer
+            if (activeTab === 'tab3' && typeof result === 'string') {
+                const blockTypesArr = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+                if (blockTypesArr.includes('Book')) {
+                    appManager.setActiveNotesBlock(result);
+                }
             }
             reapplySearchAndFilters(activeTab);
 
@@ -271,6 +335,7 @@ overlayHandler.populateBlockTypeOverlay("character_type_tags_edit");
                 if (eqBtnEdit)  eqBtnEdit.dataset.on  = 'false';
             }
             overlayHandler.setupInventoryOverlayOptions("edit");
+            overlayHandler.setupQuestOverlayOptions("edit");
             
             setTimeout(() => {
                 // Re-apply selected state for regular tags
