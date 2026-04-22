@@ -1750,24 +1750,211 @@ a:hover {
 .block-equip-hand.unequipped svg { color: var(--hand-unequipped-color); }
 
 /* ==================================================================*/
-/* ====================== SPELL SLOT STYLING ========================*/
+/* ======================= RESOURCES STRIP ==========================*/
 /* ==================================================================*/
 
-.spell-slot-section,
-.circle-section {
+.resources-strip {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    background-color: var(--gray-300);
+    border-radius: 25px;
+    padding: 16px 84px 16px 18px;
+    border: 1px solid transparent;
+    box-sizing: border-box;
+    width: 100%;
+    flex: 0 0 auto;
+    min-height: 48px;
+}
+
+.spell-slot-section {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-start;
-    background-color: #2a2a2a;
-    border-radius: 20px;
-    padding: 15px 20px;
-    row-gap: 10px;
-    column-gap: 20px;
+    border-radius: 0;
+    padding: 0;
+    min-height: 0;
+    width: auto;
+    flex: 0 1 auto;
+    row-gap: 16px;
+    column-gap: 25px;
     box-sizing: border-box;
-    min-height: 60px;
-    width: 100%;
-    flex: 0 0 auto;
+}
+
+.resources-strip-icon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    color: var(--gray-750);
+}
+
+.resources-strip .circle {
+    width: 16px;
+    height: 16px;
+}
+
+.resources-strip .spell-slot-group {
+    gap: 6px;
+    position: relative;
+}
+
+.resources-strip .spell-slot-group::before {
+    content: "";
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 18px;
+    background-color: var(--gray-400);
+}
+
+.resources-strip .spell-slot-group.first-in-row::before {
+    display: none;
+}
+
+.resources-strip .spell-slot-group:first-of-type::before {
+  content: none;
+}
+
+.resources-strip .spell-slot-title {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--gray-700);
+    margin-right: 1px;
+}
+
+.resources-strip-actions {
+    position: absolute;
+    top: 9px;
+    right: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* ==================================================================*/
+/* ================ RESOURCES STRIP — EDIT MODE =====================*/
+/* ==================================================================*/
+
+.resources-strip.edit-mode {
+    border: 1px solid rgba(244, 162, 97, 0.4);
+    padding: 16px 84px 16px 18px;
+}
+
+.resources-strip.edit-mode #edit_suit_uses_button {
+    display: none;
+}
+
+.resources-strip.edit-mode #edit_spell_slots_button {
+    background-color: rgba(244, 162, 97, 0.15);
+    color: #f4a261;
+    opacity: 1;
+}
+
+.resources-strip .circle-add,
+.resources-strip .circle-remove {
+    width: 16px;
+    height: 16px;
+    font-size: 11px;
+    line-height: 1;
+    background-color: transparent;
+}
+
+.resources-strip .circle-add {
+    border: 1px dashed #f4a261;
+    color: #f4a261;
+    margin-left: 3px;
+}
+
+.resources-strip .circle-remove {
+    border: 1px dashed #888;
+    color: #888;
+    font-size: 13px;
+}
+
+.resources-strip .ghost-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 22px;
+    margin: -3px 0;
+    padding: 0 9px;
+    border-radius: 999px;
+    border: 1px dashed #555;
+    color: #888;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    user-select: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.resources-strip .ghost-chip:hover {
+    border-color: #f4a261;
+    color: #f4a261;
+}
+
+.resources-strip .ghost-chip .ghost-chip-plus {
+    font-size: 13px;
+    line-height: 1;
+    color: #f4a261;
+}
+
+.resources-strip:not(.edit-mode) .ghost-chip {
+    display: none;
+}
+
+#long_rest_button {
+    position: relative;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--gray-900);
+    color: var(--gray-600);
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0.25;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: opacity 0.2s, background-color 0.2s, color 0.2s;
+}
+
+#long_rest_button svg {
+    width: 14px;
+    height: 14px;
+}
+
+#long_rest_button:hover {
+    opacity: 1;
+    background-color: var(--color-orange);
+    color: var(--gray-900);
+}
+
+#long_rest_button .lr-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    opacity: 1;
+    filter: blur(0);
+    transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+#long_rest_button.swapping .lr-icon-wrap {
+    opacity: 0;
+    filter: blur(6px);
 }
 
 .spell-slot-group {
@@ -2619,6 +2806,64 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 
 .delete-confirm-no:hover {
     background: var(--gray-500);
+}
+
+.long-rest-popup {
+    position: fixed;
+    z-index: 99999;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    padding: 5px 70px 5px 18px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    transform: translateX(4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.long-rest-popup.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.long-rest-popup-message {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray-900);
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+#long_rest_button.arming {
+    position: relative;
+    z-index: 100001;
+    opacity: 1;
+    background-color: var(--color-green-dark);
+    color: #fff;
+    overflow: hidden;
+}
+
+#long_rest_button.arming:hover {
+    background-color: var(--color-green-dark);
+}
+
+#long_rest_button.arming::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: var(--color-green);
+    transition: width 0.5s linear;
+    z-index: 0;
+}
+
+#long_rest_button.arming.filling::before {
+    width: 100%;
 }
 
 /* ============================================================== */

@@ -704,22 +704,30 @@
             
             <!-- Tab 9: Feats & Magic -->
             <div class="tab-content" id="tab9">
-                <div class="circle-section">
-                    <span class="spell-slot-title">Suit Uses</span>
-                    <div id="suit_uses_circles"></div>
-                    <button id="edit_suit_uses_button" title="Edit suit uses">✎</button>
-                </div>
-                <div class="spell-slot-section">
-                    <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">1st Lvl</span></div>
-                    <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">2nd Lvl</span></div>
-                    <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">3rd Lvl</span></div>
-                    <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">4th Lvl</span></div>
-                    <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">5th Lvl</span></div>
-                    <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">6th Lvl</span></div>
-                    <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">7th Lvl</span></div>
-                    <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">8th Lvl</span></div>
-                    <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>
-                    <button id="edit_spell_slots_button" class="add-block-button orange-button" title="Edit spell slots">✎</button>
+                <div class="resources-strip">
+                    <div class="spell-slot-section">
+                        <div class="spell-slot-group">
+                            <svg class="resources-strip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Suit Uses"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3z"/></svg>
+                            <div id="suit_uses_circles"></div>
+                        </div>
+                        <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">L1</span></div>
+                        <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">L2</span></div>
+                        <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">L3</span></div>
+                        <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">L4</span></div>
+                        <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">L5</span></div>
+                        <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">L6</span></div>
+                        <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">L7</span></div>
+                        <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">L8</span></div>
+                        <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">L9</span></div>
+                    </div>
+                    <div class="resources-strip-actions">
+                        <button id="long_rest_button" title="Long rest — refill all slots">
+                            <span class="lr-icon-wrap">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                            </span>
+                        </button>
+                        <button id="edit_spell_slots_button" class="add-block-button orange-button" title="Edit spell slots">✎</button>
+                    </div>
                 </div>
                 <div class="filter-and-results">
                     <div id="results_section_9" class="results-section"></div>
@@ -727,10 +735,10 @@
                     <div class="filter-section-wrapper">
                         <div class="filter-panel-header">
                             <button id="clear_filters_button_9" class="clear_filters_button" title="Clear filters">✕</button>
-                            <div class="search-container">
-                                <input id="search_input_9" class="search_input" type="text" placeholder="Search by text" />
-                                <button id="clear_search_button_9" class="clear-search"><svg class="clear-icon" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg></button>
-                            </div>
+                        <div class="search-container">
+                            <input id="search_input_9" class="search_input" type="text" placeholder="Search by text" />
+                            <button id="clear_search_button_9" class="clear-search"><svg class="clear-icon" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg></button>
+                        </div>
                             <button class="toggle-filter-button" data-tab="tab9" title="Hide filters">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M9 18l6-6-6-6"/>

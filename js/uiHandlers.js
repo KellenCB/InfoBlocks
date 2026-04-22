@@ -265,7 +265,7 @@ window.toggleObjective = toggleObjective;
 // ==============================
 // Suit Uses Circle Section
 // ==============================
-const circleContainer = document.querySelector('.circle-section');
+const circleContainer = document.querySelector('.spell-slot-group');
 if (circleContainer) {
   let circleStates = JSON.parse(localStorage.getItem('circleStates')) || {};
   let totalCircles = localStorage.getItem('totalCircles')
@@ -360,11 +360,6 @@ if (circleContainer) {
         overlay.classList.remove('show');
       };
     };
-
-    editBtn.addEventListener('click', () => {
-      renderOverlayCircles();
-      overlay.classList.add('show');
-    });
   }
 }
 
@@ -537,132 +532,333 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   
     initSpellSlotSection();
-  
-    const editTabButton = document.getElementById('edit_tab_button');
+});
+    
+/* ==================================================================*/
+/* ============ RESOURCES STRIP INLINE EDIT MODE ====================*/
+/* ==================================================================*/
 
-    // Contextual edit buttons — wire each to trigger the same logic
-    // as edit_tab_button would for its specific tab.
-    document.getElementById('edit_spell_slots_button')?.addEventListener('click', () => {
-        console.log('✏️ Spell Slot Edit Button clicked');
-        const overlay = document.querySelector('.spell-slot-edit-overlay');
-        const mainSpellSlots   = document.querySelectorAll('.spell-slot-group');
-        const overlaySpellSlots = document.querySelectorAll('.spell-slot-edit-overlay .spell-slot-group');
-        if (overlay) {
-            overlay.classList.add('show');
-            mainSpellSlots.forEach((mainGroup, index) => {
-                const overlayGroup = overlaySpellSlots[index];
-                if (!overlayGroup) return;
-                const titleElement = mainGroup.querySelector('.spell-slot-title');
-                const titleText = titleElement ? titleElement.textContent : `Level ${index + 1}`;
-                overlayGroup.innerHTML = `<span class="spell-slot-title">${titleText}</span>`;
-                mainGroup.querySelectorAll('.circle:not(.circle-button)').forEach(circle => {
-                    const newCircle = document.createElement('div');
-                    newCircle.classList.add('circle');
-                    if (circle.classList.contains('unfilled')) newCircle.classList.add('unfilled');
-                    newCircle.addEventListener('click', () => newCircle.classList.toggle('unfilled'));
-                    overlayGroup.appendChild(newCircle);
-                });
-                const addButton = document.createElement('div');
-                addButton.classList.add('circle', 'circle-button');
-                addButton.innerHTML = "+";
-                addButton.addEventListener('click', () => {
-                    const newCircle = document.createElement('div');
-                    newCircle.classList.add('circle');
-                    newCircle.addEventListener('click', () => newCircle.classList.toggle('unfilled'));
-                    overlayGroup.appendChild(newCircle);
-                });
-                const removeButton = document.createElement('div');
-                removeButton.classList.add('circle', 'circle-button');
-                removeButton.innerHTML = "−";
-                removeButton.addEventListener('click', () => {
-                    const circles = overlayGroup.querySelectorAll('.circle:not(.circle-button)');
-                    if (circles.length > 0) overlayGroup.removeChild(circles[circles.length - 1]);
-                });
-                overlayGroup.insertBefore(addButton, overlayGroup.children[1] || null);
-                overlayGroup.insertBefore(removeButton, addButton.nextSibling);
+document.addEventListener('DOMContentLoaded', () => {
+    const strip = document.querySelector('.resources-strip');
+    if (!strip) return;
+
+    const circlesWrapper   = document.getElementById('suit_uses_circles');
+    const spellSlotSection = strip.querySelector('.spell-slot-section');
+
+        const updateFirstInRow = () => {
+        requestAnimationFrame(() => {
+            const suitSection = strip.querySelector('.circle-section');
+            let lastTop = suitSection ? suitSection.offsetTop : null;
+
+            spellSlotSection.querySelectorAll('.spell-slot-group').forEach(group => {
+                if (group.classList.contains('hidden')) {
+                    group.classList.remove('first-in-row');
+                    return;
+                }
+                const top = group.offsetTop;
+                const isFirstInRow = lastTop !== null && Math.abs(top - lastTop) > 2;
+                group.classList.toggle('first-in-row', isFirstInRow);
+                lastTop = top;
             });
-            console.log('✅ Spell slot groups copied to overlay.');
-        } else {
-            console.warn('Spell slot edit overlay not found.');
+        });
+    };
+
+    new ResizeObserver(() => updateFirstInRow()).observe(strip);
+
+    const editSuitBtn      = document.getElementById('edit_suit_uses_button');
+    const editSpellBtn     = document.getElementById('edit_spell_slots_button');
+    const editTabButton    = document.getElementById('edit_tab_button');
+    if (!circlesWrapper || !spellSlotSection) return;
+
+    // ── State helpers ──────────────────────────────────────────────────
+    const getSuitTotal  = () => parseInt(localStorage.getItem('totalCircles') || '3', 10);
+    const getSuitStates = () => JSON.parse(localStorage.getItem('circleStates') || '{}');
+    const saveSuit = (states, total) => {
+        localStorage.setItem('circleStates', JSON.stringify(states));
+        localStorage.setItem('totalCircles', String(total));
+    };
+
+    const getLevelTotal  = (n) => parseInt(localStorage.getItem(`spellSlotTotalCircles_group_${n}`) || '0', 10);
+    const getLevelStates = (n) => JSON.parse(localStorage.getItem(`spellSlotStates_group_${n}`) || '{}');
+    const saveLevel = (n, states, total) => {
+        localStorage.setItem(`spellSlotStates_group_${n}`, JSON.stringify(states));
+        localStorage.setItem(`spellSlotTotalCircles_group_${n}`, String(total));
+    };
+
+    // ── Element factories ──────────────────────────────────────────────
+    const makeCircle = (unfilled, onToggle) => {
+        const c = document.createElement('div');
+        c.classList.add('circle');
+        if (unfilled) c.classList.add('unfilled');
+        c.addEventListener('click', () => {
+            c.classList.toggle('unfilled');
+            onToggle(c.classList.contains('unfilled'));
+        });
+        return c;
+    };
+
+    const makeButton = (extraClass, symbol, onClick) => {
+        const b = document.createElement('div');
+        b.classList.add('circle', 'circle-button', extraClass);
+        b.innerHTML = symbol;
+        b.addEventListener('click', onClick);
+        return b;
+    };
+
+    // ── Renderers ──────────────────────────────────────────────────────
+    const renderSuit = (editMode) => {
+        circlesWrapper.innerHTML = '';
+        const total  = getSuitTotal();
+        const states = getSuitStates();
+
+        if (editMode) {
+            circlesWrapper.appendChild(makeButton('circle-add', '+', () => {
+                const t = getSuitTotal();
+                const s = getSuitStates();
+                const newStates = { 0: false };
+                for (let i = 0; i < t; i++) newStates[i + 1] = s[i] ?? true;
+                saveSuit(newStates, t + 1);
+                renderSuit(true);
+            }));
+            circlesWrapper.appendChild(makeButton('circle-remove', '−', () => {
+                const t = getSuitTotal();
+                if (t <= 0) return;
+                const s = getSuitStates();
+                delete s[t - 1];
+                saveSuit(s, t - 1);
+                renderSuit(true);
+            }));
+        }
+
+        for (let i = 0; i < total; i++) {
+            const unfilled = states[i] ?? true;
+            circlesWrapper.appendChild(makeCircle(unfilled, (nowUnfilled) => {
+                const s = getSuitStates();
+                s[i] = nowUnfilled;
+                saveSuit(s, getSuitTotal());
+            }));
+        }
+    };
+
+    const renderLevel = (n, editMode) => {
+        const group = spellSlotSection.querySelector(`.spell-slot-group[data-group="${n}"]`);
+        if (!group) return;
+        group.querySelectorAll('.circle, .circle-button').forEach(el => el.remove());
+
+        const total  = getLevelTotal(n);
+        const states = getLevelStates(n);
+
+        if (editMode && total > 0) {
+            group.appendChild(makeButton('circle-add', '+', () => {
+                const t = getLevelTotal(n);
+                const s = getLevelStates(n);
+                const newStates = { 0: false };
+                for (let i = 0; i < t; i++) newStates[i + 1] = s[i] ?? true;
+                saveLevel(n, newStates, t + 1);
+                renderLevel(n, true);
+            }));
+            group.appendChild(makeButton('circle-remove', '−', () => {
+                const t = getLevelTotal(n);
+                if (t <= 0) return;
+                const s = getLevelStates(n);
+                delete s[t - 1];
+                saveLevel(n, s, t - 1);
+                renderLevel(n, true);
+                if (t - 1 === 0) renderGhostChips();
+            }));
+        }
+
+        for (let i = 0; i < total; i++) {
+            const unfilled = states[i] ?? true;
+            group.appendChild(makeCircle(unfilled, (nowUnfilled) => {
+                const s = getLevelStates(n);
+                s[i] = nowUnfilled;
+                saveLevel(n, s, getLevelTotal(n));
+            }));
+        }
+
+        group.classList.toggle('hidden', total === 0);
+    };
+
+    const renderGhostChips = () => {
+        spellSlotSection.querySelectorAll('.ghost-chip').forEach(c => c.remove());
+        for (let n = 1; n <= 9; n++) {
+            if (getLevelTotal(n) > 0) continue;
+            const chip = document.createElement('div');
+            chip.classList.add('ghost-chip');
+            chip.innerHTML = `<span>${n}</span><span class="ghost-chip-plus">+</span>`;
+            chip.addEventListener('click', () => {
+                saveLevel(n, { 0: false }, 1);
+                renderLevel(n, true);
+                chip.remove();
+            });
+            spellSlotSection.appendChild(chip);
+        }
+    };
+
+    // ── Mode toggling ──────────────────────────────────────────────────
+    const enterEditMode = () => {
+        strip.classList.add('edit-mode');
+        spellSlotSection.querySelectorAll('p').forEach(p => p.remove()); // drop legacy placeholder
+        renderSuit(true);
+        for (let n = 1; n <= 9; n++) renderLevel(n, true);
+        renderGhostChips();
+        if (editSpellBtn) editSpellBtn.textContent = '✓';
+    };
+
+    const exitEditMode = () => {
+        strip.classList.remove('edit-mode');
+        spellSlotSection.querySelectorAll('.ghost-chip').forEach(c => c.remove());
+        renderSuit(false);
+        for (let n = 1; n <= 9; n++) renderLevel(n, false);
+        if (editSpellBtn) editSpellBtn.textContent = '✎';
+    };
+
+    const toggleEditMode = () => {
+        if (strip.classList.contains('edit-mode')) exitEditMode();
+        else enterEditMode();
+    };
+
+    // ── Wire buttons + Escape ──────────────────────────────────────────
+    editSuitBtn?.addEventListener('click', toggleEditMode);
+    editSpellBtn?.addEventListener('click', toggleEditMode);
+    editTabButton?.addEventListener('click', () => {
+        const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;
+        if (activeTab === 'tab9') toggleEditMode();
+    });
+
+    // ── Long rest: inline arming ────────────────────────────────────────
+    const longRestBtn = document.getElementById('long_rest_button');
+
+    const MOON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+    const SUN_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></svg>`;
+
+    let iconSwapTimer = null;
+    const swapIcon = (newSvgHTML) => {
+        clearTimeout(iconSwapTimer);
+        longRestBtn.classList.add('swapping');
+        iconSwapTimer = setTimeout(() => {
+            const wrap = longRestBtn.querySelector('.lr-icon-wrap');
+            if (wrap) wrap.innerHTML = newSvgHTML;
+            longRestBtn.classList.remove('swapping');
+        }, 250);
+    };
+
+    let armTimer = null;
+
+    const doRefill = () => {
+        const suitTotal = getSuitTotal();
+        const suitStates = {};
+        for (let i = 0; i < suitTotal; i++) suitStates[i] = false;
+        saveSuit(suitStates, suitTotal);
+
+        for (let n = 1; n <= 9; n++) {
+            const total = getLevelTotal(n);
+            const states = {};
+            for (let i = 0; i < total; i++) states[i] = false;
+            saveLevel(n, states, total);
+        }
+
+        const inEdit = strip.classList.contains('edit-mode');
+        renderSuit(inEdit);
+        for (let n = 1; n <= 9; n++) renderLevel(n, inEdit);
+        if (inEdit) renderGhostChips();
+
+        console.log('✅ Long rest — all slots refilled.');
+    };
+
+    const startArmTimer = () => {
+        clearTimeout(armTimer);
+        longRestBtn.classList.remove('armed', 'filling');
+        void longRestBtn.offsetWidth;
+        longRestBtn.classList.add('filling');
+        armTimer = setTimeout(() => {
+            longRestBtn.classList.add('armed');
+        }, 500);
+    };
+
+    const cancelArmTimer = () => {
+        clearTimeout(armTimer);
+        longRestBtn.classList.remove('armed', 'filling');
+    };
+
+    const dismissLongRest = () => {
+        cancelArmTimer();
+        longRestBtn.classList.remove('arming');
+        clearTimeout(iconSwapTimer);
+        longRestBtn.classList.remove('swapping');
+        const wrap = longRestBtn.querySelector('.lr-icon-wrap');
+        if (wrap) wrap.innerHTML = MOON_SVG;
+        const popup = document.getElementById('long-rest-popup');
+        if (popup) {
+            popup.classList.remove('visible');
+            setTimeout(() => popup.remove(), 200);
+        }
+        document.removeEventListener('mousedown', onLongRestOutside);
+    };
+
+    longRestBtn?.addEventListener('mouseleave', () => {
+        if (!longRestBtn.classList.contains('arming')) return;
+        dismissLongRest();
+    });
+
+    const onLongRestOutside = (e) => {
+        if (e.target === longRestBtn || longRestBtn.contains(e.target)) return;
+        dismissLongRest();
+    };
+
+    const enterLongRestArming = () => {
+        longRestBtn.classList.add('arming');
+        swapIcon(SUN_SVG);
+
+        const popup = document.createElement('div');
+        popup.id = 'long-rest-popup';
+        popup.className = 'long-rest-popup';
+        popup.innerHTML = `<span class="long-rest-popup-message">Long rest — refill all<br>suit uses and spell slots?</span>`;
+        document.body.appendChild(popup);
+
+        const moonRect = longRestBtn.getBoundingClientRect();
+        popup.style.top    = `${moonRect.top - 5}px`;
+        popup.style.height = `${moonRect.height + 10}px`;
+        popup.style.right  = `${window.innerWidth - moonRect.right - 6}px`;
+
+        requestAnimationFrame(() => popup.classList.add('visible'));
+        setTimeout(() => document.addEventListener('mousedown', onLongRestOutside), 0);
+        startArmTimer();
+    };
+
+    longRestBtn?.addEventListener('click', () => {
+        if (!longRestBtn.classList.contains('arming')) {
+            enterLongRestArming();
+        } else if (longRestBtn.classList.contains('armed')) {
+            doRefill();
+            dismissLongRest();
         }
     });
 
-    if (editTabButton) {
-      editTabButton.addEventListener('click', () => {
-        const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;
-        if (activeTab === 'tab9') {
-          console.log('✏️ Spell Slot Edit Button Clicked via edit_tab_button in Tab 9');
-          const overlay = document.querySelector('.spell-slot-edit-overlay');
-          console.log('Overlay element:', overlay);
-          const mainSpellSlots = document.querySelectorAll('.spell-slot-group');
-          const overlaySpellSlots = document.querySelectorAll('.spell-slot-edit-overlay .spell-slot-group');
-    
-          if (overlay) {
-            overlay.classList.add('show');
-    
-            mainSpellSlots.forEach((mainGroup, index) => {
-              const overlayGroup = overlaySpellSlots[index];
-              if (!overlayGroup) return;
-    
-              const titleElement = mainGroup.querySelector('.spell-slot-title');
-              const titleText = titleElement ? titleElement.textContent : `Level ${index + 1}`;
-              overlayGroup.innerHTML = `<span class="spell-slot-title">${titleText}</span>`;
-    
-              const mainCircles = mainGroup.querySelectorAll('.circle:not(.circle-button)');
-              mainCircles.forEach((circle) => {
-                const newCircle = document.createElement('div');
-                newCircle.classList.add('circle');
-                if (circle.classList.contains('unfilled')) {
-                  newCircle.classList.add('unfilled');
-                }
-                newCircle.addEventListener('click', () => {
-                  newCircle.classList.toggle('unfilled');
-                });
-                overlayGroup.appendChild(newCircle);
-              });
-    
-              const addButton = document.createElement('div');
-              addButton.classList.add('circle', 'circle-button');
-              addButton.innerHTML = "+";
-              addButton.addEventListener('click', () => {
-                const newCircle = document.createElement('div');
-                newCircle.classList.add('circle');
-                newCircle.addEventListener('click', () => {
-                  newCircle.classList.toggle('unfilled');
-                });
-                overlayGroup.appendChild(newCircle);
-              });
-    
-              const removeButton = document.createElement('div');
-              removeButton.classList.add('circle', 'circle-button');
-              removeButton.innerHTML = "−";
-              removeButton.addEventListener('click', () => {
-                const circles = overlayGroup.querySelectorAll('.circle:not(.circle-button)');
-                if (circles.length > 0) {
-                  overlayGroup.removeChild(circles[circles.length - 1]);
-                }
-              });
-    
-              overlayGroup.insertBefore(addButton, overlayGroup.children[1] || null);
-              overlayGroup.insertBefore(removeButton, addButton.nextSibling);
-            });
-    
-            console.log('✅ Spell slot groups copied to overlay.');
-          } else {
-            console.warn('Spell slot edit overlay not found.');
-          }
-        } else {
-          console.warn('Edit tab button clicked, but no overlay is defined for this tab.');
-        }
-      });
-    } else {
-      console.error('Edit tab button with id "edit_tab_button" not found.');
-    }
+    longRestBtn?.addEventListener('mouseenter', () => {
+        if (!longRestBtn.classList.contains('arming')) return;
+        startArmTimer();
+    });
+
+    longRestBtn?.addEventListener('mouseleave', () => {
+        if (!longRestBtn.classList.contains('arming')) return;
+        cancelArmTimer();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && strip.classList.contains('edit-mode')) exitEditMode();
+    });
+
+    // ── Initial render: overwrites legacy handlers from older init code ─
+    renderSuit(false);
+    for (let n = 1; n <= 9; n++) renderLevel(n, false);
+
+    console.log('✅ Resources strip inline edit mode initialised.');
 });
 
 /* ==================================================================*/
 /* ==================== UPLOAD / DOWNLOAD ===========================*/
-/* ==================================================================*/
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -684,7 +880,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .map(el => [el.id, el.textContent.trim()])
             );
 
-            const circleSection = document.querySelector('.circle-section');
+            const circleSection = document.querySelector('.spell-slot-group');
             if (circleSection) {
                 const circles = [...circleSection.querySelectorAll('.circle:not(.circle-button)')];
                 data.circleData = {
