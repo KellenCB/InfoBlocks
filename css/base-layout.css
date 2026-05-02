@@ -695,14 +695,15 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 .block.condensed .block-tags-condensed .tag-button.selected,
 .block.condensed .block-tags-condensed .tag-button.selected-or {
     display: inline-flex;
-    font-size: 0.7em;
-    padding: 1px 6px;
+    font-size: 12px;
+    padding: 2px 8px;
 }
 
 .block-tags-condensed {
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
+    align-self: center;
     flex: 1;
     margin: 0;
     padding: 0;

@@ -163,7 +163,7 @@ export const appManager = (() => {
       pendingBlockAnim = { blockId, oldHeight };
   };
 
-  const applyPendingBlockAnim = () => {
+const applyPendingBlockAnim = () => {
       if (!pendingBlockAnim) return;
       const { blockId, oldHeight } = pendingBlockAnim;
       pendingBlockAnim = null;
@@ -191,6 +191,15 @@ export const appManager = (() => {
           el.style.transition = 'none';
       });
 
+      // On expand: fade out condensed tags inside the header
+      const condensedTags = isExpanding
+          ? blockEl.querySelector('.block-tags-condensed')
+          : null;
+      if (condensedTags) {
+          condensedTags.style.opacity = '1';
+          condensedTags.style.transition = 'none';
+      }
+
       void blockEl.offsetHeight; // force reflow to commit initial state
 
       // Now set transition and target — browser animates from initial to target
@@ -202,6 +211,11 @@ export const appManager = (() => {
           el.style.opacity = '1';
       });
 
+      if (condensedTags) {
+          condensedTags.style.transition = 'opacity 0.25s ease';
+          condensedTags.style.opacity = '0';
+      }
+
       const cleanup = () => {
           blockEl.style.height = '';
           blockEl.style.overflow = '';
@@ -210,19 +224,51 @@ export const appManager = (() => {
               el.style.opacity = '';
               el.style.transition = '';
           });
+          if (condensedTags) {
+              condensedTags.style.opacity = '';
+              condensedTags.style.transition = '';
+          }
       };
       blockEl.addEventListener('transitionend', cleanup, { once: true });
       setTimeout(cleanup, 600);
   };
 
   // Collapse animation: shrink height + fade content simultaneously on the
-  // CURRENT expanded DOM, then call back to re-render once done.
   const animateBlockCollapse = (blockEl, callback) => {
       const headerEl = blockEl.querySelector('.block-header');
       if (!headerEl) { callback(); return; }
 
       const oldHeight = blockEl.offsetHeight;
       const cs = getComputedStyle(blockEl);
+
+      // Clone selected tags into a preview that fades in during collapse
+      const selectedTags = blockEl.querySelectorAll('.block-tags .tag-button.selected, .block-tags .tag-button.selected-or');
+      let previewTags = null;
+      if (selectedTags.length > 0) {
+          previewTags = document.createElement('div');
+          previewTags.className = 'block-tags block-tags-condensed';
+          previewTags.style.opacity = '0';
+          previewTags.style.transition = 'none';
+          previewTags.style.position = 'absolute';
+          previewTags.style.pointerEvents = 'none';
+          previewTags.style.maskImage = 'none';
+          previewTags.style.webkitMaskImage = 'none';
+          selectedTags.forEach(tag => previewTags.appendChild(tag.cloneNode(true)));
+
+          // Position after the title/uses without affecting layout
+          const titleEl = headerEl.querySelector('.block-title');
+          const usesEl = headerEl.querySelector('.block-uses');
+          const anchor = usesEl || titleEl;
+          if (anchor) {
+              const blockRect = blockEl.getBoundingClientRect();
+              const anchorRect = anchor.getBoundingClientRect();
+              previewTags.style.left = (anchorRect.right - blockRect.left + 11) + 'px';
+              previewTags.style.top = (anchorRect.top - blockRect.top) + 'px';
+          }
+
+          blockEl.appendChild(previewTags);
+      }
+
       const targetHeight = headerEl.offsetHeight
           + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)
           + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
@@ -243,6 +289,10 @@ export const appManager = (() => {
           el.style.transition = 'opacity 0.35s ease';
           el.style.opacity = '0';
       });
+      if (previewTags) {
+          previewTags.style.transition = 'opacity 0.3s ease 0.15s';
+          previewTags.style.opacity = '1';
+      }
 
       setTimeout(() => {
           callback();
