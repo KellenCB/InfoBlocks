@@ -967,3 +967,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log('✅ Page title initialized.');
 });
+
+// ── Forgiving click targets for small circles ──
+// If a click lands inside a circle container but misses every circle,
+// trigger the nearest one.
+document.addEventListener('click', (e) => {
+    if (e.target.closest('.circle')) return;
+    const container = e.target.closest('.block-uses, .spell-slot-group, #suit_uses_circles');
+    if (!container) return;
+
+    const circles = container.querySelectorAll('.circle:not(.circle-button)');
+    if (circles.length === 0) return;
+
+    let closest = null;
+    let closestDist = Infinity;
+    for (const c of circles) {
+        const r = c.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const d = Math.hypot(e.clientX - cx, e.clientY - cy);
+        if (d < closestDist) { closestDist = d; closest = c; }
+    }
+
+    if (closest && closestDist < 20) {
+        closest.click();
+    }
+});
