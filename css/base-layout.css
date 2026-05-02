@@ -695,14 +695,15 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 .block.condensed .block-tags-condensed .tag-button.selected,
 .block.condensed .block-tags-condensed .tag-button.selected-or {
     display: inline-flex;
-    font-size: 0.7em;
-    padding: 1px 6px;
+    font-size: 12px;
+    padding: 2px 8px;
 }
 
 .block-tags-condensed {
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
+    align-self: center;
     flex: 1;
     margin: 0;
     padding: 0;
@@ -1750,24 +1751,211 @@ a:hover {
 .block-equip-hand.unequipped svg { color: var(--hand-unequipped-color); }
 
 /* ==================================================================*/
-/* ====================== SPELL SLOT STYLING ========================*/
+/* ======================= RESOURCES STRIP ==========================*/
 /* ==================================================================*/
 
-.spell-slot-section,
-.circle-section {
+.resources-strip {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    background-color: var(--gray-300);
+    border-radius: 25px;
+    padding: 16px 84px 16px 18px;
+    border: 1px solid transparent;
+    box-sizing: border-box;
+    width: 100%;
+    flex: 0 0 auto;
+    min-height: 48px;
+}
+
+.spell-slot-section {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-start;
-    background-color: #2a2a2a;
-    border-radius: 20px;
-    padding: 15px 20px;
-    row-gap: 10px;
-    column-gap: 20px;
+    border-radius: 0;
+    padding: 0;
+    min-height: 0;
+    width: auto;
+    flex: 0 1 auto;
+    row-gap: 16px;
+    column-gap: 25px;
     box-sizing: border-box;
-    min-height: 60px;
-    width: 100%;
-    flex: 0 0 auto;
+}
+
+.resources-strip-icon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    color: var(--gray-750);
+}
+
+.resources-strip .circle {
+    width: 16px;
+    height: 16px;
+}
+
+.resources-strip .spell-slot-group {
+    gap: 6px;
+    position: relative;
+}
+
+.resources-strip .spell-slot-group::before {
+    content: "";
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 18px;
+    background-color: var(--gray-400);
+}
+
+.resources-strip .spell-slot-group.first-in-row::before {
+    display: none;
+}
+
+.resources-strip .spell-slot-group:first-of-type::before {
+  content: none;
+}
+
+.resources-strip .spell-slot-title {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--gray-700);
+    margin-right: 1px;
+}
+
+.resources-strip-actions {
+    position: absolute;
+    top: 9px;
+    right: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* ==================================================================*/
+/* ================ RESOURCES STRIP — EDIT MODE =====================*/
+/* ==================================================================*/
+
+.resources-strip.edit-mode {
+    border: 1px solid rgba(244, 162, 97, 0.4);
+    padding: 16px 84px 16px 18px;
+}
+
+.resources-strip.edit-mode #edit_suit_uses_button {
+    display: none;
+}
+
+.resources-strip.edit-mode #edit_spell_slots_button {
+    background-color: rgba(244, 162, 97, 0.15);
+    color: #f4a261;
+    opacity: 1;
+}
+
+.resources-strip .circle-add,
+.resources-strip .circle-remove {
+    width: 16px;
+    height: 16px;
+    font-size: 11px;
+    line-height: 1;
+    background-color: transparent;
+}
+
+.resources-strip .circle-add {
+    border: 1px dashed #f4a261;
+    color: #f4a261;
+    margin-left: 3px;
+}
+
+.resources-strip .circle-remove {
+    border: 1px dashed #888;
+    color: #888;
+    font-size: 13px;
+}
+
+.resources-strip .ghost-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 22px;
+    margin: -3px 0;
+    padding: 0 9px;
+    border-radius: 999px;
+    border: 1px dashed #555;
+    color: #888;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    user-select: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.resources-strip .ghost-chip:hover {
+    border-color: #f4a261;
+    color: #f4a261;
+}
+
+.resources-strip .ghost-chip .ghost-chip-plus {
+    font-size: 13px;
+    line-height: 1;
+    color: #f4a261;
+}
+
+.resources-strip:not(.edit-mode) .ghost-chip {
+    display: none;
+}
+
+#long_rest_button {
+    position: relative;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--gray-900);
+    color: var(--gray-600);
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0.25;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: opacity 0.2s, background-color 0.2s, color 0.2s;
+}
+
+#long_rest_button svg {
+    width: 14px;
+    height: 14px;
+}
+
+#long_rest_button:hover {
+    opacity: 1;
+    background-color: var(--color-orange);
+    color: var(--gray-900);
+}
+
+#long_rest_button .lr-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    opacity: 1;
+    filter: blur(0);
+    transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+#long_rest_button.swapping .lr-icon-wrap {
+    opacity: 0;
+    filter: blur(6px);
 }
 
 .spell-slot-group {
@@ -2005,6 +2193,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    position: relative;
 }
 
 .block.pinned {
@@ -2016,4 +2205,1102 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 
 .block.pinned:not(.minimized)::after {
     display: none;
+}
+
+/* ── Pin button as drag handle on pinned blocks ────────────── */
+
+.block.pinned .pin-button {
+    touch-action: none;
+}
+
+/* ── Dragging state ────────────────────────────────────────── */
+
+.block.pinned.dragging {
+    opacity: 0.85;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    pointer-events: none;
+    z-index: 100;
+}
+
+.pinned-drag-placeholder {
+    background: var(--gray-400);
+    border-radius: 10px;
+    opacity: 0.3;
+    margin-bottom: 8px;
+}
+
+.pinned-drag-placeholder:last-child {
+    margin-bottom: 0;
+}
+
+/* ==================================================================*/
+/* ===================== TAB3 (NOTES) SECTIONS ======================*/
+/* ==================================================================*/
+
+.tab3-section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 18px 2px 10px 2px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.tab3-section-header::after {
+    content: '▾';
+    font-size: 14px;
+    margin-left: 4px;
+    color: var(--gray-700);
+    transition: transform 0.2s ease;
+    display: inline-block;
+}
+
+.tab3-section-header.tab3-collapsed::after {
+    transform: rotate(-90deg);
+}
+
+.tab3-section-left {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.tab3-section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gray-700);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.tab3-section-count {
+    font-size: 11px;
+    color: var(--gray-700);
+    font-weight: 500;
+    letter-spacing: 0.15em;
+}
+
+.tab3-section {
+    display: grid;
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transition: grid-template-rows 0.5s ease-in-out, opacity 0.5s ease-in, margin 0.5s ease-in-out;
+    overflow: hidden;
+}
+
+.tab3-section.tab3-collapsed {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    pointer-events: none;
+    transition: grid-template-rows 0.5s ease-in-out, opacity 0.4s ease-out, margin 0.5s ease-in-out;
+}
+
+.tab3-section-inner {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ==================================================================*/
+/* ======================= TAB3 QUEST BLOCKS ========================*/
+/* ==================================================================*/
+
+.block.quest-block.status-completed    { opacity: 0.55; }
+
+.block.quest-block.status-completed .block-title h4 {
+    text-decoration: line-through;
+    text-decoration-color: var(--gray-600);
+}
+
+/* ── Meta row (status pill + location pill) ────────────────────── */
+
+.quest-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px 0 10px;
+}
+
+/* ── Status pill ──────────────────────────────────────────────── */
+
+.quest-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 4px 10px 4px 9px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background: rgba(228, 224, 224, 0.12);
+    color: var(--gray-800);
+    transition: background 0.15s ease;
+}
+
+.quest-status-pill:hover { background: rgba(228, 224, 224, 0.18); }
+
+.quest-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+}
+
+.quest-status-pill.status-active       { background: rgba(76, 175, 80, 0.18); color: #7ED37F; }
+.quest-status-pill.status-on-hold      { background: rgba(244, 162, 97, 0.18); color: var(--color-orange); }
+.quest-status-pill.status-not-started  { background: rgba(228, 224, 224, 0.10); color: var(--gray-800); }
+.quest-status-pill.status-completed    { background: rgba(6, 173, 228, 0.18); color: var(--color-cyan); }
+.quest-status-pill.status-failed       { background: rgba(255, 107, 107, 0.18); color: var(--color-red); }
+
+.quest-status-pill.status-active:hover       { background: rgba(76, 175, 80, 0.28); }
+.quest-status-pill.status-on-hold:hover      { background: rgba(244, 162, 97, 0.28); }
+.quest-status-pill.status-not-started:hover  { background: rgba(228, 224, 224, 0.18); }
+.quest-status-pill.status-completed:hover    { background: rgba(6, 173, 228, 0.28); }
+.quest-status-pill.status-failed:hover       { background: rgba(255, 107, 107, 0.28); }
+
+/* ── Location pill ────────────────────────────────────────────── */
+
+.quest-location-pill {
+    display: inline-flex;
+    align-items: center;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 4px 10px;
+    border-radius: 10px;
+    background: rgba(228, 224, 224, 0.10);
+    color: var(--gray-800);
+}
+
+/* ── Progress bar ─────────────────────────────────────────────── */
+
+.quest-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.quest-progress.mini {
+    margin-bottom: 0;
+    flex-shrink: 0;
+    margin-left: auto;
+    margin-right: 8px;
+}
+
+.quest-progress-track {
+    flex: 1;
+    height: 4px;
+    background: var(--gray-150);
+    border-radius: 2px;
+    overflow: hidden;
+    min-width: 40px;
+}
+
+.quest-progress.mini .quest-progress-track {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 3px;
+}
+
+.quest-progress-fill {
+    height: 100%;
+    background: var(--gray-700);
+    transition: width 0.3s ease;
+}
+
+.block.quest-block.status-active       .quest-progress-fill { background: var(--color-green); }
+.block.quest-block.status-on-hold      .quest-progress-fill { background: var(--color-orange); }
+.block.quest-block.status-not-started  .quest-progress-fill { background: var(--gray-600); }
+.block.quest-block.status-completed    .quest-progress-fill { background: var(--color-cyan); }
+.block.quest-block.status-failed       .quest-progress-fill { background: var(--color-red); }
+
+.quest-progress-count {
+    font-size: 11px;
+    color: var(--gray-700);
+    min-width: 32px;
+    text-align: right;
+}
+
+.quest-progress.mini .quest-progress-count {
+    font-size: 10px;
+    min-width: 26px;
+}
+
+/* ── Objectives list ─────────────────────────────────────────── */
+
+.quest-objectives {
+    font-size: 13px;
+    line-height: 1.55;
+    width: fit-content;
+}
+
+
+
+
+.quest-objective {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 3px 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.quest-objective-checkbox {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    border-radius: 3px;
+    border: 1.5px solid var(--gray-700);
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.quest-objective-tick {
+    width: 9px;
+    height: 9px;
+    stroke: var(--gray-150);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.quest-objective.done .quest-objective-checkbox {
+    background: var(--color-green);
+    border-color: var(--color-green);
+}
+
+.quest-objective.done .quest-objective-tick { opacity: 1; }
+
+.quest-objective.done .quest-objective-text {
+    color: var(--gray-700);
+    text-decoration: line-through;
+}
+
+.quest-objectives-empty {
+    font-size: 12px;
+    color: var(--gray-700);
+    font-style: italic;
+    padding: 4px 0;
+}
+
+/* ── Status dropdown (shared) ────────────────────────────────── */
+
+.quest-status-dropdown {
+    position: fixed;
+    z-index: 10000;
+    background: var(--gray-300);
+    border: 1px solid var(--gray-450);
+    border-radius: 8px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 140px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+.quest-status-dropdown.hidden { display: none; }
+
+.quest-status-item {
+    background: transparent;
+    border: none;
+    color: var(--gray-850);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 5px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.quest-status-item:hover { background: var(--gray-400); }
+
+.quest-status-item.selected {
+    background: var(--gray-450);
+    color: var(--gray-900);
+}
+
+/* ==================================================================*/
+/* ==================== TAB3 LOCATION PILL ROW ======================*/
+/* ==================================================================*/
+
+.tab3-location-row {
+    margin: 4px 0 14px;
+}
+
+.tab3-location-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 0 2px;
+    color: var(--gray-700);
+}
+
+.tab3-location-label {
+    font-size: 10px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+.tab3-location-pills {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.tab3-location-pills::-webkit-scrollbar { display: none; }
+
+.tab3-location-pill {
+    padding: 5px 12px;
+    background: rgba(228, 224, 224, 0.06);
+    color: var(--gray-800);
+    border: 1px solid transparent;
+    border-radius: 14px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.tab3-location-pill:hover {
+    background: rgba(228, 224, 224, 0.12);
+}
+
+.tab3-location-pill.selected {
+    background: rgba(228, 224, 224, 0.25);
+    color: var(--gray-900);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ==================================================================*/
+/* ========================= TAB3 MAP CARDS =========================*/
+/* ==================================================================*/
+
+.block.map-block.condensed {
+    cursor: pointer;
+}
+
+.block.map-block.condensed::after {
+    display: none;
+}
+
+.block.map-block.condensed .block-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.map-card-thumb {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    background: var(--gray-400);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-700);
+}
+
+.map-card-thumb svg {
+    width: 22px;
+    height: 22px;
+}
+
+.map-card-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 12px;
+    gap: 2px;
+}
+
+.map-card-title h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-900);
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.map-card-url {
+    font-size: 11px;
+    color: var(--color-blue);
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.75;
+}
+
+/* ── Map link confirmation popup ───────────────────────────── */
+
+.map-link-popup {
+    position: fixed;
+    z-index: 100000;
+    background: var(--gray-200);
+    border: 1px solid var(--gray-500);
+    border-radius: 8px;
+    padding: 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+}
+
+.map-link-popup.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.map-link-popup-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    color: var(--color-blue);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+}
+
+.map-link-popup-action:hover {
+    background: var(--gray-400);
+}
+
+.map-link-popup-action svg {
+    flex-shrink: 0;
+    stroke: currentColor;
+}
+
+/* ── Delete confirmation popup ─────────────────────────────── */
+
+.delete-confirm-popup {
+    position: fixed;
+    z-index: 100000;
+    background: rgba(34, 34, 34, 0.8);
+    border-radius: 8px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+    min-width: 200px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.delete-confirm-popup.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.delete-confirm-message {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-900);
+    text-align: center;
+    line-height: 1.4;
+}
+
+.delete-confirm-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.delete-confirm-buttons button {
+    padding: 7px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    width: 100%;
+}
+
+.delete-confirm-yes {
+    position: relative;
+    overflow: hidden;
+    background: #a33535;
+    color: #fff;
+    cursor: default;
+}
+
+.delete-confirm-yes span {
+    position: relative;
+    z-index: 1;
+}
+
+.delete-confirm-yes::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: var(--color-red);
+    border-radius: 0;
+    transition: width 0.25s ease-in;
+}
+
+.delete-confirm-yes:hover::after {
+    width: 100%;
+    transition: width 0.5s linear;
+}
+
+.delete-confirm-yes.armed {
+    cursor: pointer;
+}
+
+.delete-confirm-no {
+    background: var(--gray-400);
+    color: var(--gray-900);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.delete-confirm-no:hover {
+    background: var(--gray-500);
+}
+
+.long-rest-popup {
+    position: fixed;
+    z-index: 99999;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    padding: 5px 70px 5px 18px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    transform: translateX(4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.long-rest-popup.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.long-rest-popup-message {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray-900);
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+#long_rest_button.arming {
+    position: relative;
+    z-index: 100001;
+    opacity: 1;
+    background-color: var(--color-green-dark);
+    color: #fff;
+    overflow: hidden;
+}
+
+#long_rest_button.arming:hover {
+    background-color: var(--color-green-dark);
+}
+
+#long_rest_button.arming::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: var(--color-green);
+    transition: width 0.5s linear;
+    z-index: 0;
+}
+
+#long_rest_button.arming.filling::before {
+    width: 100%;
+}
+
+/* ============================================================== */
+/* ============ TAB3 NOTES SPLIT LAYOUT (list + viewer) ========= */
+/* ============================================================== */
+
+.notes-layout {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.notes-list-column {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    flex-shrink: 0;
+    min-height: 0;
+    overflow: hidden;
+    transition: width 250ms ease-out;
+}
+
+.notes-list-column .results-section {
+    flex: 1;
+    min-height: 0;
+    padding: 0 5px 0 0;
+}
+
+/* ── Viewer (hidden by default, slides in for Books) ────────── */
+
+.notes-viewer {
+    display: flex;
+    flex-direction: column;
+    width: 0;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+    opacity: 0;
+    position: relative;
+    background-color: var(--gray-300);
+    border-radius: 10px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    transition: width 250ms ease-out, padding 250ms ease-out, opacity 200ms ease-out 50ms;
+}
+
+.notes-viewer::-webkit-scrollbar { display: none; }
+
+/* ── Viewer open state (toggled via JS .notes-viewer-open) ──── */
+
+.notes-layout.notes-viewer-open {
+    gap: 15px;
+}
+
+.notes-layout.notes-viewer-open .notes-list-column {
+    width: 50%;
+}
+
+.notes-layout.notes-viewer-open .notes-viewer {
+    width: 50%;
+    padding: 15px 18px;
+    opacity: 1;
+    overflow-y: auto;
+}
+
+/* ── Viewer content ─────────────────────────────────────────── */
+
+.notes-viewer-content {
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.notes-viewer-content.fading {
+    opacity: 0;
+}
+
+.notes-viewer-placeholder {
+    margin: auto;
+    color: var(--gray-700);
+    opacity: 0.4;
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
+}
+
+/* ── Viewer close button ────────────────────────────────────── */
+
+.notes-viewer-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background-color: var(--gray-400);
+    color: var(--gray-800);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    z-index: 2;
+    transition: background-color 0.2s, opacity 0.2s;
+    opacity: 0.6;
+}
+
+.notes-viewer-close-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.notes-viewer-close-btn:hover {
+    background-color: var(--color-red);
+    opacity: 1;
+}
+
+/* ── Selected-state highlight on Book cards in list ─────────── */
+
+.block.notes-block-active {
+    background-color: var(--block-bg-selected-base);
+    background-image: radial-gradient(90% 110% at 50% 0%, var(--block-bg-selected-highlight) 0%, transparent 100%);
+}
+
+#results_section_3 .block:not(.permanent-block) {
+    transition: background-color 0.2s ease;
+}
+
+#results_section_3 .block:not(.permanent-block):hover {
+    cursor: pointer;
+}
+
+/* ── Notes wide mode: viewer always visible ────────────────── */
+
+.notes-layout.notes-wide-mode {
+    gap: 15px;
+}
+
+.notes-layout.notes-wide-mode .notes-list-column {
+    width: 50%;
+}
+
+.notes-layout.notes-wide-mode .notes-viewer {
+    width: 50%;
+    padding: 15px 18px;
+    opacity: 1;
+    overflow-y: auto;
+}
+
+/* In wide mode the viewer is always visible, so the slide-in
+   class should not further alter widths. */
+.notes-layout.notes-wide-mode.notes-viewer-open .notes-list-column {
+    width: 50%;
+}
+
+.notes-layout.notes-wide-mode.notes-viewer-open .notes-viewer {
+    width: 50%;
+}
+
+/* ── Notes narrow mode: viewer completely hidden ───────────── */
+
+.notes-layout:not(.notes-wide-mode) .notes-viewer {
+    display: none !important;
+}
+
+.notes-layout:not(.notes-wide-mode) .notes-list-column {
+    width: 100% !important;
+}
+
+/* ============================================================== */
+/* ============ BOOK ACCENT COLOUR SWATCHES (overlay) =========== */
+/* ============================================================== */
+
+.book-accent-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    padding: 4px 0;
+}
+
+.book-accent-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.book-accent-swatch:hover {
+    transform: scale(1.08);
+}
+
+.book-accent-swatch.selected {
+    border-color: var(--gray-900);
+    box-shadow: 0 0 0 2px var(--gray-300), 0 0 0 4px var(--gray-900);
+}
+
+/* ============================================================== */
+/* ============ TAB3 BOOK CARD (condensed list view) ============ */
+/* ============================================================== */
+
+/* The book card itself — horizontal row: accent stripe | icon | text */
+.block.book-block.condensed {
+    cursor: pointer;
+}
+
+.block.book-block.condensed::after {
+    display: none;
+}
+
+.block.book-block.condensed .block-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.book-card-thumb {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    background-color: color-mix(in srgb, var(--book-accent, #f4a261) 18%, var(--gray-400));
+    color: var(--book-accent, #f4a261);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.book-card-thumb svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* Text column — title on top, description below; centred if no description */
+.book-card-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 12px;
+    gap: 2px;
+}
+
+.book-card-text-no-desc {
+    justify-content: center;
+}
+
+.book-card-title h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-900);
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.book-card-description {
+    font-size: 12px;
+    color: var(--gray-700);
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ============================================================== */
+/* ============ BOOK VIEWER ACCENT STRIPE (expanded) ============ */
+/* ============================================================== */
+
+.notes-viewer-content .block.expanded {
+    padding: 0;
+    border: none;
+    background: transparent;
+    overflow: visible;
+    border-radius: 0;
+}
+
+.notes-viewer-content .block.expanded::after {
+    display: none;
+}
+
+.notes-viewer::after {
+    display: none !important;
+}
+
+/* ============================================================== */
+/* ============ TAB3 — HIDE CUSTOM-TAGS INPUT =================== */
+/* ============================================================== */
+
+/* Tab3 has no user-defined tags — hide the custom-tags input AND the dynamic
+   tags container (which would otherwise take padding height while empty). */
+.add-block-overlay[data-active-tab="tab3"]  .user-tags-input,
+.edit-block-overlay[data-active-tab="tab3"] .user-tags-input,
+.add-block-overlay[data-active-tab="tab3"]  .overlay-tags,
+.edit-block-overlay[data-active-tab="tab3"] .overlay-tags,
+.add-block-overlay[data-active-tab="tab3"]  #properties_input_overlay,
+.edit-block-overlay[data-active-tab="tab3"] #properties_input_edit_overlay {
+    display: none;
+}
+
+/* ============================================================== */
+/* ============ TAB3 QUEST CARD THUMB (status-colored) ========== */
+/* ============================================================== */
+
+.block.quest-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.block.quest-block .block-header {
+    align-items: center;
+}
+
+.block.quest-block .block-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.block.quest-block .quest-progress {
+    margin: 0;
+}
+.quest-card-thumb {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-400);
+    color: var(--gray-700);
+}
+
+.quest-card-thumb svg {
+    width: 22px;
+    height: 22px;
+}
+
+.block.quest-block.status-active       .quest-card-thumb { background: rgba(76, 175, 80, 0.15); color: #4CAF50; }
+.block.quest-block.status-on-hold      .quest-card-thumb { background: rgba(244, 162, 97, 0.15); color: #f4a261; }
+.block.quest-block.status-not-started  .quest-card-thumb { background: var(--gray-400); color: var(--gray-700); }
+.block.quest-block.status-completed    .quest-card-thumb { background: rgba(6, 173, 228, 0.15); color: #06ade4; }
+.block.quest-block.status-failed       .quest-card-thumb { background: rgba(255, 107, 107, 0.15); color: #ff6b6b; }
+
+.quest-card-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.quest-card-text .block-title h4 {
+    margin: 0;
+}
+
+.quest-card-text .quest-meta-row {
+    margin: 0;
+}
+
+/* ============================================================== */
+/* ============ TAB3 NOTES CARD THUMB + DESCRIPTION ============= */
+/* ============================================================== */
+
+#tab3 .block:not(.quest-block):not(.map-block):not(.book-block).condensed,
+#tab3 .block:not(.quest-block):not(.map-block):not(.book-block).expanded {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#tab3 .block:not(.quest-block):not(.map-block):not(.book-block) .block-header {
+    align-items: center;
+}
+
+#tab3 .block:not(.quest-block):not(.map-block):not(.book-block) .block-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+.notes-card-thumb {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-400);
+    color: var(--gray-700);
+}
+
+.notes-card-thumb svg {
+    width: 22px;
+    height: 22px;
+}
+
+.notes-card-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+}
+
+.notes-card-text-no-desc {
+    justify-content: center;
+}
+
+.notes-card-text .block-title h4 {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.notes-card-description {
+    font-size: 12px;
+    color: var(--gray-700);
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

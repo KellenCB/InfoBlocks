@@ -20,6 +20,8 @@ export function initDragToScroll() {
     let startX, startY, scrollEl, initScrollLeft, initScrollTop;
 
     document.addEventListener('mousedown', e => {
+        // Don't hijack drag on text-selectable content
+        if (e.target.closest('.block-body, .block-title, .notes-card-description, .quest-objective-text')) return;
         const el = e.target.closest(
             '.pinned-blocks-zone, .results-section:not(.character-sheet-results), .filter-section, .saving-throws-and-skills-column-wrapper, ' +
             '.qr-blocks-scroll, .qr-tags-scroll, .session-log-viewer, .roll-results'
@@ -153,6 +155,149 @@ export const appManager = (() => {
   let sessionViewerEditMode   = false;
   let pendingEditMode         = false;
   let sessionListCollapsed    = localStorage.getItem('sessionListCollapsed') === 'true';
+
+  // ── Block expand/collapse animation ─────────────────────────────
+  let pendingBlockAnim = null;
+
+  const setPendingBlockAnim = (blockId, oldHeight) => {
+      pendingBlockAnim = { blockId, oldHeight };
+  };
+
+const applyPendingBlockAnim = () => {
+      if (!pendingBlockAnim) return;
+      const { blockId, oldHeight } = pendingBlockAnim;
+      pendingBlockAnim = null;
+
+      const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
+      if (!blockEl) return;
+
+      const newHeight = blockEl.scrollHeight;
+      if (Math.abs(newHeight - oldHeight) < 2) return;
+
+      const isExpanding = newHeight > oldHeight;
+
+      // Apply initial state synchronously — no rAF, so the browser
+      // never paints the block at its natural size
+      blockEl.style.height = oldHeight + 'px';
+      blockEl.style.overflow = 'hidden';
+      blockEl.style.transition = 'none';
+
+      // On expand: fade in everything except the header
+      const fadeEls = isExpanding
+          ? [...blockEl.children].filter(el => !el.classList.contains('block-header'))
+          : [];
+      fadeEls.forEach(el => {
+          el.style.opacity = '0';
+          el.style.transition = 'none';
+      });
+
+      // On expand: fade out condensed tags inside the header
+      const condensedTags = isExpanding
+          ? blockEl.querySelector('.block-tags-condensed')
+          : null;
+      if (condensedTags) {
+          condensedTags.style.opacity = '1';
+          condensedTags.style.transition = 'none';
+      }
+
+      void blockEl.offsetHeight; // force reflow to commit initial state
+
+      // Now set transition and target — browser animates from initial to target
+      blockEl.style.transition = 'height 0.5s ease';
+      blockEl.style.height = newHeight + 'px';
+
+      fadeEls.forEach(el => {
+          el.style.transition = 'opacity 0.4s ease 0.1s';
+          el.style.opacity = '1';
+      });
+
+      if (condensedTags) {
+          condensedTags.style.transition = 'opacity 0.25s ease';
+          condensedTags.style.opacity = '0';
+      }
+
+      const cleanup = () => {
+          blockEl.style.height = '';
+          blockEl.style.overflow = '';
+          blockEl.style.transition = '';
+          fadeEls.forEach(el => {
+              el.style.opacity = '';
+              el.style.transition = '';
+          });
+          if (condensedTags) {
+              condensedTags.style.opacity = '';
+              condensedTags.style.transition = '';
+          }
+      };
+      blockEl.addEventListener('transitionend', cleanup, { once: true });
+      setTimeout(cleanup, 600);
+  };
+
+  // Collapse animation: shrink height + fade content simultaneously on the
+  const animateBlockCollapse = (blockEl, callback) => {
+      const headerEl = blockEl.querySelector('.block-header');
+      if (!headerEl) { callback(); return; }
+
+      const oldHeight = blockEl.offsetHeight;
+      const cs = getComputedStyle(blockEl);
+
+      // Clone selected tags into a preview that fades in during collapse
+      const selectedTags = blockEl.querySelectorAll('.block-tags .tag-button.selected, .block-tags .tag-button.selected-or');
+      let previewTags = null;
+      if (selectedTags.length > 0) {
+          previewTags = document.createElement('div');
+          previewTags.className = 'block-tags block-tags-condensed';
+          previewTags.style.opacity = '0';
+          previewTags.style.transition = 'none';
+          previewTags.style.position = 'absolute';
+          previewTags.style.pointerEvents = 'none';
+          previewTags.style.maskImage = 'none';
+          previewTags.style.webkitMaskImage = 'none';
+          selectedTags.forEach(tag => previewTags.appendChild(tag.cloneNode(true)));
+
+          // Position after the title/uses without affecting layout
+          const titleEl = headerEl.querySelector('.block-title');
+          const usesEl = headerEl.querySelector('.block-uses');
+          const anchor = usesEl || titleEl;
+          if (anchor) {
+              const blockRect = blockEl.getBoundingClientRect();
+              const anchorRect = anchor.getBoundingClientRect();
+              previewTags.style.left = (anchorRect.right - blockRect.left + 11) + 'px';
+              previewTags.style.top = (anchorRect.top - blockRect.top) + 'px';
+          }
+
+          blockEl.appendChild(previewTags);
+      }
+
+      const targetHeight = headerEl.offsetHeight
+          + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)
+          + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+
+      const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
+
+      // Set initial state
+      blockEl.style.height = oldHeight + 'px';
+      blockEl.style.overflow = 'hidden';
+      blockEl.style.transition = 'none';
+      fadeEls.forEach(el => { el.style.transition = 'none'; });
+      void blockEl.offsetHeight;
+
+      // Animate simultaneously
+      blockEl.style.transition = 'height 0.5s ease';
+      blockEl.style.height = targetHeight + 'px';
+      fadeEls.forEach(el => {
+          el.style.transition = 'opacity 0.35s ease';
+          el.style.opacity = '0';
+      });
+      if (previewTags) {
+          previewTags.style.transition = 'opacity 0.3s ease 0.15s';
+          previewTags.style.opacity = '1';
+      }
+
+      setTimeout(() => {
+          callback();
+      }, 520);
+  };
 
 /* ==================================================================*/
 /* ============================== TAGS ==============================*/
@@ -1221,6 +1366,725 @@ export const appManager = (() => {
       }
   };
 
+/* ==================================================================*/
+  /* ======================= NOTES / TAB3 RENDER ======================*/
+  /* ==================================================================*/
+
+  const TAB3_SECTION_ORDER  = ["Quest", "Map", "Book", "Notes"];
+  const TAB3_SECTION_LABELS = {
+      "Quest": "Quests",
+      "Map":   "Maps",
+      "Book":  "Books",
+      "Notes": "Notes"
+  };
+
+  const isTab3SectionCollapsed = (key) =>
+      localStorage.getItem(`tab3_section_collapsed_${key}`) === 'true';
+
+  const setTab3SectionCollapsed = (key, collapsed) =>
+      localStorage.setItem(`tab3_section_collapsed_${key}`, collapsed ? 'true' : 'false');
+
+  // Currently-active block in the notes viewer
+  let activeNotesBlockId = null;
+
+  // ── Notes wide/narrow responsive mode ──────────────────────────
+  const NOTES_WIDE_BREAKPOINT = 700;
+  let notesWideMode = false;
+  let notesResizeObserver = null;
+
+  const initNotesResizeObserver = () => {
+      if (notesResizeObserver) return;
+      const layout = document.querySelector('.notes-layout');
+      if (!layout) return;
+
+      // Set initial mode synchronously so the first render is correct
+      notesWideMode = layout.offsetWidth >= NOTES_WIDE_BREAKPOINT;
+      layout.classList.toggle('notes-wide-mode', notesWideMode);
+
+      notesResizeObserver = new ResizeObserver(entries => {
+          const width = entries[0].contentRect.width;
+          const wasWide = notesWideMode;
+          notesWideMode = width >= NOTES_WIDE_BREAKPOINT;
+          layout.classList.toggle('notes-wide-mode', notesWideMode);
+
+          if (wasWide !== notesWideMode) {
+              const blocks = getBlocks('tab3');
+              if (notesWideMode) {
+                  // Narrow → wide: move inline-expanded block to viewer
+                  let blockToView = null;
+                  blocks.forEach(b => {
+                      if (b.viewState === 'expanded') {
+                          blockToView = b.id;
+                          b.viewState = 'condensed';
+                      }
+                  });
+                  if (blockToView) {
+                      localStorage.setItem('userBlocks_tab3', JSON.stringify(blocks));
+                      activeNotesBlockId = blockToView;
+                  }
+              } else {
+                  // Wide → narrow: move viewer block to inline-expanded
+                  if (activeNotesBlockId) {
+                      const block = blocks.find(b => b.id === activeNotesBlockId);
+                      if (block && getTab3BlockType(block) !== 'Map') {
+                          blocks.forEach(b => {
+                              if (b.viewState === 'expanded') b.viewState = 'condensed';
+                          });
+                          block.viewState = 'expanded';
+                          localStorage.setItem('userBlocks_tab3', JSON.stringify(blocks));
+                      }
+                      activeNotesBlockId = null;
+                  }
+              }
+              import('./filterManager.js').then(({ filterManager }) => {
+                  filterManager.applyFilters('3');
+              });
+          }
+      });
+      notesResizeObserver.observe(layout);
+  };
+
+  // External setter used by duplicate-block flow to auto-select the copy
+  const setActiveNotesBlock = (id) => { activeNotesBlockId = id; };
+
+  // Helper: get first block type from a block
+  const getTab3BlockType = (b) => {
+      if (Array.isArray(b.blockType) && b.blockType.length > 0) return b.blockType[0];
+      return b.blockType || null;
+  };
+
+  const buildTab3SectionHeader = (title, count, key) => {
+      const collapsed = isTab3SectionCollapsed(key);
+      return `
+          <div class="tab3-section-header${collapsed ? ' tab3-collapsed' : ''}" data-section-key="${key}">
+              <div class="tab3-section-left">
+                  <h3 class="tab3-section-title">${title}</h3>
+                  <span class="tab3-section-count">${count}</span>
+              </div>
+          </div>
+      `;
+  };
+
+  // Location helpers — blank/null/"N/A" all bucket under the same "N/A" key
+  const TAB3_NA_LOCATION_KEY = 'N/A';
+  const normalizeLocation = (loc) => {
+      if (loc === null || loc === undefined) return TAB3_NA_LOCATION_KEY;
+      const s = String(loc).trim();
+      if (s === '' || s.toLowerCase() === 'n/a') return TAB3_NA_LOCATION_KEY;
+      return s;
+  };
+
+  const getTab3ActiveLocation = () => localStorage.getItem('tab3_active_location') || '';
+  const setTab3ActiveLocation = (loc) => {
+      if (loc) localStorage.setItem('tab3_active_location', loc);
+      else     localStorage.removeItem('tab3_active_location');
+  };
+
+  const buildTab3LocationPillsHTML = (counts, activeLocation) => {
+      if (counts.size === 0) return '';
+
+      // Sort: alpha, N/A last
+      const entries = Array.from(counts.entries()).sort((a, b) => {
+          if (a[0] === TAB3_NA_LOCATION_KEY) return 1;
+          if (b[0] === TAB3_NA_LOCATION_KEY) return -1;
+          return a[0].localeCompare(b[0]);
+      });
+
+      const total = Array.from(counts.values()).reduce((s, n) => s + n, 0);
+      const allPill = `<button class="tab3-location-pill${activeLocation === '' ? ' selected' : ''}" data-location="">All · ${total}</button>`;
+
+      const pills = entries.map(([loc, count]) =>
+          `<button class="tab3-location-pill${activeLocation === loc ? ' selected' : ''}" data-location="${loc}">${loc} · ${count}</button>`
+      ).join('');
+
+      const pinSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`;
+
+      return `
+          <div class="tab3-location-row">
+              <div class="tab3-location-header">
+                  ${pinSVG}
+                  <span class="tab3-location-label">Location</span>
+              </div>
+              <div class="tab3-location-pills">
+                  ${allPill}${pills}
+              </div>
+          </div>
+      `;
+  };
+
+  // ── Close the notes viewer ──────────────────────────────────────
+  const closeNotesViewer = () => {
+      const wasActive = activeNotesBlockId;
+      activeNotesBlockId = null;
+      const layout = document.querySelector('.notes-layout');
+      const viewer = document.getElementById('notes_viewer');
+
+      document.querySelectorAll('#results_section_3 .block').forEach(b => {
+          b.classList.remove('notes-block-active');
+      });
+
+      if (notesWideMode) {
+          // Wide mode: keep viewer visible, show placeholder
+          if (viewer) viewer.innerHTML = '<p class="notes-viewer-placeholder">Select an item to view</p>';
+      } else {
+          // Narrow mode: slide out
+          if (layout) layout.classList.remove('notes-viewer-open');
+          if (viewer && wasActive) {
+              setTimeout(() => {
+                  if (!activeNotesBlockId) viewer.innerHTML = '';
+              }, 300);
+          }
+      }
+  };
+
+  // ── Map link confirmation popup ─────────────────────────────────
+  const showMapLinkPopup = (url, clickEvent) => {
+      // Remove any existing popup
+      document.getElementById('map-link-popup')?.remove();
+
+      const popup = document.createElement('div');
+      popup.id = 'map-link-popup';
+      popup.className = 'map-link-popup';
+
+      const linkSVG = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
+
+      popup.innerHTML = `
+          <a class="map-link-popup-action" href="${url}" target="_blank" rel="noopener">
+              ${linkSVG}
+              <span>Open in new tab</span>
+          </a>
+      `;
+      document.body.appendChild(popup);
+
+      // Position above the click point
+      const popupRect = popup.getBoundingClientRect();
+      let top  = clickEvent.clientY - popupRect.height - 10;
+      let left = clickEvent.clientX - (popupRect.width / 2);
+
+      // Keep within viewport
+      if (top < 4) top = clickEvent.clientY + 14;
+      if (left < 4) left = 4;
+      if (left + popupRect.width > window.innerWidth - 4) {
+          left = window.innerWidth - popupRect.width - 4;
+      }
+
+      popup.style.top  = `${top}px`;
+      popup.style.left = `${left}px`;
+      popup.classList.add('visible');
+
+      // Dismiss helpers
+      let fadeTimer = null;
+      const dismiss = () => {
+          clearTimeout(fadeTimer);
+          popup.classList.remove('visible');
+          setTimeout(() => popup.remove(), 400);
+          document.removeEventListener('mousedown', onOutside);
+          document.removeEventListener('mousemove', onFirstMove);
+      };
+      const startFadeTimer = () => {
+          clearTimeout(fadeTimer);
+          fadeTimer = setTimeout(dismiss, 600);
+      };
+      const cancelFadeTimer = () => clearTimeout(fadeTimer);
+
+      // Dismiss on outside click
+      const onOutside = (e) => {
+          if (!popup.contains(e.target)) dismiss();
+      };
+      setTimeout(() => document.addEventListener('mousedown', onOutside), 0);
+
+      // Dismiss after link is clicked
+      popup.querySelector('a').addEventListener('click', () => {
+          setTimeout(dismiss, 100);
+      });
+
+      // Hover: cancel timer while hovering, restart when leaving
+      popup.addEventListener('mouseenter', cancelFadeTimer);
+      popup.addEventListener('mouseleave', startFadeTimer);
+
+      // Start fade timer once the mouse first moves away from the click area
+      const onFirstMove = (e) => {
+          const r = popup.getBoundingClientRect();
+          const pad = 12;
+          if (e.clientX < r.left - pad || e.clientX > r.right + pad ||
+              e.clientY < r.top - pad  || e.clientY > r.bottom + pad) {
+              startFadeTimer();
+              document.removeEventListener('mousemove', onFirstMove);
+          }
+      };
+      setTimeout(() => document.addEventListener('mousemove', onFirstMove), 50);
+  };
+
+  // ── Render a block into the notes viewer ─────────────────────────
+  const renderNotesViewer = (blockId) => {
+      const viewer = document.getElementById('notes_viewer');
+      const layout = document.querySelector('.notes-layout');
+      if (!viewer) return;
+
+      if (!blockId) {
+          closeNotesViewer();
+          return;
+      }
+
+      const blocks = getBlocks('tab3');
+      const block  = blocks.find(b => b.id === blockId);
+      if (!block) {
+          closeNotesViewer();
+          return;
+      }
+
+      activeNotesBlockId = blockId;
+
+      // In narrow mode, slide open (wide mode CSS keeps viewer always visible)
+      if (!notesWideMode && layout) layout.classList.add('notes-viewer-open');
+
+      // Render the block expanded — blockTemplate handles body, tags, and
+      // includes the .block-actions menu with edit/duplicate/remove buttons.
+      const blockHTML = blockTemplate({ ...block, viewState: 'expanded' }, 'tab3');
+
+      const newContentHTML = `<div class="notes-viewer-content">${blockHTML}</div>`;
+
+      const existing = viewer.querySelector('.notes-viewer-content, .notes-viewer-placeholder');
+      const doSwap = () => {
+          viewer.innerHTML = newContentHTML;
+          const fresh = viewer.querySelector('.notes-viewer-content');
+          if (fresh) {
+              fresh.style.opacity = '0';
+              void fresh.offsetWidth;
+              fresh.style.opacity = '';
+          }
+          applyInlineDiceRolls(viewer, 'tab3');
+          document.querySelectorAll('#results_section_3 .block').forEach(b => {
+              b.classList.toggle('notes-block-active', b.getAttribute('data-id') === blockId);
+          });
+      };
+      if (existing && existing.classList.contains('notes-viewer-content')) {
+          existing.classList.add('fading');
+          setTimeout(doSwap, 200);
+      } else {
+          doSwap();
+      }
+  };
+
+  // ── Main render function for tab3 ───────────────────────────────
+  const renderNotes = (filteredBlocks = null) => {
+      const resultsSection = document.getElementById('results_section_3');
+      if (!resultsSection) return;
+
+      initNotesResizeObserver();
+
+      const allBlocks        = getBlocks('tab3');
+      const prelocationFiltered = (filteredBlocks || allBlocks);
+
+      // Count blocks per location
+      const locationCounts = new Map();
+      prelocationFiltered.forEach(b => {
+          const loc = normalizeLocation(b.location);
+          locationCounts.set(loc, (locationCounts.get(loc) || 0) + 1);
+      });
+
+      // Clear stale active location if it no longer matches any blocks
+      let activeLocation = getTab3ActiveLocation();
+      if (activeLocation && !locationCounts.has(activeLocation)) {
+          setTab3ActiveLocation('');
+          activeLocation = '';
+      }
+
+      // Apply location filter
+      const displayBlocks = activeLocation
+          ? prelocationFiltered.filter(b => normalizeLocation(b.location) === activeLocation)
+          : prelocationFiltered;
+
+      // Header — just the add button (sort/view dropdowns removed in 9a)
+      resultsSection.innerHTML = `
+          <div id="results_header_3" class="results-header">
+            <div id="header-controls_3" class="header-controls">
+              <button id="add_block_button" class="add-block-button green-button">+</button>
+            </div>
+          </div>
+          ${buildTab3LocationPillsHTML(locationCounts, activeLocation)}
+          <div id="tab3-sections-host"></div>
+      `;
+
+      const host = document.getElementById('tab3-sections-host');
+
+      // ── List block renderer ──────────────────────────────────────
+      // Wide mode: all blocks condensed; clicked block shown in viewer.
+      // Narrow mode: non-Map blocks can expand inline (accordion).
+      const renderNotesListBlock = (b) => {
+          const type = getTab3BlockType(b);
+          let listViewState;
+          if (notesWideMode) {
+              // Wide: always condensed in list, viewer shows detail
+              listViewState = 'condensed';
+          } else {
+              // Narrow: all non-Map types can expand inline
+              listViewState = (type === 'Map') ? 'condensed' : (b.viewState || 'condensed');
+          }
+          const activeClass = (b.id === activeNotesBlockId) ? ' notes-block-active' : '';
+          const html = blockTemplate({ ...b, viewState: listViewState }, 'tab3');
+          return html.replace(
+              /<div class="block ([^"]+)" data-id="([^"]+)">/,
+              `<div class="block $1${activeClass}" data-id="$2">`
+          );
+      };
+
+      // ── Group blocks by type into sections ───────────────────────
+      const blocksByType = {};
+      TAB3_SECTION_ORDER.forEach(t => { blocksByType[t] = []; });
+      const uncategorised = [];
+
+      displayBlocks.forEach(b => {
+          const t = getTab3BlockType(b);
+          if (t && blocksByType[t]) blocksByType[t].push(b);
+          else uncategorised.push(b);
+      });
+
+      TAB3_SECTION_ORDER.forEach(typeName => {
+          const sectionBlocks = blocksByType[typeName];
+          if (sectionBlocks.length === 0) return;
+
+          host.insertAdjacentHTML('beforeend',
+              buildTab3SectionHeader(TAB3_SECTION_LABELS[typeName], sectionBlocks.length, typeName));
+
+          const sectionDiv = document.createElement('div');
+          sectionDiv.className = 'tab3-section';
+          if (typeName === 'Map')  sectionDiv.classList.add('tab3-section-maps');
+          if (typeName === 'Book') sectionDiv.classList.add('tab3-section-books');
+          if (isTab3SectionCollapsed(typeName)) sectionDiv.classList.add('tab3-collapsed');
+          sectionDiv.dataset.sectionKey = typeName;
+          const blockHTML = sectionBlocks.map(renderNotesListBlock).join('');
+          sectionDiv.innerHTML = `<div class="tab3-section-inner">${blockHTML}</div>`;
+          host.appendChild(sectionDiv);
+      });
+
+      if (uncategorised.length > 0) {
+          host.insertAdjacentHTML('beforeend',
+              buildTab3SectionHeader('Uncategorised', uncategorised.length, 'uncategorised'));
+          const sectionDiv = document.createElement('div');
+          sectionDiv.className = 'tab3-section';
+          if (isTab3SectionCollapsed('uncategorised')) sectionDiv.classList.add('tab3-collapsed');
+          sectionDiv.dataset.sectionKey = 'uncategorised';
+          sectionDiv.innerHTML = uncategorised.map(renderNotesListBlock).join('');
+          host.appendChild(sectionDiv);
+      }
+
+      if (displayBlocks.length === 0) {
+          const p = document.createElement('p');
+          p.classList.add('results-placeholder');
+          p.textContent = activeLocation
+              ? `No blocks tagged with location "${activeLocation}".`
+              : 'Use the + button to add items here…';
+          p.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0.25;';
+          resultsSection.appendChild(p);
+      }
+
+      wireNotesHeaderControls();
+
+      // ── Section header collapse ──────────────────────────────────
+      host.querySelectorAll('.tab3-section-header').forEach(headerEl => {
+          headerEl.addEventListener('click', () => {
+              const key = headerEl.dataset.sectionKey;
+              if (!key) return;
+              const sec = host.querySelector(`.tab3-section[data-section-key="${key}"]`);
+              const nowCollapsed = !headerEl.classList.contains('tab3-collapsed');
+              headerEl.classList.toggle('tab3-collapsed', nowCollapsed);
+              if (sec) sec.classList.toggle('tab3-collapsed', nowCollapsed);
+              setTab3SectionCollapsed(key, nowCollapsed);
+          });
+      });
+
+      // ── Location pill click ──────────────────────────────────────
+      resultsSection.querySelectorAll('.tab3-location-pill').forEach(pill => {
+          pill.addEventListener('click', () => {
+              setTab3ActiveLocation(pill.dataset.location || '');
+              import('./filterManager.js').then(({ filterManager }) => {
+                  filterManager.applyFilters('3');
+              });
+          });
+      });
+
+
+
+      // ── Block click routing (by type) ────────────────────────────
+      resultsSection.querySelectorAll('.block:not(.permanent-block)').forEach(blockEl => {
+          blockEl.addEventListener('click', function(e) {
+              if (e.target.closest('.block-actions')   ||
+                  e.target.closest('.actions-trigger')  ||
+                  e.target.closest('.quest-status-pill') ||
+                  e.target.closest('.quest-objective')) return;
+              if (e.target.classList.contains('circle')) return;
+
+              const id = blockEl.getAttribute('data-id');
+              if (!id) return;
+
+              const blocksArr   = getBlocks('tab3');
+              const targetBlock = blocksArr.find(b => b.id === id);
+              if (!targetBlock) return;
+
+              const type = getTab3BlockType(targetBlock);
+
+              // ── Map: show popup to open URL in new tab ──────────
+              if (type === 'Map') {
+                  if (targetBlock.url) showMapLinkPopup(targetBlock.url, e);
+                  return;
+              }
+
+              if (notesWideMode) {
+                  // ── Wide mode: open/close/swap viewer for any type ──
+                  if (id === activeNotesBlockId) {
+                      closeNotesViewer();
+                  } else {
+                      renderNotesViewer(id);
+                  }
+              } else {
+                  // ── Narrow mode: accordion inline expansion ─────────
+                  // For expanded blocks, only collapse via header tap
+                  if (!blockEl.classList.contains('condensed')) return;
+
+                  // Accordion: collapse any other expanded block first
+                  blocksArr.forEach(b => {
+                      if (b.id !== id && b.viewState === 'expanded') {
+                          b.viewState = 'condensed';
+                      }
+                  });
+
+                  targetBlock.viewState = targetBlock.viewState === 'expanded'
+                      ? 'condensed' : 'expanded';
+
+                  setPendingBlockAnim(id, blockEl.offsetHeight);
+                  localStorage.setItem('userBlocks_tab3', JSON.stringify(blocksArr));
+
+                  import('./filterManager.js').then(({ filterManager }) => {
+                      filterManager.applyFilters('3');
+                  });
+              }
+          });
+      });
+
+      // Track drag vs click on expanded blocks (for text selection)
+      resultsSection.querySelectorAll('.block:not(.permanent-block)').forEach(blockEl => {
+          let startX, startY;
+          blockEl.addEventListener('mousedown', (e) => {
+              startX = e.clientX;
+              startY = e.clientY;
+              blockEl._wasDrag = false;
+          });
+          blockEl.addEventListener('mouseup', (e) => {
+              const dx = Math.abs(e.clientX - startX);
+              const dy = Math.abs(e.clientY - startY);
+              blockEl._wasDrag = (dx > 4 || dy > 4);
+          });
+      });
+
+      // ── Header tap to collapse expanded blocks ───────────────────
+      resultsSection.querySelectorAll('.block:not(.permanent-block) .block-header').forEach(headerEl => {
+          let mdX, mdY, mdFired = false;
+          headerEl.addEventListener('mousedown', (e) => {
+              mdX = e.clientX;
+              mdY = e.clientY;
+              mdFired = true;
+          });
+          headerEl.addEventListener('mouseup', (e) => {
+              if (!mdFired) return;
+              mdFired = false;
+              // Wide mode: blocks don't expand inline, nothing to collapse
+              if (notesWideMode) return;
+              const blockEl = headerEl.closest('.block');
+              if (!blockEl || blockEl.classList.contains('condensed')) return;
+              const dx = Math.abs(e.clientX - mdX);
+              const dy = Math.abs(e.clientY - mdY);
+              if (dx > 4 || dy > 4) return;
+              if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
+
+              const id = blockEl.getAttribute('data-id');
+              const blocksArr = getBlocks('tab3');
+              const targetBlock = blocksArr.find(b => b.id === id);
+              if (!targetBlock) return;
+
+              const type = getTab3BlockType(targetBlock);
+              if (type === 'Map') return;
+
+              targetBlock.viewState = 'condensed';
+              localStorage.setItem('userBlocks_tab3', JSON.stringify(blocksArr));
+              animateBlockCollapse(blockEl, () => {
+                  import('./filterManager.js').then(({ filterManager }) => {
+                      filterManager.applyFilters('3');
+                  });
+              });
+          });
+      });
+
+      // ── Click on empty list space → close viewer ─────────────────
+      resultsSection.addEventListener('click', (e) => {
+          if (!e.target.closest('.block') &&
+              !e.target.closest('.tab3-section-header') &&
+              !e.target.closest('.tab3-location-pill') &&
+              !e.target.closest('.results-header') &&
+              !e.target.closest('.add-block-button')) {
+              closeNotesViewer();
+          }
+      });
+
+      applyInlineDiceRolls(resultsSection, 'tab3');
+      updateTags();
+      attachDynamicTooltips();
+      initScrollFades('.results-section', null, '--results-fade-opacity', '_scrollFadeHandler');
+      document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab3' } }));
+      initQuestStatusDropdown();
+
+      // ── Wire quest status pill clicks in the viewer too ──────────
+      const notesViewerEl = document.getElementById('notes_viewer');
+      if (notesViewerEl && !notesViewerEl._questPillDelegationBound) {
+          notesViewerEl.addEventListener('click', (e) => {
+              const pill = e.target.closest('.quest-status-pill');
+              if (!pill) return;
+              e.stopPropagation();
+              const dropdown = document.getElementById('quest-status-dropdown');
+              if (!dropdown) return;
+              const rect = pill.getBoundingClientRect();
+              dropdown.style.top  = `${rect.bottom + 5}px`;
+              dropdown.style.left = `${rect.left}px`;
+              dropdown.dataset.blockId = pill.dataset.id;
+              const currentStatus = pill.dataset.status;
+              dropdown.querySelectorAll('.quest-status-item').forEach(it => {
+                  it.classList.toggle('selected', it.dataset.status === currentStatus);
+              });
+              dropdown.classList.remove('hidden');
+              setTimeout(() => {
+                  const closeDropdown = () => dropdown.classList.add('hidden');
+                  document.addEventListener('click', closeDropdown, { once: true });
+              }, 0);
+          });
+          notesViewerEl._questPillDelegationBound = true;
+      }
+
+      // ── Viewer: mode-dependent ────────────────────────────────────
+      const viewer = document.getElementById('notes_viewer');
+      if (notesWideMode) {
+          // Wide mode: viewer is always visible
+          const stillPresent = activeNotesBlockId &&
+              displayBlocks.find(b => b.id === activeNotesBlockId);
+          if (stillPresent) {
+              renderNotesViewer(activeNotesBlockId);
+          } else {
+              if (activeNotesBlockId) activeNotesBlockId = null;
+              if (viewer) viewer.innerHTML = '<p class="notes-viewer-placeholder">Select an item to view</p>';
+              document.querySelectorAll('#results_section_3 .block').forEach(b => {
+                  b.classList.remove('notes-block-active');
+              });
+          }
+      } else {
+          // Narrow mode: viewer hidden by CSS — just clean up state
+          if (activeNotesBlockId) {
+              activeNotesBlockId = null;
+              const layout = document.querySelector('.notes-layout');
+              if (layout) layout.classList.remove('notes-viewer-open');
+          }
+          if (viewer) viewer.innerHTML = '';
+      }
+
+      applyPendingBlockAnim();
+  };
+
+  // ── Wire the add button in the results header ───────────────────
+  const wireNotesHeaderControls = () => {
+      const addBtn = document.getElementById('add_block_button');
+      if (addBtn) {
+          addBtn.onclick = () => {
+              overlayHandler.initializeOverlayTagHandlers('add_block_overlay_tags');
+              const overlay = document.querySelector('.add-block-overlay');
+              if (overlay) overlay.dataset.activeTab = 'tab3';
+              overlay?.classList.add('show');
+              setTimeout(() => {
+                  overlayHandler.setupQuestOverlayOptions('add');
+                  // Pre-select "Notes" as the default block type
+                  if (!document.querySelector('#character_type_tags_add .tag-button.selected')) {
+                      document.querySelector('#character_type_tags_add .tag-button[data-tag="Notes"]')
+                          ?.classList.add('selected');
+                  }
+              }, 0);
+          };
+      }
+  };
+
+  const initQuestStatusDropdown = () => {
+      const resultsSection = document.getElementById('results_section_3');
+      if (!resultsSection) return;
+
+      // Create the shared dropdown once, attached to document.body so it can
+      // overlay blocks (which have overflow:hidden)
+      let dropdown = document.getElementById('quest-status-dropdown');
+      if (!dropdown) {
+          dropdown = document.createElement('div');
+          dropdown.id = 'quest-status-dropdown';
+          dropdown.className = 'quest-status-dropdown hidden';
+          dropdown.innerHTML = `
+              <button class="quest-status-item" data-status="active">Active</button>
+              <button class="quest-status-item" data-status="on hold">On hold</button>
+              <button class="quest-status-item" data-status="not started">Not started</button>
+              <button class="quest-status-item" data-status="completed">Completed</button>
+              <button class="quest-status-item" data-status="failed">Failed</button>
+          `;
+          document.body.appendChild(dropdown);
+      }
+
+      const closeDropdown = () => dropdown.classList.add('hidden');
+
+      // Dropdown item click → update status + re-render (bound once)
+      if (!dropdown._itemClickBound) {
+          dropdown.addEventListener('click', (e) => {
+              const item = e.target.closest('.quest-status-item');
+              if (!item) return;
+              e.stopPropagation();
+
+              const newStatus = item.dataset.status;
+              const blockId   = dropdown.dataset.blockId;
+              if (!blockId) { closeDropdown(); return; }
+
+              const blocks = JSON.parse(localStorage.getItem('userBlocks_tab3')) || [];
+              const block  = blocks.find(b => b.id === blockId);
+              if (!block) { closeDropdown(); return; }
+
+              block.status = newStatus;
+              localStorage.setItem('userBlocks_tab3', JSON.stringify(blocks));
+              closeDropdown();
+
+              import('./filterManager.js').then(({ filterManager }) => {
+                  filterManager.applyFilters('3');
+              });
+          });
+          dropdown._itemClickBound = true;
+      }
+
+      // Status pill click → position + open dropdown (bound once per resultsSection)
+      if (!resultsSection._questPillDelegationBound) {
+          resultsSection.addEventListener('click', (e) => {
+              const pill = e.target.closest('.quest-status-pill');
+              if (!pill) return;
+              e.stopPropagation();
+
+              const rect = pill.getBoundingClientRect();
+              dropdown.style.top  = `${rect.bottom + 5}px`;
+              dropdown.style.left = `${rect.left}px`;
+              dropdown.dataset.blockId = pill.dataset.id;
+
+              const currentStatus = pill.dataset.status;
+              dropdown.querySelectorAll('.quest-status-item').forEach(it => {
+                  it.classList.toggle('selected', it.dataset.status === currentStatus);
+              });
+
+              dropdown.classList.remove('hidden');
+
+              // One-shot close on next outside click
+              setTimeout(() => {
+                  document.addEventListener('click', closeDropdown, { once: true });
+              }, 0);
+          });
+          resultsSection._questPillDelegationBound = true;
+      }
+  };
+
   let renderAbortController = null;
 
 /* ==================================================================*/
@@ -1241,6 +2105,165 @@ export const appManager = (() => {
   const getQrState = (charTab) => {
     if (!qrState[charTab]) qrState[charTab] = { query: '', expandedIds: new Set() };
     return qrState[charTab];
+  };
+
+  // ── Pinned-block drag-to-reorder (pointer events for touch + mouse) ──
+  // The pin button doubles as the drag handle: click = unpin, drag = reorder.
+  // A 4px movement threshold distinguishes the two gestures.
+  const PINNED_DRAG_THRESHOLD = 4;
+
+  const initPinnedDragReorder = (zone) => {
+      if (!zone || zone.querySelectorAll('.block.pinned').length < 2) return;
+
+      let dragState = null;
+
+      zone.addEventListener('pointerdown', (e) => {
+          const pinBtn = e.target.closest('.pin-button');
+          if (!pinBtn) return;
+          const block = pinBtn.closest('.block.pinned');
+          if (!block) return;
+
+          e.preventDefault();
+
+          dragState = {
+              block,
+              pinBtn,
+              startX: e.clientX,
+              startY: e.clientY,
+              didDrag: false,
+              placeholder: null,
+              pointerId: e.pointerId
+          };
+
+          zone.setPointerCapture(e.pointerId);
+      });
+
+      zone.addEventListener('pointermove', (e) => {
+          if (!dragState) return;
+          const { block, startX, startY } = dragState;
+
+          if (!dragState.didDrag) {
+              const dx = Math.abs(e.clientX - startX);
+              const dy = Math.abs(e.clientY - startY);
+              if (dx < PINNED_DRAG_THRESHOLD && dy < PINNED_DRAG_THRESHOLD) return;
+
+              // Crossed threshold — enter drag mode
+              dragState.didDrag = true;
+
+              const rect = block.getBoundingClientRect();
+
+              const placeholder = document.createElement('div');
+              placeholder.className = 'pinned-drag-placeholder';
+              placeholder.style.height = rect.height + 'px';
+              block.parentNode.insertBefore(placeholder, block);
+              dragState.placeholder = placeholder;
+
+              dragState.offsetY = e.clientY - rect.top;
+              dragState.offsetX = e.clientX - rect.left;
+              dragState.lastInsertBefore = undefined;
+
+              // Move block to body with fixed positioning so it doesn't
+              // affect the zone's scroll height
+              block.classList.add('dragging');
+              block.style.width = rect.width + 'px';
+              block.style.position = 'fixed';
+              block.style.top = rect.top + 'px';
+              block.style.left = rect.left + 'px';
+              block.style.zIndex = '100000';
+              block.style.margin = '0';
+              document.body.appendChild(block);
+          }
+
+          // Already in drag mode — reposition (viewport coords)
+          block.style.top = (e.clientY - dragState.offsetY) + 'px';
+
+          const siblings = [...zone.querySelectorAll('.block.pinned:not(.dragging)')];
+          const dragMidY = e.clientY;
+          let insertBefore = null;
+          for (const sib of siblings) {
+              const sibRect = sib.getBoundingClientRect();
+              if (dragMidY < sibRect.top + sibRect.height * 0.35) {
+                  insertBefore = sib;
+                  break;
+              }
+          }
+
+          // Only animate when the insertion point actually changes
+          if (insertBefore !== dragState.lastInsertBefore) {
+              dragState.lastInsertBefore = insertBefore;
+
+              // FLIP: capture old positions
+              const oldPositions = siblings.map(sib => ({
+                  el: sib,
+                  top: sib.getBoundingClientRect().top
+              }));
+
+              // Move placeholder to new position
+              if (insertBefore) {
+                  zone.insertBefore(dragState.placeholder, insertBefore);
+              } else {
+                  zone.appendChild(dragState.placeholder);
+              }
+
+              // FLIP: animate from old to new positions
+              oldPositions.forEach(({ el, top: oldTop }) => {
+                  const newTop = el.getBoundingClientRect().top;
+                  const delta = oldTop - newTop;
+                  if (Math.abs(delta) > 1) {
+                      el.style.transition = 'none';
+                      el.style.transform = `translateY(${delta}px)`;
+                      void el.offsetHeight;
+                      el.style.transition = 'transform 0.2s ease';
+                      el.style.transform = '';
+                  }
+              });
+          }
+      });
+
+      const endDrag = () => {
+          if (!dragState) return;
+          const { block, placeholder, didDrag, pinBtn } = dragState;
+
+          if (didDrag && placeholder) {
+              // Move block back into the zone from document.body
+              zone.insertBefore(block, placeholder);
+              placeholder.remove();
+
+              block.classList.remove('dragging');
+              block.style.position = '';
+              block.style.top = '';
+              block.style.left = '';
+              block.style.width = '';
+              block.style.zIndex = '';
+              block.style.margin = '';
+
+              // Clean up any residual FLIP styles on siblings
+              zone.querySelectorAll('.block.pinned').forEach(b => {
+                  b.style.transform = '';
+                  b.style.transition = '';
+              });
+
+              const newOrder = [...zone.querySelectorAll('.block.pinned')]
+                  .map(b => b.getAttribute('data-id'));
+              localStorage.setItem('pinnedBlockOrder_tab9', JSON.stringify(newOrder));
+
+          } else if (!didDrag && pinBtn) {
+              // No movement — treat as a click to unpin
+              dragState = null;
+              pinBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+              return;
+          } else if (!didDrag && pinBtn) {
+              // No movement — treat as a click to unpin
+              dragState = null;
+              pinBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+              return;
+          }
+
+          dragState = null;
+      };
+
+      zone.addEventListener('pointerup', endDrag);
+      zone.addEventListener('pointercancel', endDrag);
   };
 
   const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
@@ -1270,6 +2293,12 @@ export const appManager = (() => {
         // ── Character sheet tabs get the quick-ref panel ──────────────────
     if (QR_CHAR_TABS.has(tab)) {
         renderQuickRef(tab);
+        return;
+    }
+
+            // ── Notes has its own sectioned render path ───────────────────────
+    if (tab === 'tab3') {
+        renderNotes(filteredBlocks);
         return;
     }
 
@@ -1414,11 +2443,23 @@ resultsSection.innerHTML = `
     const pinnedBlocks  = allBlocks.filter(b => b.pinned);
     const displayBlocks = (filteredBlocks || allBlocks).filter(b => !b.pinned);
 
+    // Sort pinned blocks by their saved manual order
+    const pinnedOrder = JSON.parse(localStorage.getItem(`pinnedBlockOrder_${tab}`) || '[]');
+    pinnedBlocks.sort((a, b) => {
+        const ai = pinnedOrder.indexOf(a.id);
+        const bi = pinnedOrder.indexOf(b.id);
+        if (ai === -1 && bi === -1) return 0;
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+    });
+
     console.log(`📦 Blocks to render for ${tab}:`, displayBlocks);
 
     if (pinnedBlocks.length > 0) {
       const pinnedHTML = pinnedBlocks.map(b => blockTemplate(b, tab)).join('');
       resultsSection.insertAdjacentHTML('beforeend', `<div class="pinned-blocks-zone-wrapper"><div class="pinned-blocks-zone">${pinnedHTML}</div></div>`);
+      initPinnedDragReorder(resultsSection.querySelector('.pinned-blocks-zone'));
     }
 
     if (displayBlocks.length === 0 && pinnedBlocks.length === 0) {
@@ -1469,7 +2510,9 @@ resultsSection.innerHTML = `
           const targetBlock = blocksArr.find(b => b.id === blockId);
           if (!targetBlock) return;
 
-          if (targetBlock.viewState === "expanded") {
+          const isCollapsing = targetBlock.viewState === "expanded";
+
+          if (isCollapsing) {
             const activeState = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
             targetBlock.viewState = activeState;
           } else {
@@ -1478,10 +2521,18 @@ resultsSection.innerHTML = `
 
           localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
 
-          // Re-run filters through filterManager so OR/AND state and search are preserved
-          import('./filterManager.js').then(({ filterManager }) => {
-            filterManager.applyFilters(tabSuffix);
-          });
+          const doRerender = () => {
+              import('./filterManager.js').then(({ filterManager }) => {
+                  filterManager.applyFilters(tabSuffix);
+              });
+          };
+
+          if (isCollapsing) {
+              animateBlockCollapse(blockEl, doRerender);
+          } else {
+              setPendingBlockAnim(blockId, blockEl.offsetHeight);
+              doRerender();
+          }
         });
       });
 
@@ -1499,6 +2550,8 @@ resultsSection.innerHTML = `
         if (tabEl && tabEl.style.display !== 'none') renderQuickRef(charTab);
       });
     }
+
+    applyPendingBlockAnim();
   };
 
   /* ==================================================================*/
@@ -1868,9 +2921,11 @@ resultsSection.innerHTML = `
 /* ======================== DATA MANAGEMENT ========================*/
 /* =================================================================*/
 
-  const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType = null, blockId = null, timestamp = null, inventoryExtras = null) => {
-    if (!blockTitle || (tab !== "tab6" && !text)) {
-      console.error(tab === "tab6" ? "❌ Block title is required for Tab 6" : "❌ Block title and text are required");
+const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType = null, blockId = null, timestamp = null, inventoryExtras = null, tab3Extras = null) => {
+    const blockTypesArr = Array.isArray(blockType) ? blockType : (blockType ? [blockType] : []);
+    const textOptional  = tab === "tab6" || (tab === "tab3" && (blockTypesArr.includes("Quest") || blockTypesArr.includes("Map")));
+    if (!blockTitle || (!textOptional && !text)) {
+      console.error(textOptional ? "❌ Block title is required" : "❌ Block title and text are required");
       return false;
     }
 
@@ -1884,7 +2939,8 @@ resultsSection.innerHTML = `
           ...userBlocks[blockIndex],
           title: blockTitle, text, tags, uses, properties, blockType,
           timestamp: userBlocks[blockIndex].timestamp || Date.now(),
-          ...(inventoryExtras || {})
+          ...(inventoryExtras || {}),
+          ...(tab3Extras || {})
         };
       } else {
         console.error(`❌ Block with ID "${blockId}" not found in tab ${tab}.`);
@@ -1908,7 +2964,8 @@ resultsSection.innerHTML = `
         blockType: blockType || null,
         timestamp: timestamp || Date.now(),
         viewState: "expanded",
-        ...(inventoryExtras || {})
+        ...(inventoryExtras || {}),
+        ...(tab3Extras || {})
       });
     }
 
@@ -1935,7 +2992,7 @@ resultsSection.innerHTML = `
     localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(userBlocks));
     return true;
   };
-
+  
 /* ==================================================================*/
 /* =========================== TOOLTIPS =============================*/
 /* ==================================================================*/
@@ -2028,5 +3085,6 @@ resultsSection.innerHTML = `
     clearFilters,
     clearData,
     setActiveInventoryBlock,
+    setActiveNotesBlock,
   };
 })();

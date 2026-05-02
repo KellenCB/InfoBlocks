@@ -662,29 +662,11 @@
 
             <!-- Tab 3: Quests & Notes -->
             <div class="tab-content" id="tab3">
-                <div class="filter-and-results">
-                    <div id="results_section_3" class="results-section"></div>
-                    <div class="filter-divider"></div>
-                    <div class="filter-section-wrapper">
-                        <div class="filter-panel-header">
-                            <button id="clear_filters_button_3" class="clear_filters_button" title="Clear filters">✕</button>
-                            <div class="search-container">
-                                <input id="search_input_3" class="search_input" type="text" placeholder="Search by text" />
-                                <button id="clear_search_button_3" class="clear-search"><svg class="clear-icon" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg></button>
-                            </div>
-                            <button class="toggle-filter-button" data-tab="tab3" title="Hide filters">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 18l6-6-6-6"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <div id="filter_section_3" class="filter-section">
-                            <div class="block-type-tags" id="character_type_tags_3"></div>
-                            <div id="all_tags_container">
-                                <div id="dynamic_tags_section_3" class="tag-section"></div>
-                            </div>
-                        </div>
+                <div class="notes-layout">
+                    <div class="notes-list-column">
+                        <div id="results_section_3" class="results-section"></div>
                     </div>
+                    <div class="notes-viewer results-section" id="notes_viewer"></div>
                 </div>
             </div>
 
@@ -722,22 +704,30 @@
             
             <!-- Tab 9: Feats & Magic -->
             <div class="tab-content" id="tab9">
-                <div class="circle-section">
-                    <span class="spell-slot-title">Suit Uses</span>
-                    <div id="suit_uses_circles"></div>
-                    <button id="edit_suit_uses_button" title="Edit suit uses">✎</button>
-                </div>
-                <div class="spell-slot-section">
-                    <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">1st Lvl</span></div>
-                    <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">2nd Lvl</span></div>
-                    <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">3rd Lvl</span></div>
-                    <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">4th Lvl</span></div>
-                    <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">5th Lvl</span></div>
-                    <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">6th Lvl</span></div>
-                    <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">7th Lvl</span></div>
-                    <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">8th Lvl</span></div>
-                    <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">9th Lvl</span></div>
-                    <button id="edit_spell_slots_button" class="add-block-button orange-button" title="Edit spell slots">✎</button>
+                <div class="resources-strip">
+                    <div class="spell-slot-section">
+                        <div class="spell-slot-group">
+                            <svg class="resources-strip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Suit Uses"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3z"/></svg>
+                            <div id="suit_uses_circles"></div>
+                        </div>
+                        <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">L1</span></div>
+                        <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">L2</span></div>
+                        <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">L3</span></div>
+                        <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">L4</span></div>
+                        <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">L5</span></div>
+                        <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">L6</span></div>
+                        <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">L7</span></div>
+                        <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">L8</span></div>
+                        <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">L9</span></div>
+                    </div>
+                    <div class="resources-strip-actions">
+                        <button id="long_rest_button" title="Long rest — refill all slots">
+                            <span class="lr-icon-wrap">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                            </span>
+                        </button>
+                        <button id="edit_spell_slots_button" class="add-block-button orange-button" title="Edit spell slots">✎</button>
+                    </div>
                 </div>
                 <div class="filter-and-results">
                     <div id="results_section_9" class="results-section"></div>
@@ -745,10 +735,10 @@
                     <div class="filter-section-wrapper">
                         <div class="filter-panel-header">
                             <button id="clear_filters_button_9" class="clear_filters_button" title="Clear filters">✕</button>
-                            <div class="search-container">
-                                <input id="search_input_9" class="search_input" type="text" placeholder="Search by text" />
-                                <button id="clear_search_button_9" class="clear-search"><svg class="clear-icon" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg></button>
-                            </div>
+                        <div class="search-container">
+                            <input id="search_input_9" class="search_input" type="text" placeholder="Search by text" />
+                            <button id="clear_search_button_9" class="clear-search"><svg class="clear-icon" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg></button>
+                        </div>
                             <button class="toggle-filter-button" data-tab="tab9" title="Hide filters">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M9 18l6-6-6-6"/>
@@ -884,6 +874,9 @@
             <h2>Add Information Block</h2>
             <!-- Populated dynamically from blockTypeConfig based on active tab -->
             <div class="block-type-tags" id="character_type_tags_add"></div>
+            <div class="add_and_edit_inputs">
+                <input type="text" id="title_input_overlay" placeholder="Enter block title here..." />
+            </div>
             <div class="inventory-overlay-pill" id="inventory_overlay_options_add" style="display:none;">
                 <label class="inv-toggle inv-toggle-attune">
                     <input type="checkbox" id="requires_attunement_add" />
@@ -905,12 +898,44 @@
                     <span>Equipped</span>
                 </button>
             </div>
+            <div class="quest-overlay-options" id="quest_overlay_options_add" style="display:none;">
+                <div class="quest-overlay-field">
+                    <label class="quest-overlay-label" for="location_input_add">Location</label>
+                    <input type="text" id="location_input_add" class="quest-overlay-input" placeholder="e.g. Ionia — leave blank for none" />
+                </div>
+                <div class="quest-overlay-field map-only-field" style="display:none;">
+                    <label class="quest-overlay-label" for="url_input_add">Link URL</label>
+                    <input type="url" id="url_input_add" class="quest-overlay-input" placeholder="https://example.com" />
+                </div>
+                <div class="quest-overlay-field desc-only-field" style="display:none;">
+                    <label class="quest-overlay-label" for="description_input_add">Description</label>
+                    <input type="text" id="description_input_add" class="quest-overlay-input" placeholder="Short description shown on the card" maxlength="200" />
+                </div>
+                <div class="quest-overlay-field book-only-field" style="display:none;">
+                    <label class="quest-overlay-label">Accent colour</label>
+                    <div id="book_accent_swatches_add" class="book-accent-swatches"></div>
+                </div>
+                <div class="quest-overlay-field quest-only-field" style="display:none;">
+                    <label class="quest-overlay-label">Status</label>
+                    <div id="status_buttons_add" class="quest-status-button-row">
+                        <button type="button" class="quest-status-pill status-active" data-status="active"><span class="quest-status-dot"></span>Active</button>
+                        <button type="button" class="quest-status-pill status-on-hold" data-status="on hold"><span class="quest-status-dot"></span>On hold</button>
+                        <button type="button" class="quest-status-pill status-not-started" data-status="not started"><span class="quest-status-dot"></span>Not started</button>
+                        <button type="button" class="quest-status-pill status-completed" data-status="completed"><span class="quest-status-dot"></span>Completed</button>
+                        <button type="button" class="quest-status-pill status-failed" data-status="failed"><span class="quest-status-dot"></span>Failed</button>
+                    </div>
+                </div>
+                <div class="quest-overlay-field quest-only-field" style="display:none;">
+                    <label class="quest-overlay-label">Objectives</label>
+                    <div id="objectives_editor_add" class="quest-objectives-editor"></div>
+                    <button type="button" id="add_objective_btn_add" class="quest-add-objective-btn">+ Add objective</button>
+                </div>
+            </div>
             <div class="add_and_edit_inputs">
-                <input type="text" id="title_input_overlay" placeholder="Enter block title here..." />
                 <div id="uses_field_overlay" class="uses-field"></div>
                 <input type="text" id="properties_input_overlay" placeholder="Enter properties here (comma separated)..." />
                 <div id="block_text_overlay" class="auto-resize" contenteditable="true" data-placeholder="Enter block text here..." rows="1"></div>
-                <input type="text" id="tags_input_overlay" placeholder="Enter custom tags here..."  />
+                <input type="text" id="tags_input_overlay" class="user-tags-input" placeholder="Enter custom tags here..."  />
             </div>
             <div class="overlay-tags" id="add_block_overlay_tags"></div>
             <div class="overlay-controls">
@@ -927,6 +952,9 @@
             <h2>Edit Information Block</h2>
             <!-- Populated dynamically from blockTypeConfig based on active tab -->
             <div class="block-type-tags" id="character_type_tags_edit"></div>
+            <div class="add_and_edit_inputs">
+                <input type="text" id="title_input_edit_overlay" placeholder="Edit title block" />
+            </div>
             <div class="inventory-overlay-pill" id="inventory_overlay_options_edit" style="display:none;">
                 <label class="inv-toggle inv-toggle-attune">
                     <input type="checkbox" id="requires_attunement_edit" />
@@ -948,12 +976,44 @@
                     <span>Equipped</span>
                 </button>
             </div>
+            <div class="quest-overlay-options" id="quest_overlay_options_edit" style="display:none;">
+                <div class="quest-overlay-field">
+                    <label class="quest-overlay-label" for="location_input_edit">Location</label>
+                    <input type="text" id="location_input_edit" class="quest-overlay-input" placeholder="e.g. Ionia — leave blank for none" />
+                </div>
+                <div class="quest-overlay-field map-only-field" style="display:none;">
+                    <label class="quest-overlay-label" for="url_input_edit">Link URL</label>
+                    <input type="url" id="url_input_edit" class="quest-overlay-input" placeholder="https://example.com" />
+                </div>
+                <div class="quest-overlay-field desc-only-field" style="display:none;">
+                    <label class="quest-overlay-label" for="description_input_edit">Description</label>
+                    <input type="text" id="description_input_edit" class="quest-overlay-input" placeholder="Short description shown on the card" maxlength="200" />
+                </div>
+                <div class="quest-overlay-field book-only-field" style="display:none;">
+                    <label class="quest-overlay-label">Accent colour</label>
+                    <div id="book_accent_swatches_edit" class="book-accent-swatches"></div>
+                </div>
+                <div class="quest-overlay-field quest-only-field" style="display:none;">
+                    <label class="quest-overlay-label">Status</label>
+                    <div id="status_buttons_edit" class="quest-status-button-row">
+                        <button type="button" class="quest-status-pill status-active" data-status="active"><span class="quest-status-dot"></span>Active</button>
+                        <button type="button" class="quest-status-pill status-on-hold" data-status="on hold"><span class="quest-status-dot"></span>On hold</button>
+                        <button type="button" class="quest-status-pill status-not-started" data-status="not started"><span class="quest-status-dot"></span>Not started</button>
+                        <button type="button" class="quest-status-pill status-completed" data-status="completed"><span class="quest-status-dot"></span>Completed</button>
+                        <button type="button" class="quest-status-pill status-failed" data-status="failed"><span class="quest-status-dot"></span>Failed</button>
+                    </div>
+                </div>
+                <div class="quest-overlay-field quest-only-field" style="display:none;">
+                    <label class="quest-overlay-label">Objectives</label>
+                    <div id="objectives_editor_edit" class="quest-objectives-editor"></div>
+                    <button type="button" id="add_objective_btn_edit" class="quest-add-objective-btn">+ Add objective</button>
+                </div>
+            </div>
             <div class="add_and_edit_inputs">
-                <input type="text" id="title_input_edit_overlay" placeholder="Edit title block" />
                 <div id="uses_field_edit_overlay" class="uses-field"></div>
                 <input type="text" id="properties_input_edit_overlay" placeholder="Enter properties here (comma separated)..." />
                 <div id="block_text_edit_overlay" class="auto-resize" contenteditable="true" data-placeholder="Enter block text here..." rows="1"></div>
-                <input type="text" id="tags_input_edit_overlay" placeholder="Edit tags (comma separated)" />
+                <input type="text" id="tags_input_edit_overlay" class="user-tags-input" placeholder="Edit tags (comma separated)" />
             </div>
             <div class="overlay-tags" id="dynamic_overlay_tags">
                 <div id="predefined_tags_edit"></div>

@@ -1,7 +1,7 @@
 let isEditing = false;
 let currentEditingBlockId = null;
 
-import { categoryTags, blockTypeConfig } from './tagConfig.js';
+import { categoryTags, blockTypeConfig, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
 import { filterManager } from './filterManager.js';
 import { appManager } from './appManager.js';
 import { overlayHandler, getOverlayTargetTab } from './overlayHandler.js';
@@ -67,15 +67,17 @@ export const saveEditHandler = () => {
         return tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
     });
 
-    if (
-        !titleInput ||
-        (activeTab !== "tab6" && !textInput)
-    ) {
-        alert(
-            activeTab === "tab6"
-                ? "A title is required."
-                : "All fields (Title and Text) are required."
-        );
+    const selTypeBtnEdit = document.querySelector('#character_type_tags_edit .tag-button.selected');
+    const isTab3QuestEdit = activeTab === 'tab3' && selTypeBtnEdit?.dataset.tag === 'Quest';
+    const isTab3MapEdit   = activeTab === 'tab3' && selTypeBtnEdit?.dataset.tag === 'Map';
+    const textOptionalEdit = activeTab === "tab6" || isTab3QuestEdit || isTab3MapEdit;
+
+    if (!titleInput) {
+        alert("A title is required.");
+        return;
+    }
+    if (!textOptionalEdit && !textInput) {
+        alert("Title and text are required.");
         return;
     }
 
@@ -117,8 +119,45 @@ const blockType = tabBTConfig
         };
     }
 
+    // Tab3-specific fields (location + quest state + book state)
+    let tab3Extras = null;
+    if (activeTab === 'tab3') {
+        const loc = document.getElementById('location_input_edit')?.value.trim();
+        tab3Extras = { location: loc || null };
+
+        const blockTypesArr = Array.isArray(blockType) ? blockType : (blockType ? [blockType] : []);
+        if (blockTypesArr.includes('Quest')) {
+            const selPill = document.querySelector('#status_buttons_edit .quest-status-pill.selected');
+            tab3Extras.status = selPill?.dataset.status || 'active';
+
+            const rows = document.querySelectorAll('#objectives_editor_edit .quest-objective-editor-row');
+            tab3Extras.objectives = Array.from(rows).map(row => ({
+                text: row.querySelector('.quest-objective-input')?.value.trim() || '',
+                done: row.dataset.done === 'true'
+            })).filter(o => o.text !== '');
+        }
+        if (blockTypesArr.includes('Book')) {
+            const descEdit  = document.getElementById('description_input_edit')?.value.trim() || '';
+            const selSwatch = document.querySelector('#book_accent_swatches_edit .book-accent-swatch.selected');
+            tab3Extras.description = descEdit;
+            tab3Extras.bookColor   = selSwatch?.dataset.colorId || DEFAULT_BOOK_ACCENT;
+        }
+        if (blockTypesArr.includes('Notes')) {
+            const descEdit = document.getElementById('description_input_edit')?.value.trim() || '';
+            tab3Extras.description = descEdit;
+        }
+        if (blockTypesArr.includes('Map')) {
+            const urlEdit = document.getElementById('url_input_edit')?.value.trim() || '';
+            if (!urlEdit) {
+                alert('A link URL is required for Map blocks.');
+                return;
+            }
+            tab3Extras.url = urlEdit;
+        }
+    }
+
     appManager.saveBlock(
-        activeTab, titleInput, textInput, allTags, usesState, propertiesInput, blockType, blockId, blocks[blockIndex].timestamp, inventoryExtras
+        activeTab, titleInput, textInput, allTags, usesState, propertiesInput, blockType, blockId, blocks[blockIndex].timestamp, inventoryExtras, tab3Extras
     );
     console.log(`✅ Block updated in ${activeTab} with tags:`, allTags);
 
@@ -164,6 +203,79 @@ export const blockActionsHandler = (() => {
     
     document.addEventListener("DOMContentLoaded", initUndoLastDelete);
 
+    // ── Delete confirmation popup (replaces the full-screen overlay) ──
+    const showDeletePopup = (blockId, clickEvent) => {
+        document.getElementById('delete-confirm-popup')?.remove();
+
+        const popup = document.createElement('div');
+        popup.id = 'delete-confirm-popup';
+        popup.className = 'delete-confirm-popup';
+        popup.innerHTML = `
+            <span class="delete-confirm-message">Are you sure you want<br>to delete this block?</span>
+            <div class="delete-confirm-buttons">
+                <button class="delete-confirm-yes"><span>Yes</span></button>
+                <button class="delete-confirm-no">No</button>
+            </div>
+        `;
+        document.body.appendChild(popup);
+
+        // Position above the click point
+        const popupRect = popup.getBoundingClientRect();
+        let top  = clickEvent.clientY - popupRect.height - 10;
+        let left = clickEvent.clientX - (popupRect.width / 2);
+
+        if (top < 4) top = clickEvent.clientY + 14;
+        if (left < 4) left = 4;
+        if (left + popupRect.width > window.innerWidth - 4) {
+            left = window.innerWidth - popupRect.width - 4;
+        }
+
+        popup.style.top  = `${top}px`;
+        popup.style.left = `${left}px`;
+        popup.classList.add('visible');
+
+        const dismiss = () => {
+            popup.classList.remove('visible');
+            setTimeout(() => popup.remove(), 400);
+            document.removeEventListener('mousedown', onOutside);
+        };
+        const onOutside = (e) => {
+            if (!popup.contains(e.target)) dismiss();
+        };
+        setTimeout(() => document.addEventListener('mousedown', onOutside), 0);
+
+        // Yes button: must hover for 0.5s before it becomes clickable
+        const yesBtn = popup.querySelector('.delete-confirm-yes');
+        let yesArmed = false;
+        let armTimer = null;
+
+        yesBtn.addEventListener('mouseenter', () => {
+            yesArmed = false;
+            yesBtn.classList.remove('armed');
+            armTimer = setTimeout(() => {
+                yesArmed = true;
+                yesBtn.classList.add('armed');
+            }, 500);
+        });
+
+        yesBtn.addEventListener('mouseleave', () => {
+            clearTimeout(armTimer);
+            yesArmed = false;
+            yesBtn.classList.remove('armed');
+        });
+
+        yesBtn.addEventListener('click', () => {
+            if (!yesArmed) return;
+            const deletedTab   = appManager.getActiveTab();
+            const deletedBlock = appManager.removeBlock(blockId);
+            lastDeletedBlock   = { tab: deletedTab, block: deletedBlock };
+            reapplySearchAndFilters();
+            dismiss();
+        });
+
+        popup.querySelector('.delete-confirm-no').addEventListener('click', dismiss);
+    };
+
     const handleBlockActions = (event) => {
         const target  = event.target.closest('.action-button') || event.target;
         const blockId = target.getAttribute("data-id");
@@ -181,17 +293,29 @@ export const blockActionsHandler = (() => {
             const blocks = appManager.getBlocks(activeTab);
             const idx    = blocks.findIndex(b => b.id === blockId);
             if (idx !== -1) {
-                blocks[idx].pinned = !blocks[idx].pinned;
+                const nowPinned = !blocks[idx].pinned;
+                blocks[idx].pinned = nowPinned;
                 localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
-                reapplySearchAndFilters(activeTab);   // ← was reapplySearchAndFilters()
+
+                // Maintain pinned order — new pins go to end, unpins are removed
+                const orderKey = `pinnedBlockOrder_${activeTab}`;
+                const order = JSON.parse(localStorage.getItem(orderKey) || '[]');
+                if (nowPinned) {
+                    if (!order.includes(blockId)) order.push(blockId);
+                } else {
+                    const filtered = order.filter(id => id !== blockId);
+                    localStorage.setItem(orderKey, JSON.stringify(filtered));
+                }
+                if (nowPinned) localStorage.setItem(orderKey, JSON.stringify(order));
+
+                reapplySearchAndFilters(activeTab);
             }
             return;
         }
 
         if (target.classList.contains("duplicate-button")) {
             const blockTags = Array.isArray(block.tags) ? [...block.tags] : [];
-            // For tab6, also carry through the inventory booleans so the copy
-            // matches the original's state
+            // For tab6, carry through the inventory booleans
             let inventoryExtras = null;
             if (activeTab === 'tab6') {
                 inventoryExtras = {
@@ -201,10 +325,33 @@ export const blockActionsHandler = (() => {
                     equipped:           block.equipped === true
                 };
             }
-            const result = appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.properties || [], block.blockType || null, null, null, inventoryExtras);
-            // On tab6, auto-select the newly created copy
+            // For tab3, carry through all type-specific fields
+            let tab3Extras = null;
+            if (activeTab === 'tab3') {
+                tab3Extras = { location: block.location || null };
+                const blockTypesArr = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+                if (blockTypesArr.includes('Quest')) {
+                    tab3Extras.status = block.status || 'active';
+                    tab3Extras.objectives = Array.isArray(block.objectives)
+                        ? block.objectives.map(o => ({ text: o.text || '', done: false }))
+                        : [];
+                }
+                if (blockTypesArr.includes('Book')) {
+                    tab3Extras.description = block.description || '';
+                    tab3Extras.bookColor   = block.bookColor || 'orange';
+                }
+                if (blockTypesArr.includes('Notes')) {
+                    tab3Extras.description = block.description || '';
+                }
+            }
+            const result = appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.properties || [], block.blockType || null, null, null, inventoryExtras, tab3Extras);
+            // On tab6, auto-select the newly created copy in the viewer
             if (activeTab === 'tab6' && typeof result === 'string') {
                 appManager.setActiveInventoryBlock(result);
+            }
+            // On tab3, auto-select the duplicate in the viewer (wide mode)
+            if (activeTab === 'tab3' && typeof result === 'string') {
+                appManager.setActiveNotesBlock(result);
             }
             reapplySearchAndFilters(activeTab);
 
@@ -271,6 +418,7 @@ overlayHandler.populateBlockTypeOverlay("character_type_tags_edit");
                 if (eqBtnEdit)  eqBtnEdit.dataset.on  = 'false';
             }
             overlayHandler.setupInventoryOverlayOptions("edit");
+            overlayHandler.setupQuestOverlayOptions("edit");
             
             setTimeout(() => {
                 // Re-apply selected state for regular tags
@@ -297,9 +445,7 @@ overlayHandler.populateBlockTypeOverlay("character_type_tags_edit");
             document.querySelector(".edit-block-overlay").classList.add("show");
 
         } else if (target.classList.contains("remove-button")) {
-            pendingDeleteBlockId = blockId;
-            const overlay = document.querySelector(".remove-block-overlay");
-            overlay && overlay.classList.add("show");
+            showDeletePopup(blockId, event);
         }
     };  
 

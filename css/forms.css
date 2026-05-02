@@ -445,3 +445,138 @@
 .edit-block-form {
     text-align: center;
 }
+
+/* ==================================================================*/
+/* ===================== TAB3 QUEST OVERLAY =========================*/
+/* ==================================================================*/
+
+.quest-overlay-options {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 14px 0;
+    text-align: left;
+}
+
+.quest-overlay-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.quest-overlay-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gray-700);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.quest-overlay-input {
+    width: 100%;
+    padding: 8px 10px;
+    background-color: var(--gray-400);
+    color: var(--gray-900);
+    border: 1px solid var(--gray-500);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.quest-overlay-input:focus {
+    outline: none;
+    border-color: var(--color-green);
+}
+
+.quest-status-button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* In the overlay, pills default to muted — only the selected one shows colour */
+.quest-overlay-options .quest-status-pill {
+    background: var(--gray-400);
+    color: var(--gray-800);
+    opacity: 0.65;
+}
+
+.quest-overlay-options .quest-status-pill:hover { opacity: 0.85; }
+.quest-overlay-options .quest-status-pill.selected { opacity: 1; }
+
+.quest-overlay-options .quest-status-pill.status-active.selected      { background: rgba(76, 175, 80, 0.28);  color: #7ED37F; }
+.quest-overlay-options .quest-status-pill.status-on-hold.selected     { background: rgba(244, 162, 97, 0.28); color: var(--color-orange); }
+.quest-overlay-options .quest-status-pill.status-not-started.selected { background: rgba(228, 224, 224, 0.22); color: var(--gray-900); }
+.quest-overlay-options .quest-status-pill.status-completed.selected   { background: rgba(6, 173, 228, 0.28);  color: var(--color-cyan); }
+.quest-overlay-options .quest-status-pill.status-failed.selected      { background: rgba(255, 107, 107, 0.28); color: var(--color-red); }
+
+.quest-objectives-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.quest-objective-editor-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.quest-objective-input {
+    flex: 1;
+    padding: 6px 10px;
+    background-color: var(--gray-400);
+    color: var(--gray-900);
+    border: 1px solid var(--gray-500);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.quest-objective-input:focus {
+    outline: none;
+    border-color: var(--color-green);
+}
+
+.quest-objective-remove {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-red);
+    border: 1px solid var(--gray-500);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+}
+
+.quest-objective-remove:hover {
+    background: rgba(255, 107, 107, 0.15);
+    border-color: var(--color-red);
+}
+
+.quest-add-objective-btn {
+    align-self: flex-start;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--gray-800);
+    border: 1px dashed var(--gray-500);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.quest-add-objective-btn:hover {
+    background: var(--gray-400);
+    color: var(--gray-900);
+    border-style: solid;
+}

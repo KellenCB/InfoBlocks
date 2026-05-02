@@ -289,11 +289,11 @@
 
 .block-property {
     padding: 3px 7px;
-    color: var(--gray-900);
+    color: var(--gray-850);
     background-color: color-mix(in srgb, var(--gray-900) 8%, transparent);
     border: none;
     border-radius: 6px;
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: normal;
     white-space: pre-wrap;
     display: inline-flex;

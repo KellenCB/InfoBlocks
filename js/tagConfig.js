@@ -58,8 +58,10 @@ export const categoryTags = {
 
 export const blockTypeConfig = {
     tab3: {
-        types: ["Book", "Map", "Quest", "Other"],
-        className: "tag-characterType"
+        types: ["Book", "Map", "Quest", "Notes"],
+        className: "tag-characterType",
+        singleSelect: true,
+        required: true
     },
     tab6: {
         types: ["Consumables", "Weapons", "Armor & clothing", "Magic & curiosities", "Tools", "Scrap & parts", "Keys", "Documents"],
@@ -72,3 +74,16 @@ export const blockTypeConfig = {
         className: "tag-characterType"
     }
 };
+
+// Preset palette for Book accent colours (tab3 only)
+// id is stored on the block; hex is used for rendering.
+export const BOOK_ACCENT_COLORS = [
+    { id: "orange", label: "Orange", hex: "#f4a261" },
+    { id: "cyan",   label: "Cyan",   hex: "#06ade4" },
+    { id: "green",  label: "Green",  hex: "#4CAF50" },
+    { id: "red",    label: "Red",    hex: "#ff6b6b" },
+    { id: "purple", label: "Purple", hex: "#a855f7" },
+    { id: "gold",   label: "Gold",   hex: "#e5c100" },
+    { id: "gray",   label: "Gray",   hex: "#888" }
+];
+export const DEFAULT_BOOK_ACCENT = "orange";
