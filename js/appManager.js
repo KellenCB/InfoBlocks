@@ -334,10 +334,10 @@ const applyPendingBlockAnim = () => {
     const tabSuffix = activeTab.replace("tab", "");
 
     function injectChipsForCollapsedGroups(container) {
-      // Chips for collapsed accordion groups — selected state re-applied by filterManager
-      container.querySelectorAll('.tag-accordion-group:not(.open)').forEach(group => {
-        group.querySelector('.tag-accordion-pill')
-          ?.querySelectorAll('.tag-accordion-chip').forEach(c => c.remove());
+      // Clear stale chips from collapsed accordion groups
+      // (selected state re-applied by filterManager._applySelectionClasses)
+      container.querySelectorAll('.tag-accordion-group:not(.open) .tag-accordion-chips').forEach(chips => {
+        chips.innerHTML = '';
       });
     }
 
@@ -370,13 +370,17 @@ const applyPendingBlockAnim = () => {
       const openClass = isOpen ? ' open' : '';
 
       html += `<div class="tag-accordion-group ${className}${openClass}" data-category="${category}">`;
-      html += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
+      html += `<div class="tag-accordion-header" data-category="${category}">`;
+      html += `<span class="tag-accordion-name">${label}</span>`;
+      html += `<span class="tag-accordion-chips"></span>`;
+      html += `<span class="tag-accordion-chevron">▸</span>`;
+      html += `</div>`;
       html += `<div class="tag-accordion-body" id="${category}_tags_list_${tabSuffix}">`;
-      html += `<span class="tag-accordion-label">${label}</span>`;
+      html += `<div class="tag-accordion-body-inner">`;
       html += usedPredefined.map(tag =>
         `<button class="tag-button ${className}" data-tag="${tag}">${tag}</button>`
       ).join("");
-      html += `</div></div>`;
+      html += `</div></div></div>`;
     });
 
     if (userGeneratedTags.length > 0) {
@@ -2266,7 +2270,7 @@ const applyPendingBlockAnim = () => {
       zone.addEventListener('pointercancel', endDrag);
   };
 
-  const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
+  const renderBlocks = (tab = getActiveTab(), filteredBlocks = null, skipTagUpdate = false) => {
     console.log("🔍 Checking tab value:", tab, typeof tab);
 
     if (renderAbortController) renderAbortController.abort();
@@ -2541,7 +2545,7 @@ resultsSection.innerHTML = `
         });
       });
 
-    updateTags();
+    if (!skipTagUpdate) updateTags();
     attachDynamicTooltips();
     initScrollFades('.results-section',              null,                        '--results-fade-opacity',      '_scrollFadeHandler');
     initScrollFades('.filter-section',               '--filter-fade-top-opacity', '--filter-fade-bottom-opacity','_filterFadeHandler', 100);
