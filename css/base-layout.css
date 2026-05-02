@@ -570,6 +570,192 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     gap: 12px;
 }
 
+.block.inline-editing {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.block.inline-editing .inline-edit-controls {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.block.inline-editing .inline-edit-controls .button {
+    margin: 0;
+    padding: 5px 12px;
+    font-size: 12px;
+}
+
+.block.inline-editing .inline-edit-block-types,
+.block.inline-editing .inline-edit-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.inline-edit-block-types .tag-button,
+.inline-edit-tags .tag-button {
+    padding: 4px 10px;
+    height: auto;
+    font-size: 13px;
+    border-radius: 12px;
+    letter-spacing: 0.03em;
+}
+
+.block.inline-editing .uses-field {
+    background: none;
+    padding: 2px 0 0;
+    border-radius: 0;
+}
+
+.block.inline-editing .uses-field .circle {
+    width: 15px;
+    height: 15px;
+}
+
+.block.inline-editing .uses-field .circle-button {
+    width: 15px;
+    height: 15px;
+    font-size: 10px;
+    line-height: 1;
+    background-color: transparent;
+}
+
+.block.inline-editing .uses-field .circle-add {
+    border: 1px dashed #f4a261;
+    color: #f4a261;
+}
+
+.block.inline-editing .uses-field .circle-remove {
+    border: 1px dashed var(--gray-550);
+    color: var(--gray-550);
+}
+
+.block.inline-editing .uses-row {
+    gap: 5px;
+}
+
+.block.inline-editing .uses-circles-container,
+.block.inline-editing .uses-controls-container {
+    gap: 5px;
+}
+
+.block.inline-editing ul,
+.block.inline-editing ol {
+    padding-left: 20px;
+    margin: 4px 0;
+}
+
+.block.inline-editing .block-property {
+    cursor: text;
+}
+
+.block-property-wrap {
+    display: none;
+}
+
+.block.inline-editing .block-property-wrap {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    padding: 3px 7px;
+    color: var(--gray-800);
+    background-color: color-mix(in srgb, var(--gray-900) 8%, transparent);
+    border-radius: 6px;
+    font-size: 11px;
+}
+
+.block.inline-editing .block-property-wrap .block-property {
+    padding: 0;
+    background: none;
+    border-radius: 0;
+}
+
+.property-remove-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--gray-600);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0 0 0 4px;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.block.inline-editing .property-remove-btn {
+    display: inline-flex;
+}
+
+.property-remove-btn:hover {
+    color: var(--color-red);
+}
+
+.inline-edit-new-prop,
+.inline-edit-add-tag {
+    cursor: pointer;
+}
+
+.inline-edit-new-prop:empty::before {
+    content: '+';
+    color: var(--gray-600);
+}
+
+.inline-edit-new-prop {
+    padding: 3px 7px;
+    background-color: color-mix(in srgb, var(--gray-900) 5%, transparent);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--gray-800);
+    min-width: 16px;
+    display: inline-block;
+}
+
+.inline-edit-add-tag:empty::before {
+    content: '+';
+    color: var(--gray-600);
+}
+
+.inline-edit-add-tag {
+    padding: 4px 10px;
+    height: auto;
+    font-size: 13px;
+    border-radius: 12px;
+    background-color: color-mix(in srgb, var(--user-color) 8%, transparent);
+    color: var(--gray-800);
+    border: 1px dashed var(--gray-500);
+    display: inline-flex;
+    align-items: center;
+    min-width: 20px;
+}
+
+.block.inline-editing .inline-edit-title:empty::before {
+    content: 'Block title...';
+    color: var(--gray-600);
+    font-weight: 400;
+}
+
+.block.inline-editing .inline-edit-body:empty::before {
+    content: 'Block text...';
+    color: var(--gray-600);
+    font-weight: 400;
+}
+
+.block.inline-editing .inline-edit-title,
+.block.inline-editing .inline-edit-body {
+    min-height: 1.4em;
+    outline: none;
+}
+
+/* Hide chips when an accordion group is open in inline edit — prevents
+   the selected-tag chips duplicating the tag buttons visible in the body */
+.inline-edit-tags .tag-accordion-group.open > .tag-accordion-chip {
+    display: none;
+}
+
+
 .block.expanded .block-header {
     align-items: stretch;
 }
@@ -1677,6 +1863,171 @@ a:hover {
 #results_section_6 .block.inventory-block-equipped.inventory-block-attuned:hover,
 #results_section_6 .block.inventory-block-equipped.inventory-block-attuned.inventory-hover-pair {
     background-color: color-mix(in srgb, #a855f7 35%, var(--gray-300));
+}
+
+/* ── Inventory viewer: in-place edit / add ────────────────────── */
+
+.inventory-viewer.editing .inventory-viewer-title {
+    outline: none;
+    min-height: 1.4em;
+}
+
+.inventory-viewer.editing .inventory-viewer-title:empty::before {
+    content: 'Item name\2026';
+    color: var(--gray-600);
+    font-weight: 400;
+}
+
+.inventory-viewer.editing .inventory-viewer-body {
+    outline: none;
+    min-height: 2em;
+}
+
+.inventory-viewer.editing .inventory-viewer-body:empty::before {
+    content: 'Item description\2026';
+    color: var(--gray-600);
+    font-weight: 400;
+}
+
+.inventory-viewer .inline-edit-controls {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.inventory-viewer .inline-edit-controls .button {
+    margin: 0;
+    padding: 5px 12px;
+    font-size: 12px;
+}
+
+/* ── Fade-in for elements inserted during edit ────────────────── */
+
+.inventory-edit-fade-in {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.inventory-edit-fade-in.visible {
+    opacity: 1;
+}
+
+/* ── Inserts wrapper (dropdown + toggles) ─────────────────────── */
+
+.inventory-edit-inserts {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+/* ── Item type tag buttons ─────────────────────────────────────── */
+
+.inventory-edit-inserts .inline-edit-block-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.inventory-edit-inserts .inline-edit-block-types .tag-button {
+    padding: 4px 10px;
+    height: auto;
+    font-size: 13px;
+    border-radius: 12px;
+    letter-spacing: 0.03em;
+}
+
+/* ── Toggle layout — left-aligned, wrapping pairs ─────────────── */
+
+.inventory-edit-toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    align-items: center;
+}
+
+.inventory-toggle-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ── Remove glow from toggles inside inventory viewer ─────────── */
+
+.inventory-viewer .inv-toggle-attune input[type="checkbox"]:checked ~ .inv-track {
+    background: color-mix(in srgb, var(--color-cyan) 45%, var(--gray-300));
+    border-color: color-mix(in srgb, var(--color-cyan) 50%, transparent);
+    box-shadow: none;
+}
+
+.inventory-viewer .inv-toggle-equip input[type="checkbox"]:checked ~ .inv-track {
+    background: color-mix(in srgb, #ff8c00 45%, var(--gray-300));
+    border-color: color-mix(in srgb, #ff8c00 50%, transparent);
+    box-shadow: none;
+}
+
+/* ── Uses field inside viewer edit ────────────────────────────── */
+
+.inventory-viewer .uses-field {
+    background: none;
+    padding: 2px 0 0;
+    border-radius: 0;
+}
+
+.inventory-viewer .uses-field .circle {
+    width: 15px;
+    height: 15px;
+}
+
+.inventory-viewer .uses-field .circle-button {
+    width: 15px;
+    height: 15px;
+    font-size: 10px;
+    line-height: 1;
+    background-color: transparent;
+}
+
+.inventory-viewer .uses-field .circle-add {
+    border: 1px dashed #f4a261;
+    color: #f4a261;
+}
+
+.inventory-viewer .uses-field .circle-remove {
+    border: 1px dashed var(--gray-550);
+    color: var(--gray-550);
+}
+
+.inventory-viewer .uses-row {
+    gap: 5px;
+}
+
+.inventory-viewer .uses-circles-container,
+.inventory-viewer .uses-controls-container {
+    gap: 5px;
+}
+
+/* ── State buttons (Attuned to / Equipped) as visible buttons ── */
+
+.inventory-viewer .inv-state-btn {
+    border: 1px solid var(--gray-400);
+    border-radius: 8px;
+    padding: 4px 10px;
+    background: color-mix(in srgb, var(--gray-900) 4%, transparent);
+    transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+}
+
+.inventory-viewer .inv-state-btn.inv-state-on.inv-state-chain {
+    color: var(--color-cyan);
+    filter: none;
+    border-color: color-mix(in srgb, var(--color-cyan) 50%, transparent);
+    background: color-mix(in srgb, var(--color-cyan) 10%, transparent);
+}
+
+.inventory-viewer .inv-state-btn.inv-state-on.inv-state-hand {
+    color: #ff8c00;
+    filter: none;
+    border-color: color-mix(in srgb, #ff8c00 50%, transparent);
+    background: color-mix(in srgb, #ff8c00 10%, transparent);
 }
 
 /* ── Search row at top of list column ─────────────────────────── */
@@ -3157,6 +3508,123 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .notes-viewer::after {
     display: none !important;
 }
+
+/* ============================================================== */
+/* ============ TAB3 — NOTES VIEWER/INLINE EDIT ================ */
+/* ============================================================== */
+
+/* ── Edit form layout (shared by viewer and inline) ─────────── */
+
+.notes-edit-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.notes-edit-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    flex: 1;
+    min-width: 0;
+    outline: none;
+    min-height: 1.4em;
+}
+
+.notes-edit-title:empty::before {
+    content: 'Enter title\2026';
+    color: var(--gray-600);
+    font-weight: 400;
+}
+
+.notes-edit-inserts {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.notes-edit-inserts .inline-edit-block-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.notes-edit-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.notes-edit-body-wrap {
+    margin-top: 8px;
+}
+
+.notes-edit-body {
+    outline: none;
+    min-height: 60px;
+    font-size: 13px;
+    padding: 12px;
+    overflow: auto;
+    max-height: 60vh;
+    position: relative;
+    font-family: inherit;
+}
+
+.notes-edit-body.empty::before {
+    content: attr(data-placeholder);
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    pointer-events: none;
+    user-select: none;
+    color: var(--gray-800);
+    opacity: 0.5;
+    letter-spacing: 0.2px;
+    font-size: inherit;
+    font-family: inherit;
+}
+
+/* ── Quest status pills: grey when unselected, colored when selected ── */
+
+.notes-edit-fields .quest-status-pill {
+    background: var(--gray-400);
+    color: var(--gray-800);
+    opacity: 0.65;
+}
+
+.notes-edit-fields .quest-status-pill:hover { opacity: 0.85; }
+.notes-edit-fields .quest-status-pill.selected { opacity: 1; }
+
+.notes-edit-fields .quest-status-pill.status-active.selected      { background: rgba(76, 175, 80, 0.28);  color: #7ED37F; }
+.notes-edit-fields .quest-status-pill.status-on-hold.selected     { background: rgba(244, 162, 97, 0.28); color: var(--color-orange); }
+.notes-edit-fields .quest-status-pill.status-not-started.selected { background: rgba(228, 224, 224, 0.22); color: var(--gray-900); }
+.notes-edit-fields .quest-status-pill.status-completed.selected   { background: rgba(6, 173, 228, 0.28);  color: var(--color-cyan); }
+.notes-edit-fields .quest-status-pill.status-failed.selected      { background: rgba(255, 107, 107, 0.28); color: var(--color-red); }
+
+/* ── Viewer-specific edit styles ───────────────────────────── */
+
+.notes-viewer.editing .notes-edit-form {
+    padding: 0;
+    border: none;
+    background: transparent;
+    overflow: visible;
+    border-radius: 0;
+}
+
+.notes-viewer .inline-edit-controls {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.notes-viewer .inline-edit-controls .button {
+    margin: 0;
+    padding: 5px 12px;
+    font-size: 12px;
+}
+
+/* ── Inline-editing overrides for tab3 blocks ──────────────── */
 
 /* ============================================================== */
 /* ============ TAB3 — HIDE CUSTOM-TAGS INPUT =================== */

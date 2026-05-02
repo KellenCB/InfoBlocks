@@ -1,5 +1,5 @@
 // appManager.js
-import { categoryTags, blockTypeConfig } from './tagConfig.js';
+import { categoryTags, blockTypeConfig, BOOK_ACCENT_COLORS, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
 import { blockTemplate } from './blockTemplate.js';
 import { overlayHandler, initUsesField, initToolbarForEditor } from './overlayHandler.js';
 import { applyInlineDiceRolls } from './diceRoller.js';
@@ -171,7 +171,7 @@ const applyPendingBlockAnim = () => {
       const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
       if (!blockEl) return;
 
-      const newHeight = blockEl.scrollHeight;
+      const newHeight = blockEl.offsetHeight;
       if (Math.abs(newHeight - oldHeight) < 2) return;
 
       const isExpanding = newHeight > oldHeight;
@@ -182,10 +182,8 @@ const applyPendingBlockAnim = () => {
       blockEl.style.overflow = 'hidden';
       blockEl.style.transition = 'none';
 
-      // On expand: fade in everything except the header
-      const fadeEls = isExpanding
-          ? [...blockEl.children].filter(el => !el.classList.contains('block-header'))
-          : [];
+      // Fade in everything except the header
+      const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
       fadeEls.forEach(el => {
           el.style.opacity = '0';
           el.style.transition = 'none';
@@ -229,7 +227,9 @@ const applyPendingBlockAnim = () => {
               condensedTags.style.transition = '';
           }
       };
-      blockEl.addEventListener('transitionend', cleanup, { once: true });
+      blockEl.addEventListener('transitionend', (e) => {
+          if (e.target === blockEl && e.propertyName === 'height') cleanup();
+      }, { once: true });
       setTimeout(cleanup, 600);
   };
 
@@ -334,10 +334,10 @@ const applyPendingBlockAnim = () => {
     const tabSuffix = activeTab.replace("tab", "");
 
     function injectChipsForCollapsedGroups(container) {
-      // Chips for collapsed accordion groups — selected state re-applied by filterManager
-      container.querySelectorAll('.tag-accordion-group:not(.open)').forEach(group => {
-        group.querySelector('.tag-accordion-pill')
-          ?.querySelectorAll('.tag-accordion-chip').forEach(c => c.remove());
+      // Clear stale chips from collapsed accordion groups
+      // (selected state re-applied by filterManager._applySelectionClasses)
+      container.querySelectorAll('.tag-accordion-group:not(.open) .tag-accordion-chips').forEach(chips => {
+        chips.innerHTML = '';
       });
     }
 
@@ -370,13 +370,17 @@ const applyPendingBlockAnim = () => {
       const openClass = isOpen ? ' open' : '';
 
       html += `<div class="tag-accordion-group ${className}${openClass}" data-category="${category}">`;
-      html += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
+      html += `<div class="tag-accordion-header" data-category="${category}">`;
+      html += `<span class="tag-accordion-name">${label}</span>`;
+      html += `<span class="tag-accordion-chips"></span>`;
+      html += `<span class="tag-accordion-chevron">▸</span>`;
+      html += `</div>`;
       html += `<div class="tag-accordion-body" id="${category}_tags_list_${tabSuffix}">`;
-      html += `<span class="tag-accordion-label">${label}</span>`;
+      html += `<div class="tag-accordion-body-inner">`;
       html += usedPredefined.map(tag =>
         `<button class="tag-button ${className}" data-tag="${tag}">${tag}</button>`
       ).join("");
-      html += `</div></div>`;
+      html += `</div></div></div>`;
     });
 
     if (userGeneratedTags.length > 0) {
@@ -860,6 +864,7 @@ const applyPendingBlockAnim = () => {
 
   // Currently-active block in the viewer
   let activeInventoryBlockId = null;
+  let inventoryEditMode = false;
 
   const getInventoryAttunementMax = () => {
       const raw = localStorage.getItem('tab6_attunement_max');
@@ -964,12 +969,6 @@ const applyPendingBlockAnim = () => {
           .replace(/<\/p>/gi, '<br>')
           .trim();
 
-      const propertiesHTML = (block.properties && block.properties.length > 0)
-          ? `<div class="inventory-viewer-properties">${block.properties.map(p =>
-              `<span class="block-property">${p}</span>`
-            ).join("")}</div>`
-          : "";
-
       const usesHTML = (block.uses && block.uses.length > 0)
           ? `<div class="block-uses" style="margin-bottom:12px;">${block.uses.map((state, idx) =>
               `<span class="circle ${state ? 'unfilled' : ''}" onclick="toggleBlockUse('${block.id}', ${idx}, event, this)"></span>`
@@ -991,7 +990,6 @@ const applyPendingBlockAnim = () => {
                       </div>
                   </div>
               </div>
-              ${propertiesHTML}
               ${usesHTML}
               <div class="inventory-viewer-body">${bodyHTML}</div>
           </div>
@@ -1021,6 +1019,396 @@ const applyPendingBlockAnim = () => {
       }
       return;
 
+  };
+
+  // ── Inventory viewer: in-place edit / add ─────────────────────────
+
+  const INVENTORY_AUTO_EQUIPABLE_VIEWER = new Set(["Weapons", "Armor & clothing"]);
+
+  const buildInventoryInserts = (block) => {
+      const reqAtt   = block?.requiresAttunement === true;
+      const equipable = block?.equipable === true;
+      const attuned  = block?.attuned === true;
+      const equipped = block?.equipped === true;
+
+      const chainSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5"/></svg>`;
+      const handSVG  = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5c-.83 0-1.5.67-1.5 1.5v6H10V4c0-.83-.67-1.5-1.5-1.5S7 3.17 7 4v8.5l-1.8-1.9c-.6-.6-1.55-.6-2.15 0-.6.6-.6 1.55 0 2.15l4.2 4.3c1.3 1.35 3.1 2.2 5.1 2.2h1.4c3.87 0 7-3.13 7-7V7c0-.83-.67-1.5-1.5-1.5S18 6.17 18 7v3.5h-.5V5c0-.83-.67-1.5-1.5-1.5S14.5 4.17 14.5 5v4.5h-.5V3c0-.83-.67-1.5-1.5-1.5z"/></svg>`;
+
+      const currentType = block
+          ? (Array.isArray(block.blockType) ? block.blockType[0] : block.blockType) || ''
+          : '';
+
+      const tabBTConfig = blockTypeConfig.tab6;
+      const blockTypeHTML = `<div class="inline-edit-block-types">${tabBTConfig.types.map(type =>
+          `<button class="tag-button ${tabBTConfig.className}${type === currentType ? ' selected' : ''}" data-tag="${type}">${type}</button>`
+      ).join('')}</div>`;
+
+      const togglesHTML = `
+          <div class="inventory-edit-toggles">
+              <div class="inventory-toggle-pair">
+                  <label class="inv-toggle inv-toggle-attune">
+                      <input type="checkbox" id="requires_attunement_viewer"${reqAtt ? ' checked' : ''} />
+                      <span class="inv-track"><span class="inv-thumb"></span></span>
+                      <span>Requires attunement</span>
+                  </label>
+                  <button type="button" class="inv-state-btn inv-state-chain" id="attuned_btn_viewer" data-on="${attuned}" title="Attune">
+                      ${chainSVG}<span>Attuned to</span>
+                  </button>
+              </div>
+              <div class="inventory-toggle-pair">
+                  <label class="inv-toggle inv-toggle-equip">
+                      <input type="checkbox" id="equipable_viewer"${equipable ? ' checked' : ''} />
+                      <span class="inv-track"><span class="inv-thumb"></span></span>
+                      <span>Equipable</span>
+                  </label>
+                  <button type="button" class="inv-state-btn inv-state-hand" id="equipped_btn_viewer" data-on="${equipped}" title="Equip">
+                      ${handSVG}<span>Equipped</span>
+                  </button>
+              </div>
+          </div>
+      `;
+
+      return { blockTypeHTML, togglesHTML };
+  };
+
+  const wireInventoryToggles = (container) => {
+      const requiresEl  = container.querySelector('#requires_attunement_viewer');
+      const equipableEl = container.querySelector('#equipable_viewer');
+      const attunedBtn  = container.querySelector('#attuned_btn_viewer');
+      const equippedBtn = container.querySelector('#equipped_btn_viewer');
+      const blockTypesContainer = container.querySelector('.inline-edit-block-types');
+
+      const syncStateButtons = () => {
+          if (attunedBtn)  attunedBtn.classList.toggle('inv-state-on',  attunedBtn.dataset.on === 'true');
+          if (equippedBtn) equippedBtn.classList.toggle('inv-state-on', equippedBtn.dataset.on === 'true');
+      };
+      syncStateButtons();
+
+      if (requiresEl) {
+          requiresEl.addEventListener('change', () => {
+              if (!requiresEl.checked && attunedBtn) attunedBtn.dataset.on = 'false';
+              syncStateButtons();
+          });
+      }
+      if (equipableEl) {
+          equipableEl.addEventListener('change', () => {
+              if (!equipableEl.checked && equippedBtn) equippedBtn.dataset.on = 'false';
+              equipableEl.dataset.userTouched = 'true';
+              syncStateButtons();
+          });
+      }
+      if (attunedBtn) {
+          attunedBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const turningOn = attunedBtn.dataset.on !== 'true';
+              attunedBtn.dataset.on = turningOn ? 'true' : 'false';
+              if (turningOn && requiresEl && !requiresEl.checked) {
+                  requiresEl.checked = true;
+                  requiresEl.dispatchEvent(new Event('change'));
+              }
+              syncStateButtons();
+          });
+      }
+      if (equippedBtn) {
+          equippedBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const turningOn = equippedBtn.dataset.on !== 'true';
+              equippedBtn.dataset.on = turningOn ? 'true' : 'false';
+              if (turningOn && equipableEl && !equipableEl.checked) {
+                  equipableEl.checked = true;
+                  equipableEl.dispatchEvent(new Event('change'));
+              }
+              syncStateButtons();
+          });
+      }
+
+      // Block type tag buttons (single-select) + auto-equipable
+      if (blockTypesContainer) {
+          blockTypesContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.tag-button');
+              if (!btn) return;
+              const wasSel = btn.classList.contains('selected');
+              blockTypesContainer.querySelectorAll('.tag-button').forEach(b => b.classList.remove('selected'));
+              if (!wasSel) btn.classList.add('selected');
+              // Auto-equipable logic
+              if (equipableEl && equipableEl.dataset.userTouched !== 'true') {
+                  const sel = blockTypesContainer.querySelector('.tag-button.selected');
+                  if (sel && INVENTORY_AUTO_EQUIPABLE_VIEWER.has(sel.dataset.tag)) {
+                      equipableEl.checked = true;
+                      equipableEl.dispatchEvent(new Event('change'));
+                      equipableEl.dataset.userTouched = '';
+                  } else if (sel) {
+                      equipableEl.checked = false;
+                      equipableEl.dispatchEvent(new Event('change'));
+                      equipableEl.dataset.userTouched = '';
+                  }
+              }
+          });
+      }
+  };
+
+  const collectInventoryFormData = (viewer) => {
+      const titleEl    = viewer.querySelector('.inventory-viewer-title');
+      const bodyEl     = viewer.querySelector('.inventory-viewer-body');
+
+      const newTitle = titleEl?.textContent.trim();
+      if (!newTitle) { alert('A title is required.'); return null; }
+
+      const selectedTypeBtn = viewer.querySelector('.inline-edit-block-types .tag-button.selected');
+      const blockType = selectedTypeBtn?.dataset.tag || null;
+      if (!blockType) {
+          alert('Please select an item type: ' + blockTypeConfig.tab6.types.join(', ') + '.');
+          return null;
+      }
+
+      const newBody = bodyEl ? bodyEl.innerHTML.trim() : '';
+
+      const requiresAttunement = !!viewer.querySelector('#requires_attunement_viewer')?.checked;
+      const equipable          = !!viewer.querySelector('#equipable_viewer')?.checked;
+      const attuned            = viewer.querySelector('#attuned_btn_viewer')?.dataset.on === 'true';
+      const equipped           = viewer.querySelector('#equipped_btn_viewer')?.dataset.on === 'true';
+
+      return {
+          title: newTitle,
+          text: newBody,
+          blockType,
+          inventoryExtras: {
+              requiresAttunement,
+              equipable,
+              attuned:  requiresAttunement ? attuned  : false,
+              equipped: equipable          ? equipped : false
+          }
+      };
+  };
+
+  const enterInventoryEdit = (blockId) => {
+      if (inventoryEditMode) return;
+      const viewer = document.getElementById('inventory_viewer');
+      if (!viewer) return;
+
+      const blocks = getBlocks('tab6');
+      const block  = blocks.find(b => b.id === blockId);
+      if (!block) return;
+
+      inventoryEditMode = true;
+      activeInventoryBlockId = blockId;
+
+      const content = viewer.querySelector('.inventory-viewer-content');
+      if (!content) {
+          // No content yet — render viewer first, then re-enter
+          inventoryEditMode = false;
+          renderInventoryViewer(blockId);
+          requestAnimationFrame(() => enterInventoryEdit(blockId));
+          return;
+      }
+
+      viewer.classList.add('editing');
+
+      // ── Remove action buttons ──
+      const actionsEl = content.querySelector('.block-actions');
+      if (actionsEl) actionsEl.remove();
+
+      // ── Remove properties display ──
+      const propsEl = content.querySelector('.inventory-viewer-properties');
+      if (propsEl) propsEl.remove();
+
+      // ── Make title editable ──
+      const titleEl = content.querySelector('.inventory-viewer-title');
+      if (titleEl) titleEl.contentEditable = 'true';
+
+      // ── Make body editable + strip dice rolls ──
+      const bodyEl = content.querySelector('.inventory-viewer-body');
+      if (bodyEl) {
+          bodyEl.querySelectorAll('.inline-dice-roll').forEach(btn => {
+              btn.replaceWith(document.createTextNode(btn.title));
+          });
+          bodyEl.normalize();
+          bodyEl.contentEditable = 'true';
+      }
+
+      // ── Replace uses with editable uses field ──
+      const usesKey = `inventory_viewer_uses_${blockId}`;
+      localStorage.setItem(usesKey, JSON.stringify(block.uses || []));
+      const existingUses = content.querySelector('.block-uses');
+      const usesField = document.createElement('div');
+      usesField.className = 'uses-field inline-edit-uses';
+      usesField.style.marginBottom = '12px';
+      if (existingUses) {
+          existingUses.replaceWith(usesField);
+      } else {
+          // Insert before body if no uses existed
+          if (bodyEl) bodyEl.before(usesField);
+      }
+      initUsesField(usesField, usesKey);
+
+      // ── Insert save/cancel into header ──
+      const headerEl = content.querySelector('.inventory-viewer-header');
+      const controls = document.createElement('div');
+      controls.className = 'inline-edit-controls inventory-edit-fade-in';
+      controls.innerHTML = `
+          <button class="button green-button inventory-edit-save">Save</button>
+          <button class="button red-button inventory-edit-cancel">Cancel</button>
+      `;
+      headerEl.appendChild(controls);
+
+      // ── Insert block type buttons + toggles after header ──
+      const { blockTypeHTML, togglesHTML } = buildInventoryInserts(block);
+
+      const insertWrapper = document.createElement('div');
+      insertWrapper.className = 'inventory-edit-inserts inventory-edit-fade-in';
+      insertWrapper.innerHTML = blockTypeHTML + togglesHTML;
+      headerEl.after(insertWrapper);
+
+      // ── Animate new elements in ──
+      requestAnimationFrame(() => {
+          content.querySelectorAll('.inventory-edit-fade-in').forEach(el => {
+              el.classList.add('visible');
+          });
+      });
+
+      // ── Wire toggle / block type handlers ──
+      wireInventoryToggles(content);
+
+      // ── Highlight active block in list ──
+      document.querySelectorAll('#results_section_6 .block').forEach(b => {
+          b.classList.toggle('inventory-block-active', b.getAttribute('data-id') === blockId);
+      });
+
+      // ── Save / Cancel / Keyboard ──
+      const doSave = () => {
+          const data = collectInventoryFormData(viewer);
+          if (!data) return;
+          viewer.removeEventListener('keydown', keyHandler);
+          const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
+          localStorage.removeItem(usesKey);
+          const latestBlock = getBlocks('tab6').find(b => b.id === blockId);
+          saveBlock('tab6', data.title, data.text, latestBlock?.tags || [], usesState, [], data.blockType, blockId, block.timestamp, data.inventoryExtras);
+          inventoryEditMode = false;
+          viewer.classList.remove('editing');
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('6'));
+      };
+
+      const doCancel = () => {
+          viewer.removeEventListener('keydown', keyHandler);
+          localStorage.removeItem(usesKey);
+          inventoryEditMode = false;
+          viewer.classList.remove('editing');
+          renderInventoryViewer(blockId);
+      };
+
+      const keyHandler = (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      };
+
+      controls.querySelector('.inventory-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+      controls.querySelector('.inventory-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+      viewer.addEventListener('keydown', keyHandler);
+
+      // ── Focus title ──
+      if (titleEl) {
+          titleEl.focus();
+          const range = document.createRange();
+          const sel   = window.getSelection();
+          range.selectNodeContents(titleEl);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+      }
+  };
+
+  const startInventoryAdd = () => {
+      if (inventoryEditMode) return;
+      const viewer = document.getElementById('inventory_viewer');
+      if (!viewer) return;
+
+      inventoryEditMode = true;
+
+      const { blockTypeHTML, togglesHTML } = buildInventoryInserts(null);
+
+      const usesKey = 'inventory_viewer_uses_new';
+      localStorage.setItem(usesKey, JSON.stringify([]));
+
+      const formHTML = `
+          <div class="inventory-viewer-content">
+              <div class="inventory-viewer-header">
+                  <h4 contenteditable="true" class="inventory-viewer-title inline-edit-title"></h4>
+                  <div class="inline-edit-controls">
+                      <button class="button green-button inventory-edit-save">Save</button>
+                      <button class="button red-button inventory-edit-cancel">Cancel</button>
+                  </div>
+              </div>
+              <div class="inventory-edit-inserts">
+                  ${blockTypeHTML}
+                  ${togglesHTML}
+              </div>
+              <div class="uses-field inline-edit-uses"></div>
+              <div class="inventory-viewer-body" contenteditable="true"></div>
+          </div>
+      `;
+
+      const existing = viewer.querySelector('.inventory-viewer-content, .inventory-viewer-placeholder');
+      const doSwap = () => {
+          viewer.innerHTML = formHTML;
+          viewer.classList.add('editing');
+          const fresh = viewer.querySelector('.inventory-viewer-content');
+          if (fresh) { fresh.style.opacity = '0'; void fresh.offsetWidth; fresh.style.opacity = ''; }
+
+          // Uses field
+          const usesContainer = viewer.querySelector('.inline-edit-uses');
+          if (usesContainer) {
+              initUsesField(usesContainer, usesKey);
+          }
+
+          wireInventoryToggles(viewer);
+
+          const saveBtn   = viewer.querySelector('.inventory-edit-save');
+          const cancelBtn = viewer.querySelector('.inventory-edit-cancel');
+
+          const doSave = () => {
+              const data = collectInventoryFormData(viewer);
+              if (!data) return;
+              viewer.removeEventListener('keydown', keyHandler);
+              const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
+              localStorage.removeItem(usesKey);
+              const newId = saveBlock('tab6', data.title, data.text, [], usesState, [], data.blockType, null, null, data.inventoryExtras);
+              inventoryEditMode = false;
+              viewer.classList.remove('editing');
+              if (typeof newId === 'string') activeInventoryBlockId = newId;
+              import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('6'));
+          };
+
+          const doCancel = () => {
+              viewer.removeEventListener('keydown', keyHandler);
+              localStorage.removeItem(usesKey);
+              inventoryEditMode = false;
+              viewer.classList.remove('editing');
+              if (activeInventoryBlockId) {
+                  renderInventoryViewer(activeInventoryBlockId);
+              } else {
+                  viewer.innerHTML = '<p class="inventory-viewer-placeholder">Select an item to view</p>';
+              }
+          };
+
+          const keyHandler = (e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+              else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+          };
+
+          saveBtn?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+          cancelBtn?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+          viewer.addEventListener('keydown', keyHandler);
+
+          const titleEl = viewer.querySelector('.inline-edit-title');
+          if (titleEl) titleEl.focus();
+      };
+
+      if (existing && existing.classList.contains('inventory-viewer-content')) {
+          existing.classList.add('fading');
+          setTimeout(doSwap, 200);
+      } else {
+          doSwap();
+      }
   };
 
   const renderInventory = (filteredBlocks = null) => {
@@ -1240,6 +1628,7 @@ const applyPendingBlockAnim = () => {
       // Block click → open in viewer, or deselect if already selected
       resultsSection.querySelectorAll('.block:not(.permanent-block)').forEach(blockEl => {
           blockEl.addEventListener('click', (e) => {
+              if (inventoryEditMode) return;
               if (e.target.closest('.block-actions')  ||
                   e.target.closest('.actions-trigger') ||
                   e.target.closest('.pin-button')      ||
@@ -1287,15 +1676,17 @@ const applyPendingBlockAnim = () => {
       });
 
       // Render viewer for the currently-active block, if it's still present.
-      // Otherwise leave the viewer empty — no auto-select.
-      const viewer = document.getElementById('inventory_viewer');
-      const stillPresent = activeInventoryBlockId &&
-          displayBlocks.find(b => b.id === activeInventoryBlockId);
-      if (stillPresent) {
-          renderInventoryViewer(activeInventoryBlockId);
-      } else {
-          activeInventoryBlockId = null;
-          if (viewer) viewer.innerHTML = '<p class="inventory-viewer-placeholder">Select an item to view</p>';
+      // If we're in edit mode, don't touch the viewer — the form is still active.
+      if (!inventoryEditMode) {
+          const viewer = document.getElementById('inventory_viewer');
+          const stillPresent = activeInventoryBlockId &&
+              displayBlocks.find(b => b.id === activeInventoryBlockId);
+          if (stillPresent) {
+              renderInventoryViewer(activeInventoryBlockId);
+          } else {
+              activeInventoryBlockId = null;
+              if (viewer) viewer.innerHTML = '<p class="inventory-viewer-placeholder">Select an item to view</p>';
+          }
       }
 
       // Section header click → toggle collapse
@@ -1358,10 +1749,8 @@ const applyPendingBlockAnim = () => {
 
       if (addBtn) {
           addBtn.onclick = () => {
-              overlayHandler.initializeOverlayTagHandlers('add_block_overlay_tags');
-              const overlay = document.querySelector('.add-block-overlay');
-              if (overlay) overlay.dataset.activeTab = 'tab6';
-              overlay?.classList.add('show');
+              if (inventoryEditMode) return;
+              startInventoryAdd();
           };
       }
   };
@@ -1386,6 +1775,7 @@ const applyPendingBlockAnim = () => {
 
   // Currently-active block in the notes viewer
   let activeNotesBlockId = null;
+  let notesEditMode = false;
 
   // ── Notes wide/narrow responsive mode ──────────────────────────
   const NOTES_WIDE_BREAKPOINT = 700;
@@ -1408,6 +1798,12 @@ const applyPendingBlockAnim = () => {
           layout.classList.toggle('notes-wide-mode', notesWideMode);
 
           if (wasWide !== notesWideMode) {
+              // Cancel any active edit — the layout is about to change
+              if (notesEditMode) {
+                  notesEditMode = false;
+                  const viewer = document.getElementById('notes_viewer');
+                  if (viewer) viewer.classList.remove('editing');
+              }
               const blocks = getBlocks('tab3');
               if (notesWideMode) {
                   // Narrow → wide: move inline-expanded block to viewer
@@ -1814,6 +2210,7 @@ const applyPendingBlockAnim = () => {
                   e.target.closest('.quest-status-pill') ||
                   e.target.closest('.quest-objective')) return;
               if (e.target.classList.contains('circle')) return;
+              if (notesEditMode) return;
 
               const id = blockEl.getAttribute('data-id');
               if (!id) return;
@@ -1917,6 +2314,7 @@ const applyPendingBlockAnim = () => {
 
       // ── Click on empty list space → close viewer ─────────────────
       resultsSection.addEventListener('click', (e) => {
+          if (notesEditMode) return;
           if (!e.target.closest('.block') &&
               !e.target.closest('.tab3-section-header') &&
               !e.target.closest('.tab3-location-pill') &&
@@ -1939,6 +2337,7 @@ const applyPendingBlockAnim = () => {
           notesViewerEl.addEventListener('click', (e) => {
               const pill = e.target.closest('.quest-status-pill');
               if (!pill) return;
+              if (notesEditMode) return;
               e.stopPropagation();
               const dropdown = document.getElementById('quest-status-dropdown');
               if (!dropdown) return;
@@ -1961,7 +2360,9 @@ const applyPendingBlockAnim = () => {
 
       // ── Viewer: mode-dependent ────────────────────────────────────
       const viewer = document.getElementById('notes_viewer');
-      if (notesWideMode) {
+      if (notesEditMode) {
+          // Editing in progress — don't touch the viewer or inline form
+      } else if (notesWideMode) {
           // Wide mode: viewer is always visible
           const stillPresent = activeNotesBlockId &&
               displayBlocks.find(b => b.id === activeNotesBlockId);
@@ -1991,20 +2392,680 @@ const applyPendingBlockAnim = () => {
   const wireNotesHeaderControls = () => {
       const addBtn = document.getElementById('add_block_button');
       if (addBtn) {
-          addBtn.onclick = () => {
-              overlayHandler.initializeOverlayTagHandlers('add_block_overlay_tags');
-              const overlay = document.querySelector('.add-block-overlay');
-              if (overlay) overlay.dataset.activeTab = 'tab3';
-              overlay?.classList.add('show');
-              setTimeout(() => {
-                  overlayHandler.setupQuestOverlayOptions('add');
-                  // Pre-select "Notes" as the default block type
-                  if (!document.querySelector('#character_type_tags_add .tag-button.selected')) {
-                      document.querySelector('#character_type_tags_add .tag-button[data-tag="Notes"]')
-                          ?.classList.add('selected');
-                  }
-              }, 0);
+          addBtn.onclick = () => startNotesAdd();
+      }
+  };
+
+  // ── Notes viewer/inline: shared edit & add helpers ─────────────
+
+  const NOTES_QUEST_STATUSES = [
+      { value: 'active',      label: 'Active' },
+      { value: 'on hold',     label: 'On hold' },
+      { value: 'not started', label: 'Not started' },
+      { value: 'completed',   label: 'Completed' },
+      { value: 'failed',      label: 'Failed' },
+  ];
+
+  // Build all the inner form HTML for a notes edit/add form.
+  // `block` is the existing block on edit, null on add.
+  const buildNotesEditFormHTML = (block) => {
+      const isEdit = !!block;
+      const tab = 'tab3';
+
+      // ── Block type buttons (single-select) ──
+      const tabBTConfig = blockTypeConfig[tab];
+      const currentTypes = isEdit
+          ? (Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []))
+          : ['Notes'];
+      const blockTypeHTML = tabBTConfig.types.map(type =>
+          `<button class="tag-button ${tabBTConfig.className}${currentTypes.includes(type) ? ' selected' : ''}" data-tag="${type}">${type}</button>`
+      ).join('');
+
+      // ── Current type for initial field visibility ──
+      const selType   = currentTypes[0] || 'Notes';
+      const showQuest = selType === 'Quest';
+      const showMap   = selType === 'Map';
+      const showBook  = selType === 'Book';
+      const showDesc  = selType === 'Book' || selType === 'Notes';
+      const showBody  = selType !== 'Map';
+
+      // ── Location ──
+      const location = isEdit ? (block.location || '') : '';
+
+      // ── URL (Map) ──
+      const url = isEdit ? (block.url || '') : '';
+
+      // ── Description (Book, Notes) ──
+      const description = isEdit ? (block.description || '') : '';
+
+      // ── Accent swatches (Book) ──
+      const bookColor = isEdit ? (block.bookColor || DEFAULT_BOOK_ACCENT) : DEFAULT_BOOK_ACCENT;
+      const swatchesHTML = BOOK_ACCENT_COLORS.map(c => `
+          <button type="button"
+              class="book-accent-swatch${c.id === bookColor ? ' selected' : ''}"
+              data-color-id="${c.id}"
+              style="background-color:${c.hex};"
+              title="${c.label}"
+              aria-label="${c.label}"></button>
+      `).join('');
+
+      // ── Status pills (Quest) ──
+      const status = isEdit ? (block.status || 'active') : 'active';
+      const statusHTML = NOTES_QUEST_STATUSES.map(s =>
+          `<button type="button" class="quest-status-pill status-${s.value.replace(/\s+/g, '-')}${status === s.value ? ' selected' : ''}" data-status="${s.value}"><span class="quest-status-dot"></span>${s.label}</button>`
+      ).join('');
+
+      // ── Objectives editor rows (Quest) ──
+      const objectives = isEdit && Array.isArray(block.objectives) ? block.objectives : [];
+      const objectivesHTML = objectives.map(o => `
+          <div class="quest-objective-editor-row" data-done="${o.done ? 'true' : 'false'}">
+              <input type="text" class="quest-objective-input" placeholder="Objective…" value="${(o.text || '').replace(/"/g, '&quot;')}" />
+              <button type="button" class="quest-objective-remove" title="Remove">×</button>
+          </div>
+      `).join('');
+
+      // ── Body ──
+      let bodyHTML = isEdit ? (block.text || '') : '';
+      bodyHTML = bodyHTML
+          .replace(/<div[^>]*>/gi, '')
+          .replace(/^(&nbsp;|\s)+/gi, '')
+          .replace(/<\/div>/gi, '<br>')
+          .replace(/<p[^>]*>/gi, '')
+          .replace(/<\/p>/gi, '<br>')
+          .trim();
+
+      // ── Title ──
+      const title = isEdit ? block.title : '';
+
+      // ── Assemble type-specific fields ──
+      const fieldsHTML = `
+          <div class="notes-edit-fields">
+              <div class="quest-overlay-field">
+                  <label class="quest-overlay-label">Location</label>
+                  <input type="text" class="notes-edit-location quest-overlay-input" placeholder="e.g. Ionia — leave blank for none" value="${location.replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="quest-overlay-field map-only-field" style="display:${showMap ? '' : 'none'};">
+                  <label class="quest-overlay-label">Link URL</label>
+                  <input type="url" class="notes-edit-url quest-overlay-input" placeholder="https://example.com" value="${url.replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="quest-overlay-field desc-only-field" style="display:${showDesc ? '' : 'none'};">
+                  <label class="quest-overlay-label">Description</label>
+                  <input type="text" class="notes-edit-description quest-overlay-input" placeholder="Short description shown on the card" maxlength="200" value="${description.replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="quest-overlay-field book-only-field" style="display:${showBook ? '' : 'none'};">
+                  <label class="quest-overlay-label">Accent colour</label>
+                  <div class="notes-edit-swatches book-accent-swatches">${swatchesHTML}</div>
+              </div>
+              <div class="quest-overlay-field quest-only-field" style="display:${showQuest ? '' : 'none'};">
+                  <label class="quest-overlay-label">Status</label>
+                  <div class="notes-edit-status quest-status-button-row">${statusHTML}</div>
+              </div>
+              <div class="quest-overlay-field quest-only-field" style="display:${showQuest ? '' : 'none'};">
+                  <label class="quest-overlay-label">Objectives</label>
+                  <div class="notes-edit-objectives quest-objectives-editor">${objectivesHTML}</div>
+                  <button type="button" class="notes-edit-add-objective quest-add-objective-btn">+ Add objective</button>
+              </div>
+          </div>
+      `;
+
+      return { title, blockTypeHTML, fieldsHTML, bodyHTML, showBody };
+  };
+
+  // Wire up all interactive behaviour within a notes edit form container.
+  const wireNotesEditBehaviour = (container) => {
+      // ── Block type single-select + field visibility ──
+      const blockTypesContainer = container.querySelector('.inline-edit-block-types');
+      const questOnlyFields = container.querySelectorAll('.quest-only-field');
+      const bookOnlyFields  = container.querySelectorAll('.book-only-field');
+      const descOnlyFields  = container.querySelectorAll('.desc-only-field');
+      const mapOnlyFields   = container.querySelectorAll('.map-only-field');
+      const bodyWrap        = container.querySelector('.notes-edit-body-wrap');
+
+      const updateFieldVisibility = () => {
+          const sel = blockTypesContainer?.querySelector('.tag-button.selected');
+          const type = sel?.dataset.tag || '';
+          const isQuest = type === 'Quest';
+          const isMap   = type === 'Map';
+          const isBook  = type === 'Book';
+          const isDesc  = isBook || type === 'Notes';
+
+          questOnlyFields.forEach(f => f.style.display = isQuest ? '' : 'none');
+          bookOnlyFields.forEach(f => f.style.display = isBook ? '' : 'none');
+          descOnlyFields.forEach(f => f.style.display = isDesc ? '' : 'none');
+          mapOnlyFields.forEach(f => f.style.display = isMap ? '' : 'none');
+
+          // Hide body editor (and its toolbar wrapper) for Map
+          if (bodyWrap) bodyWrap.style.display = isMap ? 'none' : '';
+      };
+
+      if (blockTypesContainer) {
+          blockTypesContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.tag-button');
+              if (!btn) return;
+              const wasSel = btn.classList.contains('selected');
+              blockTypesContainer.querySelectorAll('.tag-button').forEach(b => b.classList.remove('selected'));
+              if (!wasSel) btn.classList.add('selected');
+              updateFieldVisibility();
+          });
+      }
+
+      // ── Status pill mutual exclusion ──
+      const statusRow = container.querySelector('.notes-edit-status');
+      if (statusRow) {
+          statusRow.addEventListener('click', (e) => {
+              const pill = e.target.closest('.quest-status-pill');
+              if (!pill) return;
+              e.preventDefault();
+              statusRow.querySelectorAll('.quest-status-pill').forEach(p => p.classList.remove('selected'));
+              pill.classList.add('selected');
+          });
+      }
+
+      // ── Objectives add / remove / Enter-to-add ──
+      const objectivesEditor = container.querySelector('.notes-edit-objectives');
+      const addObjectiveBtn  = container.querySelector('.notes-edit-add-objective');
+
+      const renderObjectiveRow = (text = '', done = false) => {
+          const row = document.createElement('div');
+          row.className = 'quest-objective-editor-row';
+          row.dataset.done = done ? 'true' : 'false';
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'quest-objective-input';
+          input.placeholder = 'Objective…';
+          input.value = text;
+          row.appendChild(input);
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'quest-objective-remove';
+          removeBtn.title = 'Remove';
+          removeBtn.textContent = '×';
+          row.appendChild(removeBtn);
+          return row;
+      };
+
+      if (addObjectiveBtn && objectivesEditor) {
+          addObjectiveBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const row = renderObjectiveRow('', false);
+              objectivesEditor.appendChild(row);
+              row.querySelector('.quest-objective-input').focus();
+          });
+      }
+
+      if (objectivesEditor) {
+          objectivesEditor.addEventListener('click', (e) => {
+              const rmBtn = e.target.closest('.quest-objective-remove');
+              if (!rmBtn) return;
+              e.preventDefault();
+              rmBtn.closest('.quest-objective-editor-row')?.remove();
+          });
+          objectivesEditor.addEventListener('keydown', (e) => {
+              if (e.key !== 'Enter' || !e.target.classList.contains('quest-objective-input')) return;
+              e.preventDefault();
+              const row = renderObjectiveRow('', false);
+              e.target.closest('.quest-objective-editor-row').after(row);
+              row.querySelector('.quest-objective-input').focus();
+          });
+      }
+
+      // ── Accent swatch selection ──
+      const swatchContainer = container.querySelector('.notes-edit-swatches');
+      if (swatchContainer) {
+          swatchContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.book-accent-swatch');
+              if (!btn) return;
+              e.preventDefault();
+              swatchContainer.querySelectorAll('.book-accent-swatch').forEach(s => s.classList.remove('selected'));
+              btn.classList.add('selected');
+          });
+      }
+
+      // ── Rich text toolbar on body ──
+      const bodyEl = container.querySelector('.notes-edit-body');
+      if (bodyEl) {
+          initToolbarForEditor(bodyEl);
+          // Placeholder toggle (mirrors initCEPlaceholder)
+          const updatePlaceholder = () => {
+              const txt = bodyEl.textContent.replace(/\u200B/g, '').trim();
+              bodyEl.classList.toggle('empty', txt === '');
           };
+          bodyEl.addEventListener('input', updatePlaceholder);
+          bodyEl.addEventListener('focus', updatePlaceholder);
+          bodyEl.addEventListener('blur', updatePlaceholder);
+          updatePlaceholder();
+      }
+
+      // Run initial visibility pass (toolbar wrapper now exists)
+      updateFieldVisibility();
+  };
+
+  // Read + validate form data from a notes edit container.
+  // Returns object on success, null on validation failure.
+  const collectNotesFormData = (container) => {
+      const titleEl = container.querySelector('.notes-edit-title');
+      const newTitle = titleEl?.textContent.trim();
+      if (!newTitle) { alert('A title is required.'); return null; }
+
+      // Block type
+      const selectedTypeBtn = container.querySelector('.inline-edit-block-types .tag-button.selected');
+      const blockType = selectedTypeBtn?.dataset.tag || null;
+      if (!blockType) {
+          alert('Please select a block type: ' + blockTypeConfig.tab3.types.join(', ') + '.');
+          return null;
+      }
+
+      // Body
+      const bodyEl = container.querySelector('.notes-edit-body');
+      const newBody = bodyEl ? bodyEl.innerHTML.trim() : '';
+      const textOptional = blockType === 'Quest' || blockType === 'Map';
+      if (!textOptional && !newBody) {
+          alert('Title and text are required.');
+          return null;
+      }
+
+      // Location
+      const loc = container.querySelector('.notes-edit-location')?.value.trim() || null;
+
+      // Build tab3Extras
+      const tab3Extras = { location: loc };
+
+      if (blockType === 'Quest') {
+          const selPill = container.querySelector('.notes-edit-status .quest-status-pill.selected');
+          tab3Extras.status = selPill?.dataset.status || 'active';
+          const rows = container.querySelectorAll('.notes-edit-objectives .quest-objective-editor-row');
+          tab3Extras.objectives = Array.from(rows).map(row => ({
+              text: row.querySelector('.quest-objective-input')?.value.trim() || '',
+              done: row.dataset.done === 'true'
+          })).filter(o => o.text !== '');
+      }
+      if (blockType === 'Book') {
+          tab3Extras.description = container.querySelector('.notes-edit-description')?.value.trim() || '';
+          const selSwatch = container.querySelector('.notes-edit-swatches .book-accent-swatch.selected');
+          tab3Extras.bookColor = selSwatch?.dataset.colorId || DEFAULT_BOOK_ACCENT;
+      }
+      if (blockType === 'Notes') {
+          tab3Extras.description = container.querySelector('.notes-edit-description')?.value.trim() || '';
+      }
+      if (blockType === 'Map') {
+          const urlVal = container.querySelector('.notes-edit-url')?.value.trim() || '';
+          if (!urlVal) { alert('A link URL is required for Map blocks.'); return null; }
+          tab3Extras.url = urlVal;
+      }
+
+      const text = blockType === 'Map' ? '' : newBody;
+
+      return { title: newTitle, text, blockType, tab3Extras };
+  };
+
+  // Assemble the full edit form HTML used by both viewer and inline modes.
+  const assembleNotesEditFormInner = (block) => {
+      const { title, blockTypeHTML, fieldsHTML, bodyHTML, showBody } = buildNotesEditFormHTML(block);
+
+      return `
+          <div class="notes-edit-header">
+              <h4 contenteditable="true" class="notes-edit-title">${title}</h4>
+              <div class="inline-edit-controls">
+                  <button class="button green-button notes-edit-save">Save</button>
+                  <button class="button red-button notes-edit-cancel">Cancel</button>
+              </div>
+          </div>
+          <div class="notes-edit-inserts">
+              <div class="inline-edit-block-types">${blockTypeHTML}</div>
+              ${fieldsHTML}
+          </div>
+          <div class="notes-edit-body-wrap" style="display:${showBody ? '' : 'none'};">
+              <div contenteditable="true" class="notes-edit-body" data-placeholder="Enter block text here...">${bodyHTML}</div>
+          </div>
+      `;
+  };
+
+  // ── Wide mode: edit in viewer ──────────────────────────────────
+  const enterNotesViewerEdit = (blockId) => {
+      if (notesEditMode) return;
+      const viewer = document.getElementById('notes_viewer');
+      if (!viewer) return;
+
+      const blocks = getBlocks('tab3');
+      const block  = blocks.find(b => b.id === blockId);
+      if (!block) return;
+
+      // If viewer doesn't have content, render first then re-enter
+      if (!viewer.querySelector('.notes-viewer-content')) {
+          renderNotesViewer(blockId);
+          requestAnimationFrame(() => enterNotesViewerEdit(blockId));
+          return;
+      }
+
+      notesEditMode = true;
+      activeNotesBlockId = blockId;
+      viewer.classList.add('editing');
+
+      const formHTML = `<div class="notes-viewer-content notes-edit-form">${assembleNotesEditFormInner(block)}</div>`;
+
+      const existing = viewer.querySelector('.notes-viewer-content, .notes-viewer-placeholder');
+      const doSwap = () => {
+          viewer.innerHTML = formHTML;
+          const content = viewer.querySelector('.notes-edit-form');
+          if (content) { content.style.opacity = '0'; void content.offsetWidth; content.style.opacity = ''; }
+
+          wireNotesEditBehaviour(viewer);
+
+          // Highlight active block in list
+          document.querySelectorAll('#results_section_3 .block').forEach(b => {
+              b.classList.toggle('notes-block-active', b.getAttribute('data-id') === blockId);
+          });
+
+          // Save / Cancel
+          const doSave = () => {
+              const data = collectNotesFormData(viewer);
+              if (!data) return;
+              viewer.removeEventListener('keydown', keyHandler);
+              const latestBlock = getBlocks('tab3').find(b => b.id === blockId);
+              saveBlock('tab3', data.title, data.text, latestBlock?.tags || [], [], [], data.blockType, blockId, block.timestamp, null, data.tab3Extras);
+              notesEditMode = false;
+              viewer.classList.remove('editing');
+              import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
+          };
+
+          const doCancel = () => {
+              viewer.removeEventListener('keydown', keyHandler);
+              notesEditMode = false;
+              viewer.classList.remove('editing');
+              renderNotesViewer(blockId);
+          };
+
+          const keyHandler = (e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+              else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+          };
+
+          viewer.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+          viewer.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+          viewer.addEventListener('keydown', keyHandler);
+
+          // Focus title
+          const titleEl = viewer.querySelector('.notes-edit-title');
+          if (titleEl) {
+              titleEl.focus();
+              const range = document.createRange();
+              const sel = window.getSelection();
+              range.selectNodeContents(titleEl);
+              range.collapse(false);
+              sel.removeAllRanges();
+              sel.addRange(range);
+          }
+      };
+
+      if (existing && existing.classList.contains('notes-viewer-content')) {
+          existing.classList.add('fading');
+          setTimeout(doSwap, 200);
+      } else {
+          doSwap();
+      }
+  };
+
+  // ── Wide mode: add in viewer ───────────────────────────────────
+  const startNotesViewerAdd = () => {
+      if (notesEditMode) return;
+      const viewer = document.getElementById('notes_viewer');
+      const layout = document.querySelector('.notes-layout');
+      if (!viewer) return;
+
+      notesEditMode = true;
+
+      // In narrow mode slide open (shouldn't happen but safety)
+      if (!notesWideMode && layout) layout.classList.add('notes-viewer-open');
+
+      const formHTML = `<div class="notes-viewer-content notes-edit-form">${assembleNotesEditFormInner(null)}</div>`;
+
+      const existing = viewer.querySelector('.notes-viewer-content, .notes-viewer-placeholder');
+      const doSwap = () => {
+          viewer.innerHTML = formHTML;
+          viewer.classList.add('editing');
+          const content = viewer.querySelector('.notes-edit-form');
+          if (content) { content.style.opacity = '0'; void content.offsetWidth; content.style.opacity = ''; }
+
+          wireNotesEditBehaviour(viewer);
+
+          // Clear active highlight
+          document.querySelectorAll('#results_section_3 .block').forEach(b => b.classList.remove('notes-block-active'));
+
+          // Save / Cancel
+          const doSave = () => {
+              const data = collectNotesFormData(viewer);
+              if (!data) return;
+              viewer.removeEventListener('keydown', keyHandler);
+              const newId = saveBlock('tab3', data.title, data.text, [], [], [], data.blockType, null, null, null, data.tab3Extras);
+              notesEditMode = false;
+              viewer.classList.remove('editing');
+              if (typeof newId === 'string') activeNotesBlockId = newId;
+              import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
+          };
+
+          const doCancel = () => {
+              viewer.removeEventListener('keydown', keyHandler);
+              notesEditMode = false;
+              viewer.classList.remove('editing');
+              if (activeNotesBlockId) {
+                  renderNotesViewer(activeNotesBlockId);
+              } else {
+                  viewer.innerHTML = '<p class="notes-viewer-placeholder">Select an item to view</p>';
+              }
+          };
+
+          const keyHandler = (e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+              else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+          };
+
+          viewer.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+          viewer.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+          viewer.addEventListener('keydown', keyHandler);
+
+          // Focus title
+          const titleEl = viewer.querySelector('.notes-edit-title');
+          if (titleEl) titleEl.focus();
+      };
+
+      if (existing && existing.classList.contains('notes-viewer-content')) {
+          existing.classList.add('fading');
+          setTimeout(doSwap, 200);
+      } else {
+          doSwap();
+      }
+  };
+
+  // ── Narrow mode: edit inline ───────────────────────────────────
+  const enterNotesInlineEdit = (blockId) => {
+      if (notesEditMode) return;
+      const tab = 'tab3';
+      const blocksArr = getBlocks(tab);
+      const block = blocksArr.find(b => b.id === blockId);
+      if (!block) return;
+
+      // If not expanded, expand first then re-enter
+      if (block.viewState !== 'expanded') {
+          const oldHeight = document.querySelector(`.block[data-id="${blockId}"]`)?.offsetHeight || 0;
+          block.viewState = 'expanded';
+          // Collapse any other expanded block
+          blocksArr.forEach(b => { if (b.id !== blockId && b.viewState === 'expanded') b.viewState = 'condensed'; });
+          localStorage.setItem('userBlocks_tab3', JSON.stringify(blocksArr));
+          import('./filterManager.js').then(({ filterManager }) => {
+              filterManager.applyFilters('3');
+              requestAnimationFrame(() => {
+                  enterNotesInlineEdit(blockId);
+                  const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
+                  if (!blockEl || !oldHeight) return;
+                  const newHeight = blockEl.offsetHeight;
+                  if (Math.abs(newHeight - oldHeight) < 2) return;
+                  const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
+                  blockEl.style.height = oldHeight + 'px';
+                  blockEl.style.overflow = 'hidden';
+                  blockEl.style.transition = 'none';
+                  fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
+                  void blockEl.offsetHeight;
+                  blockEl.style.transition = 'height 0.5s ease';
+                  blockEl.style.height = newHeight + 'px';
+                  fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
+                  const cleanup = () => {
+                      blockEl.style.height = ''; blockEl.style.overflow = ''; blockEl.style.transition = '';
+                      fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
+                  };
+                  blockEl.addEventListener('transitionend', (e) => {
+                      if (e.target === blockEl && e.propertyName === 'height') cleanup();
+                  }, { once: true });
+                  setTimeout(cleanup, 600);
+              });
+          });
+          return;
+      }
+
+      const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
+      if (!blockEl) return;
+
+      notesEditMode = true;
+      const oldHeight = blockEl.offsetHeight;
+
+      blockEl.classList.add('inline-editing');
+      blockEl.innerHTML = assembleNotesEditFormInner(block);
+
+      wireNotesEditBehaviour(blockEl);
+
+      // Save / Cancel
+      const doSave = () => {
+          const data = collectNotesFormData(blockEl);
+          if (!data) return;
+          blockEl.removeEventListener('keydown', keyHandler);
+          const latestBlock = getBlocks(tab).find(b => b.id === blockId);
+          saveBlock(tab, data.title, data.text, latestBlock?.tags || [], [], [], data.blockType, blockId, block.timestamp, null, data.tab3Extras);
+          notesEditMode = false;
+          setPendingBlockAnim(blockId, blockEl.offsetHeight);
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
+      };
+
+      const doCancel = () => {
+          blockEl.removeEventListener('keydown', keyHandler);
+          notesEditMode = false;
+          setPendingBlockAnim(blockId, blockEl.offsetHeight);
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
+      };
+
+      const keyHandler = (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      };
+
+      blockEl.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+      blockEl.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+      blockEl.addEventListener('keydown', keyHandler);
+
+      // Focus title
+      const titleEl = blockEl.querySelector('.notes-edit-title');
+      if (titleEl) {
+          titleEl.focus();
+          const range = document.createRange();
+          const sel = window.getSelection();
+          range.selectNodeContents(titleEl);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+      }
+
+      // Animate from old height
+      const newHeight = blockEl.offsetHeight;
+      if (oldHeight && Math.abs(newHeight - oldHeight) > 2) {
+          const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('notes-edit-header'));
+          blockEl.style.height = oldHeight + 'px';
+          blockEl.style.overflow = 'hidden';
+          blockEl.style.transition = 'none';
+          fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
+          void blockEl.offsetHeight;
+          blockEl.style.transition = 'height 0.5s ease';
+          blockEl.style.height = newHeight + 'px';
+          fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
+          const cleanup = () => {
+              blockEl.style.height = ''; blockEl.style.overflow = ''; blockEl.style.transition = '';
+              fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
+          };
+          blockEl.addEventListener('transitionend', (e) => {
+              if (e.target === blockEl && e.propertyName === 'height') cleanup();
+          }, { once: true });
+          setTimeout(cleanup, 600);
+      }
+  };
+
+  // ── Narrow mode: add inline ────────────────────────────────────
+  const startNotesInlineAdd = () => {
+      if (notesEditMode) return;
+      notesEditMode = true;
+
+      const blockEl = document.createElement('div');
+      blockEl.className = 'block expanded inline-editing';
+      blockEl.setAttribute('data-id', 'new-notes-inline-add');
+
+      blockEl.innerHTML = assembleNotesEditFormInner(null);
+
+      // Insert after the results header / location row
+      const resultsSection = document.getElementById('results_section_3');
+      if (!resultsSection) return;
+      const host = document.getElementById('tab3-sections-host');
+      if (host) {
+          host.prepend(blockEl);
+      } else {
+          resultsSection.appendChild(blockEl);
+      }
+
+      blockEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      wireNotesEditBehaviour(blockEl);
+
+      // Save / Cancel
+      const doSave = () => {
+          const data = collectNotesFormData(blockEl);
+          if (!data) return;
+          blockEl.removeEventListener('keydown', keyHandler);
+          saveBlock('tab3', data.title, data.text, [], [], [], data.blockType, null, null, null, data.tab3Extras);
+          notesEditMode = false;
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
+      };
+
+      const doCancel = () => {
+          blockEl.removeEventListener('keydown', keyHandler);
+          notesEditMode = false;
+          blockEl.remove();
+      };
+
+      const keyHandler = (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      };
+
+      blockEl.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+      blockEl.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+      blockEl.addEventListener('keydown', keyHandler);
+
+      // Focus title
+      const titleEl = blockEl.querySelector('.notes-edit-title');
+      if (titleEl) titleEl.focus();
+  };
+
+  // ── Dispatchers ────────────────────────────────────────────────
+  const enterNotesEdit = (blockId) => {
+      if (notesEditMode) return;
+      if (notesWideMode) {
+          enterNotesViewerEdit(blockId);
+      } else {
+          enterNotesInlineEdit(blockId);
+      }
+  };
+
+  const startNotesAdd = () => {
+      if (notesEditMode) return;
+      if (notesWideMode) {
+          startNotesViewerAdd();
+      } else {
+          startNotesInlineAdd();
       }
   };
 
@@ -2062,6 +3123,7 @@ const applyPendingBlockAnim = () => {
           resultsSection.addEventListener('click', (e) => {
               const pill = e.target.closest('.quest-status-pill');
               if (!pill) return;
+              if (notesEditMode) return;
               e.stopPropagation();
 
               const rect = pill.getBoundingClientRect();
@@ -2266,7 +3328,7 @@ const applyPendingBlockAnim = () => {
       zone.addEventListener('pointercancel', endDrag);
   };
 
-  const renderBlocks = (tab = getActiveTab(), filteredBlocks = null) => {
+  const renderBlocks = (tab = getActiveTab(), filteredBlocks = null, skipTagUpdate = false) => {
     console.log("🔍 Checking tab value:", tab, typeof tab);
 
     if (renderAbortController) renderAbortController.abort();
@@ -2346,6 +3408,10 @@ resultsSection.innerHTML = `
       .querySelector('#add_block_button');
     if (addBtn) {
       addBtn.onclick = () => {
+        if (tab === 'tab9') {
+            startInlineAdd();
+            return;
+        }
         overlayHandler.initializeOverlayTagHandlers("add_block_overlay_tags");
         document.querySelector('.add-block-overlay').classList.add('show');
       };
@@ -2490,10 +3556,11 @@ resultsSection.innerHTML = `
     document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`)
       .forEach(blockEl => {
         blockEl.addEventListener("click", function(e) {
-          // Action buttons (pin, edit, duplicate, remove, ⋯ trigger) handle their own clicks
-          if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
-          // Interactive circles (uses) handle their own clicks
-          if (e.target.classList.contains('circle')) return;
+            // Action buttons (pin, edit, duplicate, remove, ⋯ trigger) handle their own clicks
+            if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
+            // Interactive circles (uses) handle their own clicks
+            if (e.target.classList.contains('circle')) return;
+            if (blockEl.classList.contains('inline-editing')) return;
 
           // For condensed blocks: click anywhere expands
           // For expanded blocks: only empty space collapses (tags/text remain interactive)
@@ -2536,7 +3603,7 @@ resultsSection.innerHTML = `
         });
       });
 
-    updateTags();
+    if (!skipTagUpdate) updateTags();
     attachDynamicTooltips();
     initScrollFades('.results-section',              null,                        '--results-fade-opacity',      '_scrollFadeHandler');
     initScrollFades('.filter-section',               '--filter-fade-top-opacity', '--filter-fade-bottom-opacity','_filterFadeHandler', 100);
@@ -3068,6 +4135,688 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
     updateTags();
   };
 
+  // ── Inline block editing (tab9) ──────────────────────────────────
+  let inlineEditState = null;
+
+  const enterInlineEdit = (blockId) => {
+      const tab = 'tab9';
+      const blocksArr = getBlocks(tab);
+      const block = blocksArr.find(b => b.id === blockId);
+      if (!block) return;
+
+      // If not expanded, expand first then re-enter — animate directly
+      // to the edit-form height (not the intermediate expanded height)
+      if (block.viewState !== 'expanded') {
+          const oldHeight = document.querySelector(`.block[data-id="${blockId}"]`)?.offsetHeight || 0;
+          block.viewState = 'expanded';
+          localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
+          // Don't call setPendingBlockAnim — we animate after the edit form is in place
+          import('./filterManager.js').then(({ filterManager }) => {
+              filterManager.applyFilters('9');
+              requestAnimationFrame(() => {
+                  enterInlineEdit(blockId);
+                  const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
+                  if (!blockEl || !oldHeight) return;
+                  const newHeight = blockEl.offsetHeight;
+                  if (Math.abs(newHeight - oldHeight) < 2) return;
+                  const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
+                  blockEl.style.height = oldHeight + 'px';
+                  blockEl.style.overflow = 'hidden';
+                  blockEl.style.transition = 'none';
+                  fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
+                  void blockEl.offsetHeight;
+                  blockEl.style.transition = 'height 0.5s ease';
+                  blockEl.style.height = newHeight + 'px';
+                  fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
+                  const cleanup = () => {
+                      blockEl.style.height = '';
+                      blockEl.style.overflow = '';
+                      blockEl.style.transition = '';
+                      fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
+                  };
+                  blockEl.addEventListener('transitionend', (e) => {
+                      if (e.target === blockEl && e.propertyName === 'height') cleanup();
+                  }, { once: true });
+                  setTimeout(cleanup, 600);
+              });
+          });
+          return;
+      }
+
+      const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
+      if (!blockEl) return;
+
+      // Capture height before replacing content for expand animation
+      const oldHeight = blockEl.offsetHeight;
+
+      // Snapshot for cancel
+      inlineEditState = {
+          blockId,
+          snapshot: {
+              title: block.title,
+              text: block.text,
+              tags: [...(block.tags || [])],
+              blockType: Array.isArray(block.blockType) ? [...block.blockType] : (block.blockType ? [block.blockType] : []),
+              uses: block.uses ? [...block.uses] : [],
+              properties: block.properties ? [...block.properties] : [],
+          }
+      };
+
+      blockEl.classList.add('inline-editing');
+
+      // Gather tag data
+      const predefinedTagList = Object.entries(categoryTags)
+          .filter(([_, data]) => data.tabs.includes(tab))
+          .flatMap(([_, data]) => data.tags);
+      const predefinedTagSet = new Set(predefinedTagList);
+
+      const userDefinedTags = [
+          ...new Set(
+              getBlocks(tab).flatMap(b => b.tags).map(t => t.toLowerCase())
+          )
+      ].filter(t => !predefinedTagList.map(pt => pt.toLowerCase()).includes(t))
+       .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
+       .sort((a, b) => a.localeCompare(b));
+
+      const blockTags = block.tags || [];
+      const blockUserTags = blockTags.filter(t => !predefinedTagSet.has(t));
+      const blockTypes = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+
+      // Block type buttons HTML
+      const tabBTConfig = blockTypeConfig[tab];
+      const blockTypeHTML = tabBTConfig
+          ? tabBTConfig.types.map(type =>
+              `<button class="tag-button ${tabBTConfig.className}${blockTypes.includes(type) ? ' selected' : ''}" data-tag="${type}">${type}</button>`
+            ).join('')
+          : '';
+
+      // Tag accordion groups HTML
+      let tagsHTML = '';
+      Object.entries(categoryTags).forEach(([category, data]) => {
+          if (!data.tabs.includes(tab)) return;
+          const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          tagsHTML += `<div class="tag-accordion-group ${data.className}" data-category="${category}">`;
+          tagsHTML += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
+          tagsHTML += `<div class="tag-accordion-body">`;
+          tagsHTML += `<span class="tag-accordion-label">${label}</span>`;
+          tagsHTML += data.tags.map(t =>
+              `<button class="tag-button ${data.className}${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
+          ).join('');
+          tagsHTML += `</div></div>`;
+      });
+
+      tagsHTML += `<div class="tag-category user-tags-edit">`;
+      if (userDefinedTags.length > 0) {
+          tagsHTML += userDefinedTags.map(t =>
+              `<button class="tag-button tag-user${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
+          ).join('');
+      }
+      tagsHTML += `<span class="inline-edit-add-tag"></span>`;
+      tagsHTML += `</div>`;
+
+      // Body HTML
+      let bodyHTML = block.text || '';
+      bodyHTML = bodyHTML
+          .replace(/<div[^>]*>/gi, '')
+          .replace(/^(&nbsp;|\s)+/gi, '')
+          .replace(/<\/div>/gi, '<br>')
+          .replace(/<p[^>]*>/gi, '')
+          .replace(/<\/p>/gi, '<br>')
+          .trim();
+
+      // Uses localStorage key
+      const usesKey = `inline_edit_uses_${blockId}`;
+      localStorage.setItem(usesKey, JSON.stringify(block.uses || []));
+
+      blockEl.innerHTML = `
+              <div class="block-header">
+                  <div class="block-header-left">
+                      <div class="block-title"><h4 contenteditable="true" class="inline-edit-title">${block.title}</h4></div>
+                  </div>
+                  <div class="inline-edit-controls">
+                      <button class="button green-button inline-edit-save">Save</button>
+                      <button class="button red-button inline-edit-cancel">Cancel</button>
+                  </div>
+              </div>
+              <div class="inline-edit-block-types">${blockTypeHTML}</div>
+              <div class="uses-field inline-edit-uses"></div>
+              <div class="inline-edit-tags">${tagsHTML}</div>
+              <div class="block-properties inline-edit-properties">${(block.properties || []).map(p =>
+                  `<span class="block-property-wrap"><span class="block-property" contenteditable="true">${p}</span><span class="property-remove-btn">×</span></span>`
+              ).join('')}<span class="block-property inline-edit-new-prop"></span></div>
+              <div class="block-body"><span contenteditable="true" class="inline-edit-body">${bodyHTML}</span></div>
+      `;
+
+      // Init uses field
+      const usesContainer = blockEl.querySelector('.inline-edit-uses');
+      if (usesContainer) initUsesField(usesContainer, usesKey);
+
+      // Tag toggle handler
+      const tagsContainer = blockEl.querySelector('.inline-edit-tags');
+      if (tagsContainer) {
+          tagsContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.tag-button');
+              if (btn) btn.classList.toggle('selected');
+          });
+      }
+
+      // Block type toggle handler
+      const blockTypesContainer = blockEl.querySelector('.inline-edit-block-types');
+      if (blockTypesContainer) {
+          blockTypesContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.tag-button');
+              if (btn) btn.classList.toggle('selected');
+          });
+      }
+
+      // Properties editing
+      const propsContainer = blockEl.querySelector('.inline-edit-properties');
+      const newPropBtn = blockEl.querySelector('.inline-edit-new-prop');
+
+      const createPropertyWrap = (text) => {
+          const wrap = document.createElement('span');
+          wrap.className = 'block-property-wrap';
+          wrap.innerHTML = '<span class="block-property" contenteditable="true"></span><span class="property-remove-btn">×</span>';
+          if (text) wrap.querySelector('.block-property').textContent = text;
+          return wrap;
+      };
+
+      if (propsContainer) {
+          // + button creates a new empty property
+          if (newPropBtn) {
+              newPropBtn.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  const wrap = createPropertyWrap('');
+                  newPropBtn.before(wrap);
+                  wrap.querySelector('.block-property').focus();
+              });
+          }
+
+          propsContainer.addEventListener('keydown', (e) => {
+              const prop = e.target.closest('.block-property');
+              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
+
+              if (e.key === ',' || e.key === 'Enter') {
+                  e.preventDefault();
+                  const wrap = createPropertyWrap('');
+                  prop.closest('.block-property-wrap').after(wrap);
+                  wrap.querySelector('.block-property').focus();
+              } else if (e.key === 'Backspace' && prop.textContent.trim() === '') {
+                  e.preventDefault();
+                  const wrap = prop.closest('.block-property-wrap');
+                  const prev = wrap?.previousElementSibling;
+                  wrap.remove();
+                  if (prev) {
+                      const prevProp = prev.querySelector?.('.block-property') || prev;
+                      const range = document.createRange();
+                      const sel = window.getSelection();
+                      range.selectNodeContents(prevProp);
+                      range.collapse(false);
+                      sel.removeAllRanges();
+                      sel.addRange(range);
+                  }
+              }
+          });
+
+          // Blur: empty properties get removed
+          propsContainer.addEventListener('focusout', (e) => {
+              const prop = e.target.closest('.block-property');
+              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
+              if (prop.textContent.trim() === '') {
+                  prop.closest('.block-property-wrap')?.remove();
+              }
+          });
+
+          // X button
+          propsContainer.addEventListener('click', (e) => {
+              if (e.target.classList.contains('property-remove-btn')) {
+                  e.stopPropagation();
+                  e.target.closest('.block-property-wrap')?.remove();
+              }
+          });
+      }
+
+      // User tag + button
+      const addTagEl = blockEl.querySelector('.inline-edit-add-tag');
+      if (addTagEl) {
+          addTagEl.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const input = document.createElement('span');
+              input.className = 'inline-edit-tag-input';
+              input.contentEditable = 'true';
+              Object.assign(input.style, {
+                  padding: '4px 10px',
+                  fontSize: '13px',
+                  borderRadius: '12px',
+                  backgroundColor: 'color-mix(in srgb, var(--user-color) 18%, transparent)',
+                  color: 'var(--gray-800)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  minWidth: '20px',
+                  outline: 'none',
+              });
+              addTagEl.before(input);
+              input.focus();
+
+              const commit = () => {
+                  const tagName = input.textContent.trim();
+                  if (tagName) {
+                      const normalized = tagName.charAt(0).toUpperCase() + tagName.slice(1).toLowerCase();
+                      const existing = blockEl.querySelector(`.inline-edit-tags .tag-button[data-tag="${normalized}"]`);
+                      if (existing) {
+                          existing.classList.add('selected');
+                      } else {
+                          const newBtn = document.createElement('button');
+                          newBtn.className = 'tag-button tag-user selected';
+                          newBtn.dataset.tag = normalized;
+                          newBtn.textContent = normalized;
+                          input.before(newBtn);
+                      }
+                  }
+                  input.remove();
+              };
+
+              input.addEventListener('focusout', commit);
+              input.addEventListener('keydown', (ke) => {
+                  if (ke.key === 'Enter' || ke.key === ',') {
+                      ke.preventDefault();
+                      commit();
+                  } else if (ke.key === 'Escape') {
+                      ke.preventDefault();
+                      input.remove();
+                  }
+              });
+          });
+      }
+
+      // Inject chips into collapsed groups with selected tags
+      tagsContainer?.querySelectorAll('.tag-accordion-group:not(.open)').forEach(group => {
+          const pill = group.querySelector('.tag-accordion-pill');
+          const body = group.querySelector('.tag-accordion-body');
+          if (!pill || !body) return;
+          const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group' && c !== 'open') || '';
+          body.querySelectorAll('.tag-button.selected').forEach(btn => {
+              const chip = document.createElement('button');
+              chip.classList.add('tag-accordion-chip');
+              if (tagClass) chip.classList.add(tagClass);
+              chip.dataset.tag = btn.dataset.tag;
+              chip.textContent = btn.dataset.tag;
+              group.appendChild(chip);
+          });
+      });
+
+      // ── Save ──
+      const doSave = () => {
+          const newTitle = blockEl.querySelector('.inline-edit-title')?.textContent.trim();
+          if (!newTitle) { alert('A title is required.'); return; }
+
+          const body = blockEl.querySelector('.inline-edit-body');
+          const newBody = (body ? body.innerHTML.trim() : '');
+          if (!newBody) { alert('Title and text are required.'); return; }
+
+          const selectedTypes = Array.from(blockEl.querySelectorAll('.inline-edit-block-types .tag-button.selected'))
+              .map(b => b.dataset.tag);
+          if (selectedTypes.length === 0) {
+              alert('Please select a block type: ' + blockTypeConfig.tab9.types.join(', ') + '.');
+              return;
+          }
+
+          const selectedTags = Array.from(blockEl.querySelectorAll('.inline-edit-tags .tag-button.selected'))
+              .map(b => b.dataset.tag.trim().toLowerCase());
+
+          const combinedLower = [...new Set(selectedTags)];
+          const predefinedMap = new Map(
+              Object.values(categoryTags).flatMap(cat => cat.tags).map(t => [t.toLowerCase(), t])
+          );
+          const allTags = combinedLower.map(t => predefinedMap.get(t) || normalizeTag(t));
+
+          const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
+          const properties = Array.from(blockEl.querySelectorAll('.inline-edit-properties .block-property-wrap .block-property'))
+              .map(el => el.textContent.trim()).filter(p => p.length > 0);
+
+          localStorage.removeItem(usesKey);
+          inlineEditState = null;
+
+          saveBlock(tab, newTitle, newBody, allTags, usesState, properties, selectedTypes, blockId, block.timestamp);
+          setPendingBlockAnim(blockId, blockEl.offsetHeight);
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
+      };
+
+      // ── Cancel ──
+      const doCancel = () => {
+          localStorage.removeItem(usesKey);
+          inlineEditState = null;
+          setPendingBlockAnim(blockId, blockEl.offsetHeight);
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
+      };
+
+      blockEl.querySelector('.inline-edit-save').addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+      blockEl.querySelector('.inline-edit-cancel').addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+
+      // Keyboard shortcuts
+      blockEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      });
+
+      // Focus title
+      const titleInput = blockEl.querySelector('.inline-edit-title');
+      if (titleInput) {
+          titleInput.focus();
+          const range = document.createRange();
+          const sel   = window.getSelection();
+          range.selectNodeContents(titleInput);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+      }
+
+      // Animate from old height to edit-form height
+      const newHeight = blockEl.offsetHeight;
+      if (oldHeight && Math.abs(newHeight - oldHeight) > 2) {
+          const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
+          blockEl.style.height = oldHeight + 'px';
+          blockEl.style.overflow = 'hidden';
+          blockEl.style.transition = 'none';
+          fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
+          void blockEl.offsetHeight;
+          blockEl.style.transition = 'height 0.5s ease';
+          blockEl.style.height = newHeight + 'px';
+          fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
+          const cleanup = () => {
+              blockEl.style.height = '';
+              blockEl.style.overflow = '';
+              blockEl.style.transition = '';
+              fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
+          };
+          blockEl.addEventListener('transitionend', (e) => {
+              if (e.target === blockEl && e.propertyName === 'height') cleanup();
+          }, { once: true });
+          setTimeout(cleanup, 600);
+      }
+  };
+
+    const startInlineAdd = () => {
+      const tab = 'tab9';
+
+      // Build empty tag accordion HTML (all closed)
+      const predefinedTagList = Object.entries(categoryTags)
+          .filter(([_, data]) => data.tabs.includes(tab))
+          .flatMap(([_, data]) => data.tags);
+      const predefinedTagSet = new Set(predefinedTagList);
+
+      const userDefinedTags = [
+          ...new Set(
+              getBlocks(tab).flatMap(b => b.tags).map(t => t.toLowerCase())
+          )
+      ].filter(t => !predefinedTagList.map(pt => pt.toLowerCase()).includes(t))
+       .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
+       .sort((a, b) => a.localeCompare(b));
+
+      const tabBTConfig = blockTypeConfig[tab];
+      const blockTypeHTML = tabBTConfig
+          ? tabBTConfig.types.map(type =>
+              `<button class="tag-button ${tabBTConfig.className}" data-tag="${type}">${type}</button>`
+            ).join('')
+          : '';
+
+      let tagsHTML = '';
+      Object.entries(categoryTags).forEach(([category, data]) => {
+          if (!data.tabs.includes(tab)) return;
+          const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          tagsHTML += `<div class="tag-accordion-group ${data.className}" data-category="${category}">`;
+          tagsHTML += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
+          tagsHTML += `<div class="tag-accordion-body">`;
+          tagsHTML += `<span class="tag-accordion-label">${label}</span>`;
+          tagsHTML += data.tags.map(t =>
+              `<button class="tag-button ${data.className}" data-tag="${t}">${t}</button>`
+          ).join('');
+          tagsHTML += `</div></div>`;
+      });
+
+      tagsHTML += `<div class="tag-category user-tags-edit">`;
+      if (userDefinedTags.length > 0) {
+          tagsHTML += userDefinedTags.map(t =>
+              `<button class="tag-button tag-user" data-tag="${t}">${t}</button>`
+          ).join('');
+      }
+      tagsHTML += `<span class="inline-edit-add-tag"></span>`;
+      tagsHTML += `</div>`;
+
+      const usesKey = `inline_add_uses_new`;
+      localStorage.setItem(usesKey, JSON.stringify([]));
+
+      // Create block element
+      const blockEl = document.createElement('div');
+      blockEl.className = 'block expanded inline-editing';
+      blockEl.setAttribute('data-id', 'new-inline-add');
+
+      blockEl.innerHTML = `
+              <div class="block-header">
+                  <div class="block-header-left">
+                      <div class="block-title"><h4 contenteditable="true" class="inline-edit-title"></h4></div>
+                  </div>
+                  <div class="inline-edit-controls">
+                      <button class="button green-button inline-edit-save">Save</button>
+                      <button class="button red-button inline-edit-cancel">Cancel</button>
+                  </div>
+              </div>
+              <div class="inline-edit-block-types">${blockTypeHTML}</div>
+              <div class="uses-field inline-edit-uses"></div>
+              <div class="inline-edit-tags">${tagsHTML}</div>
+              <div class="block-properties inline-edit-properties"><span class="block-property inline-edit-new-prop"></span></div>
+              <div class="block-body"><span contenteditable="true" class="inline-edit-body"></span></div>
+      `;
+
+      // Insert at top of results section (after pinned zone if present)
+      const tabSuffix = tab.replace('tab', '');
+      const resultsSection = document.getElementById(`results_section_${tabSuffix}`);
+      if (!resultsSection) return;
+      const pinnedZone = resultsSection.querySelector('.pinned-blocks-zone-wrapper');
+      if (pinnedZone) {
+          pinnedZone.after(blockEl);
+      } else {
+          resultsSection.prepend(blockEl);
+      }
+
+      // Scroll into view
+      blockEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      // Init uses field
+      const usesContainer = blockEl.querySelector('.inline-edit-uses');
+      if (usesContainer) {
+          initUsesField(usesContainer, usesKey);
+      }
+
+      // Tag toggle handler
+      const tagsContainer = blockEl.querySelector('.inline-edit-tags');
+      if (tagsContainer) {
+          tagsContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.tag-button');
+              if (btn) btn.classList.toggle('selected');
+          });
+      }
+
+      // Block type toggle handler
+      const blockTypesContainer = blockEl.querySelector('.inline-edit-block-types');
+      if (blockTypesContainer) {
+          blockTypesContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.tag-button');
+              if (btn) btn.classList.toggle('selected');
+          });
+      }
+
+      // Properties editing
+      const propsContainer = blockEl.querySelector('.inline-edit-properties');
+      const newPropBtn = blockEl.querySelector('.inline-edit-new-prop');
+
+      const createPropertyWrap = (text) => {
+          const wrap = document.createElement('span');
+          wrap.className = 'block-property-wrap';
+          wrap.innerHTML = '<span class="block-property" contenteditable="true"></span><span class="property-remove-btn">×</span>';
+          if (text) wrap.querySelector('.block-property').textContent = text;
+          return wrap;
+      };
+
+      if (propsContainer) {
+          if (newPropBtn) {
+              newPropBtn.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  const wrap = createPropertyWrap('');
+                  newPropBtn.before(wrap);
+                  wrap.querySelector('.block-property').focus();
+              });
+          }
+
+          propsContainer.addEventListener('keydown', (e) => {
+              const prop = e.target.closest('.block-property');
+              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
+
+              if (e.key === ',' || e.key === 'Enter') {
+                  e.preventDefault();
+                  const wrap = createPropertyWrap('');
+                  prop.closest('.block-property-wrap').after(wrap);
+                  wrap.querySelector('.block-property').focus();
+              } else if (e.key === 'Backspace' && prop.textContent.trim() === '') {
+                  e.preventDefault();
+                  const wrap = prop.closest('.block-property-wrap');
+                  const prev = wrap?.previousElementSibling;
+                  wrap.remove();
+                  if (prev) {
+                      const prevProp = prev.querySelector?.('.block-property') || prev;
+                      const range = document.createRange();
+                      const sel = window.getSelection();
+                      range.selectNodeContents(prevProp);
+                      range.collapse(false);
+                      sel.removeAllRanges();
+                      sel.addRange(range);
+                  }
+              }
+          });
+
+          propsContainer.addEventListener('focusout', (e) => {
+              const prop = e.target.closest('.block-property');
+              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
+              if (prop.textContent.trim() === '') {
+                  prop.closest('.block-property-wrap')?.remove();
+              }
+          });
+
+          propsContainer.addEventListener('click', (e) => {
+              if (e.target.classList.contains('property-remove-btn')) {
+                  e.stopPropagation();
+                  e.target.closest('.block-property-wrap')?.remove();
+              }
+          });
+      }
+
+      // User tag + button
+      const addTagEl = blockEl.querySelector('.inline-edit-add-tag');
+      if (addTagEl) {
+          addTagEl.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const input = document.createElement('span');
+              input.className = 'inline-edit-tag-input';
+              input.contentEditable = 'true';
+              Object.assign(input.style, {
+                  padding: '4px 10px',
+                  fontSize: '13px',
+                  borderRadius: '12px',
+                  backgroundColor: 'color-mix(in srgb, var(--user-color) 18%, transparent)',
+                  color: 'var(--gray-800)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  minWidth: '20px',
+                  outline: 'none',
+              });
+              addTagEl.before(input);
+              input.focus();
+
+              const commit = () => {
+                  const tagName = input.textContent.trim();
+                  if (tagName) {
+                      const normalized = tagName.charAt(0).toUpperCase() + tagName.slice(1).toLowerCase();
+                      const existing = blockEl.querySelector(`.inline-edit-tags .tag-button[data-tag="${normalized}"]`);
+                      if (existing) {
+                          existing.classList.add('selected');
+                      } else {
+                          const newBtn = document.createElement('button');
+                          newBtn.className = 'tag-button tag-user selected';
+                          newBtn.dataset.tag = normalized;
+                          newBtn.textContent = normalized;
+                          input.before(newBtn);
+                      }
+                  }
+                  input.remove();
+              };
+
+              input.addEventListener('focusout', commit);
+              input.addEventListener('keydown', (ke) => {
+                  if (ke.key === 'Enter' || ke.key === ',') {
+                      ke.preventDefault();
+                      commit();
+                  } else if (ke.key === 'Escape') {
+                      ke.preventDefault();
+                      input.remove();
+                  }
+              });
+          });
+      }
+
+      // Save
+      const doSave = () => {
+          const newTitle = blockEl.querySelector('.inline-edit-title')?.textContent.trim();
+          if (!newTitle) { alert('A title is required.'); return; }
+
+          const body = blockEl.querySelector('.inline-edit-body');
+          const newBody = (body ? body.innerHTML.trim() : '');
+          if (!newBody) { alert('Title and text are required.'); return; }
+
+          const selectedTypes = Array.from(blockEl.querySelectorAll('.inline-edit-block-types .tag-button.selected'))
+              .map(b => b.dataset.tag);
+          if (selectedTypes.length === 0) {
+              alert('Please select a block type: ' + blockTypeConfig.tab9.types.join(', ') + '.');
+              return;
+          }
+
+          const selectedTags = Array.from(blockEl.querySelectorAll('.inline-edit-tags .tag-button.selected'))
+              .map(b => b.dataset.tag.trim().toLowerCase());
+
+          const combinedLower = [...new Set(selectedTags)];
+          const predefinedMap = new Map(
+              Object.values(categoryTags).flatMap(cat => cat.tags).map(t => [t.toLowerCase(), t])
+          );
+          const allTags = combinedLower.map(t => predefinedMap.get(t) || normalizeTag(t));
+
+          const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
+          const properties = Array.from(blockEl.querySelectorAll('.inline-edit-properties .block-property-wrap .block-property'))
+              .map(el => el.textContent.trim()).filter(p => p.length > 0);
+
+          localStorage.removeItem(usesKey);
+
+          saveBlock(tab, newTitle, newBody, allTags, usesState, properties, selectedTypes);
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters(tabSuffix));
+      };
+
+      // Cancel — just remove the element
+      const doCancel = () => {
+          localStorage.removeItem(usesKey);
+          blockEl.remove();
+      };
+
+      blockEl.querySelector('.inline-edit-save').addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+      blockEl.querySelector('.inline-edit-cancel').addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+
+      blockEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      });
+
+      // Focus title
+      const titleInput = blockEl.querySelector('.inline-edit-title');
+      if (titleInput) titleInput.focus();
+  };
+
   return {
     getActiveTab,
     renderBlocks,
@@ -3086,5 +4835,11 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
     clearData,
     setActiveInventoryBlock,
     setActiveNotesBlock,
+    enterInlineEdit,
+    startInlineAdd,
+    enterInventoryEdit,
+    startInventoryAdd,
+    enterNotesEdit,
+    startNotesAdd,
   };
 })();

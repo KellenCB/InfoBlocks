@@ -2,6 +2,9 @@
 /* ========================== TAG BUTTON ============================*/
 /* ==================================================================*/
 
+/* ── Shared tag spacing — one value controls all tag containers ─── */
+:root { --tag-gap: 7px; }
+
 /* Accordion groups inherit their colour from the tag category */
 .tag-accordion-group                    { --accordion-color: var(--gray-750); }
 .tag-accordion-group.tag-characterType  { --accordion-color: var(--characterType-color); }
@@ -205,11 +208,6 @@
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
-    transition: transform 0.2s;
-}
-
-.tag-accordion-chip:hover {
-    transform: scale(1.05);
 }
 
 .tag-accordion-chip.selected-or {
@@ -220,14 +218,155 @@
 }
 
 /* ==================================================================*/
+/* ========= FILTER-SECTION: STACKED COLLAPSIBLE SECTIONS ==========*/
+/* Scoped to .filter-section so overlays keep inline accordion style */
+/* ==================================================================*/
+
+/* ── Groups become stacked blocks instead of display:contents ────── */
+
+.filter-section .tag-accordion-group {
+    display: block;
+    background-color: var(--gray-300);
+    border-radius: 13px;
+    padding: 2px;
+}
+
+/* ── Container becomes a vertical column ─────────────────────────── */
+
+.filter-section [id^="dynamic_tags_section"] {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 5px;
+}
+
+/* ── Full-width header row (replaces inline pill in filter panel) ── */
+
+.tag-accordion-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 34px;
+    padding: 5px 10px;
+    background-color: transparent;
+    border-radius: 10px;
+    color: var(--gray-800);
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: color 0.2s ease 0.1s;
+}
+
+.tag-accordion-header::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--accordion-color);
+    flex-shrink: 0;
+}
+
+.filter-section .tag-accordion-group:hover .tag-accordion-header {
+    color: var(--gray-900);
+    transition: color 0.05s ease;
+}
+
+.filter-section .tag-accordion-group.open .tag-accordion-header {
+    color: var(--gray-900);
+}
+
+.tag-accordion-name {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* ── Chips container (inside header, shows active filters when collapsed) ─ */
+
+.tag-accordion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    flex: 1;
+    justify-content: flex-end;
+    overflow: hidden;
+    opacity: 1;
+    transition: opacity 0.15s ease 0.15s;
+}
+
+.filter-section .tag-accordion-group.open .tag-accordion-chips {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+}
+
+/* ── Chevron ─────────────────────────────────────────────────────── */
+
+.tag-accordion-chevron {
+    font-size: 11px;
+    opacity: 0.9;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.filter-section .tag-accordion-group.open .tag-accordion-chevron {
+    transform: rotate(90deg);
+}
+
+/* ── Body: animated reveal via grid-template-rows ────────────────── */
+
+.filter-section .tag-accordion-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    overflow: hidden;
+    transition: grid-template-rows 0.3s ease;
+}
+
+.filter-section .tag-accordion-group.open .tag-accordion-body {
+    display: grid;
+    grid-template-rows: 1fr;
+}
+
+/* ── Body inner: constant padding (clipped by overflow when closed),
+     opacity fade for tags ─────────────────────────────────────────── */
+
+.filter-section .tag-accordion-body-inner {
+    overflow: hidden;
+    min-height: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--tag-gap);
+    padding: 0 10px;
+    opacity: 0;
+    transition: opacity 0.15s ease, padding 0.3s ease;
+}
+
+.filter-section .tag-accordion-group.open .tag-accordion-body-inner {
+    padding: 8px 10px 10px;
+    opacity: 1;
+    transition: opacity 0.2s ease 0.08s, padding 0.3s ease;
+}
+
+/* ── User-generated tags: visible row below category sections ──── */
+
+.filter-section .tag-category.user-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--tag-gap);
+    margin-top: 10px;
+}
+
+/* ==================================================================*/
 /* ====================== LAYOUT CONTAINERS =========================*/
 /* ==================================================================*/
 
 .tag-section {
     display: contents;
     flex-wrap: wrap;
-    column-gap: 7px;
-    row-gap: 8px;
+    gap: var(--tag-gap);
 }
 
 .tag-category { display: contents; }
@@ -244,8 +383,7 @@
     display: flex;
     flex-wrap: wrap;
     width: 100%;
-    column-gap: 7px;
-    row-gap: 9px;
+    gap: var(--tag-gap);
 }
 
 .overlay-tags,
@@ -256,7 +394,7 @@
     align-items: flex-start;
     max-width: 100%;
     padding: 10px 0;
-    gap: 6px;
+    gap: var(--tag-gap);
 }
 
 .add-block-overlay .block-type-tags,
@@ -271,7 +409,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
+    gap: var(--tag-gap);
     width: 100%;
 }
 

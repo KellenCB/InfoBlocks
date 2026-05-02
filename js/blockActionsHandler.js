@@ -356,6 +356,24 @@ export const blockActionsHandler = (() => {
             reapplySearchAndFilters(activeTab);
 
         } else if (target.classList.contains("edit-button")) {
+            
+            // Tab9: inline editing instead of overlay
+            if (activeTab === 'tab9') {
+                appManager.enterInlineEdit(blockId);
+                return;
+            }
+
+            // Tab6: edit in the inventory viewer panel
+            if (activeTab === 'tab6') {
+                appManager.enterInventoryEdit(blockId);
+                return;
+            }
+
+            // Tab3: edit in the notes viewer (wide) or inline (narrow)
+            if (activeTab === 'tab3') {
+                appManager.enterNotesEdit(blockId);
+                return;
+            }
 
             isEditing = true;
             currentEditingBlockId = blockId;

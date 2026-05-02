@@ -87,11 +87,19 @@ export const filterManager = (() => {
         // Accordion chips (collapsed groups)
         document.getElementById(`dynamic_tags_section_${tabNumber}`)
             ?.querySelectorAll('.tag-accordion-group:not(.open)').forEach(group => {
-                const pill     = group.querySelector('.tag-accordion-pill');
                 const body     = group.querySelector('.tag-accordion-body');
-                if (!pill || !body) return;
-                group.querySelectorAll(':scope > .tag-accordion-chip').forEach(c => c.remove());
+                if (!body) return;
+
+                // Clear stale chips — from chips container (filter) or group root (overlay)
+                const chipsContainer = group.querySelector('.tag-accordion-chips');
+                if (chipsContainer) {
+                    chipsContainer.innerHTML = '';
+                } else {
+                    group.querySelectorAll(':scope > .tag-accordion-chip').forEach(c => c.remove());
+                }
+
                 const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group') || '';
+                const target = chipsContainer || group;
                 body.querySelectorAll('.tag-button.selected, .tag-button.selected-or, .tag-button.selected-not').forEach(btn => {
                     const chip = document.createElement('button');
                     chip.classList.add('tag-accordion-chip');
@@ -100,14 +108,14 @@ export const filterManager = (() => {
                     if (btn.classList.contains('selected-not')) chip.classList.add('selected-not');
                     chip.dataset.tag = btn.dataset.tag;
                     chip.textContent = btn.dataset.tag;
-                    group.appendChild(chip);
+                    target.appendChild(chip);
                 });
 
             });
     };
 
     // ── Core filter + render ───────────────────────────────────────────────────
-    const applyFilters = (tabNumber) => {
+    const applyFilters = (tabNumber, skipTagUpdate = false) => {
         if (!_renderBlocks || !_updateTags || !_getBlocks) {
             console.warn('filterManager: registerRenderer() has not been called yet');
             return;
@@ -181,8 +189,8 @@ export const filterManager = (() => {
             );
         }
 
-        _renderBlocks(activeTab, blocks);
-        _updateTags();
+        _renderBlocks(activeTab, blocks, skipTagUpdate);
+        if (!skipTagUpdate) _updateTags();
         _applySelectionClasses(activeTab);
         document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: activeTab } }));
     };
@@ -195,7 +203,8 @@ export const filterManager = (() => {
                 !target.classList.contains('tag-button') ||
                 target.closest('.add-block-overlay') ||
                 target.closest('.edit-block-overlay') ||
-                target.closest('.block.condensed')
+                target.closest('.block.condensed') ||
+                target.closest('.block.inline-editing')
             ) return;
 
             const tabContent = target.closest('.tab-content');
@@ -228,7 +237,7 @@ export const filterManager = (() => {
                         btBtn.classList.remove('selected', 'selected-or', 'selected-not');
                         if (!inAnd && !inOr && !inNot) btBtn.classList.add('selected');
                     }
-                    applyFilters(tabNumber);
+                    applyFilters(tabNumber, true);
                 }
                 return;
             }
@@ -257,7 +266,7 @@ export const filterManager = (() => {
                 if (!inAnd && !inOr && !inNot) selectedAndTagsByTab[activeTab].push(tag);
             }
 
-            applyFilters(tabNumber);
+            applyFilters(tabNumber, true);
         });
     };
 

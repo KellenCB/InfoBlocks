@@ -695,29 +695,41 @@ const initializeDynamicTags = () => {
             group.classList.add("tag-accordion-group", categoryTags[category].className);
             group.dataset.category = category;
 
-            const pill = document.createElement("button");
-            pill.classList.add("tag-accordion-pill");
-            pill.dataset.category = category;
-            pill.textContent = label;
+            const header = document.createElement("div");
+            header.classList.add("tag-accordion-header");
+            header.dataset.category = category;
+
+            const nameSpan = document.createElement("span");
+            nameSpan.classList.add("tag-accordion-name");
+            nameSpan.textContent = label;
+            header.appendChild(nameSpan);
+
+            const chipsSpan = document.createElement("span");
+            chipsSpan.classList.add("tag-accordion-chips");
+            header.appendChild(chipsSpan);
+
+            const chevron = document.createElement("span");
+            chevron.classList.add("tag-accordion-chevron");
+            chevron.textContent = "▸";
+            header.appendChild(chevron);
 
             const body = document.createElement("div");
             body.classList.add("tag-accordion-body");
             body.id = `${category}_tags_list_${tabNumber}`;
 
-            const labelEl = document.createElement("span");
-            labelEl.classList.add("tag-accordion-label");
-            labelEl.textContent = label;
-            body.appendChild(labelEl);
+            const bodyInner = document.createElement("div");
+            bodyInner.classList.add("tag-accordion-body-inner");
 
             categoryTags[category].tags.forEach(tag => {
                 const button = document.createElement("button");
                 button.classList.add("tag-button", categoryTags[category].className);
                 button.dataset.tag = tag;
                 button.textContent = tag;
-                body.appendChild(button);
+                bodyInner.appendChild(button);
             });
 
-            group.appendChild(pill);
+            body.appendChild(bodyInner);
+            group.appendChild(header);
             group.appendChild(body);
             tagsSection.appendChild(group);
         });
@@ -728,10 +740,14 @@ const initializeDynamicTags = () => {
 // On collapse: read selected tags from the body and build chips dynamically.
 // On expand: remove any existing chips.
 document.addEventListener("click", (e) => {
-    const group = e.target.closest(".tag-accordion-group");
-    if (!group) return;
+    // Only toggle when clicking the header row (filter) or pill (overlay)
+    const trigger = e.target.closest(".tag-accordion-header, .tag-accordion-pill");
+    if (!trigger) return;
     if (e.target.closest(".tag-button")) return;
     if (e.target.closest(".tag-accordion-chip")) return;
+
+    const group = trigger.closest(".tag-accordion-group");
+    if (!group) return;
 
     const wasOpen = group.classList.contains("open");
     group.classList.toggle("open");
@@ -753,16 +769,20 @@ document.addEventListener("click", (e) => {
         }
     }
 
-    // Remove stale chips from the group either way before possibly re-adding
-    group.querySelectorAll(":scope > .tag-accordion-chip").forEach(c => c.remove());
-
     if (wasOpen) {
-        // Just collapsed — add a chip as a sibling after the pill for every selected tag
-        const pill = group.querySelector(".tag-accordion-pill");
+        // Just collapsed — clear stale chips and rebuild for current selected state
+        const chipsContainer = group.querySelector(".tag-accordion-chips");
+        if (chipsContainer) {
+            chipsContainer.innerHTML = "";
+        } else {
+            group.querySelectorAll(":scope > .tag-accordion-chip").forEach(c => c.remove());
+        }
+
         const body = group.querySelector(".tag-accordion-body");
-        if (!pill || !body) return;
+        if (!body) return;
         const tagClass = [...group.classList]
             .find(c => c !== "tag-accordion-group" && c !== "open") || "";
+        const target = chipsContainer || group;
         body.querySelectorAll(".tag-button.selected, .tag-button.selected-or").forEach(btn => {
             const chip = document.createElement("button");
             chip.classList.add("tag-accordion-chip");
@@ -770,9 +790,10 @@ document.addEventListener("click", (e) => {
             if (btn.classList.contains("selected-or")) chip.classList.add("selected-or");
             chip.dataset.tag = btn.dataset.tag;
             chip.textContent = btn.dataset.tag;
-            group.appendChild(chip);
+            target.appendChild(chip);
         });
     }
+    // When opening: chips stay in DOM, CSS hides them via visibility:hidden
 });
 
 // Chip click — deselect the tag without opening the group.
@@ -786,24 +807,9 @@ document.addEventListener("click", (e) => {
     const tag = chip.dataset.tag;
     const bodyBtn = group.querySelector(`.tag-accordion-body .tag-button[data-tag="${tag}"]`);
     if (bodyBtn) {
-        chip.remove();   // remove immediately (overlays won't re-render themselves)
-        bodyBtn.click(); // fire existing filter / toggle logic as normal
-    }
-}, true);
-
-// Chip click — deselect the tag without opening the group.
-// Runs in capture phase so it intercepts before any tag-button handler fires.
-document.addEventListener("click", (e) => {
-    const chip = e.target.closest(".tag-accordion-chip");
-    if (!chip) return;
-    e.stopPropagation();
-    const group = chip.closest(".tag-accordion-group");
-    if (!group) return;
-    const tag = chip.dataset.tag;
-    const bodyBtn = group.querySelector(`.tag-accordion-body .tag-button[data-tag="${tag}"]`);
-    if (bodyBtn) {
-        chip.remove();   // remove immediately (overlays won't re-render themselves)
-        bodyBtn.click(); // fire existing filter / toggle logic as normal
+        chip.style.opacity = '0';
+        chip.style.pointerEvents = 'none';
+        bodyBtn.click(); // triggers applyFilters → _applySelectionClasses which rebuilds chips
     }
 }, true);
 
@@ -1031,7 +1037,7 @@ window.onload = async () => {
 
     await appManager.loadBlocks();
     filterManager.registerRenderer(
-        (tab, blocks) => appManager.renderBlocks(tab, blocks),
+        (tab, blocks, skipTagUpdate) => appManager.renderBlocks(tab, blocks, skipTagUpdate),
         ()            => appManager.updateTags(),
         (tab)         => appManager.getBlocks(tab)
     );
