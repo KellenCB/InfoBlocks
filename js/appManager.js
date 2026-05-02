@@ -2346,6 +2346,10 @@ resultsSection.innerHTML = `
       .querySelector('#add_block_button');
     if (addBtn) {
       addBtn.onclick = () => {
+        if (tab === 'tab9') {
+            startInlineAdd();
+            return;
+        }
         overlayHandler.initializeOverlayTagHandlers("add_block_overlay_tags");
         document.querySelector('.add-block-overlay').classList.add('show');
       };
@@ -2490,10 +2494,11 @@ resultsSection.innerHTML = `
     document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`)
       .forEach(blockEl => {
         blockEl.addEventListener("click", function(e) {
-          // Action buttons (pin, edit, duplicate, remove, ⋯ trigger) handle their own clicks
-          if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
-          // Interactive circles (uses) handle their own clicks
-          if (e.target.classList.contains('circle')) return;
+            // Action buttons (pin, edit, duplicate, remove, ⋯ trigger) handle their own clicks
+            if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
+            // Interactive circles (uses) handle their own clicks
+            if (e.target.classList.contains('circle')) return;
+            if (blockEl.classList.contains('inline-editing')) return;
 
           // For condensed blocks: click anywhere expands
           // For expanded blocks: only empty space collapses (tags/text remain interactive)
@@ -3068,6 +3073,626 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
     updateTags();
   };
 
+  // ── Inline block editing (tab9) ──────────────────────────────────
+  let inlineEditState = null;
+
+  const enterInlineEdit = (blockId) => {
+      const tab = 'tab9';
+      const blocksArr = getBlocks(tab);
+      const block = blocksArr.find(b => b.id === blockId);
+      if (!block) return;
+
+      // If not expanded, expand first then re-enter
+      if (block.viewState !== 'expanded') {
+          block.viewState = 'expanded';
+          localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
+          setPendingBlockAnim(blockId, document.querySelector(`.block[data-id="${blockId}"]`)?.offsetHeight || 0);
+          import('./filterManager.js').then(({ filterManager }) => {
+              filterManager.applyFilters('9');
+              requestAnimationFrame(() => enterInlineEdit(blockId));
+          });
+          return;
+      }
+
+      const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
+      if (!blockEl) return;
+
+      // Snapshot for cancel
+      inlineEditState = {
+          blockId,
+          snapshot: {
+              title: block.title,
+              text: block.text,
+              tags: [...(block.tags || [])],
+              blockType: Array.isArray(block.blockType) ? [...block.blockType] : (block.blockType ? [block.blockType] : []),
+              uses: block.uses ? [...block.uses] : [],
+              properties: block.properties ? [...block.properties] : [],
+          }
+      };
+
+      blockEl.classList.add('inline-editing');
+
+      // Gather tag data
+      const predefinedTagList = Object.entries(categoryTags)
+          .filter(([_, data]) => data.tabs.includes(tab))
+          .flatMap(([_, data]) => data.tags);
+      const predefinedTagSet = new Set(predefinedTagList);
+
+      const userDefinedTags = [
+          ...new Set(
+              getBlocks(tab).flatMap(b => b.tags).map(t => t.toLowerCase())
+          )
+      ].filter(t => !predefinedTagList.map(pt => pt.toLowerCase()).includes(t))
+       .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
+       .sort((a, b) => a.localeCompare(b));
+
+      const blockTags = block.tags || [];
+      const blockUserTags = blockTags.filter(t => !predefinedTagSet.has(t));
+      const blockTypes = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
+
+      // Block type buttons HTML
+      const tabBTConfig = blockTypeConfig[tab];
+      const blockTypeHTML = tabBTConfig
+          ? tabBTConfig.types.map(type =>
+              `<button class="tag-button ${tabBTConfig.className}${blockTypes.includes(type) ? ' selected' : ''}" data-tag="${type}">${type}</button>`
+            ).join('')
+          : '';
+
+      // Tag accordion groups HTML
+      let tagsHTML = '';
+      Object.entries(categoryTags).forEach(([category, data]) => {
+          if (!data.tabs.includes(tab)) return;
+          const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          tagsHTML += `<div class="tag-accordion-group ${data.className}" data-category="${category}">`;
+          tagsHTML += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
+          tagsHTML += `<div class="tag-accordion-body">`;
+          tagsHTML += `<span class="tag-accordion-label">${label}</span>`;
+          tagsHTML += data.tags.map(t =>
+              `<button class="tag-button ${data.className}${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
+          ).join('');
+          tagsHTML += `</div></div>`;
+      });
+
+      tagsHTML += `<div class="tag-category user-tags-edit">`;
+      if (userDefinedTags.length > 0) {
+          tagsHTML += userDefinedTags.map(t =>
+              `<button class="tag-button tag-user${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
+          ).join('');
+      }
+      tagsHTML += `<span class="inline-edit-add-tag"></span>`;
+      tagsHTML += `</div>`;
+
+      // Body HTML
+      let bodyHTML = block.text || '';
+      bodyHTML = bodyHTML
+          .replace(/<div[^>]*>/gi, '')
+          .replace(/^(&nbsp;|\s)+/gi, '')
+          .replace(/<\/div>/gi, '<br>')
+          .replace(/<p[^>]*>/gi, '')
+          .replace(/<\/p>/gi, '<br>')
+          .trim();
+
+      // Uses localStorage key
+      const usesKey = `inline_edit_uses_${blockId}`;
+      localStorage.setItem(usesKey, JSON.stringify(block.uses || []));
+
+      blockEl.innerHTML = `
+              <div class="block-header">
+                  <div class="block-header-left">
+                      <div class="block-title"><h4 contenteditable="true" class="inline-edit-title">${block.title}</h4></div>
+                  </div>
+                  <div class="inline-edit-controls">
+                      <button class="button green-button inline-edit-save">Save</button>
+                      <button class="button red-button inline-edit-cancel">Cancel</button>
+                  </div>
+              </div>
+              <div class="inline-edit-block-types">${blockTypeHTML}</div>
+              <div class="uses-field inline-edit-uses"></div>
+              <div class="inline-edit-tags">${tagsHTML}</div>
+              <div class="block-properties inline-edit-properties">${(block.properties || []).map(p =>
+                  `<span class="block-property-wrap"><span class="block-property" contenteditable="true">${p}</span><span class="property-remove-btn">×</span></span>`
+              ).join('')}<span class="block-property inline-edit-new-prop"></span></div>
+              <div class="block-body"><span contenteditable="true" class="inline-edit-body">${bodyHTML}</span></div>
+      `;
+
+      // Init uses field
+      const usesContainer = blockEl.querySelector('.inline-edit-uses');
+      if (usesContainer) initUsesField(usesContainer, usesKey);
+      if (!(block.uses && block.uses.length > 0)) usesContainer.style.display = 'none';
+
+      // Tag toggle handler
+      const tagsContainer = blockEl.querySelector('.inline-edit-tags');
+      if (tagsContainer) {
+          tagsContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.tag-button');
+              if (btn) btn.classList.toggle('selected');
+          });
+      }
+
+      // Block type toggle handler
+      const blockTypesContainer = blockEl.querySelector('.inline-edit-block-types');
+      if (blockTypesContainer) {
+          blockTypesContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.tag-button');
+              if (btn) btn.classList.toggle('selected');
+          });
+      }
+
+      // Properties editing
+      const propsContainer = blockEl.querySelector('.inline-edit-properties');
+      const newPropBtn = blockEl.querySelector('.inline-edit-new-prop');
+
+      const createPropertyWrap = (text) => {
+          const wrap = document.createElement('span');
+          wrap.className = 'block-property-wrap';
+          wrap.innerHTML = '<span class="block-property" contenteditable="true"></span><span class="property-remove-btn">×</span>';
+          if (text) wrap.querySelector('.block-property').textContent = text;
+          return wrap;
+      };
+
+      if (propsContainer) {
+          // + button creates a new empty property
+          if (newPropBtn) {
+              newPropBtn.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  const wrap = createPropertyWrap('');
+                  newPropBtn.before(wrap);
+                  wrap.querySelector('.block-property').focus();
+              });
+          }
+
+          propsContainer.addEventListener('keydown', (e) => {
+              const prop = e.target.closest('.block-property');
+              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
+
+              if (e.key === ',' || e.key === 'Enter') {
+                  e.preventDefault();
+                  const wrap = createPropertyWrap('');
+                  prop.closest('.block-property-wrap').after(wrap);
+                  wrap.querySelector('.block-property').focus();
+              } else if (e.key === 'Backspace' && prop.textContent.trim() === '') {
+                  e.preventDefault();
+                  const wrap = prop.closest('.block-property-wrap');
+                  const prev = wrap?.previousElementSibling;
+                  wrap.remove();
+                  if (prev) {
+                      const prevProp = prev.querySelector?.('.block-property') || prev;
+                      const range = document.createRange();
+                      const sel = window.getSelection();
+                      range.selectNodeContents(prevProp);
+                      range.collapse(false);
+                      sel.removeAllRanges();
+                      sel.addRange(range);
+                  }
+              }
+          });
+
+          // Blur: empty properties get removed
+          propsContainer.addEventListener('focusout', (e) => {
+              const prop = e.target.closest('.block-property');
+              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
+              if (prop.textContent.trim() === '') {
+                  prop.closest('.block-property-wrap')?.remove();
+              }
+          });
+
+          // X button
+          propsContainer.addEventListener('click', (e) => {
+              if (e.target.classList.contains('property-remove-btn')) {
+                  e.stopPropagation();
+                  e.target.closest('.block-property-wrap')?.remove();
+              }
+          });
+      }
+
+      // User tag + button
+      const addTagEl = blockEl.querySelector('.inline-edit-add-tag');
+      if (addTagEl) {
+          addTagEl.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const input = document.createElement('span');
+              input.className = 'inline-edit-tag-input';
+              input.contentEditable = 'true';
+              Object.assign(input.style, {
+                  padding: '4px 10px',
+                  fontSize: '13px',
+                  borderRadius: '12px',
+                  backgroundColor: 'color-mix(in srgb, var(--user-color) 18%, transparent)',
+                  color: 'var(--gray-800)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  minWidth: '20px',
+                  outline: 'none',
+              });
+              addTagEl.before(input);
+              input.focus();
+
+              const commit = () => {
+                  const tagName = input.textContent.trim();
+                  if (tagName) {
+                      const normalized = tagName.charAt(0).toUpperCase() + tagName.slice(1).toLowerCase();
+                      const existing = blockEl.querySelector(`.inline-edit-tags .tag-button[data-tag="${normalized}"]`);
+                      if (existing) {
+                          existing.classList.add('selected');
+                      } else {
+                          const newBtn = document.createElement('button');
+                          newBtn.className = 'tag-button tag-user selected';
+                          newBtn.dataset.tag = normalized;
+                          newBtn.textContent = normalized;
+                          input.before(newBtn);
+                      }
+                  }
+                  input.remove();
+              };
+
+              input.addEventListener('focusout', commit);
+              input.addEventListener('keydown', (ke) => {
+                  if (ke.key === 'Enter' || ke.key === ',') {
+                      ke.preventDefault();
+                      commit();
+                  } else if (ke.key === 'Escape') {
+                      ke.preventDefault();
+                      input.remove();
+                  }
+              });
+          });
+      }
+
+      // Inject chips into collapsed groups with selected tags
+      tagsContainer?.querySelectorAll('.tag-accordion-group:not(.open)').forEach(group => {
+          const pill = group.querySelector('.tag-accordion-pill');
+          const body = group.querySelector('.tag-accordion-body');
+          if (!pill || !body) return;
+          const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group' && c !== 'open') || '';
+          body.querySelectorAll('.tag-button.selected').forEach(btn => {
+              const chip = document.createElement('button');
+              chip.classList.add('tag-accordion-chip');
+              if (tagClass) chip.classList.add(tagClass);
+              chip.dataset.tag = btn.dataset.tag;
+              chip.textContent = btn.dataset.tag;
+              group.appendChild(chip);
+          });
+      });
+
+      // ── Save ──
+      const doSave = () => {
+          const newTitle = blockEl.querySelector('.inline-edit-title')?.textContent.trim();
+          if (!newTitle) { alert('A title is required.'); return; }
+
+          const body = blockEl.querySelector('.inline-edit-body');
+          const newBody = (body ? body.innerHTML.trim() : '');
+          if (!newBody) { alert('Title and text are required.'); return; }
+
+          const selectedTypes = Array.from(blockEl.querySelectorAll('.inline-edit-block-types .tag-button.selected'))
+              .map(b => b.dataset.tag);
+          if (selectedTypes.length === 0) {
+              alert('Please select a block type: ' + blockTypeConfig.tab9.types.join(', ') + '.');
+              return;
+          }
+
+          const selectedTags = Array.from(blockEl.querySelectorAll('.inline-edit-tags .tag-button.selected'))
+              .map(b => b.dataset.tag.trim().toLowerCase());
+
+          const combinedLower = [...new Set(selectedTags)];
+          const predefinedMap = new Map(
+              Object.values(categoryTags).flatMap(cat => cat.tags).map(t => [t.toLowerCase(), t])
+          );
+          const allTags = combinedLower.map(t => predefinedMap.get(t) || normalizeTag(t));
+
+          const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
+          const properties = Array.from(blockEl.querySelectorAll('.inline-edit-properties .block-property-wrap .block-property'))
+              .map(el => el.textContent.trim()).filter(p => p.length > 0);
+
+          localStorage.removeItem(usesKey);
+          inlineEditState = null;
+
+          saveBlock(tab, newTitle, newBody, allTags, usesState, properties, selectedTypes, blockId, block.timestamp);
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
+      };
+
+      // ── Cancel ──
+      const doCancel = () => {
+          localStorage.removeItem(usesKey);
+          inlineEditState = null;
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
+      };
+
+      blockEl.querySelector('.inline-edit-save').addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+      blockEl.querySelector('.inline-edit-cancel').addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+
+      // Keyboard shortcuts
+      blockEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      });
+
+      // Focus title
+      const titleInput = blockEl.querySelector('.inline-edit-title');
+      if (titleInput) { titleInput.focus(); titleInput.setSelectionRange(titleInput.value.length, titleInput.value.length); }
+  };
+
+    const startInlineAdd = () => {
+      const tab = 'tab9';
+
+      // Build empty tag accordion HTML (all closed)
+      const predefinedTagList = Object.entries(categoryTags)
+          .filter(([_, data]) => data.tabs.includes(tab))
+          .flatMap(([_, data]) => data.tags);
+      const predefinedTagSet = new Set(predefinedTagList);
+
+      const userDefinedTags = [
+          ...new Set(
+              getBlocks(tab).flatMap(b => b.tags).map(t => t.toLowerCase())
+          )
+      ].filter(t => !predefinedTagList.map(pt => pt.toLowerCase()).includes(t))
+       .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
+       .sort((a, b) => a.localeCompare(b));
+
+      const tabBTConfig = blockTypeConfig[tab];
+      const blockTypeHTML = tabBTConfig
+          ? tabBTConfig.types.map(type =>
+              `<button class="tag-button ${tabBTConfig.className}" data-tag="${type}">${type}</button>`
+            ).join('')
+          : '';
+
+      let tagsHTML = '';
+      Object.entries(categoryTags).forEach(([category, data]) => {
+          if (!data.tabs.includes(tab)) return;
+          const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          tagsHTML += `<div class="tag-accordion-group ${data.className}" data-category="${category}">`;
+          tagsHTML += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
+          tagsHTML += `<div class="tag-accordion-body">`;
+          tagsHTML += `<span class="tag-accordion-label">${label}</span>`;
+          tagsHTML += data.tags.map(t =>
+              `<button class="tag-button ${data.className}" data-tag="${t}">${t}</button>`
+          ).join('');
+          tagsHTML += `</div></div>`;
+      });
+
+      tagsHTML += `<div class="tag-category user-tags-edit">`;
+      if (userDefinedTags.length > 0) {
+          tagsHTML += userDefinedTags.map(t =>
+              `<button class="tag-button tag-user" data-tag="${t}">${t}</button>`
+          ).join('');
+      }
+      tagsHTML += `<span class="inline-edit-add-tag"></span>`;
+      tagsHTML += `</div>`;
+
+      const usesKey = `inline_add_uses_new`;
+      localStorage.setItem(usesKey, JSON.stringify([]));
+
+      // Create block element
+      const blockEl = document.createElement('div');
+      blockEl.className = 'block expanded inline-editing';
+      blockEl.setAttribute('data-id', 'new-inline-add');
+
+      blockEl.innerHTML = `
+              <div class="block-header">
+                  <div class="block-header-left">
+                      <div class="block-title"><h4 contenteditable="true" class="inline-edit-title"></h4></div>
+                  </div>
+                  <div class="inline-edit-controls">
+                      <button class="button green-button inline-edit-save">Save</button>
+                      <button class="button red-button inline-edit-cancel">Cancel</button>
+                  </div>
+              </div>
+              <div class="inline-edit-block-types">${blockTypeHTML}</div>
+              <div class="uses-field inline-edit-uses"></div>
+              <div class="inline-edit-tags">${tagsHTML}</div>
+              <div class="block-properties inline-edit-properties"><span class="block-property inline-edit-new-prop"></span></div>
+              <div class="block-body"><span contenteditable="true" class="inline-edit-body"></span></div>
+      `;
+
+      // Insert at top of results section (after pinned zone if present)
+      const tabSuffix = tab.replace('tab', '');
+      const resultsSection = document.getElementById(`results_section_${tabSuffix}`);
+      if (!resultsSection) return;
+      const pinnedZone = resultsSection.querySelector('.pinned-blocks-zone-wrapper');
+      if (pinnedZone) {
+          pinnedZone.after(blockEl);
+      } else {
+          resultsSection.prepend(blockEl);
+      }
+
+      // Scroll into view
+      blockEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      // Init uses field
+      const usesContainer = blockEl.querySelector('.inline-edit-uses');
+      if (usesContainer) {
+          initUsesField(usesContainer, usesKey);
+          usesContainer.style.display = 'none';
+      }
+
+      // Tag toggle handler
+      const tagsContainer = blockEl.querySelector('.inline-edit-tags');
+      if (tagsContainer) {
+          tagsContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.tag-button');
+              if (btn) btn.classList.toggle('selected');
+          });
+      }
+
+      // Block type toggle handler
+      const blockTypesContainer = blockEl.querySelector('.inline-edit-block-types');
+      if (blockTypesContainer) {
+          blockTypesContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.tag-button');
+              if (btn) btn.classList.toggle('selected');
+          });
+      }
+
+      // Properties editing
+      const propsContainer = blockEl.querySelector('.inline-edit-properties');
+      const newPropBtn = blockEl.querySelector('.inline-edit-new-prop');
+
+      const createPropertyWrap = (text) => {
+          const wrap = document.createElement('span');
+          wrap.className = 'block-property-wrap';
+          wrap.innerHTML = '<span class="block-property" contenteditable="true"></span><span class="property-remove-btn">×</span>';
+          if (text) wrap.querySelector('.block-property').textContent = text;
+          return wrap;
+      };
+
+      if (propsContainer) {
+          if (newPropBtn) {
+              newPropBtn.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  const wrap = createPropertyWrap('');
+                  newPropBtn.before(wrap);
+                  wrap.querySelector('.block-property').focus();
+              });
+          }
+
+          propsContainer.addEventListener('keydown', (e) => {
+              const prop = e.target.closest('.block-property');
+              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
+
+              if (e.key === ',' || e.key === 'Enter') {
+                  e.preventDefault();
+                  const wrap = createPropertyWrap('');
+                  prop.closest('.block-property-wrap').after(wrap);
+                  wrap.querySelector('.block-property').focus();
+              } else if (e.key === 'Backspace' && prop.textContent.trim() === '') {
+                  e.preventDefault();
+                  const wrap = prop.closest('.block-property-wrap');
+                  const prev = wrap?.previousElementSibling;
+                  wrap.remove();
+                  if (prev) {
+                      const prevProp = prev.querySelector?.('.block-property') || prev;
+                      const range = document.createRange();
+                      const sel = window.getSelection();
+                      range.selectNodeContents(prevProp);
+                      range.collapse(false);
+                      sel.removeAllRanges();
+                      sel.addRange(range);
+                  }
+              }
+          });
+
+          propsContainer.addEventListener('focusout', (e) => {
+              const prop = e.target.closest('.block-property');
+              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
+              if (prop.textContent.trim() === '') {
+                  prop.closest('.block-property-wrap')?.remove();
+              }
+          });
+
+          propsContainer.addEventListener('click', (e) => {
+              if (e.target.classList.contains('property-remove-btn')) {
+                  e.stopPropagation();
+                  e.target.closest('.block-property-wrap')?.remove();
+              }
+          });
+      }
+
+      // User tag + button
+      const addTagEl = blockEl.querySelector('.inline-edit-add-tag');
+      if (addTagEl) {
+          addTagEl.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const input = document.createElement('span');
+              input.className = 'inline-edit-tag-input';
+              input.contentEditable = 'true';
+              Object.assign(input.style, {
+                  padding: '4px 10px',
+                  fontSize: '13px',
+                  borderRadius: '12px',
+                  backgroundColor: 'color-mix(in srgb, var(--user-color) 18%, transparent)',
+                  color: 'var(--gray-800)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  minWidth: '20px',
+                  outline: 'none',
+              });
+              addTagEl.before(input);
+              input.focus();
+
+              const commit = () => {
+                  const tagName = input.textContent.trim();
+                  if (tagName) {
+                      const normalized = tagName.charAt(0).toUpperCase() + tagName.slice(1).toLowerCase();
+                      const existing = blockEl.querySelector(`.inline-edit-tags .tag-button[data-tag="${normalized}"]`);
+                      if (existing) {
+                          existing.classList.add('selected');
+                      } else {
+                          const newBtn = document.createElement('button');
+                          newBtn.className = 'tag-button tag-user selected';
+                          newBtn.dataset.tag = normalized;
+                          newBtn.textContent = normalized;
+                          input.before(newBtn);
+                      }
+                  }
+                  input.remove();
+              };
+
+              input.addEventListener('focusout', commit);
+              input.addEventListener('keydown', (ke) => {
+                  if (ke.key === 'Enter' || ke.key === ',') {
+                      ke.preventDefault();
+                      commit();
+                  } else if (ke.key === 'Escape') {
+                      ke.preventDefault();
+                      input.remove();
+                  }
+              });
+          });
+      }
+
+      // Save
+      const doSave = () => {
+          const newTitle = blockEl.querySelector('.inline-edit-title')?.textContent.trim();
+          if (!newTitle) { alert('A title is required.'); return; }
+
+          const body = blockEl.querySelector('.inline-edit-body');
+          const newBody = (body ? body.innerHTML.trim() : '');
+          if (!newBody) { alert('Title and text are required.'); return; }
+
+          const selectedTypes = Array.from(blockEl.querySelectorAll('.inline-edit-block-types .tag-button.selected'))
+              .map(b => b.dataset.tag);
+          if (selectedTypes.length === 0) {
+              alert('Please select a block type: ' + blockTypeConfig.tab9.types.join(', ') + '.');
+              return;
+          }
+
+          const selectedTags = Array.from(blockEl.querySelectorAll('.inline-edit-tags .tag-button.selected'))
+              .map(b => b.dataset.tag.trim().toLowerCase());
+
+          const combinedLower = [...new Set(selectedTags)];
+          const predefinedMap = new Map(
+              Object.values(categoryTags).flatMap(cat => cat.tags).map(t => [t.toLowerCase(), t])
+          );
+          const allTags = combinedLower.map(t => predefinedMap.get(t) || normalizeTag(t));
+
+          const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
+          const properties = Array.from(blockEl.querySelectorAll('.inline-edit-properties .block-property-wrap .block-property'))
+              .map(el => el.textContent.trim()).filter(p => p.length > 0);
+
+          localStorage.removeItem(usesKey);
+
+          saveBlock(tab, newTitle, newBody, allTags, usesState, properties, selectedTypes);
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters(tabSuffix));
+      };
+
+      // Cancel — just remove the element
+      const doCancel = () => {
+          localStorage.removeItem(usesKey);
+          blockEl.remove();
+      };
+
+      blockEl.querySelector('.inline-edit-save').addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+      blockEl.querySelector('.inline-edit-cancel').addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+
+      blockEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      });
+
+      // Focus title
+      const titleInput = blockEl.querySelector('.inline-edit-title');
+      if (titleInput) titleInput.focus();
+  };
+
   return {
     getActiveTab,
     renderBlocks,
@@ -3086,5 +3711,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
     clearData,
     setActiveInventoryBlock,
     setActiveNotesBlock,
+    enterInlineEdit,
+    startInlineAdd,
   };
 })();

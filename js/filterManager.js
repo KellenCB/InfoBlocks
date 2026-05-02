@@ -195,7 +195,8 @@ export const filterManager = (() => {
                 !target.classList.contains('tag-button') ||
                 target.closest('.add-block-overlay') ||
                 target.closest('.edit-block-overlay') ||
-                target.closest('.block.condensed')
+                target.closest('.block.condensed') ||
+                target.closest('.block.inline-editing')
             ) return;
 
             const tabContent = target.closest('.tab-content');

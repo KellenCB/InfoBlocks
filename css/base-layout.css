@@ -570,6 +570,155 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     gap: 12px;
 }
 
+.block.inline-editing {
+    --block-bg: color-mix(in srgb, var(--color-orange) 15%, var(--gray-300));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.block.inline-editing .inline-edit-controls {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.block.inline-editing .inline-edit-controls .button {
+    margin: 0;
+    padding: 5px 12px;
+    font-size: 12px;
+}
+
+.block.inline-editing .inline-edit-block-types,
+.block.inline-editing .inline-edit-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.inline-edit-block-types .tag-button,
+.inline-edit-tags .tag-button {
+    padding: 4px 10px;
+    height: auto;
+    font-size: 13px;
+    border-radius: 12px;
+    letter-spacing: 0.03em;
+}
+
+.block.inline-editing .uses-field {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+}
+
+.block.inline-editing ul,
+.block.inline-editing ol {
+    padding-left: 20px;
+    margin: 4px 0;
+}
+
+.block.inline-editing .block-property {
+    cursor: text;
+}
+
+.block-property-wrap {
+    display: none;
+}
+
+.block.inline-editing .block-property-wrap {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    padding: 3px 7px;
+    color: var(--gray-800);
+    background-color: color-mix(in srgb, var(--gray-900) 8%, transparent);
+    border-radius: 6px;
+    font-size: 11px;
+}
+
+.block.inline-editing .block-property-wrap .block-property {
+    padding: 0;
+    background: none;
+    border-radius: 0;
+}
+
+.property-remove-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--gray-600);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0 0 0 4px;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.block.inline-editing .property-remove-btn {
+    display: inline-flex;
+}
+
+.property-remove-btn:hover {
+    color: var(--color-red);
+}
+
+.inline-edit-new-prop,
+.inline-edit-add-tag {
+    cursor: pointer;
+}
+
+.inline-edit-new-prop:empty::before {
+    content: '+';
+    color: var(--gray-600);
+}
+
+.inline-edit-new-prop {
+    padding: 3px 7px;
+    background-color: color-mix(in srgb, var(--gray-900) 5%, transparent);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--gray-800);
+    min-width: 16px;
+    display: inline-block;
+}
+
+.inline-edit-add-tag:empty::before {
+    content: '+';
+    color: var(--gray-600);
+}
+
+.inline-edit-add-tag {
+    padding: 4px 10px;
+    height: auto;
+    font-size: 13px;
+    border-radius: 12px;
+    background-color: color-mix(in srgb, var(--user-color) 8%, transparent);
+    color: var(--gray-800);
+    border: 1px dashed var(--gray-500);
+    display: inline-flex;
+    align-items: center;
+    min-width: 20px;
+}
+
+.block.inline-editing .inline-edit-title:empty::before {
+    content: 'Block title...';
+    color: var(--gray-600);
+    font-weight: 400;
+}
+
+.block.inline-editing .inline-edit-body:empty::before {
+    content: 'Block text...';
+    color: var(--gray-600);
+    font-weight: 400;
+}
+
+.block.inline-editing .inline-edit-title,
+.block.inline-editing .inline-edit-body {
+    min-height: 1.4em;
+    outline: none;
+}
+
+
 .block.expanded .block-header {
     align-items: stretch;
 }

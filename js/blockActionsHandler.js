@@ -356,6 +356,12 @@ export const blockActionsHandler = (() => {
             reapplySearchAndFilters(activeTab);
 
         } else if (target.classList.contains("edit-button")) {
+            
+            // Tab9: inline editing instead of overlay
+            if (activeTab === 'tab9') {
+                appManager.enterInlineEdit(blockId);
+                return;
+            }
 
             isEditing = true;
             currentEditingBlockId = blockId;
