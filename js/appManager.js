@@ -1,5 +1,5 @@
 // appManager.js
-import { categoryTags, blockTypeConfig } from './tagConfig.js';
+import { categoryTags, blockTypeConfig, BOOK_ACCENT_COLORS, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
 import { blockTemplate } from './blockTemplate.js';
 import { overlayHandler, initUsesField, initToolbarForEditor } from './overlayHandler.js';
 import { applyInlineDiceRolls } from './diceRoller.js';
@@ -1775,6 +1775,7 @@ const applyPendingBlockAnim = () => {
 
   // Currently-active block in the notes viewer
   let activeNotesBlockId = null;
+  let notesEditMode = false;
 
   // ── Notes wide/narrow responsive mode ──────────────────────────
   const NOTES_WIDE_BREAKPOINT = 700;
@@ -1797,6 +1798,12 @@ const applyPendingBlockAnim = () => {
           layout.classList.toggle('notes-wide-mode', notesWideMode);
 
           if (wasWide !== notesWideMode) {
+              // Cancel any active edit — the layout is about to change
+              if (notesEditMode) {
+                  notesEditMode = false;
+                  const viewer = document.getElementById('notes_viewer');
+                  if (viewer) viewer.classList.remove('editing');
+              }
               const blocks = getBlocks('tab3');
               if (notesWideMode) {
                   // Narrow → wide: move inline-expanded block to viewer
@@ -2203,6 +2210,7 @@ const applyPendingBlockAnim = () => {
                   e.target.closest('.quest-status-pill') ||
                   e.target.closest('.quest-objective')) return;
               if (e.target.classList.contains('circle')) return;
+              if (notesEditMode) return;
 
               const id = blockEl.getAttribute('data-id');
               if (!id) return;
@@ -2306,6 +2314,7 @@ const applyPendingBlockAnim = () => {
 
       // ── Click on empty list space → close viewer ─────────────────
       resultsSection.addEventListener('click', (e) => {
+          if (notesEditMode) return;
           if (!e.target.closest('.block') &&
               !e.target.closest('.tab3-section-header') &&
               !e.target.closest('.tab3-location-pill') &&
@@ -2328,6 +2337,7 @@ const applyPendingBlockAnim = () => {
           notesViewerEl.addEventListener('click', (e) => {
               const pill = e.target.closest('.quest-status-pill');
               if (!pill) return;
+              if (notesEditMode) return;
               e.stopPropagation();
               const dropdown = document.getElementById('quest-status-dropdown');
               if (!dropdown) return;
@@ -2350,7 +2360,9 @@ const applyPendingBlockAnim = () => {
 
       // ── Viewer: mode-dependent ────────────────────────────────────
       const viewer = document.getElementById('notes_viewer');
-      if (notesWideMode) {
+      if (notesEditMode) {
+          // Editing in progress — don't touch the viewer or inline form
+      } else if (notesWideMode) {
           // Wide mode: viewer is always visible
           const stillPresent = activeNotesBlockId &&
               displayBlocks.find(b => b.id === activeNotesBlockId);
@@ -2380,20 +2392,680 @@ const applyPendingBlockAnim = () => {
   const wireNotesHeaderControls = () => {
       const addBtn = document.getElementById('add_block_button');
       if (addBtn) {
-          addBtn.onclick = () => {
-              overlayHandler.initializeOverlayTagHandlers('add_block_overlay_tags');
-              const overlay = document.querySelector('.add-block-overlay');
-              if (overlay) overlay.dataset.activeTab = 'tab3';
-              overlay?.classList.add('show');
-              setTimeout(() => {
-                  overlayHandler.setupQuestOverlayOptions('add');
-                  // Pre-select "Notes" as the default block type
-                  if (!document.querySelector('#character_type_tags_add .tag-button.selected')) {
-                      document.querySelector('#character_type_tags_add .tag-button[data-tag="Notes"]')
-                          ?.classList.add('selected');
-                  }
-              }, 0);
+          addBtn.onclick = () => startNotesAdd();
+      }
+  };
+
+  // ── Notes viewer/inline: shared edit & add helpers ─────────────
+
+  const NOTES_QUEST_STATUSES = [
+      { value: 'active',      label: 'Active' },
+      { value: 'on hold',     label: 'On hold' },
+      { value: 'not started', label: 'Not started' },
+      { value: 'completed',   label: 'Completed' },
+      { value: 'failed',      label: 'Failed' },
+  ];
+
+  // Build all the inner form HTML for a notes edit/add form.
+  // `block` is the existing block on edit, null on add.
+  const buildNotesEditFormHTML = (block) => {
+      const isEdit = !!block;
+      const tab = 'tab3';
+
+      // ── Block type buttons (single-select) ──
+      const tabBTConfig = blockTypeConfig[tab];
+      const currentTypes = isEdit
+          ? (Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []))
+          : ['Notes'];
+      const blockTypeHTML = tabBTConfig.types.map(type =>
+          `<button class="tag-button ${tabBTConfig.className}${currentTypes.includes(type) ? ' selected' : ''}" data-tag="${type}">${type}</button>`
+      ).join('');
+
+      // ── Current type for initial field visibility ──
+      const selType   = currentTypes[0] || 'Notes';
+      const showQuest = selType === 'Quest';
+      const showMap   = selType === 'Map';
+      const showBook  = selType === 'Book';
+      const showDesc  = selType === 'Book' || selType === 'Notes';
+      const showBody  = selType !== 'Map';
+
+      // ── Location ──
+      const location = isEdit ? (block.location || '') : '';
+
+      // ── URL (Map) ──
+      const url = isEdit ? (block.url || '') : '';
+
+      // ── Description (Book, Notes) ──
+      const description = isEdit ? (block.description || '') : '';
+
+      // ── Accent swatches (Book) ──
+      const bookColor = isEdit ? (block.bookColor || DEFAULT_BOOK_ACCENT) : DEFAULT_BOOK_ACCENT;
+      const swatchesHTML = BOOK_ACCENT_COLORS.map(c => `
+          <button type="button"
+              class="book-accent-swatch${c.id === bookColor ? ' selected' : ''}"
+              data-color-id="${c.id}"
+              style="background-color:${c.hex};"
+              title="${c.label}"
+              aria-label="${c.label}"></button>
+      `).join('');
+
+      // ── Status pills (Quest) ──
+      const status = isEdit ? (block.status || 'active') : 'active';
+      const statusHTML = NOTES_QUEST_STATUSES.map(s =>
+          `<button type="button" class="quest-status-pill status-${s.value.replace(/\s+/g, '-')}${status === s.value ? ' selected' : ''}" data-status="${s.value}"><span class="quest-status-dot"></span>${s.label}</button>`
+      ).join('');
+
+      // ── Objectives editor rows (Quest) ──
+      const objectives = isEdit && Array.isArray(block.objectives) ? block.objectives : [];
+      const objectivesHTML = objectives.map(o => `
+          <div class="quest-objective-editor-row" data-done="${o.done ? 'true' : 'false'}">
+              <input type="text" class="quest-objective-input" placeholder="Objective…" value="${(o.text || '').replace(/"/g, '&quot;')}" />
+              <button type="button" class="quest-objective-remove" title="Remove">×</button>
+          </div>
+      `).join('');
+
+      // ── Body ──
+      let bodyHTML = isEdit ? (block.text || '') : '';
+      bodyHTML = bodyHTML
+          .replace(/<div[^>]*>/gi, '')
+          .replace(/^(&nbsp;|\s)+/gi, '')
+          .replace(/<\/div>/gi, '<br>')
+          .replace(/<p[^>]*>/gi, '')
+          .replace(/<\/p>/gi, '<br>')
+          .trim();
+
+      // ── Title ──
+      const title = isEdit ? block.title : '';
+
+      // ── Assemble type-specific fields ──
+      const fieldsHTML = `
+          <div class="notes-edit-fields">
+              <div class="quest-overlay-field">
+                  <label class="quest-overlay-label">Location</label>
+                  <input type="text" class="notes-edit-location quest-overlay-input" placeholder="e.g. Ionia — leave blank for none" value="${location.replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="quest-overlay-field map-only-field" style="display:${showMap ? '' : 'none'};">
+                  <label class="quest-overlay-label">Link URL</label>
+                  <input type="url" class="notes-edit-url quest-overlay-input" placeholder="https://example.com" value="${url.replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="quest-overlay-field desc-only-field" style="display:${showDesc ? '' : 'none'};">
+                  <label class="quest-overlay-label">Description</label>
+                  <input type="text" class="notes-edit-description quest-overlay-input" placeholder="Short description shown on the card" maxlength="200" value="${description.replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="quest-overlay-field book-only-field" style="display:${showBook ? '' : 'none'};">
+                  <label class="quest-overlay-label">Accent colour</label>
+                  <div class="notes-edit-swatches book-accent-swatches">${swatchesHTML}</div>
+              </div>
+              <div class="quest-overlay-field quest-only-field" style="display:${showQuest ? '' : 'none'};">
+                  <label class="quest-overlay-label">Status</label>
+                  <div class="notes-edit-status quest-status-button-row">${statusHTML}</div>
+              </div>
+              <div class="quest-overlay-field quest-only-field" style="display:${showQuest ? '' : 'none'};">
+                  <label class="quest-overlay-label">Objectives</label>
+                  <div class="notes-edit-objectives quest-objectives-editor">${objectivesHTML}</div>
+                  <button type="button" class="notes-edit-add-objective quest-add-objective-btn">+ Add objective</button>
+              </div>
+          </div>
+      `;
+
+      return { title, blockTypeHTML, fieldsHTML, bodyHTML, showBody };
+  };
+
+  // Wire up all interactive behaviour within a notes edit form container.
+  const wireNotesEditBehaviour = (container) => {
+      // ── Block type single-select + field visibility ──
+      const blockTypesContainer = container.querySelector('.inline-edit-block-types');
+      const questOnlyFields = container.querySelectorAll('.quest-only-field');
+      const bookOnlyFields  = container.querySelectorAll('.book-only-field');
+      const descOnlyFields  = container.querySelectorAll('.desc-only-field');
+      const mapOnlyFields   = container.querySelectorAll('.map-only-field');
+      const bodyWrap        = container.querySelector('.notes-edit-body-wrap');
+
+      const updateFieldVisibility = () => {
+          const sel = blockTypesContainer?.querySelector('.tag-button.selected');
+          const type = sel?.dataset.tag || '';
+          const isQuest = type === 'Quest';
+          const isMap   = type === 'Map';
+          const isBook  = type === 'Book';
+          const isDesc  = isBook || type === 'Notes';
+
+          questOnlyFields.forEach(f => f.style.display = isQuest ? '' : 'none');
+          bookOnlyFields.forEach(f => f.style.display = isBook ? '' : 'none');
+          descOnlyFields.forEach(f => f.style.display = isDesc ? '' : 'none');
+          mapOnlyFields.forEach(f => f.style.display = isMap ? '' : 'none');
+
+          // Hide body editor (and its toolbar wrapper) for Map
+          if (bodyWrap) bodyWrap.style.display = isMap ? 'none' : '';
+      };
+
+      if (blockTypesContainer) {
+          blockTypesContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.tag-button');
+              if (!btn) return;
+              const wasSel = btn.classList.contains('selected');
+              blockTypesContainer.querySelectorAll('.tag-button').forEach(b => b.classList.remove('selected'));
+              if (!wasSel) btn.classList.add('selected');
+              updateFieldVisibility();
+          });
+      }
+
+      // ── Status pill mutual exclusion ──
+      const statusRow = container.querySelector('.notes-edit-status');
+      if (statusRow) {
+          statusRow.addEventListener('click', (e) => {
+              const pill = e.target.closest('.quest-status-pill');
+              if (!pill) return;
+              e.preventDefault();
+              statusRow.querySelectorAll('.quest-status-pill').forEach(p => p.classList.remove('selected'));
+              pill.classList.add('selected');
+          });
+      }
+
+      // ── Objectives add / remove / Enter-to-add ──
+      const objectivesEditor = container.querySelector('.notes-edit-objectives');
+      const addObjectiveBtn  = container.querySelector('.notes-edit-add-objective');
+
+      const renderObjectiveRow = (text = '', done = false) => {
+          const row = document.createElement('div');
+          row.className = 'quest-objective-editor-row';
+          row.dataset.done = done ? 'true' : 'false';
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'quest-objective-input';
+          input.placeholder = 'Objective…';
+          input.value = text;
+          row.appendChild(input);
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'quest-objective-remove';
+          removeBtn.title = 'Remove';
+          removeBtn.textContent = '×';
+          row.appendChild(removeBtn);
+          return row;
+      };
+
+      if (addObjectiveBtn && objectivesEditor) {
+          addObjectiveBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const row = renderObjectiveRow('', false);
+              objectivesEditor.appendChild(row);
+              row.querySelector('.quest-objective-input').focus();
+          });
+      }
+
+      if (objectivesEditor) {
+          objectivesEditor.addEventListener('click', (e) => {
+              const rmBtn = e.target.closest('.quest-objective-remove');
+              if (!rmBtn) return;
+              e.preventDefault();
+              rmBtn.closest('.quest-objective-editor-row')?.remove();
+          });
+          objectivesEditor.addEventListener('keydown', (e) => {
+              if (e.key !== 'Enter' || !e.target.classList.contains('quest-objective-input')) return;
+              e.preventDefault();
+              const row = renderObjectiveRow('', false);
+              e.target.closest('.quest-objective-editor-row').after(row);
+              row.querySelector('.quest-objective-input').focus();
+          });
+      }
+
+      // ── Accent swatch selection ──
+      const swatchContainer = container.querySelector('.notes-edit-swatches');
+      if (swatchContainer) {
+          swatchContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.book-accent-swatch');
+              if (!btn) return;
+              e.preventDefault();
+              swatchContainer.querySelectorAll('.book-accent-swatch').forEach(s => s.classList.remove('selected'));
+              btn.classList.add('selected');
+          });
+      }
+
+      // ── Rich text toolbar on body ──
+      const bodyEl = container.querySelector('.notes-edit-body');
+      if (bodyEl) {
+          initToolbarForEditor(bodyEl);
+          // Placeholder toggle (mirrors initCEPlaceholder)
+          const updatePlaceholder = () => {
+              const txt = bodyEl.textContent.replace(/\u200B/g, '').trim();
+              bodyEl.classList.toggle('empty', txt === '');
           };
+          bodyEl.addEventListener('input', updatePlaceholder);
+          bodyEl.addEventListener('focus', updatePlaceholder);
+          bodyEl.addEventListener('blur', updatePlaceholder);
+          updatePlaceholder();
+      }
+
+      // Run initial visibility pass (toolbar wrapper now exists)
+      updateFieldVisibility();
+  };
+
+  // Read + validate form data from a notes edit container.
+  // Returns object on success, null on validation failure.
+  const collectNotesFormData = (container) => {
+      const titleEl = container.querySelector('.notes-edit-title');
+      const newTitle = titleEl?.textContent.trim();
+      if (!newTitle) { alert('A title is required.'); return null; }
+
+      // Block type
+      const selectedTypeBtn = container.querySelector('.inline-edit-block-types .tag-button.selected');
+      const blockType = selectedTypeBtn?.dataset.tag || null;
+      if (!blockType) {
+          alert('Please select a block type: ' + blockTypeConfig.tab3.types.join(', ') + '.');
+          return null;
+      }
+
+      // Body
+      const bodyEl = container.querySelector('.notes-edit-body');
+      const newBody = bodyEl ? bodyEl.innerHTML.trim() : '';
+      const textOptional = blockType === 'Quest' || blockType === 'Map';
+      if (!textOptional && !newBody) {
+          alert('Title and text are required.');
+          return null;
+      }
+
+      // Location
+      const loc = container.querySelector('.notes-edit-location')?.value.trim() || null;
+
+      // Build tab3Extras
+      const tab3Extras = { location: loc };
+
+      if (blockType === 'Quest') {
+          const selPill = container.querySelector('.notes-edit-status .quest-status-pill.selected');
+          tab3Extras.status = selPill?.dataset.status || 'active';
+          const rows = container.querySelectorAll('.notes-edit-objectives .quest-objective-editor-row');
+          tab3Extras.objectives = Array.from(rows).map(row => ({
+              text: row.querySelector('.quest-objective-input')?.value.trim() || '',
+              done: row.dataset.done === 'true'
+          })).filter(o => o.text !== '');
+      }
+      if (blockType === 'Book') {
+          tab3Extras.description = container.querySelector('.notes-edit-description')?.value.trim() || '';
+          const selSwatch = container.querySelector('.notes-edit-swatches .book-accent-swatch.selected');
+          tab3Extras.bookColor = selSwatch?.dataset.colorId || DEFAULT_BOOK_ACCENT;
+      }
+      if (blockType === 'Notes') {
+          tab3Extras.description = container.querySelector('.notes-edit-description')?.value.trim() || '';
+      }
+      if (blockType === 'Map') {
+          const urlVal = container.querySelector('.notes-edit-url')?.value.trim() || '';
+          if (!urlVal) { alert('A link URL is required for Map blocks.'); return null; }
+          tab3Extras.url = urlVal;
+      }
+
+      const text = blockType === 'Map' ? '' : newBody;
+
+      return { title: newTitle, text, blockType, tab3Extras };
+  };
+
+  // Assemble the full edit form HTML used by both viewer and inline modes.
+  const assembleNotesEditFormInner = (block) => {
+      const { title, blockTypeHTML, fieldsHTML, bodyHTML, showBody } = buildNotesEditFormHTML(block);
+
+      return `
+          <div class="notes-edit-header">
+              <h4 contenteditable="true" class="notes-edit-title">${title}</h4>
+              <div class="inline-edit-controls">
+                  <button class="button green-button notes-edit-save">Save</button>
+                  <button class="button red-button notes-edit-cancel">Cancel</button>
+              </div>
+          </div>
+          <div class="notes-edit-inserts">
+              <div class="inline-edit-block-types">${blockTypeHTML}</div>
+              ${fieldsHTML}
+          </div>
+          <div class="notes-edit-body-wrap" style="display:${showBody ? '' : 'none'};">
+              <div contenteditable="true" class="notes-edit-body" data-placeholder="Enter block text here...">${bodyHTML}</div>
+          </div>
+      `;
+  };
+
+  // ── Wide mode: edit in viewer ──────────────────────────────────
+  const enterNotesViewerEdit = (blockId) => {
+      if (notesEditMode) return;
+      const viewer = document.getElementById('notes_viewer');
+      if (!viewer) return;
+
+      const blocks = getBlocks('tab3');
+      const block  = blocks.find(b => b.id === blockId);
+      if (!block) return;
+
+      // If viewer doesn't have content, render first then re-enter
+      if (!viewer.querySelector('.notes-viewer-content')) {
+          renderNotesViewer(blockId);
+          requestAnimationFrame(() => enterNotesViewerEdit(blockId));
+          return;
+      }
+
+      notesEditMode = true;
+      activeNotesBlockId = blockId;
+      viewer.classList.add('editing');
+
+      const formHTML = `<div class="notes-viewer-content notes-edit-form">${assembleNotesEditFormInner(block)}</div>`;
+
+      const existing = viewer.querySelector('.notes-viewer-content, .notes-viewer-placeholder');
+      const doSwap = () => {
+          viewer.innerHTML = formHTML;
+          const content = viewer.querySelector('.notes-edit-form');
+          if (content) { content.style.opacity = '0'; void content.offsetWidth; content.style.opacity = ''; }
+
+          wireNotesEditBehaviour(viewer);
+
+          // Highlight active block in list
+          document.querySelectorAll('#results_section_3 .block').forEach(b => {
+              b.classList.toggle('notes-block-active', b.getAttribute('data-id') === blockId);
+          });
+
+          // Save / Cancel
+          const doSave = () => {
+              const data = collectNotesFormData(viewer);
+              if (!data) return;
+              viewer.removeEventListener('keydown', keyHandler);
+              const latestBlock = getBlocks('tab3').find(b => b.id === blockId);
+              saveBlock('tab3', data.title, data.text, latestBlock?.tags || [], [], [], data.blockType, blockId, block.timestamp, null, data.tab3Extras);
+              notesEditMode = false;
+              viewer.classList.remove('editing');
+              import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
+          };
+
+          const doCancel = () => {
+              viewer.removeEventListener('keydown', keyHandler);
+              notesEditMode = false;
+              viewer.classList.remove('editing');
+              renderNotesViewer(blockId);
+          };
+
+          const keyHandler = (e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+              else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+          };
+
+          viewer.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+          viewer.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+          viewer.addEventListener('keydown', keyHandler);
+
+          // Focus title
+          const titleEl = viewer.querySelector('.notes-edit-title');
+          if (titleEl) {
+              titleEl.focus();
+              const range = document.createRange();
+              const sel = window.getSelection();
+              range.selectNodeContents(titleEl);
+              range.collapse(false);
+              sel.removeAllRanges();
+              sel.addRange(range);
+          }
+      };
+
+      if (existing && existing.classList.contains('notes-viewer-content')) {
+          existing.classList.add('fading');
+          setTimeout(doSwap, 200);
+      } else {
+          doSwap();
+      }
+  };
+
+  // ── Wide mode: add in viewer ───────────────────────────────────
+  const startNotesViewerAdd = () => {
+      if (notesEditMode) return;
+      const viewer = document.getElementById('notes_viewer');
+      const layout = document.querySelector('.notes-layout');
+      if (!viewer) return;
+
+      notesEditMode = true;
+
+      // In narrow mode slide open (shouldn't happen but safety)
+      if (!notesWideMode && layout) layout.classList.add('notes-viewer-open');
+
+      const formHTML = `<div class="notes-viewer-content notes-edit-form">${assembleNotesEditFormInner(null)}</div>`;
+
+      const existing = viewer.querySelector('.notes-viewer-content, .notes-viewer-placeholder');
+      const doSwap = () => {
+          viewer.innerHTML = formHTML;
+          viewer.classList.add('editing');
+          const content = viewer.querySelector('.notes-edit-form');
+          if (content) { content.style.opacity = '0'; void content.offsetWidth; content.style.opacity = ''; }
+
+          wireNotesEditBehaviour(viewer);
+
+          // Clear active highlight
+          document.querySelectorAll('#results_section_3 .block').forEach(b => b.classList.remove('notes-block-active'));
+
+          // Save / Cancel
+          const doSave = () => {
+              const data = collectNotesFormData(viewer);
+              if (!data) return;
+              viewer.removeEventListener('keydown', keyHandler);
+              const newId = saveBlock('tab3', data.title, data.text, [], [], [], data.blockType, null, null, null, data.tab3Extras);
+              notesEditMode = false;
+              viewer.classList.remove('editing');
+              if (typeof newId === 'string') activeNotesBlockId = newId;
+              import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
+          };
+
+          const doCancel = () => {
+              viewer.removeEventListener('keydown', keyHandler);
+              notesEditMode = false;
+              viewer.classList.remove('editing');
+              if (activeNotesBlockId) {
+                  renderNotesViewer(activeNotesBlockId);
+              } else {
+                  viewer.innerHTML = '<p class="notes-viewer-placeholder">Select an item to view</p>';
+              }
+          };
+
+          const keyHandler = (e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+              else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+          };
+
+          viewer.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+          viewer.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+          viewer.addEventListener('keydown', keyHandler);
+
+          // Focus title
+          const titleEl = viewer.querySelector('.notes-edit-title');
+          if (titleEl) titleEl.focus();
+      };
+
+      if (existing && existing.classList.contains('notes-viewer-content')) {
+          existing.classList.add('fading');
+          setTimeout(doSwap, 200);
+      } else {
+          doSwap();
+      }
+  };
+
+  // ── Narrow mode: edit inline ───────────────────────────────────
+  const enterNotesInlineEdit = (blockId) => {
+      if (notesEditMode) return;
+      const tab = 'tab3';
+      const blocksArr = getBlocks(tab);
+      const block = blocksArr.find(b => b.id === blockId);
+      if (!block) return;
+
+      // If not expanded, expand first then re-enter
+      if (block.viewState !== 'expanded') {
+          const oldHeight = document.querySelector(`.block[data-id="${blockId}"]`)?.offsetHeight || 0;
+          block.viewState = 'expanded';
+          // Collapse any other expanded block
+          blocksArr.forEach(b => { if (b.id !== blockId && b.viewState === 'expanded') b.viewState = 'condensed'; });
+          localStorage.setItem('userBlocks_tab3', JSON.stringify(blocksArr));
+          import('./filterManager.js').then(({ filterManager }) => {
+              filterManager.applyFilters('3');
+              requestAnimationFrame(() => {
+                  enterNotesInlineEdit(blockId);
+                  const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
+                  if (!blockEl || !oldHeight) return;
+                  const newHeight = blockEl.offsetHeight;
+                  if (Math.abs(newHeight - oldHeight) < 2) return;
+                  const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
+                  blockEl.style.height = oldHeight + 'px';
+                  blockEl.style.overflow = 'hidden';
+                  blockEl.style.transition = 'none';
+                  fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
+                  void blockEl.offsetHeight;
+                  blockEl.style.transition = 'height 0.5s ease';
+                  blockEl.style.height = newHeight + 'px';
+                  fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
+                  const cleanup = () => {
+                      blockEl.style.height = ''; blockEl.style.overflow = ''; blockEl.style.transition = '';
+                      fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
+                  };
+                  blockEl.addEventListener('transitionend', (e) => {
+                      if (e.target === blockEl && e.propertyName === 'height') cleanup();
+                  }, { once: true });
+                  setTimeout(cleanup, 600);
+              });
+          });
+          return;
+      }
+
+      const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
+      if (!blockEl) return;
+
+      notesEditMode = true;
+      const oldHeight = blockEl.offsetHeight;
+
+      blockEl.classList.add('inline-editing');
+      blockEl.innerHTML = assembleNotesEditFormInner(block);
+
+      wireNotesEditBehaviour(blockEl);
+
+      // Save / Cancel
+      const doSave = () => {
+          const data = collectNotesFormData(blockEl);
+          if (!data) return;
+          blockEl.removeEventListener('keydown', keyHandler);
+          const latestBlock = getBlocks(tab).find(b => b.id === blockId);
+          saveBlock(tab, data.title, data.text, latestBlock?.tags || [], [], [], data.blockType, blockId, block.timestamp, null, data.tab3Extras);
+          notesEditMode = false;
+          setPendingBlockAnim(blockId, blockEl.offsetHeight);
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
+      };
+
+      const doCancel = () => {
+          blockEl.removeEventListener('keydown', keyHandler);
+          notesEditMode = false;
+          setPendingBlockAnim(blockId, blockEl.offsetHeight);
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
+      };
+
+      const keyHandler = (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      };
+
+      blockEl.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+      blockEl.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+      blockEl.addEventListener('keydown', keyHandler);
+
+      // Focus title
+      const titleEl = blockEl.querySelector('.notes-edit-title');
+      if (titleEl) {
+          titleEl.focus();
+          const range = document.createRange();
+          const sel = window.getSelection();
+          range.selectNodeContents(titleEl);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+      }
+
+      // Animate from old height
+      const newHeight = blockEl.offsetHeight;
+      if (oldHeight && Math.abs(newHeight - oldHeight) > 2) {
+          const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('notes-edit-header'));
+          blockEl.style.height = oldHeight + 'px';
+          blockEl.style.overflow = 'hidden';
+          blockEl.style.transition = 'none';
+          fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
+          void blockEl.offsetHeight;
+          blockEl.style.transition = 'height 0.5s ease';
+          blockEl.style.height = newHeight + 'px';
+          fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
+          const cleanup = () => {
+              blockEl.style.height = ''; blockEl.style.overflow = ''; blockEl.style.transition = '';
+              fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
+          };
+          blockEl.addEventListener('transitionend', (e) => {
+              if (e.target === blockEl && e.propertyName === 'height') cleanup();
+          }, { once: true });
+          setTimeout(cleanup, 600);
+      }
+  };
+
+  // ── Narrow mode: add inline ────────────────────────────────────
+  const startNotesInlineAdd = () => {
+      if (notesEditMode) return;
+      notesEditMode = true;
+
+      const blockEl = document.createElement('div');
+      blockEl.className = 'block expanded inline-editing';
+      blockEl.setAttribute('data-id', 'new-notes-inline-add');
+
+      blockEl.innerHTML = assembleNotesEditFormInner(null);
+
+      // Insert after the results header / location row
+      const resultsSection = document.getElementById('results_section_3');
+      if (!resultsSection) return;
+      const host = document.getElementById('tab3-sections-host');
+      if (host) {
+          host.prepend(blockEl);
+      } else {
+          resultsSection.appendChild(blockEl);
+      }
+
+      blockEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      wireNotesEditBehaviour(blockEl);
+
+      // Save / Cancel
+      const doSave = () => {
+          const data = collectNotesFormData(blockEl);
+          if (!data) return;
+          blockEl.removeEventListener('keydown', keyHandler);
+          saveBlock('tab3', data.title, data.text, [], [], [], data.blockType, null, null, null, data.tab3Extras);
+          notesEditMode = false;
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
+      };
+
+      const doCancel = () => {
+          blockEl.removeEventListener('keydown', keyHandler);
+          notesEditMode = false;
+          blockEl.remove();
+      };
+
+      const keyHandler = (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      };
+
+      blockEl.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+      blockEl.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+      blockEl.addEventListener('keydown', keyHandler);
+
+      // Focus title
+      const titleEl = blockEl.querySelector('.notes-edit-title');
+      if (titleEl) titleEl.focus();
+  };
+
+  // ── Dispatchers ────────────────────────────────────────────────
+  const enterNotesEdit = (blockId) => {
+      if (notesEditMode) return;
+      if (notesWideMode) {
+          enterNotesViewerEdit(blockId);
+      } else {
+          enterNotesInlineEdit(blockId);
+      }
+  };
+
+  const startNotesAdd = () => {
+      if (notesEditMode) return;
+      if (notesWideMode) {
+          startNotesViewerAdd();
+      } else {
+          startNotesInlineAdd();
       }
   };
 
@@ -2451,6 +3123,7 @@ const applyPendingBlockAnim = () => {
           resultsSection.addEventListener('click', (e) => {
               const pill = e.target.closest('.quest-status-pill');
               if (!pill) return;
+              if (notesEditMode) return;
               e.stopPropagation();
 
               const rect = pill.getBoundingClientRect();
@@ -4166,5 +4839,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
     startInlineAdd,
     enterInventoryEdit,
     startInventoryAdd,
+    enterNotesEdit,
+    startNotesAdd,
   };
 })();

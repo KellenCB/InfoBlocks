@@ -369,6 +369,12 @@ export const blockActionsHandler = (() => {
                 return;
             }
 
+            // Tab3: edit in the notes viewer (wide) or inline (narrow)
+            if (activeTab === 'tab3') {
+                appManager.enterNotesEdit(blockId);
+                return;
+            }
+
             isEditing = true;
             currentEditingBlockId = blockId;
         
