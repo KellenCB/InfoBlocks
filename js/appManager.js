@@ -2172,7 +2172,7 @@ export const appManager = (() => {
 
       const endDrag = () => {
           if (!dragState) return;
-          const { block, placeholder, didDrag } = dragState;
+          const { block, placeholder, didDrag, pinBtn } = dragState;
 
           if (didDrag && placeholder) {
               // Move block back into the zone from document.body
@@ -2197,11 +2197,16 @@ export const appManager = (() => {
                   .map(b => b.getAttribute('data-id'));
               localStorage.setItem('pinnedBlockOrder_tab9', JSON.stringify(newOrder));
 
-              // Eat the subsequent click so it doesn't unpin the block
-              document.addEventListener('click', (ev) => {
-                  ev.stopPropagation();
-                  ev.preventDefault();
-              }, { capture: true, once: true });
+          } else if (!didDrag && pinBtn) {
+              // No movement — treat as a click to unpin
+              dragState = null;
+              pinBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+              return;
+          } else if (!didDrag && pinBtn) {
+              // No movement — treat as a click to unpin
+              dragState = null;
+              pinBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+              return;
           }
 
           dragState = null;

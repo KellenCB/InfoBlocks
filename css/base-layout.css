@@ -2209,12 +2209,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 /* ── Pin button as drag handle on pinned blocks ────────────── */
 
 .block.pinned .pin-button {
-    cursor: grab;
     touch-action: none;
-}
-
-.block.pinned .pin-button:active {
-    cursor: grabbing;
 }
 
 /* ── Dragging state ────────────────────────────────────────── */
