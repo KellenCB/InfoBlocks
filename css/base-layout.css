@@ -571,7 +571,6 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 }
 
 .block.inline-editing {
-    --block-bg: color-mix(in srgb, var(--color-orange) 15%, var(--gray-300));
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -607,8 +606,40 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 
 .block.inline-editing .uses-field {
     background: none;
-    padding: 0;
+    padding: 2px 0 0;
     border-radius: 0;
+}
+
+.block.inline-editing .uses-field .circle {
+    width: 15px;
+    height: 15px;
+}
+
+.block.inline-editing .uses-field .circle-button {
+    width: 15px;
+    height: 15px;
+    font-size: 10px;
+    line-height: 1;
+    background-color: transparent;
+}
+
+.block.inline-editing .uses-field .circle-add {
+    border: 1px dashed #f4a261;
+    color: #f4a261;
+}
+
+.block.inline-editing .uses-field .circle-remove {
+    border: 1px dashed var(--gray-550);
+    color: var(--gray-550);
+}
+
+.block.inline-editing .uses-row {
+    gap: 5px;
+}
+
+.block.inline-editing .uses-circles-container,
+.block.inline-editing .uses-controls-container {
+    gap: 5px;
 }
 
 .block.inline-editing ul,
@@ -716,6 +747,12 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 .block.inline-editing .inline-edit-body {
     min-height: 1.4em;
     outline: none;
+}
+
+/* Hide chips when an accordion group is open in inline edit — prevents
+   the selected-tag chips duplicating the tag buttons visible in the body */
+.inline-edit-tags .tag-accordion-group.open > .tag-accordion-chip {
+    display: none;
 }
 
 
@@ -1826,6 +1863,171 @@ a:hover {
 #results_section_6 .block.inventory-block-equipped.inventory-block-attuned:hover,
 #results_section_6 .block.inventory-block-equipped.inventory-block-attuned.inventory-hover-pair {
     background-color: color-mix(in srgb, #a855f7 35%, var(--gray-300));
+}
+
+/* ── Inventory viewer: in-place edit / add ────────────────────── */
+
+.inventory-viewer.editing .inventory-viewer-title {
+    outline: none;
+    min-height: 1.4em;
+}
+
+.inventory-viewer.editing .inventory-viewer-title:empty::before {
+    content: 'Item name\2026';
+    color: var(--gray-600);
+    font-weight: 400;
+}
+
+.inventory-viewer.editing .inventory-viewer-body {
+    outline: none;
+    min-height: 2em;
+}
+
+.inventory-viewer.editing .inventory-viewer-body:empty::before {
+    content: 'Item description\2026';
+    color: var(--gray-600);
+    font-weight: 400;
+}
+
+.inventory-viewer .inline-edit-controls {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.inventory-viewer .inline-edit-controls .button {
+    margin: 0;
+    padding: 5px 12px;
+    font-size: 12px;
+}
+
+/* ── Fade-in for elements inserted during edit ────────────────── */
+
+.inventory-edit-fade-in {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.inventory-edit-fade-in.visible {
+    opacity: 1;
+}
+
+/* ── Inserts wrapper (dropdown + toggles) ─────────────────────── */
+
+.inventory-edit-inserts {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+/* ── Item type tag buttons ─────────────────────────────────────── */
+
+.inventory-edit-inserts .inline-edit-block-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.inventory-edit-inserts .inline-edit-block-types .tag-button {
+    padding: 4px 10px;
+    height: auto;
+    font-size: 13px;
+    border-radius: 12px;
+    letter-spacing: 0.03em;
+}
+
+/* ── Toggle layout — left-aligned, wrapping pairs ─────────────── */
+
+.inventory-edit-toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    align-items: center;
+}
+
+.inventory-toggle-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ── Remove glow from toggles inside inventory viewer ─────────── */
+
+.inventory-viewer .inv-toggle-attune input[type="checkbox"]:checked ~ .inv-track {
+    background: color-mix(in srgb, var(--color-cyan) 45%, var(--gray-300));
+    border-color: color-mix(in srgb, var(--color-cyan) 50%, transparent);
+    box-shadow: none;
+}
+
+.inventory-viewer .inv-toggle-equip input[type="checkbox"]:checked ~ .inv-track {
+    background: color-mix(in srgb, #ff8c00 45%, var(--gray-300));
+    border-color: color-mix(in srgb, #ff8c00 50%, transparent);
+    box-shadow: none;
+}
+
+/* ── Uses field inside viewer edit ────────────────────────────── */
+
+.inventory-viewer .uses-field {
+    background: none;
+    padding: 2px 0 0;
+    border-radius: 0;
+}
+
+.inventory-viewer .uses-field .circle {
+    width: 15px;
+    height: 15px;
+}
+
+.inventory-viewer .uses-field .circle-button {
+    width: 15px;
+    height: 15px;
+    font-size: 10px;
+    line-height: 1;
+    background-color: transparent;
+}
+
+.inventory-viewer .uses-field .circle-add {
+    border: 1px dashed #f4a261;
+    color: #f4a261;
+}
+
+.inventory-viewer .uses-field .circle-remove {
+    border: 1px dashed var(--gray-550);
+    color: var(--gray-550);
+}
+
+.inventory-viewer .uses-row {
+    gap: 5px;
+}
+
+.inventory-viewer .uses-circles-container,
+.inventory-viewer .uses-controls-container {
+    gap: 5px;
+}
+
+/* ── State buttons (Attuned to / Equipped) as visible buttons ── */
+
+.inventory-viewer .inv-state-btn {
+    border: 1px solid var(--gray-400);
+    border-radius: 8px;
+    padding: 4px 10px;
+    background: color-mix(in srgb, var(--gray-900) 4%, transparent);
+    transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+}
+
+.inventory-viewer .inv-state-btn.inv-state-on.inv-state-chain {
+    color: var(--color-cyan);
+    filter: none;
+    border-color: color-mix(in srgb, var(--color-cyan) 50%, transparent);
+    background: color-mix(in srgb, var(--color-cyan) 10%, transparent);
+}
+
+.inventory-viewer .inv-state-btn.inv-state-on.inv-state-hand {
+    color: #ff8c00;
+    filter: none;
+    border-color: color-mix(in srgb, #ff8c00 50%, transparent);
+    background: color-mix(in srgb, #ff8c00 10%, transparent);
 }
 
 /* ── Search row at top of list column ─────────────────────────── */

@@ -363,6 +363,12 @@ export const blockActionsHandler = (() => {
                 return;
             }
 
+            // Tab6: edit in the inventory viewer panel
+            if (activeTab === 'tab6') {
+                appManager.enterInventoryEdit(blockId);
+                return;
+            }
+
             isEditing = true;
             currentEditingBlockId = blockId;
         

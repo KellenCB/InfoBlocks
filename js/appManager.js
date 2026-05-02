@@ -171,7 +171,7 @@ const applyPendingBlockAnim = () => {
       const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
       if (!blockEl) return;
 
-      const newHeight = blockEl.scrollHeight;
+      const newHeight = blockEl.offsetHeight;
       if (Math.abs(newHeight - oldHeight) < 2) return;
 
       const isExpanding = newHeight > oldHeight;
@@ -182,10 +182,8 @@ const applyPendingBlockAnim = () => {
       blockEl.style.overflow = 'hidden';
       blockEl.style.transition = 'none';
 
-      // On expand: fade in everything except the header
-      const fadeEls = isExpanding
-          ? [...blockEl.children].filter(el => !el.classList.contains('block-header'))
-          : [];
+      // Fade in everything except the header
+      const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
       fadeEls.forEach(el => {
           el.style.opacity = '0';
           el.style.transition = 'none';
@@ -229,7 +227,9 @@ const applyPendingBlockAnim = () => {
               condensedTags.style.transition = '';
           }
       };
-      blockEl.addEventListener('transitionend', cleanup, { once: true });
+      blockEl.addEventListener('transitionend', (e) => {
+          if (e.target === blockEl && e.propertyName === 'height') cleanup();
+      }, { once: true });
       setTimeout(cleanup, 600);
   };
 
@@ -864,6 +864,7 @@ const applyPendingBlockAnim = () => {
 
   // Currently-active block in the viewer
   let activeInventoryBlockId = null;
+  let inventoryEditMode = false;
 
   const getInventoryAttunementMax = () => {
       const raw = localStorage.getItem('tab6_attunement_max');
@@ -968,12 +969,6 @@ const applyPendingBlockAnim = () => {
           .replace(/<\/p>/gi, '<br>')
           .trim();
 
-      const propertiesHTML = (block.properties && block.properties.length > 0)
-          ? `<div class="inventory-viewer-properties">${block.properties.map(p =>
-              `<span class="block-property">${p}</span>`
-            ).join("")}</div>`
-          : "";
-
       const usesHTML = (block.uses && block.uses.length > 0)
           ? `<div class="block-uses" style="margin-bottom:12px;">${block.uses.map((state, idx) =>
               `<span class="circle ${state ? 'unfilled' : ''}" onclick="toggleBlockUse('${block.id}', ${idx}, event, this)"></span>`
@@ -995,7 +990,6 @@ const applyPendingBlockAnim = () => {
                       </div>
                   </div>
               </div>
-              ${propertiesHTML}
               ${usesHTML}
               <div class="inventory-viewer-body">${bodyHTML}</div>
           </div>
@@ -1025,6 +1019,396 @@ const applyPendingBlockAnim = () => {
       }
       return;
 
+  };
+
+  // ── Inventory viewer: in-place edit / add ─────────────────────────
+
+  const INVENTORY_AUTO_EQUIPABLE_VIEWER = new Set(["Weapons", "Armor & clothing"]);
+
+  const buildInventoryInserts = (block) => {
+      const reqAtt   = block?.requiresAttunement === true;
+      const equipable = block?.equipable === true;
+      const attuned  = block?.attuned === true;
+      const equipped = block?.equipped === true;
+
+      const chainSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5"/></svg>`;
+      const handSVG  = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5c-.83 0-1.5.67-1.5 1.5v6H10V4c0-.83-.67-1.5-1.5-1.5S7 3.17 7 4v8.5l-1.8-1.9c-.6-.6-1.55-.6-2.15 0-.6.6-.6 1.55 0 2.15l4.2 4.3c1.3 1.35 3.1 2.2 5.1 2.2h1.4c3.87 0 7-3.13 7-7V7c0-.83-.67-1.5-1.5-1.5S18 6.17 18 7v3.5h-.5V5c0-.83-.67-1.5-1.5-1.5S14.5 4.17 14.5 5v4.5h-.5V3c0-.83-.67-1.5-1.5-1.5z"/></svg>`;
+
+      const currentType = block
+          ? (Array.isArray(block.blockType) ? block.blockType[0] : block.blockType) || ''
+          : '';
+
+      const tabBTConfig = blockTypeConfig.tab6;
+      const blockTypeHTML = `<div class="inline-edit-block-types">${tabBTConfig.types.map(type =>
+          `<button class="tag-button ${tabBTConfig.className}${type === currentType ? ' selected' : ''}" data-tag="${type}">${type}</button>`
+      ).join('')}</div>`;
+
+      const togglesHTML = `
+          <div class="inventory-edit-toggles">
+              <div class="inventory-toggle-pair">
+                  <label class="inv-toggle inv-toggle-attune">
+                      <input type="checkbox" id="requires_attunement_viewer"${reqAtt ? ' checked' : ''} />
+                      <span class="inv-track"><span class="inv-thumb"></span></span>
+                      <span>Requires attunement</span>
+                  </label>
+                  <button type="button" class="inv-state-btn inv-state-chain" id="attuned_btn_viewer" data-on="${attuned}" title="Attune">
+                      ${chainSVG}<span>Attuned to</span>
+                  </button>
+              </div>
+              <div class="inventory-toggle-pair">
+                  <label class="inv-toggle inv-toggle-equip">
+                      <input type="checkbox" id="equipable_viewer"${equipable ? ' checked' : ''} />
+                      <span class="inv-track"><span class="inv-thumb"></span></span>
+                      <span>Equipable</span>
+                  </label>
+                  <button type="button" class="inv-state-btn inv-state-hand" id="equipped_btn_viewer" data-on="${equipped}" title="Equip">
+                      ${handSVG}<span>Equipped</span>
+                  </button>
+              </div>
+          </div>
+      `;
+
+      return { blockTypeHTML, togglesHTML };
+  };
+
+  const wireInventoryToggles = (container) => {
+      const requiresEl  = container.querySelector('#requires_attunement_viewer');
+      const equipableEl = container.querySelector('#equipable_viewer');
+      const attunedBtn  = container.querySelector('#attuned_btn_viewer');
+      const equippedBtn = container.querySelector('#equipped_btn_viewer');
+      const blockTypesContainer = container.querySelector('.inline-edit-block-types');
+
+      const syncStateButtons = () => {
+          if (attunedBtn)  attunedBtn.classList.toggle('inv-state-on',  attunedBtn.dataset.on === 'true');
+          if (equippedBtn) equippedBtn.classList.toggle('inv-state-on', equippedBtn.dataset.on === 'true');
+      };
+      syncStateButtons();
+
+      if (requiresEl) {
+          requiresEl.addEventListener('change', () => {
+              if (!requiresEl.checked && attunedBtn) attunedBtn.dataset.on = 'false';
+              syncStateButtons();
+          });
+      }
+      if (equipableEl) {
+          equipableEl.addEventListener('change', () => {
+              if (!equipableEl.checked && equippedBtn) equippedBtn.dataset.on = 'false';
+              equipableEl.dataset.userTouched = 'true';
+              syncStateButtons();
+          });
+      }
+      if (attunedBtn) {
+          attunedBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const turningOn = attunedBtn.dataset.on !== 'true';
+              attunedBtn.dataset.on = turningOn ? 'true' : 'false';
+              if (turningOn && requiresEl && !requiresEl.checked) {
+                  requiresEl.checked = true;
+                  requiresEl.dispatchEvent(new Event('change'));
+              }
+              syncStateButtons();
+          });
+      }
+      if (equippedBtn) {
+          equippedBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const turningOn = equippedBtn.dataset.on !== 'true';
+              equippedBtn.dataset.on = turningOn ? 'true' : 'false';
+              if (turningOn && equipableEl && !equipableEl.checked) {
+                  equipableEl.checked = true;
+                  equipableEl.dispatchEvent(new Event('change'));
+              }
+              syncStateButtons();
+          });
+      }
+
+      // Block type tag buttons (single-select) + auto-equipable
+      if (blockTypesContainer) {
+          blockTypesContainer.addEventListener('click', (e) => {
+              const btn = e.target.closest('.tag-button');
+              if (!btn) return;
+              const wasSel = btn.classList.contains('selected');
+              blockTypesContainer.querySelectorAll('.tag-button').forEach(b => b.classList.remove('selected'));
+              if (!wasSel) btn.classList.add('selected');
+              // Auto-equipable logic
+              if (equipableEl && equipableEl.dataset.userTouched !== 'true') {
+                  const sel = blockTypesContainer.querySelector('.tag-button.selected');
+                  if (sel && INVENTORY_AUTO_EQUIPABLE_VIEWER.has(sel.dataset.tag)) {
+                      equipableEl.checked = true;
+                      equipableEl.dispatchEvent(new Event('change'));
+                      equipableEl.dataset.userTouched = '';
+                  } else if (sel) {
+                      equipableEl.checked = false;
+                      equipableEl.dispatchEvent(new Event('change'));
+                      equipableEl.dataset.userTouched = '';
+                  }
+              }
+          });
+      }
+  };
+
+  const collectInventoryFormData = (viewer) => {
+      const titleEl    = viewer.querySelector('.inventory-viewer-title');
+      const bodyEl     = viewer.querySelector('.inventory-viewer-body');
+
+      const newTitle = titleEl?.textContent.trim();
+      if (!newTitle) { alert('A title is required.'); return null; }
+
+      const selectedTypeBtn = viewer.querySelector('.inline-edit-block-types .tag-button.selected');
+      const blockType = selectedTypeBtn?.dataset.tag || null;
+      if (!blockType) {
+          alert('Please select an item type: ' + blockTypeConfig.tab6.types.join(', ') + '.');
+          return null;
+      }
+
+      const newBody = bodyEl ? bodyEl.innerHTML.trim() : '';
+
+      const requiresAttunement = !!viewer.querySelector('#requires_attunement_viewer')?.checked;
+      const equipable          = !!viewer.querySelector('#equipable_viewer')?.checked;
+      const attuned            = viewer.querySelector('#attuned_btn_viewer')?.dataset.on === 'true';
+      const equipped           = viewer.querySelector('#equipped_btn_viewer')?.dataset.on === 'true';
+
+      return {
+          title: newTitle,
+          text: newBody,
+          blockType,
+          inventoryExtras: {
+              requiresAttunement,
+              equipable,
+              attuned:  requiresAttunement ? attuned  : false,
+              equipped: equipable          ? equipped : false
+          }
+      };
+  };
+
+  const enterInventoryEdit = (blockId) => {
+      if (inventoryEditMode) return;
+      const viewer = document.getElementById('inventory_viewer');
+      if (!viewer) return;
+
+      const blocks = getBlocks('tab6');
+      const block  = blocks.find(b => b.id === blockId);
+      if (!block) return;
+
+      inventoryEditMode = true;
+      activeInventoryBlockId = blockId;
+
+      const content = viewer.querySelector('.inventory-viewer-content');
+      if (!content) {
+          // No content yet — render viewer first, then re-enter
+          inventoryEditMode = false;
+          renderInventoryViewer(blockId);
+          requestAnimationFrame(() => enterInventoryEdit(blockId));
+          return;
+      }
+
+      viewer.classList.add('editing');
+
+      // ── Remove action buttons ──
+      const actionsEl = content.querySelector('.block-actions');
+      if (actionsEl) actionsEl.remove();
+
+      // ── Remove properties display ──
+      const propsEl = content.querySelector('.inventory-viewer-properties');
+      if (propsEl) propsEl.remove();
+
+      // ── Make title editable ──
+      const titleEl = content.querySelector('.inventory-viewer-title');
+      if (titleEl) titleEl.contentEditable = 'true';
+
+      // ── Make body editable + strip dice rolls ──
+      const bodyEl = content.querySelector('.inventory-viewer-body');
+      if (bodyEl) {
+          bodyEl.querySelectorAll('.inline-dice-roll').forEach(btn => {
+              btn.replaceWith(document.createTextNode(btn.title));
+          });
+          bodyEl.normalize();
+          bodyEl.contentEditable = 'true';
+      }
+
+      // ── Replace uses with editable uses field ──
+      const usesKey = `inventory_viewer_uses_${blockId}`;
+      localStorage.setItem(usesKey, JSON.stringify(block.uses || []));
+      const existingUses = content.querySelector('.block-uses');
+      const usesField = document.createElement('div');
+      usesField.className = 'uses-field inline-edit-uses';
+      usesField.style.marginBottom = '12px';
+      if (existingUses) {
+          existingUses.replaceWith(usesField);
+      } else {
+          // Insert before body if no uses existed
+          if (bodyEl) bodyEl.before(usesField);
+      }
+      initUsesField(usesField, usesKey);
+
+      // ── Insert save/cancel into header ──
+      const headerEl = content.querySelector('.inventory-viewer-header');
+      const controls = document.createElement('div');
+      controls.className = 'inline-edit-controls inventory-edit-fade-in';
+      controls.innerHTML = `
+          <button class="button green-button inventory-edit-save">Save</button>
+          <button class="button red-button inventory-edit-cancel">Cancel</button>
+      `;
+      headerEl.appendChild(controls);
+
+      // ── Insert block type buttons + toggles after header ──
+      const { blockTypeHTML, togglesHTML } = buildInventoryInserts(block);
+
+      const insertWrapper = document.createElement('div');
+      insertWrapper.className = 'inventory-edit-inserts inventory-edit-fade-in';
+      insertWrapper.innerHTML = blockTypeHTML + togglesHTML;
+      headerEl.after(insertWrapper);
+
+      // ── Animate new elements in ──
+      requestAnimationFrame(() => {
+          content.querySelectorAll('.inventory-edit-fade-in').forEach(el => {
+              el.classList.add('visible');
+          });
+      });
+
+      // ── Wire toggle / block type handlers ──
+      wireInventoryToggles(content);
+
+      // ── Highlight active block in list ──
+      document.querySelectorAll('#results_section_6 .block').forEach(b => {
+          b.classList.toggle('inventory-block-active', b.getAttribute('data-id') === blockId);
+      });
+
+      // ── Save / Cancel / Keyboard ──
+      const doSave = () => {
+          const data = collectInventoryFormData(viewer);
+          if (!data) return;
+          viewer.removeEventListener('keydown', keyHandler);
+          const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
+          localStorage.removeItem(usesKey);
+          const latestBlock = getBlocks('tab6').find(b => b.id === blockId);
+          saveBlock('tab6', data.title, data.text, latestBlock?.tags || [], usesState, [], data.blockType, blockId, block.timestamp, data.inventoryExtras);
+          inventoryEditMode = false;
+          viewer.classList.remove('editing');
+          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('6'));
+      };
+
+      const doCancel = () => {
+          viewer.removeEventListener('keydown', keyHandler);
+          localStorage.removeItem(usesKey);
+          inventoryEditMode = false;
+          viewer.classList.remove('editing');
+          renderInventoryViewer(blockId);
+      };
+
+      const keyHandler = (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      };
+
+      controls.querySelector('.inventory-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+      controls.querySelector('.inventory-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+      viewer.addEventListener('keydown', keyHandler);
+
+      // ── Focus title ──
+      if (titleEl) {
+          titleEl.focus();
+          const range = document.createRange();
+          const sel   = window.getSelection();
+          range.selectNodeContents(titleEl);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+      }
+  };
+
+  const startInventoryAdd = () => {
+      if (inventoryEditMode) return;
+      const viewer = document.getElementById('inventory_viewer');
+      if (!viewer) return;
+
+      inventoryEditMode = true;
+
+      const { blockTypeHTML, togglesHTML } = buildInventoryInserts(null);
+
+      const usesKey = 'inventory_viewer_uses_new';
+      localStorage.setItem(usesKey, JSON.stringify([]));
+
+      const formHTML = `
+          <div class="inventory-viewer-content">
+              <div class="inventory-viewer-header">
+                  <h4 contenteditable="true" class="inventory-viewer-title inline-edit-title"></h4>
+                  <div class="inline-edit-controls">
+                      <button class="button green-button inventory-edit-save">Save</button>
+                      <button class="button red-button inventory-edit-cancel">Cancel</button>
+                  </div>
+              </div>
+              <div class="inventory-edit-inserts">
+                  ${blockTypeHTML}
+                  ${togglesHTML}
+              </div>
+              <div class="uses-field inline-edit-uses"></div>
+              <div class="inventory-viewer-body" contenteditable="true"></div>
+          </div>
+      `;
+
+      const existing = viewer.querySelector('.inventory-viewer-content, .inventory-viewer-placeholder');
+      const doSwap = () => {
+          viewer.innerHTML = formHTML;
+          viewer.classList.add('editing');
+          const fresh = viewer.querySelector('.inventory-viewer-content');
+          if (fresh) { fresh.style.opacity = '0'; void fresh.offsetWidth; fresh.style.opacity = ''; }
+
+          // Uses field
+          const usesContainer = viewer.querySelector('.inline-edit-uses');
+          if (usesContainer) {
+              initUsesField(usesContainer, usesKey);
+          }
+
+          wireInventoryToggles(viewer);
+
+          const saveBtn   = viewer.querySelector('.inventory-edit-save');
+          const cancelBtn = viewer.querySelector('.inventory-edit-cancel');
+
+          const doSave = () => {
+              const data = collectInventoryFormData(viewer);
+              if (!data) return;
+              viewer.removeEventListener('keydown', keyHandler);
+              const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
+              localStorage.removeItem(usesKey);
+              const newId = saveBlock('tab6', data.title, data.text, [], usesState, [], data.blockType, null, null, data.inventoryExtras);
+              inventoryEditMode = false;
+              viewer.classList.remove('editing');
+              if (typeof newId === 'string') activeInventoryBlockId = newId;
+              import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('6'));
+          };
+
+          const doCancel = () => {
+              viewer.removeEventListener('keydown', keyHandler);
+              localStorage.removeItem(usesKey);
+              inventoryEditMode = false;
+              viewer.classList.remove('editing');
+              if (activeInventoryBlockId) {
+                  renderInventoryViewer(activeInventoryBlockId);
+              } else {
+                  viewer.innerHTML = '<p class="inventory-viewer-placeholder">Select an item to view</p>';
+              }
+          };
+
+          const keyHandler = (e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
+              else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+          };
+
+          saveBtn?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+          cancelBtn?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
+          viewer.addEventListener('keydown', keyHandler);
+
+          const titleEl = viewer.querySelector('.inline-edit-title');
+          if (titleEl) titleEl.focus();
+      };
+
+      if (existing && existing.classList.contains('inventory-viewer-content')) {
+          existing.classList.add('fading');
+          setTimeout(doSwap, 200);
+      } else {
+          doSwap();
+      }
   };
 
   const renderInventory = (filteredBlocks = null) => {
@@ -1244,6 +1628,7 @@ const applyPendingBlockAnim = () => {
       // Block click → open in viewer, or deselect if already selected
       resultsSection.querySelectorAll('.block:not(.permanent-block)').forEach(blockEl => {
           blockEl.addEventListener('click', (e) => {
+              if (inventoryEditMode) return;
               if (e.target.closest('.block-actions')  ||
                   e.target.closest('.actions-trigger') ||
                   e.target.closest('.pin-button')      ||
@@ -1291,15 +1676,17 @@ const applyPendingBlockAnim = () => {
       });
 
       // Render viewer for the currently-active block, if it's still present.
-      // Otherwise leave the viewer empty — no auto-select.
-      const viewer = document.getElementById('inventory_viewer');
-      const stillPresent = activeInventoryBlockId &&
-          displayBlocks.find(b => b.id === activeInventoryBlockId);
-      if (stillPresent) {
-          renderInventoryViewer(activeInventoryBlockId);
-      } else {
-          activeInventoryBlockId = null;
-          if (viewer) viewer.innerHTML = '<p class="inventory-viewer-placeholder">Select an item to view</p>';
+      // If we're in edit mode, don't touch the viewer — the form is still active.
+      if (!inventoryEditMode) {
+          const viewer = document.getElementById('inventory_viewer');
+          const stillPresent = activeInventoryBlockId &&
+              displayBlocks.find(b => b.id === activeInventoryBlockId);
+          if (stillPresent) {
+              renderInventoryViewer(activeInventoryBlockId);
+          } else {
+              activeInventoryBlockId = null;
+              if (viewer) viewer.innerHTML = '<p class="inventory-viewer-placeholder">Select an item to view</p>';
+          }
       }
 
       // Section header click → toggle collapse
@@ -1362,10 +1749,8 @@ const applyPendingBlockAnim = () => {
 
       if (addBtn) {
           addBtn.onclick = () => {
-              overlayHandler.initializeOverlayTagHandlers('add_block_overlay_tags');
-              const overlay = document.querySelector('.add-block-overlay');
-              if (overlay) overlay.dataset.activeTab = 'tab6';
-              overlay?.classList.add('show');
+              if (inventoryEditMode) return;
+              startInventoryAdd();
           };
       }
   };
@@ -3086,20 +3471,50 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       const block = blocksArr.find(b => b.id === blockId);
       if (!block) return;
 
-      // If not expanded, expand first then re-enter
+      // If not expanded, expand first then re-enter — animate directly
+      // to the edit-form height (not the intermediate expanded height)
       if (block.viewState !== 'expanded') {
+          const oldHeight = document.querySelector(`.block[data-id="${blockId}"]`)?.offsetHeight || 0;
           block.viewState = 'expanded';
           localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
-          setPendingBlockAnim(blockId, document.querySelector(`.block[data-id="${blockId}"]`)?.offsetHeight || 0);
+          // Don't call setPendingBlockAnim — we animate after the edit form is in place
           import('./filterManager.js').then(({ filterManager }) => {
               filterManager.applyFilters('9');
-              requestAnimationFrame(() => enterInlineEdit(blockId));
+              requestAnimationFrame(() => {
+                  enterInlineEdit(blockId);
+                  const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
+                  if (!blockEl || !oldHeight) return;
+                  const newHeight = blockEl.offsetHeight;
+                  if (Math.abs(newHeight - oldHeight) < 2) return;
+                  const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
+                  blockEl.style.height = oldHeight + 'px';
+                  blockEl.style.overflow = 'hidden';
+                  blockEl.style.transition = 'none';
+                  fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
+                  void blockEl.offsetHeight;
+                  blockEl.style.transition = 'height 0.5s ease';
+                  blockEl.style.height = newHeight + 'px';
+                  fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
+                  const cleanup = () => {
+                      blockEl.style.height = '';
+                      blockEl.style.overflow = '';
+                      blockEl.style.transition = '';
+                      fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
+                  };
+                  blockEl.addEventListener('transitionend', (e) => {
+                      if (e.target === blockEl && e.propertyName === 'height') cleanup();
+                  }, { once: true });
+                  setTimeout(cleanup, 600);
+              });
           });
           return;
       }
 
       const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
       if (!blockEl) return;
+
+      // Capture height before replacing content for expand animation
+      const oldHeight = blockEl.offsetHeight;
 
       // Snapshot for cancel
       inlineEditState = {
@@ -3202,7 +3617,6 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       // Init uses field
       const usesContainer = blockEl.querySelector('.inline-edit-uses');
       if (usesContainer) initUsesField(usesContainer, usesKey);
-      if (!(block.uses && block.uses.length > 0)) usesContainer.style.display = 'none';
 
       // Tag toggle handler
       const tagsContainer = blockEl.querySelector('.inline-edit-tags');
@@ -3391,6 +3805,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
           inlineEditState = null;
 
           saveBlock(tab, newTitle, newBody, allTags, usesState, properties, selectedTypes, blockId, block.timestamp);
+          setPendingBlockAnim(blockId, blockEl.offsetHeight);
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
       };
 
@@ -3398,6 +3813,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       const doCancel = () => {
           localStorage.removeItem(usesKey);
           inlineEditState = null;
+          setPendingBlockAnim(blockId, blockEl.offsetHeight);
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
       };
 
@@ -3412,7 +3828,39 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
 
       // Focus title
       const titleInput = blockEl.querySelector('.inline-edit-title');
-      if (titleInput) { titleInput.focus(); titleInput.setSelectionRange(titleInput.value.length, titleInput.value.length); }
+      if (titleInput) {
+          titleInput.focus();
+          const range = document.createRange();
+          const sel   = window.getSelection();
+          range.selectNodeContents(titleInput);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+      }
+
+      // Animate from old height to edit-form height
+      const newHeight = blockEl.offsetHeight;
+      if (oldHeight && Math.abs(newHeight - oldHeight) > 2) {
+          const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
+          blockEl.style.height = oldHeight + 'px';
+          blockEl.style.overflow = 'hidden';
+          blockEl.style.transition = 'none';
+          fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
+          void blockEl.offsetHeight;
+          blockEl.style.transition = 'height 0.5s ease';
+          blockEl.style.height = newHeight + 'px';
+          fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
+          const cleanup = () => {
+              blockEl.style.height = '';
+              blockEl.style.overflow = '';
+              blockEl.style.transition = '';
+              fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
+          };
+          blockEl.addEventListener('transitionend', (e) => {
+              if (e.target === blockEl && e.propertyName === 'height') cleanup();
+          }, { once: true });
+          setTimeout(cleanup, 600);
+      }
   };
 
     const startInlineAdd = () => {
@@ -3505,7 +3953,6 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       const usesContainer = blockEl.querySelector('.inline-edit-uses');
       if (usesContainer) {
           initUsesField(usesContainer, usesKey);
-          usesContainer.style.display = 'none';
       }
 
       // Tag toggle handler
@@ -3717,5 +4164,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
     setActiveNotesBlock,
     enterInlineEdit,
     startInlineAdd,
+    enterInventoryEdit,
+    startInventoryAdd,
   };
 })();

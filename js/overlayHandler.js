@@ -379,7 +379,7 @@ function initUsesField(overlayElement, storageKeyPrefix, defaultSlots = 5) {
     controlsContainer.classList.add("uses-controls-container");
 
     const addButton = document.createElement("div");
-    addButton.classList.add("circle", "circle-button");
+    addButton.classList.add("circle", "circle-button", "circle-add");
     addButton.innerHTML = "+";
     addButton.addEventListener("click", () => {
         usesState.push(false);
@@ -389,7 +389,7 @@ function initUsesField(overlayElement, storageKeyPrefix, defaultSlots = 5) {
     controlsContainer.appendChild(addButton);
 
     const removeButton = document.createElement("div");
-    removeButton.classList.add("circle", "circle-button");
+    removeButton.classList.add("circle", "circle-button", "circle-remove");
     removeButton.innerHTML = "−";
     removeButton.addEventListener("click", () => {
         if (usesState.length > 0) {
