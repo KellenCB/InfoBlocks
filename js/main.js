@@ -678,7 +678,6 @@ document.addEventListener("click", (e) => {
     const trigger = e.target.closest(".tag-accordion-header, .tag-accordion-pill");
     if (!trigger) return;
     if (e.target.closest(".tag-button")) return;
-    if (e.target.closest(".tag-accordion-chip")) return;
 
     const group = trigger.closest(".tag-accordion-group");
     if (!group) return;
@@ -706,11 +705,7 @@ document.addEventListener("click", (e) => {
     if (wasOpen) {
         // Just collapsed — clear stale chips and rebuild for current selected state
         const chipsContainer = group.querySelector(".tag-accordion-chips");
-        if (chipsContainer) {
-            chipsContainer.innerHTML = "";
-        } else {
-            group.querySelectorAll(":scope > .tag-accordion-chip").forEach(c => c.remove());
-        }
+        if (chipsContainer) chipsContainer.innerHTML = "";
 
         const body = group.querySelector(".tag-accordion-body");
         if (!body) return;
@@ -719,9 +714,9 @@ document.addEventListener("click", (e) => {
         const target = chipsContainer || group;
         body.querySelectorAll(".tag-button.selected, .tag-button.selected-or").forEach(btn => {
             const chip = document.createElement("button");
-            chip.classList.add("tag-accordion-chip");
+            chip.classList.add("tag-button", "selected");
             if (tagClass) chip.classList.add(tagClass);
-            if (btn.classList.contains("selected-or")) chip.classList.add("selected-or");
+            if (btn.classList.contains("selected-or")) { chip.classList.remove("selected"); chip.classList.add("selected-or"); }
             chip.dataset.tag = btn.dataset.tag;
             chip.textContent = btn.dataset.tag;
             target.appendChild(chip);
@@ -733,7 +728,7 @@ document.addEventListener("click", (e) => {
 // Chip click — deselect the tag without opening the group.
 // Runs in capture phase so it intercepts before any tag-button handler fires.
 document.addEventListener("click", (e) => {
-    const chip = e.target.closest(".tag-accordion-chip");
+    const chip = e.target.closest(".tag-accordion-chips .tag-button");
     if (!chip) return;
     e.stopPropagation();
     const group = chip.closest(".tag-accordion-group");
@@ -741,9 +736,17 @@ document.addEventListener("click", (e) => {
     const tag = chip.dataset.tag;
     const bodyBtn = group.querySelector(`.tag-accordion-body .tag-button[data-tag="${tag}"]`);
     if (bodyBtn) {
-        chip.style.opacity = '0';
-        chip.style.pointerEvents = 'none';
-        bodyBtn.click(); // triggers applyFilters → _applySelectionClasses which rebuilds chips
+        const allInstances = document.querySelectorAll(
+            `.tag-accordion-chips .tag-button[data-tag="${tag}"], ` +
+            `.block-tags-condensed .tag-button.selected[data-tag="${tag}"], ` +
+            `.block-tags-condensed .tag-button.selected-or[data-tag="${tag}"]`
+        );
+        allInstances.forEach(el => {
+            el.style.transition = 'opacity 0.15s ease';
+            el.style.opacity = '0';
+            el.style.pointerEvents = 'none';
+        });
+        setTimeout(() => bodyBtn.click(), 150);
     }
 }, true);
 

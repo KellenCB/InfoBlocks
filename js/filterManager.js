@@ -90,22 +90,18 @@ export const filterManager = (() => {
                 const body     = group.querySelector('.tag-accordion-body');
                 if (!body) return;
 
-                // Clear stale chips — from chips container (filter) or group root (overlay)
+                // Clear stale chips
                 const chipsContainer = group.querySelector('.tag-accordion-chips');
-                if (chipsContainer) {
-                    chipsContainer.innerHTML = '';
-                } else {
-                    group.querySelectorAll(':scope > .tag-accordion-chip').forEach(c => c.remove());
-                }
+                if (chipsContainer) chipsContainer.innerHTML = '';
 
                 const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group') || '';
                 const target = chipsContainer || group;
                 body.querySelectorAll('.tag-button.selected, .tag-button.selected-or, .tag-button.selected-not').forEach(btn => {
                     const chip = document.createElement('button');
-                    chip.classList.add('tag-accordion-chip');
+                    chip.classList.add('tag-button', 'selected');
                     if (tagClass) chip.classList.add(tagClass);
-                    if (btn.classList.contains('selected-or'))  chip.classList.add('selected-or');
-                    if (btn.classList.contains('selected-not')) chip.classList.add('selected-not');
+                    if (btn.classList.contains('selected-or'))  { chip.classList.remove('selected'); chip.classList.add('selected-or'); }
+                    if (btn.classList.contains('selected-not')) { chip.classList.remove('selected'); chip.classList.add('selected-not'); }
                     chip.dataset.tag = btn.dataset.tag;
                     chip.textContent = btn.dataset.tag;
                     target.appendChild(chip);

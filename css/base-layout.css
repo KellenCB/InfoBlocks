@@ -751,8 +751,14 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 
 /* Hide chips when an accordion group is open in inline edit — prevents
    the selected-tag chips duplicating the tag buttons visible in the body */
-.inline-edit-tags .tag-accordion-group.open > .tag-accordion-chip {
+.inline-edit-tags .tag-accordion-group.open > .tag-button {
     display: none;
+}
+
+/* Compact sizing for inline edit chips (same as filter accordion chips) */
+.inline-edit-tags .tag-accordion-group > .tag-button {
+    font-size: 12px;
+    padding: 2px 8px;
 }
 
 

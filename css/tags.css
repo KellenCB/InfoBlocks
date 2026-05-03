@@ -118,6 +118,7 @@
 
 .tag-accordion-group {
     display: contents;
+    margin-bottom: 2px;
 }
 
 /* ── The closed/open accordion toggle pill ────────────────────────── */
@@ -189,32 +190,13 @@
     display: none;
 }
 
-/* ── Chips next to closed pills (summary of selected tags) ───────── */
-/* Chips are visually identical to block-tags buttons — same size,   */
-/* same filled/selected-or/selected-not states.                      */
+/* ── Compact tag sizing inside accordion chip containers ────────── */
+/* These are standard .tag-button.selected elements, just rendered  */
+/* smaller when shown as summary chips in a collapsed accordion.    */
 
-.tag-accordion-chip {
-    --tag-color: var(--accordion-color);
-    padding: 4px 10px;
-    background-color: var(--tag-color);
-    color: var(--gray-350);
-    border: none;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    white-space: nowrap;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    flex-shrink: 0;
-}
-
-.tag-accordion-chip.selected-or {
-    background-color: color-mix(in srgb, var(--tag-color) var(--tag-bg-opacity), transparent);
-    color: var(--tag-color);
-    outline: 1px dashed var(--tag-color);
-    outline-offset: -1px;
+.tag-accordion-chips .tag-button {
+    font-size: 12px;
+    padding: 2px 8px;
 }
 
 /* ==================================================================*/
@@ -244,11 +226,10 @@
 .tag-accordion-header {
     display: flex;
     align-items: center;
-    gap: 6px;
-    min-height: 34px;
+    gap: 8px;
     padding: 5px 10px;
     background-color: transparent;
-    border-radius: 10px;
+    border-radius: 14px;
     color: var(--gray-800);
     font-size: 13px;
     letter-spacing: 0.03em;
@@ -258,8 +239,8 @@
 
 .tag-accordion-header::before {
     content: '';
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background-color: var(--accordion-color);
     flex-shrink: 0;
@@ -277,6 +258,7 @@
 .tag-accordion-name {
     flex-shrink: 0;
     white-space: nowrap;
+    margin-right: 3px;
 }
 
 /* ── Chips container (inside header, shows active filters when collapsed) ─ */
@@ -285,8 +267,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-    flex: 1;
-    justify-content: flex-end;
     overflow: hidden;
     opacity: 1;
     transition: opacity 0.15s ease 0.15s;
@@ -301,15 +281,20 @@
 /* ── Chevron ─────────────────────────────────────────────────────── */
 
 .tag-accordion-chevron {
-    font-size: 11px;
-    opacity: 0.9;
     flex-shrink: 0;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     transition: transform 0.3s ease;
+    margin-left: auto;
+    color: var(--gray-700);
+}
+
+.tag-accordion-chevron svg {
+    width: 100%;
+    height: 100%;
 }
 
 .filter-section .tag-accordion-group.open .tag-accordion-chevron {
@@ -341,13 +326,13 @@
     gap: var(--tag-gap);
     padding: 0 10px;
     opacity: 0;
-    transition: opacity 0.15s ease, padding 0.3s ease;
+    transition: opacity 0.2s ease, padding 0.3s ease;
 }
 
 .filter-section .tag-accordion-group.open .tag-accordion-body-inner {
     padding: 8px 10px 10px;
     opacity: 1;
-    transition: opacity 0.2s ease 0.08s, padding 0.3s ease;
+    transition: opacity 0.25s ease 0.1s, padding 0.3s ease;
 }
 
 /* ── User-generated tags: visible row below category sections ──── */

@@ -477,8 +477,8 @@ export function initDragToScroll() {
         // Don't hijack drag on text-selectable content
         if (e.target.closest('.block-body, .block-title, .notes-card-description, .quest-objective-text')) return;
         const el = e.target.closest(
-            '.pinned-blocks-zone, .results-section:not(.character-sheet-results), .filter-section, .saving-throws-and-skills-column-wrapper, ' +
-            '.qr-blocks-scroll, .qr-tags-scroll, .session-log-viewer, .roll-results'
+            '.pinned-blocks-zone, .results-section, .filter-section, .saving-throws-and-skills-column-wrapper, ' +
+            '.session-log-viewer, .roll-results'
         );
         if (!el) return;
         isDown                 = true;
@@ -534,7 +534,6 @@ export function initScrollFades(selector, topVar, bottomVar, handlerKey, delay =
     delay ? setTimeout(run, delay) : run();
 }
 
-export const CLEAR_SEARCH_SVG = `<svg class="clear-icon" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg>`;
 
 export function setupSearchInput(inputEl, clearBtnEl, onInput, onClear) {
     if (!inputEl) return;
@@ -906,7 +905,7 @@ const applyPendingBlockAnim = () => {
           const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group' && c !== 'open') || '';
           body.querySelectorAll('.tag-button.selected').forEach(btn => {
               const chip = document.createElement('button');
-              chip.classList.add('tag-accordion-chip');
+              chip.classList.add('tag-button', 'selected');
               if (tagClass) chip.classList.add(tagClass);
               chip.dataset.tag = btn.dataset.tag;
               chip.textContent = btn.dataset.tag;
@@ -1060,12 +1059,13 @@ const applyPendingBlockAnim = () => {
       const className = categoryTags[category].className;
       const isOpen    = currentlyOpen.has(category);
       const openClass = isOpen ? ' open' : '';
+      const CHEVRON_SVG = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="9 6 15 12 9 18"/></svg>`;
 
       html += `<div class="tag-accordion-group ${className}${openClass}" data-category="${category}">`;
       html += `<div class="tag-accordion-header" data-category="${category}">`;
       html += `<span class="tag-accordion-name">${label}</span>`;
       html += `<span class="tag-accordion-chips"></span>`;
-      html += `<span class="tag-accordion-chevron">▸</span>`;
+      html += `<span class="tag-accordion-chevron">${CHEVRON_SVG}</span>`;
       html += `</div>`;
       html += `<div class="tag-accordion-body" id="${category}_tags_list_${tabSuffix}">`;
       html += `<div class="tag-accordion-body-inner">`;
@@ -3729,22 +3729,6 @@ const applyPendingBlockAnim = () => {
 /* ============================= BLOCKS =============================*/
 /* ==================================================================*/
 
-  /* ==================================================================*/
-  /* ====================== QUICK-REF PANEL ===========================*/
-  /* ==================================================================*/
-
-  const QR_CHAR_TABS    = new Set(['tab4', 'tab8']);
-  const QR_ACTION_TAGS  = ['Action', 'Reaction', 'Bonus action', 'Free action', 'Check', 'Save'];
-  const QR_ABILITY_TAGS = ['Buff', 'Debuff', 'Heal', 'Movement', 'Ranged', 'Melee', 'Spell', 'Utility', 'AC'];
-
-  // Per-tab filter state — persists across re-renders (e.g. when tab9 changes in landscape)
-  const qrState = {};
-
-  const getQrState = (charTab) => {
-    if (!qrState[charTab]) qrState[charTab] = { query: '', expandedIds: new Set() };
-    return qrState[charTab];
-  };
-
   // ── Pinned-block drag-to-reorder (pointer events for touch + mouse) ──
   // The pin button doubles as the drag handle: click = unpin, drag = reorder.
   // A 4px movement threshold distinguishes the two gestures.
@@ -3923,15 +3907,15 @@ const applyPendingBlockAnim = () => {
         return;
     }
 
-        // ── Character sheet tabs get the quick-ref panel ──────────────────
-    if (QR_CHAR_TABS.has(tab)) {
-        renderQuickRef(tab);
-        return;
-    }
-
             // ── Notes has its own sectioned render path ───────────────────────
     if (tab === 'tab3') {
         renderNotes(filteredBlocks);
+        return;
+    }
+
+    // ── Character sheet tabs have no block results ────────────────────
+    if (tab === 'tab4' || tab === 'tab8') {
+        initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
         return;
     }
 
@@ -4169,288 +4153,8 @@ resultsSection.innerHTML = `
     initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
     initScrollFades('.roll-results', '--dice-fade-top-opacity', '--dice-fade-bottom-opacity', '_diceFadeHandler', 100);
 
-    // When tab9 changes, refresh any currently-visible quick-ref panels
-    if (tab === 'tab9') {
-      QR_CHAR_TABS.forEach(charTab => {
-        const tabEl = document.getElementById(charTab);
-        if (tabEl && tabEl.style.display !== 'none') renderQuickRef(charTab);
-      });
-    }
-
     applyPendingBlockAnim();
   };
-
-  /* ==================================================================*/
-  /* ================== QUICK-REF HELPER FUNCTIONS ====================*/
-  /* ==================================================================*/
-
-  const buildQrBlockHTML = (block, expanded) => {
-    const usesHTML = block.uses
-      ? block.uses.map(state =>
-          `<span class="circle ${state ? 'unfilled' : 'filled'}"></span>`
-        ).join('')
-      : '';
-
-    const headerHTML = `
-      <div class="block-header">
-        <div class="block-header-left">
-          <div class="block-title"><h4>${block.title}</h4></div>
-          ${usesHTML ? `<div class="block-uses">${usesHTML}</div>` : ''}
-        </div>
-      </div>`;
-
-    if (!expanded) return headerHTML;
-
-    const blockTypes = Array.isArray(block.blockType)
-      ? block.blockType
-      : (block.blockType ? [block.blockType] : []);
-
-    const blockTypeHTML = blockTypes
-      .map(bt => `<button class="tag-button tag-characterType" data-tag="${bt}">${bt}</button>`)
-      .join('');
-
-    const tabPredefinedTags = Object.entries(categoryTags)
-      .filter(([, data]) => data.tabs.includes('tab9'))
-      .flatMap(([, data]) => data.tags);
-
-    const predefinedTagsHTML = Object.entries(categoryTags)
-      .filter(([, data]) => data.tabs.includes('tab9'))
-      .flatMap(([, data]) =>
-        data.tags
-          .filter(tag => block.tags.includes(tag))
-          .map(tag => `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`)
-      ).join('');
-
-    const userTagsHTML = block.tags
-      .filter(t => !tabPredefinedTags.includes(t))
-      .map(t => `<button class="tag-button tag-user" data-tag="${t}">${t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()}</button>`)
-      .join('');
-
-    const hasAnyTags = blockTypeHTML || predefinedTagsHTML || userTagsHTML;
-    const tagsHTML = hasAnyTags
-      ? `<div class="block-tags">${blockTypeHTML}${predefinedTagsHTML}${userTagsHTML}</div>`
-      : '';
-
-    const propertiesHTML = block.properties && block.properties.length > 0
-      ? `<div class="block-properties">${block.properties.map(p => `<span class="block-property">${p}</span>`).join('')}</div>`
-      : '';
-
-    const bodyText = sanitizeBlockHTML(block.text);
-    const bodyHTML = bodyText ? `<div class="block-body"><span>${bodyText}</span></div>` : '';
-
-    return headerHTML + tagsHTML + propertiesHTML + bodyHTML;
-  };
-
-  const refilterQr = (charTab) => {
-    const state    = getQrState(charTab);
-    const tabSuffix = charTab.replace('tab', '');
-    const blocksDiv = document.getElementById(`qr_blocks_${tabSuffix}`);
-    if (!blocksDiv) return;
-
-    let filtered = getBlocks('tab9');
-
-    if (state.query) {
-      const q = state.query.toLowerCase();
-      filtered = filtered.filter(b =>
-        b.title.toLowerCase().includes(q) ||
-        stripHTML(b.text || '').toLowerCase().includes(q) ||
-        (b.properties || []).some(p => p.toLowerCase().includes(q))
-      );
-    }
-
-    const andTags = filterManager.getAndTags(charTab);
-    const orTags  = filterManager.getOrTags(charTab);
-    const notTags = filterManager.getNotTags(charTab);
-
-    const tab9Types      = blockTypeConfig['tab9']?.types || [];
-    const andBlockTypes  = andTags.filter(t => tab9Types.includes(t));
-    const orBlockTypes   = orTags.filter(t => tab9Types.includes(t));
-    const notBlockTypes  = notTags.filter(t => tab9Types.includes(t));
-    const regularAndTags = andTags.filter(t => !tab9Types.includes(t));
-    const regularOrTags  = orTags.filter(t => !tab9Types.includes(t));
-    const regularNotTags = notTags.filter(t => !tab9Types.includes(t));
-
-    if (regularAndTags.length > 0) {
-      filtered = filtered.filter(b =>
-        regularAndTags.every(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
-      );
-    }
-    if (regularOrTags.length > 0) {
-      filtered = filtered.filter(b =>
-        regularOrTags.some(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
-      );
-    }
-    if (regularNotTags.length > 0) {
-      filtered = filtered.filter(b =>
-        !regularNotTags.some(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
-      );
-    }
-    if (andBlockTypes.length > 0) {
-      filtered = filtered.filter(b => {
-        const types = Array.isArray(b.blockType) ? b.blockType : (b.blockType ? [b.blockType] : []);
-        return andBlockTypes.every(t => types.includes(t));
-      });
-    }
-    if (orBlockTypes.length > 0) {
-      filtered = filtered.filter(b => {
-        const types = Array.isArray(b.blockType) ? b.blockType : (b.blockType ? [b.blockType] : []);
-        return orBlockTypes.some(t => types.includes(t));
-      });
-    }
-    if (notBlockTypes.length > 0) {
-      filtered = filtered.filter(b => {
-        const types = Array.isArray(b.blockType) ? b.blockType : (b.blockType ? [b.blockType] : []);
-        return !notBlockTypes.some(t => types.includes(t));
-      });
-    }
-
-    blocksDiv.innerHTML = '';
-
-    if (filtered.length === 0) {
-      const p = document.createElement('p');
-      p.classList.add('results-placeholder');
-      p.style.cssText = 'text-align:center;opacity:0.25;padding:30px 0;';
-      p.textContent = 'No matching abilities';
-      blocksDiv.appendChild(p);
-      return;
-    }
-
-    filtered.forEach(block => {
-      const expanded = state.expandedIds.has(block.id);
-      const el = document.createElement('div');
-      el.className = `block ${expanded ? 'expanded' : 'condensed'}`;
-      el.dataset.qrId = block.id;
-      el.innerHTML = buildQrBlockHTML(block, expanded);
-      blocksDiv.appendChild(el);
-    });
-    applyInlineDiceRolls(blocksDiv, charTab);
-    filterManager.applySelectionClasses(charTab);
-    initScrollFades('.qr-blocks-scroll', '--qr-fade-top-opacity', '--qr-fade-bottom-opacity', '_qrScrollFadeHandler');
-  };
-
-  const wireQrEvents = (section, charTab, tabSuffix) => {
-    const state     = getQrState(charTab);
-    const searchEl  = document.getElementById(`qr_search_${tabSuffix}`);
-    const clearEl   = document.getElementById(`qr_clear_${tabSuffix}`);
-    const blocksDiv = document.getElementById(`qr_blocks_${tabSuffix}`);
-
-    setupSearchInput(
-      searchEl,
-      clearEl,
-      (value) => { state.query = value; refilterQr(charTab); },
-      ()      => { state.query = '';    refilterQr(charTab); }
-    );
-
-    // Delegated listener on blocks area — expand/collapse only
-    blocksDiv?.addEventListener('click', e => {
-      const blockEl = e.target.closest('.block[data-qr-id]');
-      if (!blockEl) return;
-
-      // Action buttons and uses circles handle their own clicks
-      if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
-      if (e.target.classList.contains('circle')) return;
-
-      // For condensed blocks: click anywhere expands (tags are non-interactive)
-      // For expanded blocks: only empty space collapses
-      if (!blockEl.classList.contains('condensed')) {
-        if (e.target.closest('.tag-button[data-tag]')) return;
-        const validTargets = ['.block', '.block-header', '.block-header-left', '.block-title'];
-        const isEmptySpace = validTargets.some(sel => {
-          const node = blockEl.querySelector(sel);
-          return e.target === blockEl || e.target === node;
-        });
-        if (!isEmptySpace) return;
-      }
-
-      const id    = blockEl.dataset.qrId;
-      const block = getBlocks('tab9').find(b => b.id === id);
-      if (!block) return;
-
-      const isExpanded = blockEl.classList.contains('expanded');
-      if (isExpanded) {
-        state.expandedIds.delete(id);
-        blockEl.classList.replace('expanded', 'condensed');
-      } else {
-        state.expandedIds.add(id);
-        blockEl.classList.replace('condensed', 'expanded');
-      }
-      blockEl.innerHTML = buildQrBlockHTML(block, !isExpanded);
-      if (!isExpanded) {
-          applyInlineDiceRolls(blockEl, charTab);
-          filterManager.applySelectionClasses(charTab);
-      }
-      document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: charTab } }));
-    });
-
-    // Horizontal fades on tag scroll row
-    const tagsScroll  = section.querySelector('.qr-tags-scroll');
-    const tagsWrapper = section.querySelector('.qr-tags-scroll-wrapper');
-
-    const updateTagFades = () => {
-      if (!tagsScroll || !tagsWrapper) return;
-      const left    = tagsScroll.scrollLeft;
-      const maxLeft = tagsScroll.scrollWidth - tagsScroll.clientWidth;
-      tagsWrapper.style.setProperty('--qr-tags-fade-left',  Math.min(left / 30, 1));
-      tagsWrapper.style.setProperty('--qr-tags-fade-right', Math.min((maxLeft - left) / 30, 1));
-    };
-
-    tagsScroll?.addEventListener('scroll', updateTagFades);
-    updateTagFades();
-
-    // Redirect vertical wheel to horizontal scroll when hovering over tag row
-    tagsWrapper?.addEventListener('wheel', e => {
-      if (e.deltaY !== 0) {
-        e.preventDefault();
-        tagsScroll.scrollLeft += e.deltaY;
-        updateTagFades();
-      }
-    }, { passive: false });
-  };
-
-  const renderQuickRef = (charTab) => {
-    const tabSuffix = charTab.replace('tab', '');
-    const section   = document.getElementById(`results_section_${tabSuffix}`);
-    if (!section) return;
-
-    const state = getQrState(charTab);
-
-  const andTags = filterManager.getAndTags(charTab);
-    const orTags  = filterManager.getOrTags(charTab);
-
-    const actionPillsHTML = QR_ACTION_TAGS.map(tag =>
-      `<button class="tag-button tag-actionType${andTags.includes(tag) ? ' selected' : orTags.includes(tag) ? ' selected-or' : ''}" data-tag="${tag}">${tag}</button>`
-    ).join('');
-
-    const abilityPillsHTML = QR_ABILITY_TAGS.map(tag =>
-      `<button class="tag-button tag-abilityType${andTags.includes(tag) ? ' selected' : orTags.includes(tag) ? ' selected-or' : ''}" data-tag="${tag}">${tag}</button>`
-    ).join('');
-    
-    section.innerHTML = `
-      <div class="qr-filter-row">
-        <div class="search-container" style="width:160px;flex-shrink:0;">
-          <input id="qr_search_${tabSuffix}" class="search_input" type="text" placeholder="Search…" value="${state.query}" />
-          <button class="clear-search" id="qr_clear_${tabSuffix}">
-            ${CLEAR_SEARCH_SVG}
-          </button>
-        </div>
-        <div class="qr-tags-scroll-wrapper">
-          <div class="qr-tags-scroll" id="qr_tags_${tabSuffix}">
-            <div class="vertical-break" style="height:22px;flex-shrink:0;"></div>
-            ${actionPillsHTML}
-            <div class="vertical-break" style="height:22px;flex-shrink:0;"></div>
-            ${abilityPillsHTML}
-          </div>
-        </div>
-      </div>
-      <div class="qr-blocks-scroll" id="qr_blocks_${tabSuffix}"></div>
-    `;
-
-    refilterQr(charTab);
-    wireQrEvents(section, charTab, tabSuffix);
-    initScrollFades('.qr-blocks-scroll', '--qr-fade-top-opacity', '--qr-fade-bottom-opacity', '_qrScrollFadeHandler', 100);
-    initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
-  };
-
 
   const getBlocks = (tab = getActiveTab()) => {
     const storedBlocks  = localStorage.getItem(`userBlocks_${tab}`);
@@ -4805,7 +4509,6 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
   return {
     getActiveTab,
     renderBlocks,
-    renderQuickRef,
     getBlocks,
     updateBlocksViewState,
     updateViewToggleDropdown,
