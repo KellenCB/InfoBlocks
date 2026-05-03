@@ -1,7 +1,7 @@
 // appManager.js
 import { categoryTags, blockTypeConfig, BOOK_ACCENT_COLORS, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
-import { blockTemplate } from './blockTemplate.js';
-import { overlayHandler, initUsesField, initToolbarForEditor } from './overlayHandler.js';
+import { blockTemplate, sanitizeBlockHTML } from './blockTemplate.js';
+
 import { applyInlineDiceRolls } from './diceRoller.js';
 import { filterManager } from './filterManager.js';
 import { blockActionsHandler } from './blockActionsHandler.js';
@@ -14,6 +14,460 @@ export function stripHTML(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 
+/* ==================================================================*/
+/* ================ USES FIELD (moved from overlayHandler) =========*/
+/* ==================================================================*/
+
+export function initUsesField(overlayElement, storageKeyPrefix, defaultSlots = 5) {
+    let usesState = JSON.parse(localStorage.getItem(storageKeyPrefix)) || [];
+  
+    overlayElement.innerHTML = "";
+  
+    const usesRow = document.createElement("div");
+    usesRow.classList.add("uses-row");
+
+    const controlsContainer = document.createElement("div");
+    controlsContainer.classList.add("uses-controls-container");
+
+    const addButton = document.createElement("div");
+    addButton.classList.add("circle", "circle-button", "circle-add");
+    addButton.innerHTML = "+";
+    addButton.addEventListener("click", () => {
+        usesState.push(false);
+        localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
+        renderCircles();
+    });
+    controlsContainer.appendChild(addButton);
+
+    const removeButton = document.createElement("div");
+    removeButton.classList.add("circle", "circle-button", "circle-remove");
+    removeButton.innerHTML = "−";
+    removeButton.addEventListener("click", () => {
+        if (usesState.length > 0) {
+            usesState.pop();
+            localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
+            renderCircles();
+        }
+    });
+    controlsContainer.appendChild(removeButton);
+
+    const circlesContainer = document.createElement("div");
+    circlesContainer.classList.add("uses-circles-container");
+
+    function renderCircles() {
+        circlesContainer.innerHTML = "";
+        usesState.forEach((state, index) => {
+            const circle = document.createElement("div");
+            circle.classList.add("circle");
+            if (state) circle.classList.add("unfilled");
+            circle.addEventListener("click", () => {
+                circle.classList.toggle("unfilled");
+                usesState[index] = circle.classList.contains("unfilled");
+                localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
+            });
+            circlesContainer.appendChild(circle);
+        });
+    }
+  
+    renderCircles();
+
+    usesRow.appendChild(controlsContainer);
+    usesRow.appendChild(circlesContainer);
+    overlayElement.appendChild(usesRow);
+}
+
+/* ==================================================================*/
+/* ============ TEXT TOOLBAR (moved from overlayHandler) ============*/
+/* ==================================================================*/
+
+export function initToolbarForEditor(editor) {
+      const toolbar = document.createElement('div');
+      toolbar.className = 'text-toolbar';
+      toolbar.innerHTML = `
+        <button type="button" data-action="bold" data-tooltip="Bold"><i class="fas fa-bold"></i></button>
+        <button type="button" data-action="italic" data-tooltip="Italic"><i class="fas fa-italic"></i></button>
+        <button type="button" data-action="underline" data-tooltip="Underline"><i class="fas fa-underline"></i></button>
+        <button type="button" data-action="link" data-tooltip="Link"><i class="fas fa-link"></i></button>
+        <button type="button" data-action="insertUnorderedList" data-tooltip="Unordered List"><i class="fas fa-list-ul"></i></button>
+        <button type="button" data-action="insertOrderedList" data-tooltip="Ordered List"><i class="fas fa-list-ol"></i></button>
+        <button type="button" data-action="increaseFont" data-tooltip="Increase Font"><i class="fas fa-arrow-up"></i></button>
+        <select id="font-size-select">
+            <option value="1">10px</option>
+            <option value="2">13px</option>
+            <option value="3">16px</option>
+            <option value="4">18px</option>
+            <option value="5">24px</option>
+            <option value="6">32px</option>
+            <option value="7">48px</option>
+        </select>
+        <button type="button" data-action="decreaseFont" data-tooltip="Decrease Font"><i class="fas fa-arrow-down"></i></button>
+        <button type="button" data-action="uppercase" data-tooltip="Uppercase">A↑</button>
+        <button type="button" data-action="sentencecase" data-tooltip="Sentence case">Aa</button>
+        <button type="button" data-action="lowercase" data-tooltip="Lowercase">a↓</button>
+        <button type="button" data-action="removeStyling" data-tooltip="Remove styling">✕</button>
+        <button type="button" data-action="findReplace" data-tooltip="Find and Replace">A→B</button>
+      `;
+  
+      const wrapper = document.createElement('div');
+      wrapper.className = 'editor-toolbar-wrapper';
+      editor.parentNode.replaceChild(wrapper, editor);
+      wrapper.appendChild(toolbar);
+      wrapper.appendChild(editor);
+
+      const frPanel = document.createElement('div');
+      frPanel.className = 'find-replace-panel hidden';
+      frPanel.innerHTML = `
+        <div class="find-replace-row">
+            <input type="text" class="fr-find" placeholder="Find..." />
+            <input type="text" class="fr-replace" placeholder="Replace..." />
+            <button type="button" class="fr-btn fr-find-next">Find Next</button>
+            <button type="button" class="fr-btn fr-replace-one">Replace One</button>
+            <button type="button" class="fr-btn fr-replace-all">Replace All</button>
+            <button type="button" class="fr-btn fr-close">✕</button>
+        </div>
+        <div class="fr-feedback"></div>
+      `;
+      wrapper.insertBefore(frPanel, editor);
+
+      let frMatches = [];
+      let frIndex = -1;
+
+      const frFind    = frPanel.querySelector('.fr-find');
+      const frReplace = frPanel.querySelector('.fr-replace');
+      const frFeedback = frPanel.querySelector('.fr-feedback');
+      frFeedback.style.display = 'none';
+
+      const clearFrHighlights = () => {
+        editor.querySelectorAll('span.fr-highlight, span.fr-highlight-active').forEach(span => {
+          span.replaceWith(...span.childNodes);
+        });
+        editor.normalize();
+      };
+
+      const findTextMatches = () => {
+        const results = [];
+        const query = frFind.value;
+        if (!query) return results;
+        const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        const walk = (node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.nodeValue;
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+              results.push({ node, index: match.index, length: match[0].length });
+            }
+          } else {
+            if (node.nodeType === Node.ELEMENT_NODE &&
+                (node.classList.contains('fr-highlight') || node.classList.contains('fr-highlight-active'))) {
+              results.push({ node: node.firstChild, index: 0, length: node.textContent.length });
+              return;
+            }
+            node.childNodes.forEach(walk);
+          }
+        };
+        walk(editor);
+        return results;
+      };
+
+      const highlightAll = (activeIdx = -1) => {
+        clearFrHighlights();
+        if (frMatches.length === 0) return;
+        [...frMatches].reverse().forEach(({ node, index, length }, reversedI) => {
+          const actualI = frMatches.length - 1 - reversedI;
+          if (!node || !node.parentNode) return;
+          const range = document.createRange();
+          range.setStart(node, index);
+          range.setEnd(node, index + length);
+          const span = document.createElement('span');
+          span.className = actualI === activeIdx ? 'fr-highlight-active' : 'fr-highlight';
+          range.surroundContents(span);
+        });
+        if (activeIdx >= 0) {
+          const active = editor.querySelector('span.fr-highlight-active');
+          if (active) active.scrollIntoView({ block: 'nearest' });
+        }
+      };
+
+      const buildMatches = () => {
+        clearFrHighlights();
+        frMatches = findTextMatches();
+        frIndex = -1;
+        frFeedback.textContent = '';
+        if (frMatches.length === 0) {
+          if (frFind.value) frFeedback.textContent = 'No matches found';
+        } else {
+          frFeedback.textContent = `${frMatches.length} match${frMatches.length !== 1 ? 'es' : ''} found`;
+          highlightAll();
+        }
+      };
+
+      frFind.addEventListener('input', () => {
+        if (!frFind.value) {
+          clearFrHighlights();
+          frMatches = [];
+          frIndex = -1;
+          frFeedback.textContent = '';
+          frFeedback.style.display = 'none';
+          return;
+        }
+        frFeedback.style.display = '';
+        buildMatches();
+      });
+
+      frPanel.querySelector('.fr-find-next').addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        clearFrHighlights();
+        frMatches = findTextMatches();
+        if (frMatches.length === 0) { frFeedback.textContent = 'No matches found'; return; }
+        frIndex = (frIndex + 1) % frMatches.length;
+        highlightAll(frIndex);
+        frFeedback.style.display = '';
+        frFeedback.textContent = frIndex === frMatches.length - 1
+          ? `Match ${frIndex + 1} of ${frMatches.length} — no more matches after this`
+          : `Match ${frIndex + 1} of ${frMatches.length}`;
+      });
+
+      frPanel.querySelector('.fr-replace-one').addEventListener('mousedown', e => {
+        e.preventDefault();
+        if (frIndex < 0 || frMatches.length === 0) { frFeedback.textContent = 'Use Find Next to select a match first'; return; }
+        const active = editor.querySelector('span.fr-highlight-active');
+        if (!active) { frFeedback.textContent = 'Use Find Next to select a match first'; return; }
+        const replacedIndex = frIndex;
+        const replaceText = frReplace.value;
+        active.textContent = replaceText;
+        active.className = 'fr-highlight-active';
+        editor.querySelectorAll('span.fr-highlight').forEach(span => span.replaceWith(...span.childNodes));
+        editor.normalize();
+        frMatches = findTextMatches();
+        if (frMatches.length === 0) {
+          frIndex = -1;
+          frFeedback.textContent = 'No more matches';
+          editor.querySelectorAll('span.fr-highlight-active').forEach(span => span.replaceWith(...span.childNodes));
+          editor.normalize();
+        } else {
+          frIndex = replacedIndex - 1;
+          if (frIndex < -1) frIndex = frMatches.length - 1;
+          frFeedback.textContent = `${frMatches.length} match${frMatches.length !== 1 ? 'es' : ''} remaining — use Find Next to continue`;
+          editor.querySelectorAll('span.fr-highlight').forEach(span => span.replaceWith(...span.childNodes));
+          editor.normalize();
+          frMatches = findTextMatches();
+          [...frMatches].reverse().forEach(({ node, index, length }) => {
+            if (!node || !node.parentNode) return;
+            const range = document.createRange();
+            range.setStart(node, index);
+            range.setEnd(node, index + length);
+            const span = document.createElement('span');
+            span.className = 'fr-highlight';
+            range.surroundContents(span);
+          });
+        }
+      });
+
+      frPanel.querySelector('.fr-replace-all').addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        clearFrHighlights();
+        frMatches = findTextMatches();
+        if (frMatches.length === 0) { frFeedback.textContent = 'No matches found'; return; }
+        const count = frMatches.length;
+        const replaceText = frReplace.value;
+        [...frMatches].reverse().forEach(({ node, index, length }) => {
+          if (!node || !node.parentNode) return;
+          const range = document.createRange();
+          range.setStart(node, index);
+          range.setEnd(node, index + length);
+          const span = document.createElement('span');
+          span.className = 'fr-highlight';
+          range.surroundContents(span);
+          span.textContent = replaceText;
+        });
+        editor.normalize();
+        frMatches = [];
+        frIndex = -1;
+        frFeedback.textContent = `${count} replacement${count !== 1 ? 's' : ''} made`;
+      });
+
+      frPanel.querySelector('.fr-close').addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        clearFrHighlights();
+        frPanel.classList.add('hidden');
+        frMatches = [];
+        frIndex = -1;
+        frFeedback.textContent = '';
+        frFeedback.style.display = 'none';
+        frFind.value = '';
+        frReplace.value = '';
+      });
+
+      const buttons = toolbar.querySelectorAll('button');
+      const sizeSelect = toolbar.querySelector('#font-size-select');
+  
+      sizeSelect.addEventListener('change', () => {
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('fontSize', false, sizeSelect.value);
+        updateToolbarState();
+      });
+  
+      function updateToolbarState() {
+        buttons.forEach(btn => {
+          const action = btn.dataset.action;
+          const active = document.queryCommandState(action);
+          btn.classList.toggle('selected', active);
+        });
+        const sel = window.getSelection();
+        if (sel.rangeCount && sel.toString()) {
+          const node = sel.getRangeAt(0).startContainer.parentNode;
+          const sizePx = window.getComputedStyle(node).fontSize;
+          const map = { '10px':'1','13px':'2','16px':'3','18px':'4','24px':'5','32px':'6','48px':'7' };
+          if (map[sizePx]) sizeSelect.value = map[sizePx];
+        }
+      }
+  
+      let activeTooltip = null;
+      buttons.forEach(btn => {
+        const tooltipText = btn.dataset.tooltip;
+        if (tooltipText) {
+          btn.addEventListener('mouseenter', () => {
+            clearTimeout(btn._tooltipTimer);
+            btn._tooltipTimer = setTimeout(() => {
+              const tip = document.createElement('div');
+              tip.classList.add('text-tooltip');
+              tip.textContent = tooltipText;
+              document.body.appendChild(tip);
+              const rect = btn.getBoundingClientRect();
+              tip.style.left = `${rect.left}px`;
+              tip.style.top  = `${rect.bottom + 5}px`;
+              activeTooltip = tip;
+            }, 750);
+          });
+          btn.addEventListener('mouseleave', () => {
+            clearTimeout(btn._tooltipTimer);
+            if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
+          });
+        }
+
+        btn.addEventListener('mousedown', e => {
+          if (e.button !== 0) return;
+          e.preventDefault();
+          if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
+          const action = btn.dataset.action;
+          if (action === 'link') {
+            const url = prompt('Enter URL');
+            if (url) document.execCommand('createLink', false, url.startsWith('http') ? url : `https://${url}`);
+          } else if (action === 'increaseFont') {
+            let idx = sizeSelect.selectedIndex;
+            if (idx < sizeSelect.options.length - 1) { sizeSelect.selectedIndex = idx + 1; sizeSelect.dispatchEvent(new Event('change')); }
+          } else if (action === 'decreaseFont') {
+            let idx = sizeSelect.selectedIndex;
+            if (idx > 0) { sizeSelect.selectedIndex = idx - 1; sizeSelect.dispatchEvent(new Event('change')); }
+          } else if (action === 'removeStyling') {
+            const sel = window.getSelection();
+            if (!sel.rangeCount) return;
+            const range = sel.getRangeAt(0);
+            const selectedText = range.toString();
+            if (!selectedText) return;
+            const frag = range.cloneContents();
+            const tempDiv = document.createElement('div');
+            tempDiv.appendChild(frag);
+            tempDiv.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+            tempDiv.querySelectorAll('p, div, li').forEach(el => { el.insertAdjacentText('afterend', '\n'); el.replaceWith(el.textContent); });
+            tempDiv.querySelectorAll('ul, ol').forEach(el => el.replaceWith(el.textContent));
+            tempDiv.querySelectorAll('*').forEach(el => el.replaceWith(el.textContent));
+            const newFrag = document.createDocumentFragment();
+            const lines = tempDiv.textContent.split('\n');
+            lines.forEach((line, i) => {
+              newFrag.appendChild(document.createTextNode(line));
+              if (i < lines.length - 1) newFrag.appendChild(document.createElement('br'));
+            });
+            range.deleteContents();
+            range.insertNode(newFrag);
+          } else if (action === 'findReplace') {
+            frPanel.classList.toggle('hidden');
+            if (!frPanel.classList.contains('hidden')) {
+              frFind.focus();
+            } else {
+              clearFrHighlights();
+              frMatches = [];
+              frIndex = -1;
+              frFeedback.textContent = '';
+            }
+          } else if (['uppercase','sentencecase','lowercase'].includes(action)) {
+            // fallback span-transform if needed
+          } else {
+            document.execCommand(action, false, null);
+          }
+          updateToolbarState();
+        });
+      });
+
+      editor.addEventListener('keyup', updateToolbarState);
+      editor.addEventListener('mouseup', updateToolbarState);
+
+      editor.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !frPanel.classList.contains('hidden')) {
+          e.stopPropagation();
+          clearFrHighlights();
+          frPanel.classList.add('hidden');
+          frMatches = [];
+          frIndex = -1;
+          frFeedback.textContent = '';
+        }
+      });
+
+      frPanel.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          e.stopPropagation();
+          clearFrHighlights();
+          frPanel.classList.add('hidden');
+          frMatches = [];
+          frIndex = -1;
+          frFeedback.textContent = '';
+          frFind.value = '';
+          frReplace.value = '';
+        }
+      });
+
+      editor.addEventListener('paste', e => {
+        e.preventDefault();
+        const html = e.clipboardData.getData('text/html');
+        const text = e.clipboardData.getData('text/plain');
+        let cleaned = '';
+        if (html) {
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          tempDiv.querySelectorAll('*').forEach(el => {
+            el.removeAttribute('style');
+            el.removeAttribute('color');
+            el.removeAttribute('face');
+            el.removeAttribute('size');
+            el.removeAttribute('bgcolor');
+            el.removeAttribute('background');
+            el.removeAttribute('class');
+          });
+          tempDiv.querySelectorAll('span').forEach(span => span.replaceWith(...span.childNodes));
+          tempDiv.querySelectorAll('font').forEach(font => font.replaceWith(...font.childNodes));
+          tempDiv.querySelectorAll('a').forEach(a => a.replaceWith(...a.childNodes));
+          cleaned = tempDiv.innerHTML;
+        } else {
+          cleaned = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\n/g, '<br>');
+        }
+        document.execCommand('insertHTML', false, cleaned);
+        updateToolbarState();
+      });
+
+    return function teardown() {
+        if (wrapper.parentNode) {
+            wrapper.parentNode.replaceChild(editor, wrapper);
+        }
+    };
+}
+
 export function initDragToScroll() {
     let isDown   = false;
     let moved    = false;
@@ -23,8 +477,8 @@ export function initDragToScroll() {
         // Don't hijack drag on text-selectable content
         if (e.target.closest('.block-body, .block-title, .notes-card-description, .quest-objective-text')) return;
         const el = e.target.closest(
-            '.pinned-blocks-zone, .results-section:not(.character-sheet-results), .filter-section, .saving-throws-and-skills-column-wrapper, ' +
-            '.qr-blocks-scroll, .qr-tags-scroll, .session-log-viewer, .roll-results'
+            '.pinned-blocks-zone, .results-section, .filter-section, .saving-throws-and-skills-column-wrapper, ' +
+            '.session-log-viewer, .roll-results'
         );
         if (!el) return;
         isDown                 = true;
@@ -63,8 +517,6 @@ export function initDragToScroll() {
     }, true);
 }
 
-export let selectedFilterTagsBeforeAdd = [];
-
 export function initScrollFades(selector, topVar, bottomVar, handlerKey, delay = 0) {
     const run = () => {
         document.querySelectorAll(selector).forEach(el => {
@@ -77,12 +529,31 @@ export function initScrollFades(selector, topVar, bottomVar, handlerKey, delay =
             el[handlerKey] = check;
             el.addEventListener('scroll', check);
             check();
+            // Re-check on element size changes (window resize)
+            if (!el[handlerKey + '_ro']) {
+                el[handlerKey + '_ro'] = new ResizeObserver(check);
+                el[handlerKey + '_ro'].observe(el);
+            }
+            // Re-check on content changes (accordion toggle, blocks added/removed)
+            if (!el[handlerKey + '_mo']) {
+                let debounce = null;
+                el[handlerKey + '_mo'] = new MutationObserver(() => {
+                    clearTimeout(debounce);
+                    debounce = setTimeout(check, 50);
+                    // Also re-check after CSS transitions settle (accordion 0.3s, block 0.5s)
+                    setTimeout(check, 350);
+                    setTimeout(check, 600);
+                });
+                el[handlerKey + '_mo'].observe(el, {
+                    childList: true, subtree: true,
+                    attributes: true, attributeFilter: ['class', 'style']
+                });
+            }
         });
     };
     delay ? setTimeout(run, delay) : run();
 }
 
-export const CLEAR_SEARCH_SVG = `<svg class="clear-icon" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg>`;
 
 export function setupSearchInput(inputEl, clearBtnEl, onInput, onClear) {
     if (!inputEl) return;
@@ -118,7 +589,6 @@ export const actionButtonHandlers = (() => {
 
     const elements = {
       binButtons: document.querySelectorAll(".bin-button"),
-      addBlockOverlay: document.querySelector(".add-block-overlay"),
       clearDataOverlay: document.querySelector(".cleardata-overlay"),
       confirmClearButton: document.getElementById("confirm_clear_button"),
     };
@@ -147,8 +617,6 @@ export const actionButtonHandlers = (() => {
 
 
 export const appManager = (() => {
-  let userBlocks = JSON.parse(localStorage.getItem("userBlocks")) || [];
-  let title = localStorage.getItem("pageTitle") || "Information Blocks";
 
   // ── Session Log viewer state ─────────────────────────────────────
   let activeSessionLogBlockId = null;
@@ -233,6 +701,273 @@ const applyPendingBlockAnim = () => {
       setTimeout(cleanup, 600);
   };
 
+  /* ==================================================================*/
+  /* ================ SHARED EDIT/ADD HELPERS =========================*/
+  /* ==================================================================*/
+
+  // Wire save/cancel buttons + Ctrl+Enter / Escape keyboard shortcuts.
+  // Returns a teardown function to remove the keydown listener.
+  const wireEditControls = (container, { saveSel, cancelSel, onSave, onCancel }) => {
+      const keyHandler = (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); onSave(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onCancel(); }
+      };
+      container.querySelector(saveSel)?.addEventListener('click', (e) => { e.stopPropagation(); onSave(); });
+      container.querySelector(cancelSel)?.addEventListener('click', (e) => { e.stopPropagation(); onCancel(); });
+      container.addEventListener('keydown', keyHandler);
+      return () => container.removeEventListener('keydown', keyHandler);
+  };
+
+  // Focus an element and place the cursor at the end of its content.
+  const focusAndCursorToEnd = (el) => {
+      if (!el) return;
+      el.focus();
+      if (el.textContent) {
+          const range = document.createRange();
+          const sel   = window.getSelection();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+      }
+  };
+
+  // Animate a block element from oldHeight to its current height,
+  // fading in children except those matching excludeClass.
+  const animateHeightTransition = (blockEl, oldHeight, excludeClass = 'block-header') => {
+      const newHeight = blockEl.offsetHeight;
+      if (!oldHeight || Math.abs(newHeight - oldHeight) < 2) return;
+      const fadeEls = [...blockEl.children].filter(el => !el.classList.contains(excludeClass));
+      blockEl.style.height = oldHeight + 'px';
+      blockEl.style.overflow = 'hidden';
+      blockEl.style.transition = 'none';
+      fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
+      void blockEl.offsetHeight;
+      blockEl.style.transition = 'height 0.5s ease';
+      blockEl.style.height = newHeight + 'px';
+      fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
+      const cleanup = () => {
+          blockEl.style.height = ''; blockEl.style.overflow = ''; blockEl.style.transition = '';
+          fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
+      };
+      blockEl.addEventListener('transitionend', (e) => {
+          if (e.target === blockEl && e.propertyName === 'height') cleanup();
+      }, { once: true });
+      setTimeout(cleanup, 600);
+  };
+
+  // Build tag accordion + user tags HTML for tab9 edit/add forms.
+  // blockTags = array of currently selected tags (empty for add).
+  const buildTab9TagsHTML = (tab, blockTags = []) => {
+      const predefinedTagList = Object.entries(categoryTags)
+          .filter(([_, data]) => data.tabs.includes(tab))
+          .flatMap(([_, data]) => data.tags);
+
+      const userDefinedTags = [
+          ...new Set(getBlocks(tab).flatMap(b => b.tags).map(t => t.toLowerCase()))
+      ].filter(t => !predefinedTagList.map(pt => pt.toLowerCase()).includes(t))
+       .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
+       .sort((a, b) => a.localeCompare(b));
+
+      let html = '';
+      Object.entries(categoryTags).forEach(([category, data]) => {
+          if (!data.tabs.includes(tab)) return;
+          const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          html += `<div class="tag-accordion-group ${data.className}" data-category="${category}">`;
+          html += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
+          html += `<div class="tag-accordion-body">`;
+          html += `<span class="tag-accordion-label">${label}</span>`;
+          html += data.tags.map(t =>
+              `<button class="tag-button ${data.className}${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
+          ).join('');
+          html += `</div></div>`;
+      });
+
+      html += `<div class="tag-category user-tags-edit">`;
+      if (userDefinedTags.length > 0) {
+          html += userDefinedTags.map(t =>
+              `<button class="tag-button tag-user${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
+          ).join('');
+      }
+      html += `<span class="inline-edit-add-tag"></span>`;
+      html += `</div>`;
+
+      return html;
+  };
+
+  // Wire all interactive handlers on a tab9 inline edit/add form:
+  // tag toggles, block type toggles, property editing, user tag add, uses field.
+  const wireTab9FormHandlers = (blockEl, usesKey) => {
+      // Uses field
+      const usesContainer = blockEl.querySelector('.inline-edit-uses');
+      if (usesContainer) initUsesField(usesContainer, usesKey);
+
+      // Tag toggle
+      blockEl.querySelector('.inline-edit-tags')?.addEventListener('click', (e) => {
+          const btn = e.target.closest('.tag-button');
+          if (btn) btn.classList.toggle('selected');
+      });
+
+      // Block type toggle
+      blockEl.querySelector('.inline-edit-block-types')?.addEventListener('click', (e) => {
+          const btn = e.target.closest('.tag-button');
+          if (btn) btn.classList.toggle('selected');
+      });
+
+      // Properties editing
+      const propsContainer = blockEl.querySelector('.inline-edit-properties');
+      const newPropBtn = blockEl.querySelector('.inline-edit-new-prop');
+
+      const createPropertyWrap = (text) => {
+          const wrap = document.createElement('span');
+          wrap.className = 'block-property-wrap';
+          wrap.innerHTML = '<span class="block-property" contenteditable="true"></span><span class="property-remove-btn">×</span>';
+          if (text) wrap.querySelector('.block-property').textContent = text;
+          return wrap;
+      };
+
+      if (propsContainer) {
+          if (newPropBtn) {
+              newPropBtn.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  const wrap = createPropertyWrap('');
+                  newPropBtn.before(wrap);
+                  wrap.querySelector('.block-property').focus();
+              });
+          }
+
+          propsContainer.addEventListener('keydown', (e) => {
+              const prop = e.target.closest('.block-property');
+              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
+              if (e.key === ',' || e.key === 'Enter') {
+                  e.preventDefault();
+                  const wrap = createPropertyWrap('');
+                  prop.closest('.block-property-wrap').after(wrap);
+                  wrap.querySelector('.block-property').focus();
+              } else if (e.key === 'Backspace' && prop.textContent.trim() === '') {
+                  e.preventDefault();
+                  const wrap = prop.closest('.block-property-wrap');
+                  const prev = wrap?.previousElementSibling;
+                  wrap.remove();
+                  if (prev) {
+                      const prevProp = prev.querySelector?.('.block-property') || prev;
+                      const range = document.createRange();
+                      const sel = window.getSelection();
+                      range.selectNodeContents(prevProp);
+                      range.collapse(false);
+                      sel.removeAllRanges();
+                      sel.addRange(range);
+                  }
+              }
+          });
+
+          propsContainer.addEventListener('focusout', (e) => {
+              const prop = e.target.closest('.block-property');
+              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
+              if (prop.textContent.trim() === '') prop.closest('.block-property-wrap')?.remove();
+          });
+
+          propsContainer.addEventListener('click', (e) => {
+              if (e.target.classList.contains('property-remove-btn')) {
+                  e.stopPropagation();
+                  e.target.closest('.block-property-wrap')?.remove();
+              }
+          });
+      }
+
+      // User tag add button
+      const addTagEl = blockEl.querySelector('.inline-edit-add-tag');
+      if (addTagEl) {
+          addTagEl.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const input = document.createElement('span');
+              input.className = 'inline-edit-tag-input';
+              input.contentEditable = 'true';
+              Object.assign(input.style, {
+                  padding: '4px 10px', fontSize: '13px', borderRadius: '12px',
+                  backgroundColor: 'color-mix(in srgb, var(--user-color) 18%, transparent)',
+                  color: 'var(--gray-800)', display: 'inline-flex', alignItems: 'center',
+                  minWidth: '20px', outline: 'none',
+              });
+              addTagEl.before(input);
+              input.focus();
+
+              const commit = () => {
+                  const tagName = input.textContent.trim();
+                  if (tagName) {
+                      const normalized = tagName.charAt(0).toUpperCase() + tagName.slice(1).toLowerCase();
+                      const existing = blockEl.querySelector(`.inline-edit-tags .tag-button[data-tag="${normalized}"]`);
+                      if (existing) { existing.classList.add('selected'); }
+                      else {
+                          const newBtn = document.createElement('button');
+                          newBtn.className = 'tag-button tag-user selected';
+                          newBtn.dataset.tag = normalized;
+                          newBtn.textContent = normalized;
+                          input.before(newBtn);
+                      }
+                  }
+                  input.remove();
+              };
+
+              input.addEventListener('focusout', commit);
+              input.addEventListener('keydown', (ke) => {
+                  if (ke.key === 'Enter' || ke.key === ',') { ke.preventDefault(); commit(); }
+                  else if (ke.key === 'Escape') { ke.preventDefault(); input.remove(); }
+              });
+          });
+      }
+
+      // Inject chips into collapsed accordion groups with selected tags
+      blockEl.querySelectorAll('.inline-edit-tags .tag-accordion-group:not(.open)').forEach(group => {
+          const pill = group.querySelector('.tag-accordion-pill');
+          const body = group.querySelector('.tag-accordion-body');
+          if (!pill || !body) return;
+          const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group' && c !== 'open') || '';
+          body.querySelectorAll('.tag-button.selected').forEach(btn => {
+              const chip = document.createElement('button');
+              chip.classList.add('tag-button', 'selected');
+              if (tagClass) chip.classList.add(tagClass);
+              chip.dataset.tag = btn.dataset.tag;
+              chip.textContent = btn.dataset.tag;
+              group.appendChild(chip);
+          });
+      });
+  };
+
+  // Validate and collect form data from a tab9 inline edit/add form.
+  // Returns null if validation fails (alert shown).
+  const collectTab9FormData = (blockEl, usesKey) => {
+      const title = blockEl.querySelector('.inline-edit-title')?.textContent.trim();
+      if (!title) { alert('A title is required.'); return null; }
+
+      const body = blockEl.querySelector('.inline-edit-body');
+      const text = body ? body.innerHTML.trim() : '';
+      if (!text) { alert('Title and text are required.'); return null; }
+
+      const selectedTypes = Array.from(blockEl.querySelectorAll('.inline-edit-block-types .tag-button.selected'))
+          .map(b => b.dataset.tag);
+      if (selectedTypes.length === 0) {
+          alert('Please select a block type: ' + blockTypeConfig.tab9.types.join(', ') + '.');
+          return null;
+      }
+
+      const selectedTags = Array.from(blockEl.querySelectorAll('.inline-edit-tags .tag-button.selected'))
+          .map(b => b.dataset.tag.trim().toLowerCase());
+      const combinedLower = [...new Set(selectedTags)];
+      const predefinedMap = new Map(
+          Object.values(categoryTags).flatMap(cat => cat.tags).map(t => [t.toLowerCase(), t])
+      );
+      const allTags = combinedLower.map(t => predefinedMap.get(t) || normalizeTag(t));
+
+      const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
+      const properties = Array.from(blockEl.querySelectorAll('.inline-edit-properties .block-property-wrap .block-property'))
+          .map(el => el.textContent.trim()).filter(p => p.length > 0);
+
+      localStorage.removeItem(usesKey);
+
+      return { title, text, blockType: selectedTypes, tags: allTags, uses: usesState, properties };
+  };
+
   // Collapse animation: shrink height + fade content simultaneously on the
   const animateBlockCollapse = (blockEl, callback) => {
       const headerEl = blockEl.querySelector('.block-header');
@@ -241,37 +976,30 @@ const applyPendingBlockAnim = () => {
       const oldHeight = blockEl.offsetHeight;
       const cs = getComputedStyle(blockEl);
 
-      // Clone selected tags into a preview that fades in during collapse
+      // Build condensed tags from selected tags and inject into header
       const selectedTags = blockEl.querySelectorAll('.block-tags .tag-button.selected, .block-tags .tag-button.selected-or');
-      let previewTags = null;
+      let previewContainer = null;
       if (selectedTags.length > 0) {
-          previewTags = document.createElement('div');
-          previewTags.className = 'block-tags block-tags-condensed';
-          previewTags.style.opacity = '0';
-          previewTags.style.transition = 'none';
-          previewTags.style.position = 'absolute';
-          previewTags.style.pointerEvents = 'none';
-          previewTags.style.maskImage = 'none';
-          previewTags.style.webkitMaskImage = 'none';
-          selectedTags.forEach(tag => previewTags.appendChild(tag.cloneNode(true)));
-
-          // Position after the title/uses without affecting layout
-          const titleEl = headerEl.querySelector('.block-title');
-          const usesEl = headerEl.querySelector('.block-uses');
-          const anchor = usesEl || titleEl;
-          if (anchor) {
-              const blockRect = blockEl.getBoundingClientRect();
-              const anchorRect = anchor.getBoundingClientRect();
-              previewTags.style.left = (anchorRect.right - blockRect.left + 11) + 'px';
-              previewTags.style.top = (anchorRect.top - blockRect.top) + 'px';
-          }
-
-          blockEl.appendChild(previewTags);
+          previewContainer = document.createElement('div');
+          previewContainer.className = 'block-tags block-tags-condensed';
+          previewContainer.style.opacity = '0';
+          previewContainer.style.transition = 'none';
+          previewContainer.style.pointerEvents = 'none';
+          selectedTags.forEach(tag => {
+              const clone = tag.cloneNode(true);
+              clone.style.fontSize = '12px';
+              clone.style.padding = '2px 8px';
+              previewContainer.appendChild(clone);
+          });
+          // Insert inside block-header-left (after title/uses) for correct flex positioning
+          const headerLeft = headerEl.querySelector('.block-header-left');
+          if (headerLeft) headerLeft.appendChild(previewContainer);
+          else headerEl.appendChild(previewContainer);
       }
 
       const targetHeight = headerEl.offsetHeight
           + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)
-          + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+          + (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
 
       const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
 
@@ -289,9 +1017,9 @@ const applyPendingBlockAnim = () => {
           el.style.transition = 'opacity 0.35s ease';
           el.style.opacity = '0';
       });
-      if (previewTags) {
-          previewTags.style.transition = 'opacity 0.3s ease 0.15s';
-          previewTags.style.opacity = '1';
+      if (previewContainer) {
+          previewContainer.style.transition = 'opacity 0.3s ease 0.15s';
+          previewContainer.style.opacity = '1';
       }
 
       setTimeout(() => {
@@ -302,30 +1030,6 @@ const applyPendingBlockAnim = () => {
 /* ==================================================================*/
 /* ============================== TAGS ==============================*/
 /* ==================================================================*/
-
-  const renderTags = (tags, containerId) => {
-    const container = document.getElementById(containerId);
-    if (!container) {
-      console.error(`Container with ID "${containerId}" not found`);
-      return;
-    }
-    const predefinedTagsSet = new Set(Object.values(categoryTags).flatMap(data => data.tags));
-    const userGeneratedTags = tags
-      .filter(tag => !predefinedTagsSet.has(tag))
-      .map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase())
-      .sort((a, b) => a.localeCompare(b));
-    const predefinedTags = tags.filter(tag => predefinedTagsSet.has(tag));
-
-    container.innerHTML = [...predefinedTags, ...userGeneratedTags]
-      .map(tag => {
-        const category = Object.entries(categoryTags).find(([_, data]) => data.tags.includes(tag));
-        const tagClass = category ? category[1].className : "tag-user";
-        return `<button class="tag-button ${tagClass}" data-tag="${tag}">${tag}</button>`;
-      })
-      .join("");
-
-    console.log("✅ Final Rendered Tags");
-  };
 
   // updateTags renders tag HTML without any selected-state classes.
   // filterManager._applySelectionClasses() applies those after every render.
@@ -373,7 +1077,7 @@ const applyPendingBlockAnim = () => {
       html += `<div class="tag-accordion-header" data-category="${category}">`;
       html += `<span class="tag-accordion-name">${label}</span>`;
       html += `<span class="tag-accordion-chips"></span>`;
-      html += `<span class="tag-accordion-chevron">▸</span>`;
+      html += `<span class="tag-accordion-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>`;
       html += `</div>`;
       html += `<div class="tag-accordion-body" id="${category}_tags_list_${tabSuffix}">`;
       html += `<div class="tag-accordion-body-inner">`;
@@ -499,15 +1203,7 @@ const applyPendingBlockAnim = () => {
           b.classList.toggle('session-log-active', b.getAttribute('data-id') === blockId);
       });
 
-      // Build body (same transforms as blockTemplate)
-      let bodyHTML = block.text || '';
-      bodyHTML = bodyHTML
-          .replace(/<div[^>]*>/gi, '')
-          .replace(/^(&nbsp;|\s)+/gi, '')
-          .replace(/<\/div>/gi, '<br>')
-          .replace(/<p[^>]*>/gi, '')
-          .replace(/<\/p>/gi, '<br>')
-          .trim();
+      const bodyHTML = sanitizeBlockHTML(block.text);
 
       viewer.innerHTML = `
           <div class="session-viewer-header">
@@ -840,7 +1536,6 @@ const applyPendingBlockAnim = () => {
 
       updateTags();
       attachDynamicTooltips();
-      initScrollFades('.results-section', null, '--results-fade-opacity', '_scrollFadeHandler');
       document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab7' } }));
   };
 
@@ -959,15 +1654,7 @@ const applyPendingBlockAnim = () => {
 
       activeInventoryBlockId = blockId;
 
-      // Body HTML transforms (same as blockTemplate)
-      let bodyHTML = block.text || '';
-      bodyHTML = bodyHTML
-          .replace(/<div[^>]*>/gi, '')
-          .replace(/^(&nbsp;|\s)+/gi, '')
-          .replace(/<\/div>/gi, '<br>')
-          .replace(/<p[^>]*>/gi, '')
-          .replace(/<\/p>/gi, '<br>')
-          .trim();
+      const bodyHTML = sanitizeBlockHTML(block.text);
 
       const usesHTML = (block.uses && block.uses.length > 0)
           ? `<div class="block-uses" style="margin-bottom:12px;">${block.uses.map((state, idx) =>
@@ -1022,8 +1709,6 @@ const applyPendingBlockAnim = () => {
   };
 
   // ── Inventory viewer: in-place edit / add ─────────────────────────
-
-  const INVENTORY_AUTO_EQUIPABLE_VIEWER = new Set(["Weapons", "Armor & clothing"]);
 
   const buildInventoryInserts = (block) => {
       const reqAtt   = block?.requiresAttunement === true;
@@ -1133,7 +1818,7 @@ const applyPendingBlockAnim = () => {
               // Auto-equipable logic
               if (equipableEl && equipableEl.dataset.userTouched !== 'true') {
                   const sel = blockTypesContainer.querySelector('.tag-button.selected');
-                  if (sel && INVENTORY_AUTO_EQUIPABLE_VIEWER.has(sel.dataset.tag)) {
+                  if (sel && INVENTORY_AUTO_EQUIPABLE_TYPES.has(sel.dataset.tag)) {
                       equipableEl.checked = true;
                       equipableEl.dispatchEvent(new Event('change'));
                       equipableEl.dataset.userTouched = '';
@@ -1274,11 +1959,12 @@ const applyPendingBlockAnim = () => {
           b.classList.toggle('inventory-block-active', b.getAttribute('data-id') === blockId);
       });
 
-      // ── Save / Cancel / Keyboard ──
+      // ── Save / Cancel ──
+      let removeKeyHandler;
       const doSave = () => {
           const data = collectInventoryFormData(viewer);
           if (!data) return;
-          viewer.removeEventListener('keydown', keyHandler);
+          removeKeyHandler();
           const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
           localStorage.removeItem(usesKey);
           const latestBlock = getBlocks('tab6').find(b => b.id === blockId);
@@ -1289,32 +1975,19 @@ const applyPendingBlockAnim = () => {
       };
 
       const doCancel = () => {
-          viewer.removeEventListener('keydown', keyHandler);
+          removeKeyHandler();
           localStorage.removeItem(usesKey);
           inventoryEditMode = false;
           viewer.classList.remove('editing');
           renderInventoryViewer(blockId);
       };
 
-      const keyHandler = (e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
-      };
+      removeKeyHandler = wireEditControls(viewer, {
+          saveSel: '.inventory-edit-save', cancelSel: '.inventory-edit-cancel',
+          onSave: doSave, onCancel: doCancel,
+      });
 
-      controls.querySelector('.inventory-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-      controls.querySelector('.inventory-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-      viewer.addEventListener('keydown', keyHandler);
-
-      // ── Focus title ──
-      if (titleEl) {
-          titleEl.focus();
-          const range = document.createRange();
-          const sel   = window.getSelection();
-          range.selectNodeContents(titleEl);
-          range.collapse(false);
-          sel.removeAllRanges();
-          sel.addRange(range);
-      }
+      focusAndCursorToEnd(titleEl);
   };
 
   const startInventoryAdd = () => {
@@ -1362,13 +2035,11 @@ const applyPendingBlockAnim = () => {
 
           wireInventoryToggles(viewer);
 
-          const saveBtn   = viewer.querySelector('.inventory-edit-save');
-          const cancelBtn = viewer.querySelector('.inventory-edit-cancel');
-
+          let removeKeyHandler;
           const doSave = () => {
               const data = collectInventoryFormData(viewer);
               if (!data) return;
-              viewer.removeEventListener('keydown', keyHandler);
+              removeKeyHandler();
               const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
               localStorage.removeItem(usesKey);
               const newId = saveBlock('tab6', data.title, data.text, [], usesState, [], data.blockType, null, null, data.inventoryExtras);
@@ -1379,7 +2050,7 @@ const applyPendingBlockAnim = () => {
           };
 
           const doCancel = () => {
-              viewer.removeEventListener('keydown', keyHandler);
+              removeKeyHandler();
               localStorage.removeItem(usesKey);
               inventoryEditMode = false;
               viewer.classList.remove('editing');
@@ -1390,14 +2061,10 @@ const applyPendingBlockAnim = () => {
               }
           };
 
-          const keyHandler = (e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-              else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
-          };
-
-          saveBtn?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-          cancelBtn?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-          viewer.addEventListener('keydown', keyHandler);
+          removeKeyHandler = wireEditControls(viewer, {
+              saveSel: '.inventory-edit-save', cancelSel: '.inventory-edit-cancel',
+              onSave: doSave, onCancel: doCancel,
+          });
 
           const titleEl = viewer.querySelector('.inline-edit-title');
           if (titleEl) titleEl.focus();
@@ -1704,7 +2371,6 @@ const applyPendingBlockAnim = () => {
 
       applyInlineDiceRolls(resultsSection, 'tab6');
       attachDynamicTooltips();
-      initScrollFades('.results-section', null, '--results-fade-opacity', '_scrollFadeHandler');
       document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab6' } }));
   };
 
@@ -2327,7 +2993,6 @@ const applyPendingBlockAnim = () => {
       applyInlineDiceRolls(resultsSection, 'tab3');
       updateTags();
       attachDynamicTooltips();
-      initScrollFades('.results-section', null, '--results-fade-opacity', '_scrollFadeHandler');
       document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab3' } }));
       initQuestStatusDropdown();
 
@@ -2465,14 +3130,7 @@ const applyPendingBlockAnim = () => {
       `).join('');
 
       // ── Body ──
-      let bodyHTML = isEdit ? (block.text || '') : '';
-      bodyHTML = bodyHTML
-          .replace(/<div[^>]*>/gi, '')
-          .replace(/^(&nbsp;|\s)+/gi, '')
-          .replace(/<\/div>/gi, '<br>')
-          .replace(/<p[^>]*>/gi, '')
-          .replace(/<\/p>/gi, '<br>')
-          .trim();
+      const bodyHTML = sanitizeBlockHTML(isEdit ? block.text : '');
 
       // ── Title ──
       const title = isEdit ? block.title : '';
@@ -2757,10 +3415,11 @@ const applyPendingBlockAnim = () => {
           });
 
           // Save / Cancel
+          let removeKeyHandler;
           const doSave = () => {
               const data = collectNotesFormData(viewer);
               if (!data) return;
-              viewer.removeEventListener('keydown', keyHandler);
+              removeKeyHandler();
               const latestBlock = getBlocks('tab3').find(b => b.id === blockId);
               saveBlock('tab3', data.title, data.text, latestBlock?.tags || [], [], [], data.blockType, blockId, block.timestamp, null, data.tab3Extras);
               notesEditMode = false;
@@ -2769,32 +3428,18 @@ const applyPendingBlockAnim = () => {
           };
 
           const doCancel = () => {
-              viewer.removeEventListener('keydown', keyHandler);
+              removeKeyHandler();
               notesEditMode = false;
               viewer.classList.remove('editing');
               renderNotesViewer(blockId);
           };
 
-          const keyHandler = (e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-              else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
-          };
+          removeKeyHandler = wireEditControls(viewer, {
+              saveSel: '.notes-edit-save', cancelSel: '.notes-edit-cancel',
+              onSave: doSave, onCancel: doCancel,
+          });
 
-          viewer.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-          viewer.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-          viewer.addEventListener('keydown', keyHandler);
-
-          // Focus title
-          const titleEl = viewer.querySelector('.notes-edit-title');
-          if (titleEl) {
-              titleEl.focus();
-              const range = document.createRange();
-              const sel = window.getSelection();
-              range.selectNodeContents(titleEl);
-              range.collapse(false);
-              sel.removeAllRanges();
-              sel.addRange(range);
-          }
+          focusAndCursorToEnd(viewer.querySelector('.notes-edit-title'));
       };
 
       if (existing && existing.classList.contains('notes-viewer-content')) {
@@ -2832,10 +3477,11 @@ const applyPendingBlockAnim = () => {
           document.querySelectorAll('#results_section_3 .block').forEach(b => b.classList.remove('notes-block-active'));
 
           // Save / Cancel
+          let removeKeyHandler;
           const doSave = () => {
               const data = collectNotesFormData(viewer);
               if (!data) return;
-              viewer.removeEventListener('keydown', keyHandler);
+              removeKeyHandler();
               const newId = saveBlock('tab3', data.title, data.text, [], [], [], data.blockType, null, null, null, data.tab3Extras);
               notesEditMode = false;
               viewer.classList.remove('editing');
@@ -2844,7 +3490,7 @@ const applyPendingBlockAnim = () => {
           };
 
           const doCancel = () => {
-              viewer.removeEventListener('keydown', keyHandler);
+              removeKeyHandler();
               notesEditMode = false;
               viewer.classList.remove('editing');
               if (activeNotesBlockId) {
@@ -2854,16 +3500,11 @@ const applyPendingBlockAnim = () => {
               }
           };
 
-          const keyHandler = (e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-              else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
-          };
+          removeKeyHandler = wireEditControls(viewer, {
+              saveSel: '.notes-edit-save', cancelSel: '.notes-edit-cancel',
+              onSave: doSave, onCancel: doCancel,
+          });
 
-          viewer.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-          viewer.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-          viewer.addEventListener('keydown', keyHandler);
-
-          // Focus title
           const titleEl = viewer.querySelector('.notes-edit-title');
           if (titleEl) titleEl.focus();
       };
@@ -2877,7 +3518,7 @@ const applyPendingBlockAnim = () => {
   };
 
   // ── Narrow mode: edit inline ───────────────────────────────────
-  const enterNotesInlineEdit = (blockId) => {
+  const enterNotesInlineEdit = (blockId, skipAnim = false) => {
       if (notesEditMode) return;
       const tab = 'tab3';
       const blocksArr = getBlocks(tab);
@@ -2894,28 +3535,9 @@ const applyPendingBlockAnim = () => {
           import('./filterManager.js').then(({ filterManager }) => {
               filterManager.applyFilters('3');
               requestAnimationFrame(() => {
-                  enterNotesInlineEdit(blockId);
+                  enterNotesInlineEdit(blockId, true);
                   const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
-                  if (!blockEl || !oldHeight) return;
-                  const newHeight = blockEl.offsetHeight;
-                  if (Math.abs(newHeight - oldHeight) < 2) return;
-                  const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
-                  blockEl.style.height = oldHeight + 'px';
-                  blockEl.style.overflow = 'hidden';
-                  blockEl.style.transition = 'none';
-                  fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
-                  void blockEl.offsetHeight;
-                  blockEl.style.transition = 'height 0.5s ease';
-                  blockEl.style.height = newHeight + 'px';
-                  fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
-                  const cleanup = () => {
-                      blockEl.style.height = ''; blockEl.style.overflow = ''; blockEl.style.transition = '';
-                      fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
-                  };
-                  blockEl.addEventListener('transitionend', (e) => {
-                      if (e.target === blockEl && e.propertyName === 'height') cleanup();
-                  }, { once: true });
-                  setTimeout(cleanup, 600);
+                  if (blockEl) animateHeightTransition(blockEl, oldHeight);
               });
           });
           return;
@@ -2933,10 +3555,11 @@ const applyPendingBlockAnim = () => {
       wireNotesEditBehaviour(blockEl);
 
       // Save / Cancel
+      let removeKeyHandler;
       const doSave = () => {
           const data = collectNotesFormData(blockEl);
           if (!data) return;
-          blockEl.removeEventListener('keydown', keyHandler);
+          removeKeyHandler();
           const latestBlock = getBlocks(tab).find(b => b.id === blockId);
           saveBlock(tab, data.title, data.text, latestBlock?.tags || [], [], [], data.blockType, blockId, block.timestamp, null, data.tab3Extras);
           notesEditMode = false;
@@ -2945,54 +3568,20 @@ const applyPendingBlockAnim = () => {
       };
 
       const doCancel = () => {
-          blockEl.removeEventListener('keydown', keyHandler);
+          removeKeyHandler();
           notesEditMode = false;
           setPendingBlockAnim(blockId, blockEl.offsetHeight);
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
       };
 
-      const keyHandler = (e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
-      };
+      removeKeyHandler = wireEditControls(blockEl, {
+          saveSel: '.notes-edit-save', cancelSel: '.notes-edit-cancel',
+          onSave: doSave, onCancel: doCancel,
+      });
 
-      blockEl.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-      blockEl.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-      blockEl.addEventListener('keydown', keyHandler);
+      focusAndCursorToEnd(blockEl.querySelector('.notes-edit-title'));
 
-      // Focus title
-      const titleEl = blockEl.querySelector('.notes-edit-title');
-      if (titleEl) {
-          titleEl.focus();
-          const range = document.createRange();
-          const sel = window.getSelection();
-          range.selectNodeContents(titleEl);
-          range.collapse(false);
-          sel.removeAllRanges();
-          sel.addRange(range);
-      }
-
-      // Animate from old height
-      const newHeight = blockEl.offsetHeight;
-      if (oldHeight && Math.abs(newHeight - oldHeight) > 2) {
-          const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('notes-edit-header'));
-          blockEl.style.height = oldHeight + 'px';
-          blockEl.style.overflow = 'hidden';
-          blockEl.style.transition = 'none';
-          fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
-          void blockEl.offsetHeight;
-          blockEl.style.transition = 'height 0.5s ease';
-          blockEl.style.height = newHeight + 'px';
-          fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
-          const cleanup = () => {
-              blockEl.style.height = ''; blockEl.style.overflow = ''; blockEl.style.transition = '';
-              fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
-          };
-          blockEl.addEventListener('transitionend', (e) => {
-              if (e.target === blockEl && e.propertyName === 'height') cleanup();
-          }, { once: true });
-          setTimeout(cleanup, 600);
-      }
+      if (!skipAnim) animateHeightTransition(blockEl, oldHeight, 'notes-edit-header');
   };
 
   // ── Narrow mode: add inline ────────────────────────────────────
@@ -3021,31 +3610,27 @@ const applyPendingBlockAnim = () => {
       wireNotesEditBehaviour(blockEl);
 
       // Save / Cancel
+      let removeKeyHandler;
       const doSave = () => {
           const data = collectNotesFormData(blockEl);
           if (!data) return;
-          blockEl.removeEventListener('keydown', keyHandler);
+          removeKeyHandler();
           saveBlock('tab3', data.title, data.text, [], [], [], data.blockType, null, null, null, data.tab3Extras);
           notesEditMode = false;
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
       };
 
       const doCancel = () => {
-          blockEl.removeEventListener('keydown', keyHandler);
+          removeKeyHandler();
           notesEditMode = false;
           blockEl.remove();
       };
 
-      const keyHandler = (e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
-      };
+      removeKeyHandler = wireEditControls(blockEl, {
+          saveSel: '.notes-edit-save', cancelSel: '.notes-edit-cancel',
+          onSave: doSave, onCancel: doCancel,
+      });
 
-      blockEl.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-      blockEl.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-      blockEl.addEventListener('keydown', keyHandler);
-
-      // Focus title
       const titleEl = blockEl.querySelector('.notes-edit-title');
       if (titleEl) titleEl.focus();
   };
@@ -3147,27 +3732,10 @@ const applyPendingBlockAnim = () => {
       }
   };
 
-  let renderAbortController = null;
 
 /* ==================================================================*/
 /* ============================= BLOCKS =============================*/
 /* ==================================================================*/
-
-  /* ==================================================================*/
-  /* ====================== QUICK-REF PANEL ===========================*/
-  /* ==================================================================*/
-
-  const QR_CHAR_TABS    = new Set(['tab4', 'tab8']);
-  const QR_ACTION_TAGS  = ['Action', 'Reaction', 'Bonus action', 'Free action', 'Check', 'Save'];
-  const QR_ABILITY_TAGS = ['Buff', 'Debuff', 'Heal', 'Movement', 'Ranged', 'Melee', 'Spell', 'Utility', 'AC'];
-
-  // Per-tab filter state — persists across re-renders (e.g. when tab9 changes in landscape)
-  const qrState = {};
-
-  const getQrState = (charTab) => {
-    if (!qrState[charTab]) qrState[charTab] = { query: '', expandedIds: new Set() };
-    return qrState[charTab];
-  };
 
   // ── Pinned-block drag-to-reorder (pointer events for touch + mouse) ──
   // The pin button doubles as the drag handle: click = unpin, drag = reorder.
@@ -3176,6 +3744,8 @@ const applyPendingBlockAnim = () => {
 
   const initPinnedDragReorder = (zone) => {
       if (!zone || zone.querySelectorAll('.block.pinned').length < 2) return;
+      if (zone._dragInitialized) return;
+      zone._dragInitialized = true;
 
       let dragState = null;
 
@@ -3305,15 +3875,11 @@ const applyPendingBlockAnim = () => {
                   b.style.transition = '';
               });
 
+              const activeTab = getActiveTab();
               const newOrder = [...zone.querySelectorAll('.block.pinned')]
                   .map(b => b.getAttribute('data-id'));
-              localStorage.setItem('pinnedBlockOrder_tab9', JSON.stringify(newOrder));
+              localStorage.setItem(`pinnedBlockOrder_${activeTab}`, JSON.stringify(newOrder));
 
-          } else if (!didDrag && pinBtn) {
-              // No movement — treat as a click to unpin
-              dragState = null;
-              pinBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-              return;
           } else if (!didDrag && pinBtn) {
               // No movement — treat as a click to unpin
               dragState = null;
@@ -3330,10 +3896,6 @@ const applyPendingBlockAnim = () => {
 
   const renderBlocks = (tab = getActiveTab(), filteredBlocks = null, skipTagUpdate = false) => {
     console.log("🔍 Checking tab value:", tab, typeof tab);
-
-    if (renderAbortController) renderAbortController.abort();
-    renderAbortController = new AbortController();
-    const signal = renderAbortController.signal;
 
     if (typeof tab !== "string") {
       console.error("❌ Error: 'tab' should be a string but got:", tab);
@@ -3352,15 +3914,15 @@ const applyPendingBlockAnim = () => {
         return;
     }
 
-        // ── Character sheet tabs get the quick-ref panel ──────────────────
-    if (QR_CHAR_TABS.has(tab)) {
-        renderQuickRef(tab);
-        return;
-    }
-
             // ── Notes has its own sectioned render path ───────────────────────
     if (tab === 'tab3') {
         renderNotes(filteredBlocks);
+        return;
+    }
+
+    // ── Character sheet tabs have no block results ────────────────────
+    if (tab === 'tab4' || tab === 'tab8') {
+        initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
         return;
     }
 
@@ -3369,17 +3931,22 @@ const applyPendingBlockAnim = () => {
     const resultsSection = document.getElementById(sectionId);
     if (!resultsSection) return;
 
-    const _filterTabs  = new Set(['tab3', 'tab6', 'tab7', 'tab9']);
-    const _openBtnHTML = _filterTabs.has(tab)
-        ? `<button class="filter-open-btn" data-tab="${tab}" title="Show filters">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M15 18l-6-6 6-6"/>
-              </svg>
-          </button>`
-        : '';
+    // ── HEADER: create once, skip on subsequent renders ──────────────
+    if (!resultsSection.querySelector('.results-header')) {
 
-resultsSection.innerHTML = `
-      <div id="results_header_${tabSuffix}" class="results-header">
+      const _filterTabs  = new Set(['tab3', 'tab6', 'tab7', 'tab9']);
+      const _openBtnHTML = _filterTabs.has(tab)
+          ? `<button class="filter-open-btn" data-tab="${tab}" title="Show filters">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
+            </button>`
+          : '';
+
+      const headerEl = document.createElement('div');
+      headerEl.id = `results_header_${tabSuffix}`;
+      headerEl.className = 'results-header';
+      headerEl.innerHTML = `
         <div id="header-controls_${tabSuffix}" class="header-controls">
           <button id="results-sort-btn_${tabSuffix}" class="results-settings">
             <img src="./images/Sort_Icon.svg" alt="Sort icon">
@@ -3401,115 +3968,138 @@ resultsSection.innerHTML = `
           <button id="add_block_button" class="add-block-button green-button">+</button>
           ${_openBtnHTML}
         </div>
-      </div>
-    `;
-        
-    const addBtn = document.getElementById(`results_header_${tabSuffix}`)
-      .querySelector('#add_block_button');
-    if (addBtn) {
-      addBtn.onclick = () => {
-        if (tab === 'tab9') {
-            startInlineAdd();
-            return;
-        }
-        overlayHandler.initializeOverlayTagHandlers("add_block_overlay_tags");
-        document.querySelector('.add-block-overlay').classList.add('show');
-      };
-    }
+      `;
+      resultsSection.prepend(headerEl);
 
-    const settingsBtn  = document.getElementById(`results-settings_${tabSuffix}`);
-    const viewDropdown = document.getElementById(`view-toggle-dropdown_${tabSuffix}`);
-    const activeTab    = tab;
-    const savedView    = localStorage.getItem(`activeViewState_${activeTab}`) || "condensed";
-
-    const closeDropdowns = () => {
-      viewDropdown.classList.add("hidden");
-      sortDropdown.classList.add("hidden");
-    };
-
-    settingsBtn.addEventListener("click", e => {
-      e.stopPropagation();
-      const wasOpen = !viewDropdown.classList.contains("hidden");
-      closeDropdowns();
-      if (!wasOpen) {
-        const rect = settingsBtn.getBoundingClientRect();
-        viewDropdown.style.top  = `${rect.bottom + 5}px`;
-        viewDropdown.style.left = `${rect.left}px`;
-        viewDropdown.classList.remove("hidden");
+      // ── Wire add button ──
+      const addBtn = headerEl.querySelector('#add_block_button');
+      if (addBtn) {
+        addBtn.onclick = () => {
+          if (tab === 'tab9') startInlineAdd();
+        };
       }
-    });
 
-    document.addEventListener("click", closeDropdowns, { signal });
+      // ── Wire view dropdown ──
+      const settingsBtn  = document.getElementById(`results-settings_${tabSuffix}`);
+      const viewDropdown = document.getElementById(`view-toggle-dropdown_${tabSuffix}`);
+      const sortBtn      = document.getElementById(`results-sort-btn_${tabSuffix}`);
+      const sortDropdown = document.getElementById(`sort-dropdown_${tabSuffix}`);
 
-    viewDropdown.querySelectorAll(".view-toggle-item").forEach(item => {
-      const state = item.dataset.state;
-      item.classList.toggle("selected", state === savedView);
-      item.addEventListener("click", e => {
-        e.stopPropagation();
-        closeDropdowns();
-        updateBlocksViewState(state);
-        viewDropdown.querySelectorAll(".view-toggle-item")
-          .forEach(i => i.classList.toggle("selected", i === item));
+      const closeDropdowns = () => {
         viewDropdown.classList.add("hidden");
-      });
-    });
-
-    const sortBtn       = document.getElementById(`results-sort-btn_${tabSuffix}`);
-    const sortDropdown  = document.getElementById(`sort-dropdown_${tabSuffix}`);
-    const savedSortMode = localStorage.getItem(`activeSortOrder_${tab}`) || "newest";
-
-    sortBtn.addEventListener("click", e => {
-      e.stopPropagation();
-      const wasOpen = !sortDropdown.classList.contains("hidden");
-      closeDropdowns();
-      if (!wasOpen) {
-        const rect = sortBtn.getBoundingClientRect();
-        sortDropdown.style.top  = `${rect.bottom + 5}px`;
-        sortDropdown.style.left = `${rect.left}px`;
-        sortDropdown.classList.remove("hidden");
-      }
-    });
-
-    sortDropdown.querySelectorAll(".sort-item").forEach(item => {
-      const mode = item.dataset.sort;
-      item.classList.toggle("selected", mode === savedSortMode);
-      item.addEventListener("click", e => {
-        e.stopPropagation();
-        localStorage.setItem(`activeSortOrder_${tab}`, mode);
-        sortDropdown.querySelectorAll(".sort-item")
-          .forEach(i => i.classList.toggle("selected", i === item));
         sortDropdown.classList.add("hidden");
-        renderBlocks(tab, getBlocks(tab));
-        updateTags();
-        updateViewToggleDropdown(tabSuffix);
+      };
+
+      settingsBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        const wasOpen = !viewDropdown.classList.contains("hidden");
+        closeDropdowns();
+        if (!wasOpen) {
+          const rect = settingsBtn.getBoundingClientRect();
+          viewDropdown.style.top  = `${rect.bottom + 5}px`;
+          viewDropdown.style.left = `${rect.left}px`;
+          viewDropdown.classList.remove("hidden");
+        }
       });
-    });
 
-    if (tab === "tab6") {
-      const permanentItems  = [
-        { id: "perm1", defaultValue: "00" },
-        { id: "perm2", defaultValue: "00" },
-        { id: "perm3", defaultValue: "00" }
-      ];
-      const colorClasses = { perm1: "gold-bg", perm2: "silver-bg", perm3: "copper-bg" };
+      document.addEventListener("click", closeDropdowns);
 
-      let permanentHTML = "";
-      permanentItems.forEach(({ id, defaultValue }) => {
-        const savedValue = localStorage.getItem(`permanentItem_${id}`) || defaultValue;
-        permanentHTML += `
-          <div class="block minimized permanent-block ${colorClasses[id]}" data-id="${id}">
-            <h4 class="permanent-title" contenteditable="true">${savedValue}</h4>
-          </div>
-        `;
+      const savedView = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
+      viewDropdown.querySelectorAll(".view-toggle-item").forEach(item => {
+        const state = item.dataset.state;
+        item.classList.toggle("selected", state === savedView);
+        item.addEventListener("click", e => {
+          e.stopPropagation();
+          closeDropdowns();
+          updateBlocksViewState(state);
+          viewDropdown.querySelectorAll(".view-toggle-item")
+            .forEach(i => i.classList.toggle("selected", i === item));
+        });
       });
-      resultsSection.insertAdjacentHTML("beforeend", `<div class="permanent-items-container">${permanentHTML}</div>`);
-    }
 
+      // ── Wire sort dropdown ──
+      const savedSortMode = localStorage.getItem(`activeSortOrder_${tab}`) || "newest";
+
+      sortBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        const wasOpen = !sortDropdown.classList.contains("hidden");
+        closeDropdowns();
+        if (!wasOpen) {
+          const rect = sortBtn.getBoundingClientRect();
+          sortDropdown.style.top  = `${rect.bottom + 5}px`;
+          sortDropdown.style.left = `${rect.left}px`;
+          sortDropdown.classList.remove("hidden");
+        }
+      });
+
+      sortDropdown.querySelectorAll(".sort-item").forEach(item => {
+        const mode = item.dataset.sort;
+        item.classList.toggle("selected", mode === savedSortMode);
+        item.addEventListener("click", e => {
+          e.stopPropagation();
+          localStorage.setItem(`activeSortOrder_${tab}`, mode);
+          sortDropdown.querySelectorAll(".sort-item")
+            .forEach(i => i.classList.toggle("selected", i === item));
+          sortDropdown.classList.add("hidden");
+          renderBlocks(tab, getBlocks(tab));
+          updateTags();
+          updateViewToggleDropdown(tabSuffix);
+        });
+      });
+
+      // ── Event delegation: block expand/collapse toggle ──
+      resultsSection.addEventListener("click", function(e) {
+        const blockEl = e.target.closest('.block:not(.permanent-block)');
+        if (!blockEl || !resultsSection.contains(blockEl)) return;
+
+        if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
+        if (e.target.classList.contains('circle')) return;
+        if (blockEl.classList.contains('inline-editing')) return;
+
+        if (!blockEl.classList.contains('condensed')) {
+          const validTargets = ['.block', '.block-header', '.block-header-left'];
+          const isEmptySpace = validTargets.some(sel =>
+            e.target === blockEl.querySelector(sel) || e.target === blockEl
+          );
+          if (!isEmptySpace) return;
+        }
+
+        const blockId    = blockEl.getAttribute("data-id");
+        const blocksArr  = getBlocks(tab);
+        const targetBlock = blocksArr.find(b => b.id === blockId);
+        if (!targetBlock) return;
+
+        const isCollapsing = targetBlock.viewState === "expanded";
+
+        if (isCollapsing) {
+          const activeState = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
+          targetBlock.viewState = activeState;
+        } else {
+          targetBlock.viewState = "expanded";
+        }
+
+        localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
+
+        const doRerender = () => {
+            import('./filterManager.js').then(({ filterManager }) => {
+                filterManager.applyFilters(tabSuffix);
+            });
+        };
+
+        if (isCollapsing) {
+            animateBlockCollapse(blockEl, doRerender);
+        } else {
+            setPendingBlockAnim(blockId, blockEl.offsetHeight);
+            doRerender();
+        }
+      });
+    } // end header creation
+
+    // ── BLOCK DATA ──────────────────────────────────────────────────
     const allBlocks     = getBlocks(tab);
     const pinnedBlocks  = allBlocks.filter(b => b.pinned);
     const displayBlocks = (filteredBlocks || allBlocks).filter(b => !b.pinned);
 
-    // Sort pinned blocks by their saved manual order
     const pinnedOrder = JSON.parse(localStorage.getItem(`pinnedBlockOrder_${tab}`) || '[]');
     pinnedBlocks.sort((a, b) => {
         const ai = pinnedOrder.indexOf(a.id);
@@ -3522,398 +4112,241 @@ resultsSection.innerHTML = `
 
     console.log(`📦 Blocks to render for ${tab}:`, displayBlocks);
 
-    if (pinnedBlocks.length > 0) {
-      const pinnedHTML = pinnedBlocks.map(b => blockTemplate(b, tab)).join('');
-      resultsSection.insertAdjacentHTML('beforeend', `<div class="pinned-blocks-zone-wrapper"><div class="pinned-blocks-zone">${pinnedHTML}</div></div>`);
-      initPinnedDragReorder(resultsSection.querySelector('.pinned-blocks-zone'));
+    // ── MAP EXISTING DOM BLOCKS ─────────────────────────────────────
+    const existingDisplayEls = new Map();
+    resultsSection.querySelectorAll(':scope > .block[data-id]').forEach(el => {
+        if (!el.classList.contains('block-removing')) {
+            existingDisplayEls.set(el.getAttribute('data-id'), el);
+        }
+    });
+
+    const existingPinnedEls = new Map();
+    const oldPinnedZone = resultsSection.querySelector('.pinned-blocks-zone');
+    if (oldPinnedZone) {
+        oldPinnedZone.querySelectorAll('.block[data-id]').forEach(el => {
+            if (!el.classList.contains('block-removing')) {
+                existingPinnedEls.set(el.getAttribute('data-id'), el);
+            }
+        });
     }
 
-    if (displayBlocks.length === 0 && pinnedBlocks.length === 0) {
-      const p = document.createElement('p');
-      p.classList.add('results-placeholder');
-      p.textContent = 'Use the + button to add items here…';
-      p.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0.25;';
-      resultsSection.appendChild(p);
+    // ── IDENTIFY & ANIMATE ORPHANS FIRST ────────────────────────────
+    // Mark departing blocks before the sync loop so they collapse in-place
+    // and the sync loop can skip over them when checking positions.
+    const displayIdSet = new Set(displayBlocks.map(b => b.id));
+    existingDisplayEls.forEach((el, id) => {
+        if (!displayIdSet.has(id) && !el.classList.contains('inline-editing')) {
+            el.classList.add('block-removing');
+            const h = el.offsetHeight;
+            el.style.maxHeight = h + 'px';
+            el.style.overflow = 'hidden';
+            el.style.pointerEvents = 'none';
+            void el.offsetHeight;
+            el.style.transition = 'opacity 0.35s ease, max-height 0.5s ease 0.1s, margin 0.5s ease 0.1s, padding 0.5s ease 0.1s';
+            el.style.opacity = '0';
+            el.style.maxHeight = '0';
+            el.style.marginTop = '0';
+            el.style.marginBottom = '0';
+            el.style.paddingTop = '0';
+            el.style.paddingBottom = '0';
+            console.log('🗑️ Animating block removal:', id);
+            setTimeout(() => el.remove(), 650);
+        }
+    });
+
+    // ── SYNC PINNED ZONE ────────────────────────────────────────────
+    let pinnedWrapper = resultsSection.querySelector('.pinned-blocks-zone-wrapper');
+    if (pinnedBlocks.length > 0) {
+        if (!pinnedWrapper) {
+            pinnedWrapper = document.createElement('div');
+            pinnedWrapper.className = 'pinned-blocks-zone-wrapper';
+            pinnedWrapper.innerHTML = '<div class="pinned-blocks-zone"></div>';
+            const header = resultsSection.querySelector('.results-header');
+            if (header) header.after(pinnedWrapper);
+            else resultsSection.prepend(pinnedWrapper);
+        }
+        const pinnedZone = pinnedWrapper.querySelector('.pinned-blocks-zone');
+
+        pinnedBlocks.forEach(block => {
+            const el = existingPinnedEls.get(block.id);
+            const viewState = block.viewState || 'condensed';
+            if (el && el.classList.contains(viewState)) {
+                pinnedZone.appendChild(el);
+                existingPinnedEls.delete(block.id);
+            } else {
+                if (el) { el.remove(); existingPinnedEls.delete(block.id); }
+                pinnedZone.insertAdjacentHTML('beforeend', blockTemplate(block, tab));
+            }
+        });
+
+        existingPinnedEls.forEach(el => {
+            el.classList.add('block-removing');
+            const h = el.offsetHeight;
+            el.style.maxHeight = h + 'px';
+            el.style.overflow = 'hidden';
+            el.style.pointerEvents = 'none';
+            void el.offsetHeight;
+            el.style.transition = 'opacity 0.35s ease, max-height 0.5s ease 0.1s, margin 0.5s ease 0.1s, padding 0.5s ease 0.1s';
+            el.style.opacity = '0';
+            el.style.maxHeight = '0';
+            el.style.marginTop = '0';
+            el.style.marginBottom = '0';
+            el.style.paddingTop = '0';
+            el.style.paddingBottom = '0';
+            setTimeout(() => el.remove(), 650);
+        });
+
+        initPinnedDragReorder(pinnedZone);
+    } else if (pinnedWrapper) {
+        pinnedWrapper.remove();
     }
+
+    // ── SYNC DISPLAY BLOCKS (position-aware, skips departing blocks) ──
+    let prevEl = resultsSection.querySelector('.pinned-blocks-zone-wrapper')
+              || resultsSection.querySelector('.results-header');
 
     displayBlocks.forEach(block => {
-      resultsSection.insertAdjacentHTML('beforeend', blockTemplate(block, tab));
+        const el = existingDisplayEls.get(block.id);
+        const viewState = block.viewState || 'condensed';
+
+        if (el && el.classList.contains(viewState) && !el.classList.contains('block-removing')) {
+            existingDisplayEls.delete(block.id);
+            // Find expected next sibling, skipping over departing blocks
+            let expectedNext = prevEl ? prevEl.nextElementSibling : resultsSection.firstElementChild;
+            while (expectedNext && expectedNext.classList.contains('block-removing')) {
+                expectedNext = expectedNext.nextElementSibling;
+            }
+            if (el !== expectedNext) {
+                if (prevEl) prevEl.after(el);
+                else resultsSection.prepend(el);
+            }
+            prevEl = el;
+        } else if (el && !el.classList.contains('block-removing')) {
+            // View state changed — rebuild instantly (collapse/expand animation is handled separately)
+            existingDisplayEls.delete(block.id);
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = blockTemplate(block, tab);
+            const newEl = wrapper.firstElementChild;
+            el.replaceWith(newEl);
+            prevEl = newEl;
+        } else if (!el) {
+            // Genuinely new block — create with expand + fade in
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = blockTemplate(block, tab);
+            const newEl = wrapper.firstElementChild;
+            if (prevEl) prevEl.after(newEl);
+            else resultsSection.prepend(newEl);
+            const naturalHeight = newEl.scrollHeight;
+            newEl.style.overflow = 'hidden';
+            newEl.style.maxHeight = '0';
+            newEl.style.opacity = '0';
+            newEl.style.marginTop = '0';
+            newEl.style.marginBottom = '0';
+            newEl.style.paddingTop = '0';
+            newEl.style.paddingBottom = '0';
+            void newEl.offsetHeight;
+            requestAnimationFrame(() => {
+                newEl.style.transition = 'max-height 0.5s ease, opacity 0.4s ease 0.1s, margin 0.5s ease, padding 0.5s ease';
+                newEl.style.maxHeight = naturalHeight + 'px';
+                newEl.style.opacity = '1';
+                newEl.style.marginTop = '0';
+                newEl.style.marginBottom = '8px';
+                newEl.style.paddingTop = '10px';
+                newEl.style.paddingBottom = '10px';
+                const cleanup = () => {
+                    newEl.style.maxHeight = '';
+                    newEl.style.overflow = '';
+                    newEl.style.transition = '';
+                    newEl.style.opacity = '';
+                    newEl.style.marginTop = '';
+                    newEl.style.marginBottom = '';
+                    newEl.style.paddingTop = '';
+                    newEl.style.paddingBottom = '';
+                };
+                newEl.addEventListener('transitionend', (e) => {
+                    if (e.target === newEl && e.propertyName === 'max-height') cleanup();
+                }, { once: true });
+                setTimeout(cleanup, 600);
+            });
+            prevEl = newEl;
+        }
     });
+
+    // ── PLACEHOLDER ─────────────────────────────────────────────────
+    let placeholder = resultsSection.querySelector('.results-placeholder');
+    if (displayBlocks.length === 0 && pinnedBlocks.length === 0) {
+      if (!placeholder) {
+        placeholder = document.createElement('p');
+        placeholder.classList.add('results-placeholder');
+        placeholder.textContent = 'Use the + button to add items here…';
+        placeholder.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0.25;';
+        resultsSection.appendChild(placeholder);
+      }
+    } else if (placeholder) {
+      placeholder.remove();
+    }
+
+    // ── FADE OVERLAY (always last child for sticky bottom) ────────
+    let fadeEl = resultsSection.querySelector('.results-fade');
+    if (!fadeEl) {
+        fadeEl = document.createElement('div');
+        fadeEl.className = 'results-fade';
+    }
+    resultsSection.appendChild(fadeEl);
+
+    // Control fade visibility based on actual overflow
+    const updateFade = () => {
+        const scrollableAmount = resultsSection.scrollHeight - resultsSection.clientHeight;
+        if (scrollableAmount <= 5) {
+            fadeEl.style.opacity = '0';
+            return;
+        }
+        const distanceFromBottom = resultsSection.scrollHeight - resultsSection.scrollTop - resultsSection.clientHeight;
+        fadeEl.style.opacity = Math.min(distanceFromBottom / 42, 1);
+    };
+    resultsSection.removeEventListener('scroll', resultsSection._resultsFadeHandler);
+    resultsSection._resultsFadeHandler = updateFade;
+    resultsSection.addEventListener('scroll', updateFade);
+    updateFade();
+    // Track scrollHeight changes during block animations (~700ms)
+    if (resultsSection._fadeRAF) cancelAnimationFrame(resultsSection._fadeRAF);
+    const startTime = performance.now();
+    const trackFade = (now) => {
+        updateFade();
+        if (now - startTime < 700) resultsSection._fadeRAF = requestAnimationFrame(trackFade);
+    };
+    resultsSection._fadeRAF = requestAnimationFrame(trackFade);
+    // Re-check on element size changes (window resize)
+    if (!resultsSection._fadeResizeObserver) {
+        resultsSection._fadeResizeObserver = new ResizeObserver(updateFade);
+        resultsSection._fadeResizeObserver.observe(resultsSection);
+    }
+    // Re-check on content changes (blocks added/removed, style changes)
+    if (!resultsSection._fadeMutationObserver) {
+        let debounce = null;
+        resultsSection._fadeMutationObserver = new MutationObserver(() => {
+            clearTimeout(debounce);
+            debounce = setTimeout(updateFade, 50);
+            setTimeout(updateFade, 350);
+            setTimeout(updateFade, 600);
+        });
+        resultsSection._fadeMutationObserver.observe(resultsSection, {
+            childList: true, subtree: true,
+            attributes: true, attributeFilter: ['class', 'style']
+        });
+    }
 
     applyInlineDiceRolls(resultsSection, tab);
     console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
 
-    if (tab === "tab6") {
-      resultsSection.querySelectorAll(".permanent-title").forEach(titleEl => {
-        titleEl.addEventListener("blur", () => {
-          const blockId = titleEl.parentElement.getAttribute("data-id");
-          localStorage.setItem(`permanentItem_${blockId}`, titleEl.textContent.trim());
-        });
-      });
-    }
-
-    // Click-to-toggle view for non-permanent blocks
-    document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`)
-      .forEach(blockEl => {
-        blockEl.addEventListener("click", function(e) {
-            // Action buttons (pin, edit, duplicate, remove, ⋯ trigger) handle their own clicks
-            if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
-            // Interactive circles (uses) handle their own clicks
-            if (e.target.classList.contains('circle')) return;
-            if (blockEl.classList.contains('inline-editing')) return;
-
-          // For condensed blocks: click anywhere expands
-          // For expanded blocks: only empty space collapses (tags/text remain interactive)
-          if (!blockEl.classList.contains('condensed')) {
-            const validTargets = ['.block', '.block-header', '.block-header-left'];
-            const isEmptySpace = validTargets.some(sel =>
-              e.target === blockEl.querySelector(sel) || e.target === blockEl
-            );
-            if (!isEmptySpace) return;
-          }
-
-          const blockId    = blockEl.getAttribute("data-id");
-          const blocksArr  = getBlocks(tab);
-          const targetBlock = blocksArr.find(b => b.id === blockId);
-          if (!targetBlock) return;
-
-          const isCollapsing = targetBlock.viewState === "expanded";
-
-          if (isCollapsing) {
-            const activeState = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
-            targetBlock.viewState = activeState;
-          } else {
-            targetBlock.viewState = "expanded";
-          }
-
-          localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
-
-          const doRerender = () => {
-              import('./filterManager.js').then(({ filterManager }) => {
-                  filterManager.applyFilters(tabSuffix);
-              });
-          };
-
-          if (isCollapsing) {
-              animateBlockCollapse(blockEl, doRerender);
-          } else {
-              setPendingBlockAnim(blockId, blockEl.offsetHeight);
-              doRerender();
-          }
-        });
-      });
-
     if (!skipTagUpdate) updateTags();
     attachDynamicTooltips();
-    initScrollFades('.results-section',              null,                        '--results-fade-opacity',      '_scrollFadeHandler');
     initScrollFades('.filter-section',               '--filter-fade-top-opacity', '--filter-fade-bottom-opacity','_filterFadeHandler', 100);
     initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
     initScrollFades('.roll-results', '--dice-fade-top-opacity', '--dice-fade-bottom-opacity', '_diceFadeHandler', 100);
 
-    // When tab9 changes, refresh any currently-visible quick-ref panels
-    if (tab === 'tab9') {
-      QR_CHAR_TABS.forEach(charTab => {
-        const tabEl = document.getElementById(charTab);
-        if (tabEl && tabEl.style.display !== 'none') renderQuickRef(charTab);
-      });
-    }
-
     applyPendingBlockAnim();
   };
-
-  /* ==================================================================*/
-  /* ================== QUICK-REF HELPER FUNCTIONS ====================*/
-  /* ==================================================================*/
-
-  const buildQrBlockHTML = (block, expanded) => {
-    const usesHTML = block.uses
-      ? block.uses.map(state =>
-          `<span class="circle ${state ? 'unfilled' : 'filled'}"></span>`
-        ).join('')
-      : '';
-
-    const headerHTML = `
-      <div class="block-header">
-        <div class="block-header-left">
-          <div class="block-title"><h4>${block.title}</h4></div>
-          ${usesHTML ? `<div class="block-uses">${usesHTML}</div>` : ''}
-        </div>
-      </div>`;
-
-    if (!expanded) return headerHTML;
-
-    const blockTypes = Array.isArray(block.blockType)
-      ? block.blockType
-      : (block.blockType ? [block.blockType] : []);
-
-    const blockTypeHTML = blockTypes
-      .map(bt => `<button class="tag-button tag-characterType" data-tag="${bt}">${bt}</button>`)
-      .join('');
-
-    const tabPredefinedTags = Object.entries(categoryTags)
-      .filter(([, data]) => data.tabs.includes('tab9'))
-      .flatMap(([, data]) => data.tags);
-
-    const predefinedTagsHTML = Object.entries(categoryTags)
-      .filter(([, data]) => data.tabs.includes('tab9'))
-      .flatMap(([, data]) =>
-        data.tags
-          .filter(tag => block.tags.includes(tag))
-          .map(tag => `<button class="tag-button ${data.className}" data-tag="${tag}">${tag}</button>`)
-      ).join('');
-
-    const userTagsHTML = block.tags
-      .filter(t => !tabPredefinedTags.includes(t))
-      .map(t => `<button class="tag-button tag-user" data-tag="${t}">${t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()}</button>`)
-      .join('');
-
-    const hasAnyTags = blockTypeHTML || predefinedTagsHTML || userTagsHTML;
-    const tagsHTML = hasAnyTags
-      ? `<div class="block-tags">${blockTypeHTML}${predefinedTagsHTML}${userTagsHTML}</div>`
-      : '';
-
-    const propertiesHTML = block.properties && block.properties.length > 0
-      ? `<div class="block-properties">${block.properties.map(p => `<span class="block-property">${p}</span>`).join('')}</div>`
-      : '';
-
-    let bodyText = block.text || '';
-    bodyText = bodyText
-      .replace(/<div[^>]*>/gi, '')
-      .replace(/^(&nbsp;|\s)+/gi, '')
-      .replace(/<\/div>/gi, '<br>')
-      .replace(/<p[^>]*>/gi, '')
-      .replace(/<\/p>/gi, '<br>')
-      .trim();
-    const bodyHTML = bodyText ? `<div class="block-body"><span>${bodyText}</span></div>` : '';
-
-    return headerHTML + tagsHTML + propertiesHTML + bodyHTML;
-  };
-
-  const refilterQr = (charTab) => {
-    const state    = getQrState(charTab);
-    const tabSuffix = charTab.replace('tab', '');
-    const blocksDiv = document.getElementById(`qr_blocks_${tabSuffix}`);
-    if (!blocksDiv) return;
-
-    let filtered = getBlocks('tab9');
-
-    if (state.query) {
-      const q = state.query.toLowerCase();
-      filtered = filtered.filter(b =>
-        b.title.toLowerCase().includes(q) ||
-        stripHTML(b.text || '').toLowerCase().includes(q) ||
-        (b.properties || []).some(p => p.toLowerCase().includes(q))
-      );
-    }
-
-    const andTags = filterManager.getAndTags(charTab);
-    const orTags  = filterManager.getOrTags(charTab);
-    const notTags = filterManager.getNotTags(charTab);
-
-    const tab9Types      = blockTypeConfig['tab9']?.types || [];
-    const andBlockTypes  = andTags.filter(t => tab9Types.includes(t));
-    const orBlockTypes   = orTags.filter(t => tab9Types.includes(t));
-    const notBlockTypes  = notTags.filter(t => tab9Types.includes(t));
-    const regularAndTags = andTags.filter(t => !tab9Types.includes(t));
-    const regularOrTags  = orTags.filter(t => !tab9Types.includes(t));
-    const regularNotTags = notTags.filter(t => !tab9Types.includes(t));
-
-    if (regularAndTags.length > 0) {
-      filtered = filtered.filter(b =>
-        regularAndTags.every(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
-      );
-    }
-    if (regularOrTags.length > 0) {
-      filtered = filtered.filter(b =>
-        regularOrTags.some(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
-      );
-    }
-    if (regularNotTags.length > 0) {
-      filtered = filtered.filter(b =>
-        !regularNotTags.some(t => b.tags.some(bt => normalizeTag(bt) === normalizeTag(t)))
-      );
-    }
-    if (andBlockTypes.length > 0) {
-      filtered = filtered.filter(b => {
-        const types = Array.isArray(b.blockType) ? b.blockType : (b.blockType ? [b.blockType] : []);
-        return andBlockTypes.every(t => types.includes(t));
-      });
-    }
-    if (orBlockTypes.length > 0) {
-      filtered = filtered.filter(b => {
-        const types = Array.isArray(b.blockType) ? b.blockType : (b.blockType ? [b.blockType] : []);
-        return orBlockTypes.some(t => types.includes(t));
-      });
-    }
-    if (notBlockTypes.length > 0) {
-      filtered = filtered.filter(b => {
-        const types = Array.isArray(b.blockType) ? b.blockType : (b.blockType ? [b.blockType] : []);
-        return !notBlockTypes.some(t => types.includes(t));
-      });
-    }
-
-    blocksDiv.innerHTML = '';
-
-    if (filtered.length === 0) {
-      const p = document.createElement('p');
-      p.classList.add('results-placeholder');
-      p.style.cssText = 'text-align:center;opacity:0.25;padding:30px 0;';
-      p.textContent = 'No matching abilities';
-      blocksDiv.appendChild(p);
-      return;
-    }
-
-    filtered.forEach(block => {
-      const expanded = state.expandedIds.has(block.id);
-      const el = document.createElement('div');
-      el.className = `block ${expanded ? 'expanded' : 'condensed'}`;
-      el.dataset.qrId = block.id;
-      el.innerHTML = buildQrBlockHTML(block, expanded);
-      blocksDiv.appendChild(el);
-    });
-    applyInlineDiceRolls(blocksDiv, charTab);
-    filterManager.applySelectionClasses(charTab);
-    initScrollFades('.qr-blocks-scroll', '--qr-fade-top-opacity', '--qr-fade-bottom-opacity', '_qrScrollFadeHandler');
-  };
-
-  const wireQrEvents = (section, charTab, tabSuffix) => {
-    const state     = getQrState(charTab);
-    const searchEl  = document.getElementById(`qr_search_${tabSuffix}`);
-    const clearEl   = document.getElementById(`qr_clear_${tabSuffix}`);
-    const blocksDiv = document.getElementById(`qr_blocks_${tabSuffix}`);
-
-    setupSearchInput(
-      searchEl,
-      clearEl,
-      (value) => { state.query = value; refilterQr(charTab); },
-      ()      => { state.query = '';    refilterQr(charTab); }
-    );
-
-    // Delegated listener on blocks area — expand/collapse only
-    blocksDiv?.addEventListener('click', e => {
-      const blockEl = e.target.closest('.block[data-qr-id]');
-      if (!blockEl) return;
-
-      // Action buttons and uses circles handle their own clicks
-      if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
-      if (e.target.classList.contains('circle')) return;
-
-      // For condensed blocks: click anywhere expands (tags are non-interactive)
-      // For expanded blocks: only empty space collapses
-      if (!blockEl.classList.contains('condensed')) {
-        if (e.target.closest('.tag-button[data-tag]')) return;
-        const validTargets = ['.block', '.block-header', '.block-header-left', '.block-title'];
-        const isEmptySpace = validTargets.some(sel => {
-          const node = blockEl.querySelector(sel);
-          return e.target === blockEl || e.target === node;
-        });
-        if (!isEmptySpace) return;
-      }
-
-      const id    = blockEl.dataset.qrId;
-      const block = getBlocks('tab9').find(b => b.id === id);
-      if (!block) return;
-
-      const isExpanded = blockEl.classList.contains('expanded');
-      if (isExpanded) {
-        state.expandedIds.delete(id);
-        blockEl.classList.replace('expanded', 'condensed');
-      } else {
-        state.expandedIds.add(id);
-        blockEl.classList.replace('condensed', 'expanded');
-      }
-      blockEl.innerHTML = buildQrBlockHTML(block, !isExpanded);
-      if (!isExpanded) {
-          applyInlineDiceRolls(blockEl, charTab);
-          filterManager.applySelectionClasses(charTab);
-      }
-      document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: charTab } }));
-    });
-
-    // Horizontal fades on tag scroll row
-    const tagsScroll  = section.querySelector('.qr-tags-scroll');
-    const tagsWrapper = section.querySelector('.qr-tags-scroll-wrapper');
-
-    const updateTagFades = () => {
-      if (!tagsScroll || !tagsWrapper) return;
-      const left    = tagsScroll.scrollLeft;
-      const maxLeft = tagsScroll.scrollWidth - tagsScroll.clientWidth;
-      tagsWrapper.style.setProperty('--qr-tags-fade-left',  Math.min(left / 30, 1));
-      tagsWrapper.style.setProperty('--qr-tags-fade-right', Math.min((maxLeft - left) / 30, 1));
-    };
-
-    tagsScroll?.addEventListener('scroll', updateTagFades);
-    updateTagFades();
-
-    // Redirect vertical wheel to horizontal scroll when hovering over tag row
-    tagsWrapper?.addEventListener('wheel', e => {
-      if (e.deltaY !== 0) {
-        e.preventDefault();
-        tagsScroll.scrollLeft += e.deltaY;
-        updateTagFades();
-      }
-    }, { passive: false });
-  };
-
-  const renderQuickRef = (charTab) => {
-    const tabSuffix = charTab.replace('tab', '');
-    const section   = document.getElementById(`results_section_${tabSuffix}`);
-    if (!section) return;
-
-    const state = getQrState(charTab);
-
-  const andTags = filterManager.getAndTags(charTab);
-    const orTags  = filterManager.getOrTags(charTab);
-
-    const actionPillsHTML = QR_ACTION_TAGS.map(tag =>
-      `<button class="tag-button tag-actionType${andTags.includes(tag) ? ' selected' : orTags.includes(tag) ? ' selected-or' : ''}" data-tag="${tag}">${tag}</button>`
-    ).join('');
-
-    const abilityPillsHTML = QR_ABILITY_TAGS.map(tag =>
-      `<button class="tag-button tag-abilityType${andTags.includes(tag) ? ' selected' : orTags.includes(tag) ? ' selected-or' : ''}" data-tag="${tag}">${tag}</button>`
-    ).join('');
-    
-    section.innerHTML = `
-      <div class="qr-filter-row">
-        <div class="search-container" style="width:160px;flex-shrink:0;">
-          <input id="qr_search_${tabSuffix}" class="search_input" type="text" placeholder="Search…" value="${state.query}" />
-          <button class="clear-search" id="qr_clear_${tabSuffix}">
-            ${CLEAR_SEARCH_SVG}
-          </button>
-        </div>
-        <div class="qr-tags-scroll-wrapper">
-          <div class="qr-tags-scroll" id="qr_tags_${tabSuffix}">
-            <div class="vertical-break" style="height:22px;flex-shrink:0;"></div>
-            ${actionPillsHTML}
-            <div class="vertical-break" style="height:22px;flex-shrink:0;"></div>
-            ${abilityPillsHTML}
-          </div>
-        </div>
-      </div>
-      <div class="qr-blocks-scroll" id="qr_blocks_${tabSuffix}"></div>
-    `;
-
-    refilterQr(charTab);
-    wireQrEvents(section, charTab, tabSuffix);
-    initScrollFades('.qr-blocks-scroll', '--qr-fade-top-opacity', '--qr-fade-bottom-opacity', '_qrScrollFadeHandler', 100);
-    initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
-  };
-
-
-  const loadBlocks = () => {
-    const savedBlocks = localStorage.getItem("userBlocks");
-    if (savedBlocks) {
-      const parsedBlocks = JSON.parse(savedBlocks);
-      if (Array.isArray(parsedBlocks)) {
-        userBlocks = parsedBlocks;
-        console.log("Blocks loaded from localStorage:", userBlocks);
-        return;
-      }
-    }
-    console.log("No valid 'userBlocks' found in localStorage");
-  };
-
-  let currentSortMode = "newest";
 
   const getBlocks = (tab = getActiveTab()) => {
     const storedBlocks  = localStorage.getItem(`userBlocks_${tab}`);
@@ -3956,33 +4389,6 @@ resultsSection.innerHTML = `
       item.classList.toggle("selected", item.dataset.state === saved);
     });
   }
-
-  const clearToggleClasses = () => {
-    document.getElementById("view_condensed_button")?.classList.remove("active");
-    document.getElementById("view_minimized_button")?.classList.remove("active");
-  };
-
-  document.getElementById("view_expanded_button")?.addEventListener("click", () => {
-    updateBlocksViewState("expanded");
-  });
-  document.getElementById("view_condensed_button")?.addEventListener("click", () => {
-    updateBlocksViewState("condensed");
-    clearToggleClasses();
-    document.getElementById("view_condensed_button")?.classList.add("active");
-  });
-  document.getElementById("view_minimized_button")?.addEventListener("click", () => {
-    updateBlocksViewState("minimized");
-    clearToggleClasses();
-    document.getElementById("view_minimized_button")?.classList.add("active");
-  });
-
-  const tab = getActiveTab();
-  const savedViewState = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
-  document
-    .querySelectorAll(`#view-toggle-dropdown_${tab.replace("tab","")} .view-toggle-item`)
-    .forEach(item => {
-      item.classList.toggle(item.dataset.state === savedViewState);
-    });
 
 /* =================================================================*/
 /* ======================== DATA MANAGEMENT ========================*/
@@ -4112,33 +4518,10 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
 /* ======================== HELPER FUNCTIONS ========================*/
 /* ==================================================================*/
 
-  const clearFilters = () => {
-    const activeTab   = getActiveTab();
-    const tabNumber   = activeTab.replace("tab", "");
-    const searchInput = document.getElementById(`search_input_${tabNumber}`);
-    if (searchInput) searchInput.value = "";
-    // Use dynamic import to avoid circular dependency
-    import('./filterManager.js').then(({ filterManager }) => {
-      filterManager.clearSelectedTags(activeTab);
-      filterManager.applyFilters(tabNumber);
-    });
-  };
-
-  const clearData = () => {
-    userBlocks = [];
-    title      = "Information Blocks";
-    localStorage.removeItem("userBlocks");
-    localStorage.removeItem("pageTitle");
-    document.querySelectorAll(".circle").forEach(circle => circle.classList.remove("filled"));
-    document.querySelector("header.title-section h1").textContent = "INFORMATION BLOCKS";
-    renderBlocks([]);
-    updateTags();
-  };
-
   // ── Inline block editing (tab9) ──────────────────────────────────
   let inlineEditState = null;
 
-  const enterInlineEdit = (blockId) => {
+  const enterInlineEdit = (blockId, skipAnim = false) => {
       const tab = 'tab9';
       const blocksArr = getBlocks(tab);
       const block = blocksArr.find(b => b.id === blockId);
@@ -4154,30 +4537,9 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
           import('./filterManager.js').then(({ filterManager }) => {
               filterManager.applyFilters('9');
               requestAnimationFrame(() => {
-                  enterInlineEdit(blockId);
+                  enterInlineEdit(blockId, true);
                   const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
-                  if (!blockEl || !oldHeight) return;
-                  const newHeight = blockEl.offsetHeight;
-                  if (Math.abs(newHeight - oldHeight) < 2) return;
-                  const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
-                  blockEl.style.height = oldHeight + 'px';
-                  blockEl.style.overflow = 'hidden';
-                  blockEl.style.transition = 'none';
-                  fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
-                  void blockEl.offsetHeight;
-                  blockEl.style.transition = 'height 0.5s ease';
-                  blockEl.style.height = newHeight + 'px';
-                  fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
-                  const cleanup = () => {
-                      blockEl.style.height = '';
-                      blockEl.style.overflow = '';
-                      blockEl.style.transition = '';
-                      fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
-                  };
-                  blockEl.addEventListener('transitionend', (e) => {
-                      if (e.target === blockEl && e.propertyName === 'height') cleanup();
-                  }, { once: true });
-                  setTimeout(cleanup, 600);
+                  if (blockEl) animateHeightTransition(blockEl, oldHeight);
               });
           });
           return;
@@ -4204,22 +4566,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
 
       blockEl.classList.add('inline-editing');
 
-      // Gather tag data
-      const predefinedTagList = Object.entries(categoryTags)
-          .filter(([_, data]) => data.tabs.includes(tab))
-          .flatMap(([_, data]) => data.tags);
-      const predefinedTagSet = new Set(predefinedTagList);
-
-      const userDefinedTags = [
-          ...new Set(
-              getBlocks(tab).flatMap(b => b.tags).map(t => t.toLowerCase())
-          )
-      ].filter(t => !predefinedTagList.map(pt => pt.toLowerCase()).includes(t))
-       .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
-       .sort((a, b) => a.localeCompare(b));
-
       const blockTags = block.tags || [];
-      const blockUserTags = blockTags.filter(t => !predefinedTagSet.has(t));
       const blockTypes = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
 
       // Block type buttons HTML
@@ -4230,41 +4577,10 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
             ).join('')
           : '';
 
-      // Tag accordion groups HTML
-      let tagsHTML = '';
-      Object.entries(categoryTags).forEach(([category, data]) => {
-          if (!data.tabs.includes(tab)) return;
-          const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-          tagsHTML += `<div class="tag-accordion-group ${data.className}" data-category="${category}">`;
-          tagsHTML += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
-          tagsHTML += `<div class="tag-accordion-body">`;
-          tagsHTML += `<span class="tag-accordion-label">${label}</span>`;
-          tagsHTML += data.tags.map(t =>
-              `<button class="tag-button ${data.className}${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
-          ).join('');
-          tagsHTML += `</div></div>`;
-      });
+      const tagsHTML = buildTab9TagsHTML(tab, blockTags);
 
-      tagsHTML += `<div class="tag-category user-tags-edit">`;
-      if (userDefinedTags.length > 0) {
-          tagsHTML += userDefinedTags.map(t =>
-              `<button class="tag-button tag-user${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
-          ).join('');
-      }
-      tagsHTML += `<span class="inline-edit-add-tag"></span>`;
-      tagsHTML += `</div>`;
+      const bodyHTML = sanitizeBlockHTML(block.text);
 
-      // Body HTML
-      let bodyHTML = block.text || '';
-      bodyHTML = bodyHTML
-          .replace(/<div[^>]*>/gi, '')
-          .replace(/^(&nbsp;|\s)+/gi, '')
-          .replace(/<\/div>/gi, '<br>')
-          .replace(/<p[^>]*>/gi, '')
-          .replace(/<\/p>/gi, '<br>')
-          .trim();
-
-      // Uses localStorage key
       const usesKey = `inline_edit_uses_${blockId}`;
       localStorage.setItem(usesKey, JSON.stringify(block.uses || []));
 
@@ -4287,271 +4603,36 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
               <div class="block-body"><span contenteditable="true" class="inline-edit-body">${bodyHTML}</span></div>
       `;
 
-      // Init uses field
-      const usesContainer = blockEl.querySelector('.inline-edit-uses');
-      if (usesContainer) initUsesField(usesContainer, usesKey);
+      wireTab9FormHandlers(blockEl, usesKey);
 
-      // Tag toggle handler
-      const tagsContainer = blockEl.querySelector('.inline-edit-tags');
-      if (tagsContainer) {
-          tagsContainer.addEventListener('click', (e) => {
-              const btn = e.target.closest('.tag-button');
-              if (btn) btn.classList.toggle('selected');
-          });
-      }
-
-      // Block type toggle handler
-      const blockTypesContainer = blockEl.querySelector('.inline-edit-block-types');
-      if (blockTypesContainer) {
-          blockTypesContainer.addEventListener('click', (e) => {
-              const btn = e.target.closest('.tag-button');
-              if (btn) btn.classList.toggle('selected');
-          });
-      }
-
-      // Properties editing
-      const propsContainer = blockEl.querySelector('.inline-edit-properties');
-      const newPropBtn = blockEl.querySelector('.inline-edit-new-prop');
-
-      const createPropertyWrap = (text) => {
-          const wrap = document.createElement('span');
-          wrap.className = 'block-property-wrap';
-          wrap.innerHTML = '<span class="block-property" contenteditable="true"></span><span class="property-remove-btn">×</span>';
-          if (text) wrap.querySelector('.block-property').textContent = text;
-          return wrap;
-      };
-
-      if (propsContainer) {
-          // + button creates a new empty property
-          if (newPropBtn) {
-              newPropBtn.addEventListener('click', (e) => {
-                  e.stopPropagation();
-                  const wrap = createPropertyWrap('');
-                  newPropBtn.before(wrap);
-                  wrap.querySelector('.block-property').focus();
-              });
-          }
-
-          propsContainer.addEventListener('keydown', (e) => {
-              const prop = e.target.closest('.block-property');
-              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
-
-              if (e.key === ',' || e.key === 'Enter') {
-                  e.preventDefault();
-                  const wrap = createPropertyWrap('');
-                  prop.closest('.block-property-wrap').after(wrap);
-                  wrap.querySelector('.block-property').focus();
-              } else if (e.key === 'Backspace' && prop.textContent.trim() === '') {
-                  e.preventDefault();
-                  const wrap = prop.closest('.block-property-wrap');
-                  const prev = wrap?.previousElementSibling;
-                  wrap.remove();
-                  if (prev) {
-                      const prevProp = prev.querySelector?.('.block-property') || prev;
-                      const range = document.createRange();
-                      const sel = window.getSelection();
-                      range.selectNodeContents(prevProp);
-                      range.collapse(false);
-                      sel.removeAllRanges();
-                      sel.addRange(range);
-                  }
-              }
-          });
-
-          // Blur: empty properties get removed
-          propsContainer.addEventListener('focusout', (e) => {
-              const prop = e.target.closest('.block-property');
-              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
-              if (prop.textContent.trim() === '') {
-                  prop.closest('.block-property-wrap')?.remove();
-              }
-          });
-
-          // X button
-          propsContainer.addEventListener('click', (e) => {
-              if (e.target.classList.contains('property-remove-btn')) {
-                  e.stopPropagation();
-                  e.target.closest('.block-property-wrap')?.remove();
-              }
-          });
-      }
-
-      // User tag + button
-      const addTagEl = blockEl.querySelector('.inline-edit-add-tag');
-      if (addTagEl) {
-          addTagEl.addEventListener('click', (e) => {
-              e.stopPropagation();
-              const input = document.createElement('span');
-              input.className = 'inline-edit-tag-input';
-              input.contentEditable = 'true';
-              Object.assign(input.style, {
-                  padding: '4px 10px',
-                  fontSize: '13px',
-                  borderRadius: '12px',
-                  backgroundColor: 'color-mix(in srgb, var(--user-color) 18%, transparent)',
-                  color: 'var(--gray-800)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  minWidth: '20px',
-                  outline: 'none',
-              });
-              addTagEl.before(input);
-              input.focus();
-
-              const commit = () => {
-                  const tagName = input.textContent.trim();
-                  if (tagName) {
-                      const normalized = tagName.charAt(0).toUpperCase() + tagName.slice(1).toLowerCase();
-                      const existing = blockEl.querySelector(`.inline-edit-tags .tag-button[data-tag="${normalized}"]`);
-                      if (existing) {
-                          existing.classList.add('selected');
-                      } else {
-                          const newBtn = document.createElement('button');
-                          newBtn.className = 'tag-button tag-user selected';
-                          newBtn.dataset.tag = normalized;
-                          newBtn.textContent = normalized;
-                          input.before(newBtn);
-                      }
-                  }
-                  input.remove();
-              };
-
-              input.addEventListener('focusout', commit);
-              input.addEventListener('keydown', (ke) => {
-                  if (ke.key === 'Enter' || ke.key === ',') {
-                      ke.preventDefault();
-                      commit();
-                  } else if (ke.key === 'Escape') {
-                      ke.preventDefault();
-                      input.remove();
-                  }
-              });
-          });
-      }
-
-      // Inject chips into collapsed groups with selected tags
-      tagsContainer?.querySelectorAll('.tag-accordion-group:not(.open)').forEach(group => {
-          const pill = group.querySelector('.tag-accordion-pill');
-          const body = group.querySelector('.tag-accordion-body');
-          if (!pill || !body) return;
-          const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group' && c !== 'open') || '';
-          body.querySelectorAll('.tag-button.selected').forEach(btn => {
-              const chip = document.createElement('button');
-              chip.classList.add('tag-accordion-chip');
-              if (tagClass) chip.classList.add(tagClass);
-              chip.dataset.tag = btn.dataset.tag;
-              chip.textContent = btn.dataset.tag;
-              group.appendChild(chip);
-          });
-      });
-
-      // ── Save ──
+      // ── Save / Cancel ──
       const doSave = () => {
-          const newTitle = blockEl.querySelector('.inline-edit-title')?.textContent.trim();
-          if (!newTitle) { alert('A title is required.'); return; }
-
-          const body = blockEl.querySelector('.inline-edit-body');
-          const newBody = (body ? body.innerHTML.trim() : '');
-          if (!newBody) { alert('Title and text are required.'); return; }
-
-          const selectedTypes = Array.from(blockEl.querySelectorAll('.inline-edit-block-types .tag-button.selected'))
-              .map(b => b.dataset.tag);
-          if (selectedTypes.length === 0) {
-              alert('Please select a block type: ' + blockTypeConfig.tab9.types.join(', ') + '.');
-              return;
-          }
-
-          const selectedTags = Array.from(blockEl.querySelectorAll('.inline-edit-tags .tag-button.selected'))
-              .map(b => b.dataset.tag.trim().toLowerCase());
-
-          const combinedLower = [...new Set(selectedTags)];
-          const predefinedMap = new Map(
-              Object.values(categoryTags).flatMap(cat => cat.tags).map(t => [t.toLowerCase(), t])
-          );
-          const allTags = combinedLower.map(t => predefinedMap.get(t) || normalizeTag(t));
-
-          const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
-          const properties = Array.from(blockEl.querySelectorAll('.inline-edit-properties .block-property-wrap .block-property'))
-              .map(el => el.textContent.trim()).filter(p => p.length > 0);
-
-          localStorage.removeItem(usesKey);
+          const data = collectTab9FormData(blockEl, usesKey);
+          if (!data) return;
           inlineEditState = null;
-
-          saveBlock(tab, newTitle, newBody, allTags, usesState, properties, selectedTypes, blockId, block.timestamp);
+          saveBlock(tab, data.title, data.text, data.tags, data.uses, data.properties, data.blockType, blockId, block.timestamp);
           setPendingBlockAnim(blockId, blockEl.offsetHeight);
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
       };
 
-      // ── Cancel ──
       const doCancel = () => {
-          localStorage.removeItem(usesKey);
           inlineEditState = null;
           setPendingBlockAnim(blockId, blockEl.offsetHeight);
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
       };
 
-      blockEl.querySelector('.inline-edit-save').addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-      blockEl.querySelector('.inline-edit-cancel').addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-
-      // Keyboard shortcuts
-      blockEl.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      wireEditControls(blockEl, {
+          saveSel: '.inline-edit-save', cancelSel: '.inline-edit-cancel',
+          onSave: doSave, onCancel: doCancel,
       });
 
-      // Focus title
-      const titleInput = blockEl.querySelector('.inline-edit-title');
-      if (titleInput) {
-          titleInput.focus();
-          const range = document.createRange();
-          const sel   = window.getSelection();
-          range.selectNodeContents(titleInput);
-          range.collapse(false);
-          sel.removeAllRanges();
-          sel.addRange(range);
-      }
+      focusAndCursorToEnd(blockEl.querySelector('.inline-edit-title'));
 
-      // Animate from old height to edit-form height
-      const newHeight = blockEl.offsetHeight;
-      if (oldHeight && Math.abs(newHeight - oldHeight) > 2) {
-          const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
-          blockEl.style.height = oldHeight + 'px';
-          blockEl.style.overflow = 'hidden';
-          blockEl.style.transition = 'none';
-          fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
-          void blockEl.offsetHeight;
-          blockEl.style.transition = 'height 0.5s ease';
-          blockEl.style.height = newHeight + 'px';
-          fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
-          const cleanup = () => {
-              blockEl.style.height = '';
-              blockEl.style.overflow = '';
-              blockEl.style.transition = '';
-              fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
-          };
-          blockEl.addEventListener('transitionend', (e) => {
-              if (e.target === blockEl && e.propertyName === 'height') cleanup();
-          }, { once: true });
-          setTimeout(cleanup, 600);
-      }
+      if (!skipAnim) animateHeightTransition(blockEl, oldHeight);
   };
 
     const startInlineAdd = () => {
       const tab = 'tab9';
-
-      // Build empty tag accordion HTML (all closed)
-      const predefinedTagList = Object.entries(categoryTags)
-          .filter(([_, data]) => data.tabs.includes(tab))
-          .flatMap(([_, data]) => data.tags);
-      const predefinedTagSet = new Set(predefinedTagList);
-
-      const userDefinedTags = [
-          ...new Set(
-              getBlocks(tab).flatMap(b => b.tags).map(t => t.toLowerCase())
-          )
-      ].filter(t => !predefinedTagList.map(pt => pt.toLowerCase()).includes(t))
-       .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
-       .sort((a, b) => a.localeCompare(b));
 
       const tabBTConfig = blockTypeConfig[tab];
       const blockTypeHTML = tabBTConfig
@@ -4560,33 +4641,11 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
             ).join('')
           : '';
 
-      let tagsHTML = '';
-      Object.entries(categoryTags).forEach(([category, data]) => {
-          if (!data.tabs.includes(tab)) return;
-          const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-          tagsHTML += `<div class="tag-accordion-group ${data.className}" data-category="${category}">`;
-          tagsHTML += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
-          tagsHTML += `<div class="tag-accordion-body">`;
-          tagsHTML += `<span class="tag-accordion-label">${label}</span>`;
-          tagsHTML += data.tags.map(t =>
-              `<button class="tag-button ${data.className}" data-tag="${t}">${t}</button>`
-          ).join('');
-          tagsHTML += `</div></div>`;
-      });
-
-      tagsHTML += `<div class="tag-category user-tags-edit">`;
-      if (userDefinedTags.length > 0) {
-          tagsHTML += userDefinedTags.map(t =>
-              `<button class="tag-button tag-user" data-tag="${t}">${t}</button>`
-          ).join('');
-      }
-      tagsHTML += `<span class="inline-edit-add-tag"></span>`;
-      tagsHTML += `</div>`;
+      const tagsHTML = buildTab9TagsHTML(tab);
 
       const usesKey = `inline_add_uses_new`;
       localStorage.setItem(usesKey, JSON.stringify([]));
 
-      // Create block element
       const blockEl = document.createElement('div');
       blockEl.className = 'block expanded inline-editing';
       blockEl.setAttribute('data-id', 'new-inline-add');
@@ -4608,211 +4667,33 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
               <div class="block-body"><span contenteditable="true" class="inline-edit-body"></span></div>
       `;
 
-      // Insert at top of results section (after pinned zone if present)
       const tabSuffix = tab.replace('tab', '');
       const resultsSection = document.getElementById(`results_section_${tabSuffix}`);
       if (!resultsSection) return;
       const pinnedZone = resultsSection.querySelector('.pinned-blocks-zone-wrapper');
-      if (pinnedZone) {
-          pinnedZone.after(blockEl);
-      } else {
-          resultsSection.prepend(blockEl);
-      }
+      if (pinnedZone) { pinnedZone.after(blockEl); } else { resultsSection.prepend(blockEl); }
 
-      // Scroll into view
       blockEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-      // Init uses field
-      const usesContainer = blockEl.querySelector('.inline-edit-uses');
-      if (usesContainer) {
-          initUsesField(usesContainer, usesKey);
-      }
+      wireTab9FormHandlers(blockEl, usesKey);
 
-      // Tag toggle handler
-      const tagsContainer = blockEl.querySelector('.inline-edit-tags');
-      if (tagsContainer) {
-          tagsContainer.addEventListener('click', (e) => {
-              const btn = e.target.closest('.tag-button');
-              if (btn) btn.classList.toggle('selected');
-          });
-      }
-
-      // Block type toggle handler
-      const blockTypesContainer = blockEl.querySelector('.inline-edit-block-types');
-      if (blockTypesContainer) {
-          blockTypesContainer.addEventListener('click', (e) => {
-              const btn = e.target.closest('.tag-button');
-              if (btn) btn.classList.toggle('selected');
-          });
-      }
-
-      // Properties editing
-      const propsContainer = blockEl.querySelector('.inline-edit-properties');
-      const newPropBtn = blockEl.querySelector('.inline-edit-new-prop');
-
-      const createPropertyWrap = (text) => {
-          const wrap = document.createElement('span');
-          wrap.className = 'block-property-wrap';
-          wrap.innerHTML = '<span class="block-property" contenteditable="true"></span><span class="property-remove-btn">×</span>';
-          if (text) wrap.querySelector('.block-property').textContent = text;
-          return wrap;
-      };
-
-      if (propsContainer) {
-          if (newPropBtn) {
-              newPropBtn.addEventListener('click', (e) => {
-                  e.stopPropagation();
-                  const wrap = createPropertyWrap('');
-                  newPropBtn.before(wrap);
-                  wrap.querySelector('.block-property').focus();
-              });
-          }
-
-          propsContainer.addEventListener('keydown', (e) => {
-              const prop = e.target.closest('.block-property');
-              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
-
-              if (e.key === ',' || e.key === 'Enter') {
-                  e.preventDefault();
-                  const wrap = createPropertyWrap('');
-                  prop.closest('.block-property-wrap').after(wrap);
-                  wrap.querySelector('.block-property').focus();
-              } else if (e.key === 'Backspace' && prop.textContent.trim() === '') {
-                  e.preventDefault();
-                  const wrap = prop.closest('.block-property-wrap');
-                  const prev = wrap?.previousElementSibling;
-                  wrap.remove();
-                  if (prev) {
-                      const prevProp = prev.querySelector?.('.block-property') || prev;
-                      const range = document.createRange();
-                      const sel = window.getSelection();
-                      range.selectNodeContents(prevProp);
-                      range.collapse(false);
-                      sel.removeAllRanges();
-                      sel.addRange(range);
-                  }
-              }
-          });
-
-          propsContainer.addEventListener('focusout', (e) => {
-              const prop = e.target.closest('.block-property');
-              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
-              if (prop.textContent.trim() === '') {
-                  prop.closest('.block-property-wrap')?.remove();
-              }
-          });
-
-          propsContainer.addEventListener('click', (e) => {
-              if (e.target.classList.contains('property-remove-btn')) {
-                  e.stopPropagation();
-                  e.target.closest('.block-property-wrap')?.remove();
-              }
-          });
-      }
-
-      // User tag + button
-      const addTagEl = blockEl.querySelector('.inline-edit-add-tag');
-      if (addTagEl) {
-          addTagEl.addEventListener('click', (e) => {
-              e.stopPropagation();
-              const input = document.createElement('span');
-              input.className = 'inline-edit-tag-input';
-              input.contentEditable = 'true';
-              Object.assign(input.style, {
-                  padding: '4px 10px',
-                  fontSize: '13px',
-                  borderRadius: '12px',
-                  backgroundColor: 'color-mix(in srgb, var(--user-color) 18%, transparent)',
-                  color: 'var(--gray-800)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  minWidth: '20px',
-                  outline: 'none',
-              });
-              addTagEl.before(input);
-              input.focus();
-
-              const commit = () => {
-                  const tagName = input.textContent.trim();
-                  if (tagName) {
-                      const normalized = tagName.charAt(0).toUpperCase() + tagName.slice(1).toLowerCase();
-                      const existing = blockEl.querySelector(`.inline-edit-tags .tag-button[data-tag="${normalized}"]`);
-                      if (existing) {
-                          existing.classList.add('selected');
-                      } else {
-                          const newBtn = document.createElement('button');
-                          newBtn.className = 'tag-button tag-user selected';
-                          newBtn.dataset.tag = normalized;
-                          newBtn.textContent = normalized;
-                          input.before(newBtn);
-                      }
-                  }
-                  input.remove();
-              };
-
-              input.addEventListener('focusout', commit);
-              input.addEventListener('keydown', (ke) => {
-                  if (ke.key === 'Enter' || ke.key === ',') {
-                      ke.preventDefault();
-                      commit();
-                  } else if (ke.key === 'Escape') {
-                      ke.preventDefault();
-                      input.remove();
-                  }
-              });
-          });
-      }
-
-      // Save
       const doSave = () => {
-          const newTitle = blockEl.querySelector('.inline-edit-title')?.textContent.trim();
-          if (!newTitle) { alert('A title is required.'); return; }
-
-          const body = blockEl.querySelector('.inline-edit-body');
-          const newBody = (body ? body.innerHTML.trim() : '');
-          if (!newBody) { alert('Title and text are required.'); return; }
-
-          const selectedTypes = Array.from(blockEl.querySelectorAll('.inline-edit-block-types .tag-button.selected'))
-              .map(b => b.dataset.tag);
-          if (selectedTypes.length === 0) {
-              alert('Please select a block type: ' + blockTypeConfig.tab9.types.join(', ') + '.');
-              return;
-          }
-
-          const selectedTags = Array.from(blockEl.querySelectorAll('.inline-edit-tags .tag-button.selected'))
-              .map(b => b.dataset.tag.trim().toLowerCase());
-
-          const combinedLower = [...new Set(selectedTags)];
-          const predefinedMap = new Map(
-              Object.values(categoryTags).flatMap(cat => cat.tags).map(t => [t.toLowerCase(), t])
-          );
-          const allTags = combinedLower.map(t => predefinedMap.get(t) || normalizeTag(t));
-
-          const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
-          const properties = Array.from(blockEl.querySelectorAll('.inline-edit-properties .block-property-wrap .block-property'))
-              .map(el => el.textContent.trim()).filter(p => p.length > 0);
-
-          localStorage.removeItem(usesKey);
-
-          saveBlock(tab, newTitle, newBody, allTags, usesState, properties, selectedTypes);
+          const data = collectTab9FormData(blockEl, usesKey);
+          if (!data) return;
+          saveBlock(tab, data.title, data.text, data.tags, data.uses, data.properties, data.blockType);
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters(tabSuffix));
       };
 
-      // Cancel — just remove the element
       const doCancel = () => {
           localStorage.removeItem(usesKey);
           blockEl.remove();
       };
 
-      blockEl.querySelector('.inline-edit-save').addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-      blockEl.querySelector('.inline-edit-cancel').addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-
-      blockEl.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      wireEditControls(blockEl, {
+          saveSel: '.inline-edit-save', cancelSel: '.inline-edit-cancel',
+          onSave: doSave, onCancel: doCancel,
       });
 
-      // Focus title
       const titleInput = blockEl.querySelector('.inline-edit-title');
       if (titleInput) titleInput.focus();
   };
@@ -4820,19 +4701,14 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
   return {
     getActiveTab,
     renderBlocks,
-    renderQuickRef,
-    loadBlocks,
     getBlocks,
     updateBlocksViewState,
     updateViewToggleDropdown,
-    renderTags,
     updateTags,
     getTags,
     saveBlock,
     removeBlock,
     restoreBlock,
-    clearFilters,
-    clearData,
     setActiveInventoryBlock,
     setActiveNotesBlock,
     enterInlineEdit,

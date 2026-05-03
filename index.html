@@ -26,13 +26,6 @@
     
         <div class="hero-button-section">
     
-            <button id="edit_tab_button" class="hero-button orange-button" style="display:none;">
-
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 15.5V19h3.5l9.94-9.94-3.5-3.5L4 15.5zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.5 3.5 1.83-1.83z" />
-                </svg>
-            </button>
-
             <button id="split-view-button" class="hero-button clear-button" title="Split View">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="2" y="3" width="20" height="18" rx="2"/>
@@ -358,8 +351,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="vertical-break"></div>
-                    <div id="results_section_4" class="results-section character-sheet-results"></div>
                 </div>
             </div>
 
@@ -638,8 +629,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="vertical-break"></div>
-                    <div id="results_section_8" class="results-section character-sheet-results"></div>
                 </div>
             </div>
 
@@ -868,164 +857,6 @@
         </div>
     </div>
 
-    <!-- Overlay for Adding Block -->
-    <div class="add-block-overlay">
-        <div class="add-block-form">
-            <h2>Add Information Block</h2>
-            <!-- Populated dynamically from blockTypeConfig based on active tab -->
-            <div class="block-type-tags" id="character_type_tags_add"></div>
-            <div class="add_and_edit_inputs">
-                <input type="text" id="title_input_overlay" placeholder="Enter block title here..." />
-            </div>
-            <div class="inventory-overlay-pill" id="inventory_overlay_options_add" style="display:none;">
-                <label class="inv-toggle inv-toggle-attune">
-                    <input type="checkbox" id="requires_attunement_add" />
-                    <span class="inv-track"><span class="inv-thumb"></span></span>
-                    <span>Requires attunement</span>
-                </label>
-                <button type="button" class="inv-state-btn inv-state-chain" id="attuned_btn_add" title="Attune">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5"/></svg>
-                    <span>Attuned to</span>
-                </button>
-                <span class="inv-pill-divider"></span>
-                <label class="inv-toggle inv-toggle-equip">
-                    <input type="checkbox" id="equipable_add" />
-                    <span class="inv-track"><span class="inv-thumb"></span></span>
-                    <span>Equipable</span>
-                </label>
-                <button type="button" class="inv-state-btn inv-state-hand" id="equipped_btn_add" title="Equip">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5c-.83 0-1.5.67-1.5 1.5v6H10V4c0-.83-.67-1.5-1.5-1.5S7 3.17 7 4v8.5l-1.8-1.9c-.6-.6-1.55-.6-2.15 0-.6.6-.6 1.55 0 2.15l4.2 4.3c1.3 1.35 3.1 2.2 5.1 2.2h1.4c3.87 0 7-3.13 7-7V7c0-.83-.67-1.5-1.5-1.5S18 6.17 18 7v3.5h-.5V5c0-.83-.67-1.5-1.5-1.5S14.5 4.17 14.5 5v4.5h-.5V3c0-.83-.67-1.5-1.5-1.5z"/></svg>
-                    <span>Equipped</span>
-                </button>
-            </div>
-            <div class="quest-overlay-options" id="quest_overlay_options_add" style="display:none;">
-                <div class="quest-overlay-field">
-                    <label class="quest-overlay-label" for="location_input_add">Location</label>
-                    <input type="text" id="location_input_add" class="quest-overlay-input" placeholder="e.g. Ionia — leave blank for none" />
-                </div>
-                <div class="quest-overlay-field map-only-field" style="display:none;">
-                    <label class="quest-overlay-label" for="url_input_add">Link URL</label>
-                    <input type="url" id="url_input_add" class="quest-overlay-input" placeholder="https://example.com" />
-                </div>
-                <div class="quest-overlay-field desc-only-field" style="display:none;">
-                    <label class="quest-overlay-label" for="description_input_add">Description</label>
-                    <input type="text" id="description_input_add" class="quest-overlay-input" placeholder="Short description shown on the card" maxlength="200" />
-                </div>
-                <div class="quest-overlay-field book-only-field" style="display:none;">
-                    <label class="quest-overlay-label">Accent colour</label>
-                    <div id="book_accent_swatches_add" class="book-accent-swatches"></div>
-                </div>
-                <div class="quest-overlay-field quest-only-field" style="display:none;">
-                    <label class="quest-overlay-label">Status</label>
-                    <div id="status_buttons_add" class="quest-status-button-row">
-                        <button type="button" class="quest-status-pill status-active" data-status="active"><span class="quest-status-dot"></span>Active</button>
-                        <button type="button" class="quest-status-pill status-on-hold" data-status="on hold"><span class="quest-status-dot"></span>On hold</button>
-                        <button type="button" class="quest-status-pill status-not-started" data-status="not started"><span class="quest-status-dot"></span>Not started</button>
-                        <button type="button" class="quest-status-pill status-completed" data-status="completed"><span class="quest-status-dot"></span>Completed</button>
-                        <button type="button" class="quest-status-pill status-failed" data-status="failed"><span class="quest-status-dot"></span>Failed</button>
-                    </div>
-                </div>
-                <div class="quest-overlay-field quest-only-field" style="display:none;">
-                    <label class="quest-overlay-label">Objectives</label>
-                    <div id="objectives_editor_add" class="quest-objectives-editor"></div>
-                    <button type="button" id="add_objective_btn_add" class="quest-add-objective-btn">+ Add objective</button>
-                </div>
-            </div>
-            <div class="add_and_edit_inputs">
-                <div id="uses_field_overlay" class="uses-field"></div>
-                <input type="text" id="properties_input_overlay" placeholder="Enter properties here (comma separated)..." />
-                <div id="block_text_overlay" class="auto-resize" contenteditable="true" data-placeholder="Enter block text here..." rows="1"></div>
-                <input type="text" id="tags_input_overlay" class="user-tags-input" placeholder="Enter custom tags here..."  />
-            </div>
-            <div class="overlay-tags" id="add_block_overlay_tags"></div>
-            <div class="overlay-controls">
-                <button id="save-block-button" class="button green-button">Save Block</button>
-                <button id="clear_block_button" class="button orange-button">Clear</button>
-                <button id="cancel_add_block" class="button red-button red-button">Cancel</button>
-            </div>
-        </div>
-    </div>
-                                                 
-    <!-- Overlay for Editing Block -->
-    <div class="edit-block-overlay">
-        <div class="edit-block-form">
-            <h2>Edit Information Block</h2>
-            <!-- Populated dynamically from blockTypeConfig based on active tab -->
-            <div class="block-type-tags" id="character_type_tags_edit"></div>
-            <div class="add_and_edit_inputs">
-                <input type="text" id="title_input_edit_overlay" placeholder="Edit title block" />
-            </div>
-            <div class="inventory-overlay-pill" id="inventory_overlay_options_edit" style="display:none;">
-                <label class="inv-toggle inv-toggle-attune">
-                    <input type="checkbox" id="requires_attunement_edit" />
-                    <span class="inv-track"><span class="inv-thumb"></span></span>
-                    <span>Requires attunement</span>
-                </label>
-                <button type="button" class="inv-state-btn inv-state-chain" id="attuned_btn_edit" title="Attune">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5"/></svg>
-                    <span>Attuned to</span>
-                </button>
-                <span class="inv-pill-divider"></span>
-                <label class="inv-toggle inv-toggle-equip">
-                    <input type="checkbox" id="equipable_edit" />
-                    <span class="inv-track"><span class="inv-thumb"></span></span>
-                    <span>Equipable</span>
-                </label>
-                <button type="button" class="inv-state-btn inv-state-hand" id="equipped_btn_edit" title="Equip">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5c-.83 0-1.5.67-1.5 1.5v6H10V4c0-.83-.67-1.5-1.5-1.5S7 3.17 7 4v8.5l-1.8-1.9c-.6-.6-1.55-.6-2.15 0-.6.6-.6 1.55 0 2.15l4.2 4.3c1.3 1.35 3.1 2.2 5.1 2.2h1.4c3.87 0 7-3.13 7-7V7c0-.83-.67-1.5-1.5-1.5S18 6.17 18 7v3.5h-.5V5c0-.83-.67-1.5-1.5-1.5S14.5 4.17 14.5 5v4.5h-.5V3c0-.83-.67-1.5-1.5-1.5z"/></svg>
-                    <span>Equipped</span>
-                </button>
-            </div>
-            <div class="quest-overlay-options" id="quest_overlay_options_edit" style="display:none;">
-                <div class="quest-overlay-field">
-                    <label class="quest-overlay-label" for="location_input_edit">Location</label>
-                    <input type="text" id="location_input_edit" class="quest-overlay-input" placeholder="e.g. Ionia — leave blank for none" />
-                </div>
-                <div class="quest-overlay-field map-only-field" style="display:none;">
-                    <label class="quest-overlay-label" for="url_input_edit">Link URL</label>
-                    <input type="url" id="url_input_edit" class="quest-overlay-input" placeholder="https://example.com" />
-                </div>
-                <div class="quest-overlay-field desc-only-field" style="display:none;">
-                    <label class="quest-overlay-label" for="description_input_edit">Description</label>
-                    <input type="text" id="description_input_edit" class="quest-overlay-input" placeholder="Short description shown on the card" maxlength="200" />
-                </div>
-                <div class="quest-overlay-field book-only-field" style="display:none;">
-                    <label class="quest-overlay-label">Accent colour</label>
-                    <div id="book_accent_swatches_edit" class="book-accent-swatches"></div>
-                </div>
-                <div class="quest-overlay-field quest-only-field" style="display:none;">
-                    <label class="quest-overlay-label">Status</label>
-                    <div id="status_buttons_edit" class="quest-status-button-row">
-                        <button type="button" class="quest-status-pill status-active" data-status="active"><span class="quest-status-dot"></span>Active</button>
-                        <button type="button" class="quest-status-pill status-on-hold" data-status="on hold"><span class="quest-status-dot"></span>On hold</button>
-                        <button type="button" class="quest-status-pill status-not-started" data-status="not started"><span class="quest-status-dot"></span>Not started</button>
-                        <button type="button" class="quest-status-pill status-completed" data-status="completed"><span class="quest-status-dot"></span>Completed</button>
-                        <button type="button" class="quest-status-pill status-failed" data-status="failed"><span class="quest-status-dot"></span>Failed</button>
-                    </div>
-                </div>
-                <div class="quest-overlay-field quest-only-field" style="display:none;">
-                    <label class="quest-overlay-label">Objectives</label>
-                    <div id="objectives_editor_edit" class="quest-objectives-editor"></div>
-                    <button type="button" id="add_objective_btn_edit" class="quest-add-objective-btn">+ Add objective</button>
-                </div>
-            </div>
-            <div class="add_and_edit_inputs">
-                <div id="uses_field_edit_overlay" class="uses-field"></div>
-                <input type="text" id="properties_input_edit_overlay" placeholder="Enter properties here (comma separated)..." />
-                <div id="block_text_edit_overlay" class="auto-resize" contenteditable="true" data-placeholder="Enter block text here..." rows="1"></div>
-                <input type="text" id="tags_input_edit_overlay" class="user-tags-input" placeholder="Edit tags (comma separated)" />
-            </div>
-            <div class="overlay-tags" id="dynamic_overlay_tags">
-                <div id="predefined_tags_edit"></div>
-            </div>
-            <div class="overlay-controls">
-                <button id="save-edit-button" class="button green-button">Save Changes</button>
-                <button id="clear_edit-button" class="button orange-button">Clear</button>
-                <button id="cancel_edit_block" class="button red-button">Cancel</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Overlay for Clearing Data -->
     <div class="cleardata-overlay">
         <div class="cleardata-form">
@@ -1034,18 +865,6 @@
             <div class="overlay-controls">
                 <button id="confirm_clear_button" class="button green-button">Yes</button>
                 <button id="cancel_clear_button" class="button red-button">No</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Overlay for Suit Uses Editing -->
-    <div class="suit-uses-edit-overlay">
-        <div class="spell-slot-edit-container">
-            <h2>Edit Suit Uses</h2>
-            <div class="spell-slot-group" id="suit_uses_edit_group"></div>
-            <div class="overlay-controls">
-                <button id="save_suit_uses" class="button green-button">Save Changes</button>
-                <button id="close_suit_uses_edit" class="button red-button">Cancel</button>
             </div>
         </div>
     </div>
@@ -1084,23 +903,10 @@
         </div>
     </div>
 
-    <!-- Overlay for Deleting Action Rows -->
-    <div class="cleardata-overlay remove-action-overlay">
-        <div class="cleardata-form">
-            <h2>Delete Action</h2>
-            <p>Are you sure you want to delete this action?</p>
-            <div class="overlay-controls">
-                <button id="confirm_remove_action_button" class="button green-button">Yes</button>
-                <button id="cancel_remove_action_button" class="button red-button">No</button>
-            </div>
-        </div>
-    </div>
-
     <script type="module" src="js/tagConfig.js"></script>
     <script type="module" src="js/appManager.js"></script>
     <script type="module" src="js/main.js"></script>
     <script type="module" src="js/blockActionsHandler.js"></script>
-    <script type="module" src="js/overlayHandler.js"></script>
     <script type="module" src="js/filterManager.js"></script>
     <script type="module" src="js/uiHandlers.js"></script>
     <script type="module" src="js/diceRoller.js"></script>

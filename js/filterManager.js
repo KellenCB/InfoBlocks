@@ -79,38 +79,168 @@ export const filterManager = (() => {
             });
         };
 
-        // Filter panel tags
-        applyTo(`#dynamic_tags_section_${tabNumber} .tag-button`);
-        // Rendered block tags
-        applyTo(`#results_section_${tabNumber} .tag-button`);
+        // Filter panel tags — instant (exclude chips, they're managed by the diff below)
+        applyTo(`#dynamic_tags_section_${tabNumber} .tag-accordion-body .tag-button, #dynamic_tags_section_${tabNumber} .tag-category.user-tags .tag-button`);
+
+        // Non-condensed block tags — instant
+        applyTo(`#results_section_${tabNumber} .block:not(.condensed) .tag-button`);
+
+        // ── Condensed block tags: animated width transitions ────────────
+        // Departing tags shrink in-flow (flex slides neighbors naturally).
+        // Arriving tags grow from 0 (flex pushes neighbors naturally).
+        // No ghosts, no FLIP, no position calculations needed.
+        const resultsSection = document.getElementById(`results_section_${tabNumber}`);
+        if (resultsSection) {
+            resultsSection.querySelectorAll('.block.condensed .block-tags-condensed .tag-button').forEach(btn => {
+                const tag = btn.dataset.tag;
+                const shouldSelect    = andTags.includes(tag) || selectedBlockTypes.has(tag);
+                const shouldSelectOr  = orTags.includes(tag)  || orBlockTypes.has(tag);
+                const shouldSelectNot = notTags.includes(tag) || notBlockTypes.has(tag);
+                const wasVisible  = btn.classList.contains('selected') || btn.classList.contains('selected-or');
+                const willBeVisible = shouldSelect || shouldSelectOr;
+
+                if (wasVisible && !willBeVisible) {
+                    // ── Departing: shrink width + height + fade out ──
+                    const w = btn.offsetWidth;
+                    const h = btn.offsetHeight;
+                    btn.style.width = w + 'px';
+                    btn.style.height = h + 'px';
+                    btn.style.overflow = 'hidden';
+                    btn.style.boxSizing = 'border-box';
+                    btn.style.flexShrink = '0';
+                    void btn.offsetHeight;
+                    btn.style.transition = 'width 0.2s ease, height 0.2s ease, padding 0.2s ease, margin 0.2s ease, opacity 0.18s ease';
+                    btn.style.width = '0';
+                    btn.style.height = '0';
+                    btn.style.padding = '0';
+                    btn.style.margin = '0 -2px';
+                    btn.style.opacity = '0';
+                    setTimeout(() => {
+                        btn.classList.remove('selected', 'selected-or', 'selected-not');
+                        btn.removeAttribute('style');
+                    }, 250);
+
+                } else if (!wasVisible && willBeVisible) {
+                    // ── Arriving: grow width + height + fade in ──
+                    btn.classList.toggle('selected',     shouldSelect);
+                    btn.classList.toggle('selected-or',  shouldSelectOr);
+                    btn.classList.toggle('selected-not', shouldSelectNot);
+                    const naturalWidth = btn.offsetWidth;
+                    const naturalHeight = btn.offsetHeight;
+                    btn.style.maxWidth = '0px';
+                    btn.style.maxHeight = '0px';
+                    btn.style.overflow = 'hidden';
+                    btn.style.opacity = '0';
+                    btn.style.padding = '0';
+                    void btn.offsetHeight;
+                    btn.style.transition = 'max-width 0.2s ease, max-height 0.2s ease, opacity 0.18s ease 0.04s, padding 0.2s ease';
+                    btn.style.maxWidth = naturalWidth + 'px';
+                    btn.style.maxHeight = naturalHeight + 'px';
+                    btn.style.opacity = '1';
+                    btn.style.padding = '';
+                    setTimeout(() => btn.removeAttribute('style'), 250);
+
+                } else {
+                    // ── No visibility change — instant toggle ──
+                    btn.classList.toggle('selected',     shouldSelect);
+                    btn.classList.toggle('selected-or',  shouldSelectOr);
+                    btn.classList.toggle('selected-not', shouldSelectNot);
+                }
+            });
+        }
         
-        // Accordion chips (collapsed groups)
+        // Accordion chips (collapsed groups) — diff with width+opacity animation
         document.getElementById(`dynamic_tags_section_${tabNumber}`)
             ?.querySelectorAll('.tag-accordion-group:not(.open)').forEach(group => {
                 const body     = group.querySelector('.tag-accordion-body');
                 if (!body) return;
 
-                // Clear stale chips — from chips container (filter) or group root (overlay)
                 const chipsContainer = group.querySelector('.tag-accordion-chips');
-                if (chipsContainer) {
-                    chipsContainer.innerHTML = '';
-                } else {
-                    group.querySelectorAll(':scope > .tag-accordion-chip').forEach(c => c.remove());
-                }
+                if (!chipsContainer) return;
 
                 const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group') || '';
-                const target = chipsContainer || group;
+
+                // Build ordered list of tags that should have chips (matches body tag order)
+                const desiredChips = [];
                 body.querySelectorAll('.tag-button.selected, .tag-button.selected-or, .tag-button.selected-not').forEach(btn => {
-                    const chip = document.createElement('button');
-                    chip.classList.add('tag-accordion-chip');
-                    if (tagClass) chip.classList.add(tagClass);
-                    if (btn.classList.contains('selected-or'))  chip.classList.add('selected-or');
-                    if (btn.classList.contains('selected-not')) chip.classList.add('selected-not');
-                    chip.dataset.tag = btn.dataset.tag;
-                    chip.textContent = btn.dataset.tag;
-                    target.appendChild(chip);
+                    const state = btn.classList.contains('selected-or') ? 'selected-or'
+                                : btn.classList.contains('selected-not') ? 'selected-not'
+                                : 'selected';
+                    desiredChips.push({ tag: btn.dataset.tag, state });
+                });
+                const desiredSet = new Set(desiredChips.map(d => d.tag));
+
+                // Map existing chips
+                const existingChips = new Map();
+                chipsContainer.querySelectorAll('.tag-button').forEach(chip => {
+                    existingChips.set(chip.dataset.tag, chip);
                 });
 
+                // Remove chips that should no longer exist (shrink + fade, keep selected style)
+                existingChips.forEach((chip, tag) => {
+                    if (!desiredSet.has(tag)) {
+                        chip.classList.add('chip-removing');
+                        const w = chip.offsetWidth;
+                        const h = chip.offsetHeight;
+                        chip.style.width = w + 'px';
+                        chip.style.height = h + 'px';
+                        chip.style.overflow = 'hidden';
+                        chip.style.boxSizing = 'border-box';
+                        chip.style.flexShrink = '0';
+                        void chip.offsetHeight;
+                        chip.style.transition = 'width 0.2s ease, height 0.2s ease, padding 0.2s ease, margin 0.2s ease, opacity 0.18s ease';
+                        chip.style.width = '0';
+                        chip.style.height = '0';
+                        chip.style.padding = '0';
+                        chip.style.margin = '0 -2px';
+                        chip.style.opacity = '0';
+                        setTimeout(() => chip.remove(), 250);
+                    }
+                });
+
+                // Add or update chips
+                desiredChips.forEach(({ tag, state }) => {
+                    const existing = existingChips.get(tag);
+                    if (existing && !existing.classList.contains('chip-removing')) {
+                        // Update state class if changed
+                        existing.classList.remove('selected', 'selected-or', 'selected-not');
+                        existing.classList.add(state);
+                    } else if (!existing) {
+                        // Create new chip
+                        const chip = document.createElement('button');
+                        chip.classList.add('tag-button', state);
+                        if (tagClass) chip.classList.add(tagClass);
+                        chip.dataset.tag = tag;
+                        chip.textContent = tag;
+                        chipsContainer.appendChild(chip);
+                    }
+                });
+
+                // Reorder non-removing chips to match body tag order
+                desiredChips.forEach(({ tag }) => {
+                    const chip = chipsContainer.querySelector(`.tag-button[data-tag="${tag}"]:not(.chip-removing)`);
+                    if (chip) chipsContainer.appendChild(chip);
+                });
+
+                // Animate newly created chips (grow + fade in)
+                desiredChips.forEach(({ tag }) => {
+                    const chip = chipsContainer.querySelector(`.tag-button[data-tag="${tag}"]`);
+                    if (!chip || existingChips.has(tag)) return;
+                    const naturalWidth = chip.offsetWidth;
+                    const naturalHeight = chip.offsetHeight;
+                    chip.style.maxWidth = '0px';
+                    chip.style.maxHeight = '0px';
+                    chip.style.overflow = 'hidden';
+                    chip.style.opacity = '0';
+                    chip.style.padding = '0';
+                    void chip.offsetHeight;
+                    chip.style.transition = 'max-width 0.2s ease, max-height 0.2s ease, opacity 0.18s ease 0.04s, padding 0.2s ease';
+                    chip.style.maxWidth = naturalWidth + 'px';
+                    chip.style.maxHeight = naturalHeight + 'px';
+                    chip.style.opacity = '1';
+                    chip.style.padding = '';
+                    setTimeout(() => chip.removeAttribute('style'), 250);
+                });
             });
     };
 
@@ -190,8 +320,9 @@ export const filterManager = (() => {
         }
 
         _renderBlocks(activeTab, blocks, skipTagUpdate);
-        if (!skipTagUpdate) _updateTags();
-        _applySelectionClasses(activeTab);
+        // When !skipTagUpdate, renderBlocks already calls updateTags → tagsUpdated → _applySelectionClasses
+        // When skipTagUpdate, we need to call it directly since tagsUpdated won't fire
+        if (skipTagUpdate) _applySelectionClasses(activeTab);
         document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: activeTab } }));
     };
 
@@ -201,8 +332,6 @@ export const filterManager = (() => {
             const target = e.target;
             if (
                 !target.classList.contains('tag-button') ||
-                target.closest('.add-block-overlay') ||
-                target.closest('.edit-block-overlay') ||
                 target.closest('.block.condensed') ||
                 target.closest('.block.inline-editing')
             ) return;
@@ -270,55 +399,6 @@ export const filterManager = (() => {
         });
     };
 
-    // ── Overlay tag clicks — toggle only, no filtering ────────────────────────
-    // If the clicked button is inside an overlay's block-type-tags container
-    // AND the tab's blockTypeConfig has singleSelect: true, clicking one
-    // button deselects any other block-type button in the same container.
-    const handleOverlayTagClick = () => {
-        document.addEventListener('click', e => {
-            const target = e.target;
-            if (
-                target.classList.contains('tag-button') &&
-                (target.closest('.add-block-overlay') || target.closest('.edit-block-overlay'))
-            ) {
-                e.stopPropagation();
-
-                const btContainer = target.closest('.block-type-tags');
-                if (btContainer) {
-                    // Determine active tab for the overlay (add or edit)
-                    const overlay = target.closest('.add-block-overlay, .edit-block-overlay');
-                    const activeTab = overlay?.dataset?.activeTab
-                        || document.querySelector('.tab-button.active')?.dataset.tab
-                        || 'tab4';
-                    const cfg = blockTypeConfig[activeTab];
-                    if (cfg && cfg.singleSelect) {
-                        const wasSelected = target.classList.contains('selected');
-                        // Clear every sibling block-type button, then flip the clicked one
-                        btContainer.querySelectorAll('.tag-button.selected')
-                            .forEach(b => b.classList.remove('selected'));
-                        if (!wasSelected) target.classList.add('selected');
-                        return;
-                    }
-                }
-
-                // Default (existing) behaviour — plain toggle
-                target.classList.toggle('selected');
-            }
-        }, true);
-    };
-
-    // ── Re-apply selected classes after a save ────────────────────────────────
-    const applyFiltersAfterSave = () => {
-        const activeTab = document.querySelector('.tab-button.active')?.dataset.tab || 'tab4';
-        _applySelectionClasses(activeTab);
-    };
-
-    const filterBlocksBySelectedTags = (blocks) => {
-        const andTags = getAndTags();
-        if (!andTags.length) return blocks;
-        return blocks.filter(b => b.tags.some(t => andTags.includes(t)));
-    };
-
     // Re-apply selected/selected-or classes whenever updateTags re-renders the
     // tag DOM. Placed inside the IIFE so _applySelectionClasses is in scope.
     document.addEventListener('tagsUpdated', e => {
@@ -335,15 +415,11 @@ export const filterManager = (() => {
         setSelectedTags,
         clearSelectedTags,
         applyFilters,
-        applyFiltersAfterSave,
         applySelectionClasses: _applySelectionClasses,
         handleTagClick,
-        handleOverlayTagClick,
-        filterBlocksBySelectedTags,
     };
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
     filterManager.handleTagClick();
-    filterManager.handleOverlayTagClick();
 });

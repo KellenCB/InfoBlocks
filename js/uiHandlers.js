@@ -263,107 +263,6 @@ export function toggleObjective(blockId, idx, event, element) {
 window.toggleObjective = toggleObjective;
 
 // ==============================
-// Suit Uses Circle Section
-// ==============================
-const circleContainer = document.querySelector('.spell-slot-group');
-if (circleContainer) {
-  let circleStates = JSON.parse(localStorage.getItem('circleStates')) || {};
-  let totalCircles = localStorage.getItem('totalCircles')
-    ? parseInt(localStorage.getItem('totalCircles'))
-    : 3;
-
-  const circlesWrapper = document.getElementById('suit_uses_circles');
-
-  // Render circles in the main section from saved state
-  const renderMainCircles = () => {
-    circlesWrapper.innerHTML = "";
-    for (let i = 0; i < totalCircles; i++) {
-      const circle = document.createElement('div');
-      circle.classList.add('circle');
-      if (circleStates[i] ?? true) circle.classList.add('unfilled');
-      circle.addEventListener('click', () => {
-        circle.classList.toggle('unfilled');
-        circleStates[i] = circle.classList.contains('unfilled');
-        localStorage.setItem('circleStates', JSON.stringify(circleStates));
-      });
-      circlesWrapper.appendChild(circle);
-    }
-  };
-  
-  renderMainCircles();
-  console.log("✅ Suit uses circles initialised.");
-
-  // Overlay logic
-  const editBtn   = document.getElementById('edit_suit_uses_button');
-  const overlay   = document.querySelector('.suit-uses-edit-overlay');
-  const editGroup = document.getElementById('suit_uses_edit_group');
-  const saveBtn   = document.getElementById('save_suit_uses');
-  const cancelBtn = document.getElementById('close_suit_uses_edit');
-
-  if (!editBtn || !overlay || !editGroup || !saveBtn || !cancelBtn) {
-    console.warn('Suit uses overlay elements not found.');
-  } else {
-
-    const renderOverlayCircles = () => {
-      editGroup.querySelectorAll('.circle').forEach(c => c.remove());
-
-      let overlayTotal  = totalCircles;
-      let overlayStates = { ...circleStates };
-
-      const addButton = document.createElement('div');
-      addButton.classList.add('circle', 'circle-button');
-      addButton.innerHTML = "+";
-
-      const removeButton = document.createElement('div');
-      removeButton.classList.add('circle', 'circle-button');
-      removeButton.innerHTML = "−";
-
-      editGroup.appendChild(addButton);
-      editGroup.appendChild(removeButton);
-
-      const drawCircles = () => {
-        editGroup.querySelectorAll('.circle:not(.circle-button)').forEach(c => c.remove());
-        for (let i = 0; i < overlayTotal; i++) {
-          const circle = document.createElement('div');
-          circle.classList.add('circle');
-          if (overlayStates[i] ?? true) circle.classList.add('unfilled');
-          circle.addEventListener('click', () => {
-            circle.classList.toggle('unfilled');
-            overlayStates[i] = circle.classList.contains('unfilled');
-          });
-          editGroup.appendChild(circle);
-        }
-      };
-
-      drawCircles();
-
-      addButton.addEventListener('click', () => {
-        overlayStates[overlayTotal] = true;
-        overlayTotal++;
-        drawCircles();
-      });
-
-      removeButton.addEventListener('click', () => {
-        if (overlayTotal > 0) {
-          overlayTotal--;
-          delete overlayStates[overlayTotal];
-          drawCircles();
-        }
-      });
-
-      saveBtn.onclick = () => {
-        totalCircles = overlayTotal;
-        circleStates = { ...overlayStates };
-        localStorage.setItem('totalCircles', totalCircles);
-        localStorage.setItem('circleStates', JSON.stringify(circleStates));
-        renderMainCircles();
-        overlay.classList.remove('show');
-      };
-    };
-  }
-}
-
-// ==============================
 // Circle Toggles for Stats, Saves & Skills (Tab 4 & Tab 8)
 // ==============================
 
@@ -565,9 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     new ResizeObserver(() => updateFirstInRow()).observe(strip);
 
-    const editSuitBtn      = document.getElementById('edit_suit_uses_button');
     const editSpellBtn     = document.getElementById('edit_spell_slots_button');
-    const editTabButton    = document.getElementById('edit_tab_button');
     if (!circlesWrapper || !spellSlotSection) return;
 
     // ── State helpers ──────────────────────────────────────────────────
@@ -720,12 +617,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ── Wire buttons + Escape ──────────────────────────────────────────
-    editSuitBtn?.addEventListener('click', toggleEditMode);
     editSpellBtn?.addEventListener('click', toggleEditMode);
-    editTabButton?.addEventListener('click', () => {
-        const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;
-        if (activeTab === 'tab9') toggleEditMode();
-    });
 
     // ── Long rest: inline arming ────────────────────────────────────────
     const longRestBtn = document.getElementById('long_rest_button');

@@ -94,14 +94,9 @@ body.landscape-mode #list-tab-nav .tab-button[data-tab="tab8"] {
 }
 
 /* ── Overlays always above both panels ────────────────────────────────────── */
-.add-block-overlay,
-.edit-block-overlay,
 .cleardata-overlay,
 .remove-block-overlay,
-.remove-action-overlay,
-.actions-edit-overlay,
 .spell-slot-edit-overlay,
-.suit-uses-edit-overlay,
 #menu_overlay {
     z-index: 99999 !important;
 }
