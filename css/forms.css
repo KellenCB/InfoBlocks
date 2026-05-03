@@ -53,74 +53,6 @@
 }
 
 /* ==================================================================*/
-/* ========================= Add Block Form =========================*/
-/* ==================================================================*/
-
-.add_and_edit_inputs {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    margin: 18px 0 18px 0;
-}
-
-.add-block-form input, .edit-block-form input {
-    width: 100%;
-    padding: 12px;
-    font-size: 16px;
-    background-color: var(--gray-400);
-    color: var(--gray-900);
-    border: 1px solid var(--gray-500);
-    border-radius: 8px;
-    box-sizing: border-box;
-    transition: border-color 0.3s;
-    text-align: left;
-}
-
-#block_text_overlay,
-#block_text_edit_overlay {
-    font-size: 13px;
-    min-height: 100px;
-    padding: 12px;
-    resize: vertical;
-    overflow: auto;
-    max-height: 60vh;
-}
-
-.auto-resize[contenteditable] {
-    font-family: inherit;
-    position: relative;
-}
-
-.auto-resize[contenteditable].empty::before {
-    content: attr(data-placeholder);
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    pointer-events: none;
-    user-select: none;
-    color: var(--gray-800);
-    opacity: 0.5;
-    letter-spacing: 0.2px;
-    font-style: normal;
-    font-size: inherit;
-    font-family: inherit;
-}
-
-.auto-resize[contenteditable]::before { content: ""; }
-
-.auto-resize[contenteditable] {
-    position: relative;
-    padding-top: 15px;
-    box-sizing: border-box;
-}
-
-::placeholder {
-    color: var(--gray-800);
-    opacity: 0.5;
-    letter-spacing: 0.2px;
-}
-
-/* ==================================================================*/
 /* ========================= Text Toolbar ==========================*/
 /* ==================================================================*/
 
@@ -182,25 +114,17 @@
 }
 
 /* ─── List styling inside the editable box ─── */
-#block_text_overlay ul,
-#block_text_edit_overlay ul,
-#block_text_overlay ol,
-#block_text_edit_overlay ol,
 .block-body ul,
 .block-body ol {
     margin: 4px 0 0 0;
     padding-left: 1.25em;
 }
 
-#block_text_overlay li,
-#block_text_edit_overlay li,
 .block-body li {
     margin: 0 0 3px 0;
     line-height: 1.5;
 }
 
-#block_text_overlay li:last-child,
-#block_text_edit_overlay li:last-child,
 .block-body li:last-child {
     margin-bottom: 0;
 }
@@ -209,12 +133,7 @@
 /* ========================= Overlay Styles =========================*/
 /* ==================================================================*/
 
-.add-block-overlay .add-block-form,
-.edit-block-overlay .edit-block-form {
-    width: 75vw;
-}
-
-.add-block-overlay, .cleardata-overlay, .edit-block-overlay {
+.cleardata-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -229,13 +148,13 @@
     z-index: 1000;
 }
 
-.add-block-overlay.show, .cleardata-overlay.show, .edit-block-overlay.show {
+.cleardata-overlay.show {
     display: flex;
     opacity: 1;
     z-index: 10001;
 }
 
-.add-block-form, .cleardata-form, .edit-block-form {
+.cleardata-form {
     background-color: var(--gray-350);
     padding: 30px;
     border-radius: 12px;
@@ -319,19 +238,8 @@
 }
 
 /* ==================================================================*/
-/* ================ INVENTORY OVERLAY PILL ==========================*/
+/* ================ INVENTORY TOGGLE STYLES ========================*/
 /* ==================================================================*/
-
-.inventory-overlay-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 14px;
-    padding: 6px 14px;
-    background-color: var(--gray-300);
-    border: 1px solid var(--gray-400);
-    border-radius: 22px;
-    margin: 10px auto 4px;
-}
 
 /* ── Toggle switch (requires attunement / equipable) ──────────── */
 
@@ -426,37 +334,9 @@
     filter: drop-shadow(0 0 6px rgba(255, 140, 0, 0.7));
 }
 
-/* ── Divider ──────────────────────────────────────────────────── */
-
-.inv-pill-divider {
-    width: 1px;
-    height: 24px;
-    background: var(--gray-400);
-    flex-shrink: 0;
-}
-
-/* ── Layout tweak so the pill centres in both overlays ────────── */
-
-.add-block-overlay .inventory-overlay-pill,
-.edit-block-overlay .inventory-overlay-pill {
-    display: inline-flex;
-}
-.add-block-form,
-.edit-block-form {
-    text-align: center;
-}
-
 /* ==================================================================*/
-/* ===================== TAB3 QUEST OVERLAY =========================*/
+/* ===================== QUEST/NOTES FIELD STYLES ==================*/
 /* ==================================================================*/
-
-.quest-overlay-options {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    margin: 14px 0;
-    text-align: left;
-}
 
 .quest-overlay-field {
     display: flex;
@@ -494,22 +374,6 @@
     flex-wrap: wrap;
     gap: 6px;
 }
-
-/* In the overlay, pills default to muted — only the selected one shows colour */
-.quest-overlay-options .quest-status-pill {
-    background: var(--gray-400);
-    color: var(--gray-800);
-    opacity: 0.65;
-}
-
-.quest-overlay-options .quest-status-pill:hover { opacity: 0.85; }
-.quest-overlay-options .quest-status-pill.selected { opacity: 1; }
-
-.quest-overlay-options .quest-status-pill.status-active.selected      { background: rgba(76, 175, 80, 0.28);  color: #7ED37F; }
-.quest-overlay-options .quest-status-pill.status-on-hold.selected     { background: rgba(244, 162, 97, 0.28); color: var(--color-orange); }
-.quest-overlay-options .quest-status-pill.status-not-started.selected { background: rgba(228, 224, 224, 0.22); color: var(--gray-900); }
-.quest-overlay-options .quest-status-pill.status-completed.selected   { background: rgba(6, 173, 228, 0.28);  color: var(--color-cyan); }
-.quest-overlay-options .quest-status-pill.status-failed.selected      { background: rgba(255, 107, 107, 0.28); color: var(--color-red); }
 
 .quest-objectives-editor {
     display: flex;

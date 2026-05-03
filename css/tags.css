@@ -386,33 +386,6 @@
     gap: var(--tag-gap);
 }
 
-.overlay-tags,
-#dynamic_overlay_tags {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: flex-start;
-    max-width: 100%;
-    padding: 10px 0;
-    gap: var(--tag-gap);
-}
-
-.add-block-overlay .block-type-tags,
-.edit-block-overlay .block-type-tags {
-    border-bottom: none;
-    border-top: 1px solid var(--gray-400);
-    padding: 10px 0 0 0;
-    justify-content: center;
-}
-
-#predefined_tags_edit {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--tag-gap);
-    width: 100%;
-}
-
 
 /* ==================================================================*/
 /* ======================== BLOCK PROPERTIES ========================*/
