@@ -682,6 +682,273 @@ const applyPendingBlockAnim = () => {
       setTimeout(cleanup, 600);
   };
 
+  /* ==================================================================*/
+  /* ================ SHARED EDIT/ADD HELPERS =========================*/
+  /* ==================================================================*/
+
+  // Wire save/cancel buttons + Ctrl+Enter / Escape keyboard shortcuts.
+  // Returns a teardown function to remove the keydown listener.
+  const wireEditControls = (container, { saveSel, cancelSel, onSave, onCancel }) => {
+      const keyHandler = (e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); onSave(); }
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onCancel(); }
+      };
+      container.querySelector(saveSel)?.addEventListener('click', (e) => { e.stopPropagation(); onSave(); });
+      container.querySelector(cancelSel)?.addEventListener('click', (e) => { e.stopPropagation(); onCancel(); });
+      container.addEventListener('keydown', keyHandler);
+      return () => container.removeEventListener('keydown', keyHandler);
+  };
+
+  // Focus an element and place the cursor at the end of its content.
+  const focusAndCursorToEnd = (el) => {
+      if (!el) return;
+      el.focus();
+      if (el.textContent) {
+          const range = document.createRange();
+          const sel   = window.getSelection();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+      }
+  };
+
+  // Animate a block element from oldHeight to its current height,
+  // fading in children except those matching excludeClass.
+  const animateHeightTransition = (blockEl, oldHeight, excludeClass = 'block-header') => {
+      const newHeight = blockEl.offsetHeight;
+      if (!oldHeight || Math.abs(newHeight - oldHeight) < 2) return;
+      const fadeEls = [...blockEl.children].filter(el => !el.classList.contains(excludeClass));
+      blockEl.style.height = oldHeight + 'px';
+      blockEl.style.overflow = 'hidden';
+      blockEl.style.transition = 'none';
+      fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
+      void blockEl.offsetHeight;
+      blockEl.style.transition = 'height 0.5s ease';
+      blockEl.style.height = newHeight + 'px';
+      fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
+      const cleanup = () => {
+          blockEl.style.height = ''; blockEl.style.overflow = ''; blockEl.style.transition = '';
+          fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
+      };
+      blockEl.addEventListener('transitionend', (e) => {
+          if (e.target === blockEl && e.propertyName === 'height') cleanup();
+      }, { once: true });
+      setTimeout(cleanup, 600);
+  };
+
+  // Build tag accordion + user tags HTML for tab9 edit/add forms.
+  // blockTags = array of currently selected tags (empty for add).
+  const buildTab9TagsHTML = (tab, blockTags = []) => {
+      const predefinedTagList = Object.entries(categoryTags)
+          .filter(([_, data]) => data.tabs.includes(tab))
+          .flatMap(([_, data]) => data.tags);
+
+      const userDefinedTags = [
+          ...new Set(getBlocks(tab).flatMap(b => b.tags).map(t => t.toLowerCase()))
+      ].filter(t => !predefinedTagList.map(pt => pt.toLowerCase()).includes(t))
+       .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
+       .sort((a, b) => a.localeCompare(b));
+
+      let html = '';
+      Object.entries(categoryTags).forEach(([category, data]) => {
+          if (!data.tabs.includes(tab)) return;
+          const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          html += `<div class="tag-accordion-group ${data.className}" data-category="${category}">`;
+          html += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
+          html += `<div class="tag-accordion-body">`;
+          html += `<span class="tag-accordion-label">${label}</span>`;
+          html += data.tags.map(t =>
+              `<button class="tag-button ${data.className}${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
+          ).join('');
+          html += `</div></div>`;
+      });
+
+      html += `<div class="tag-category user-tags-edit">`;
+      if (userDefinedTags.length > 0) {
+          html += userDefinedTags.map(t =>
+              `<button class="tag-button tag-user${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
+          ).join('');
+      }
+      html += `<span class="inline-edit-add-tag"></span>`;
+      html += `</div>`;
+
+      return html;
+  };
+
+  // Wire all interactive handlers on a tab9 inline edit/add form:
+  // tag toggles, block type toggles, property editing, user tag add, uses field.
+  const wireTab9FormHandlers = (blockEl, usesKey) => {
+      // Uses field
+      const usesContainer = blockEl.querySelector('.inline-edit-uses');
+      if (usesContainer) initUsesField(usesContainer, usesKey);
+
+      // Tag toggle
+      blockEl.querySelector('.inline-edit-tags')?.addEventListener('click', (e) => {
+          const btn = e.target.closest('.tag-button');
+          if (btn) btn.classList.toggle('selected');
+      });
+
+      // Block type toggle
+      blockEl.querySelector('.inline-edit-block-types')?.addEventListener('click', (e) => {
+          const btn = e.target.closest('.tag-button');
+          if (btn) btn.classList.toggle('selected');
+      });
+
+      // Properties editing
+      const propsContainer = blockEl.querySelector('.inline-edit-properties');
+      const newPropBtn = blockEl.querySelector('.inline-edit-new-prop');
+
+      const createPropertyWrap = (text) => {
+          const wrap = document.createElement('span');
+          wrap.className = 'block-property-wrap';
+          wrap.innerHTML = '<span class="block-property" contenteditable="true"></span><span class="property-remove-btn">×</span>';
+          if (text) wrap.querySelector('.block-property').textContent = text;
+          return wrap;
+      };
+
+      if (propsContainer) {
+          if (newPropBtn) {
+              newPropBtn.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  const wrap = createPropertyWrap('');
+                  newPropBtn.before(wrap);
+                  wrap.querySelector('.block-property').focus();
+              });
+          }
+
+          propsContainer.addEventListener('keydown', (e) => {
+              const prop = e.target.closest('.block-property');
+              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
+              if (e.key === ',' || e.key === 'Enter') {
+                  e.preventDefault();
+                  const wrap = createPropertyWrap('');
+                  prop.closest('.block-property-wrap').after(wrap);
+                  wrap.querySelector('.block-property').focus();
+              } else if (e.key === 'Backspace' && prop.textContent.trim() === '') {
+                  e.preventDefault();
+                  const wrap = prop.closest('.block-property-wrap');
+                  const prev = wrap?.previousElementSibling;
+                  wrap.remove();
+                  if (prev) {
+                      const prevProp = prev.querySelector?.('.block-property') || prev;
+                      const range = document.createRange();
+                      const sel = window.getSelection();
+                      range.selectNodeContents(prevProp);
+                      range.collapse(false);
+                      sel.removeAllRanges();
+                      sel.addRange(range);
+                  }
+              }
+          });
+
+          propsContainer.addEventListener('focusout', (e) => {
+              const prop = e.target.closest('.block-property');
+              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
+              if (prop.textContent.trim() === '') prop.closest('.block-property-wrap')?.remove();
+          });
+
+          propsContainer.addEventListener('click', (e) => {
+              if (e.target.classList.contains('property-remove-btn')) {
+                  e.stopPropagation();
+                  e.target.closest('.block-property-wrap')?.remove();
+              }
+          });
+      }
+
+      // User tag add button
+      const addTagEl = blockEl.querySelector('.inline-edit-add-tag');
+      if (addTagEl) {
+          addTagEl.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const input = document.createElement('span');
+              input.className = 'inline-edit-tag-input';
+              input.contentEditable = 'true';
+              Object.assign(input.style, {
+                  padding: '4px 10px', fontSize: '13px', borderRadius: '12px',
+                  backgroundColor: 'color-mix(in srgb, var(--user-color) 18%, transparent)',
+                  color: 'var(--gray-800)', display: 'inline-flex', alignItems: 'center',
+                  minWidth: '20px', outline: 'none',
+              });
+              addTagEl.before(input);
+              input.focus();
+
+              const commit = () => {
+                  const tagName = input.textContent.trim();
+                  if (tagName) {
+                      const normalized = tagName.charAt(0).toUpperCase() + tagName.slice(1).toLowerCase();
+                      const existing = blockEl.querySelector(`.inline-edit-tags .tag-button[data-tag="${normalized}"]`);
+                      if (existing) { existing.classList.add('selected'); }
+                      else {
+                          const newBtn = document.createElement('button');
+                          newBtn.className = 'tag-button tag-user selected';
+                          newBtn.dataset.tag = normalized;
+                          newBtn.textContent = normalized;
+                          input.before(newBtn);
+                      }
+                  }
+                  input.remove();
+              };
+
+              input.addEventListener('focusout', commit);
+              input.addEventListener('keydown', (ke) => {
+                  if (ke.key === 'Enter' || ke.key === ',') { ke.preventDefault(); commit(); }
+                  else if (ke.key === 'Escape') { ke.preventDefault(); input.remove(); }
+              });
+          });
+      }
+
+      // Inject chips into collapsed accordion groups with selected tags
+      blockEl.querySelectorAll('.inline-edit-tags .tag-accordion-group:not(.open)').forEach(group => {
+          const pill = group.querySelector('.tag-accordion-pill');
+          const body = group.querySelector('.tag-accordion-body');
+          if (!pill || !body) return;
+          const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group' && c !== 'open') || '';
+          body.querySelectorAll('.tag-button.selected').forEach(btn => {
+              const chip = document.createElement('button');
+              chip.classList.add('tag-accordion-chip');
+              if (tagClass) chip.classList.add(tagClass);
+              chip.dataset.tag = btn.dataset.tag;
+              chip.textContent = btn.dataset.tag;
+              group.appendChild(chip);
+          });
+      });
+  };
+
+  // Validate and collect form data from a tab9 inline edit/add form.
+  // Returns null if validation fails (alert shown).
+  const collectTab9FormData = (blockEl, usesKey) => {
+      const title = blockEl.querySelector('.inline-edit-title')?.textContent.trim();
+      if (!title) { alert('A title is required.'); return null; }
+
+      const body = blockEl.querySelector('.inline-edit-body');
+      const text = body ? body.innerHTML.trim() : '';
+      if (!text) { alert('Title and text are required.'); return null; }
+
+      const selectedTypes = Array.from(blockEl.querySelectorAll('.inline-edit-block-types .tag-button.selected'))
+          .map(b => b.dataset.tag);
+      if (selectedTypes.length === 0) {
+          alert('Please select a block type: ' + blockTypeConfig.tab9.types.join(', ') + '.');
+          return null;
+      }
+
+      const selectedTags = Array.from(blockEl.querySelectorAll('.inline-edit-tags .tag-button.selected'))
+          .map(b => b.dataset.tag.trim().toLowerCase());
+      const combinedLower = [...new Set(selectedTags)];
+      const predefinedMap = new Map(
+          Object.values(categoryTags).flatMap(cat => cat.tags).map(t => [t.toLowerCase(), t])
+      );
+      const allTags = combinedLower.map(t => predefinedMap.get(t) || normalizeTag(t));
+
+      const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
+      const properties = Array.from(blockEl.querySelectorAll('.inline-edit-properties .block-property-wrap .block-property'))
+          .map(el => el.textContent.trim()).filter(p => p.length > 0);
+
+      localStorage.removeItem(usesKey);
+
+      return { title, text, blockType: selectedTypes, tags: allTags, uses: usesState, properties };
+  };
+
   // Collapse animation: shrink height + fade content simultaneously on the
   const animateBlockCollapse = (blockEl, callback) => {
       const headerEl = blockEl.querySelector('.block-header');
@@ -1681,11 +1948,12 @@ const applyPendingBlockAnim = () => {
           b.classList.toggle('inventory-block-active', b.getAttribute('data-id') === blockId);
       });
 
-      // ── Save / Cancel / Keyboard ──
+      // ── Save / Cancel ──
+      let removeKeyHandler;
       const doSave = () => {
           const data = collectInventoryFormData(viewer);
           if (!data) return;
-          viewer.removeEventListener('keydown', keyHandler);
+          removeKeyHandler();
           const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
           localStorage.removeItem(usesKey);
           const latestBlock = getBlocks('tab6').find(b => b.id === blockId);
@@ -1696,32 +1964,19 @@ const applyPendingBlockAnim = () => {
       };
 
       const doCancel = () => {
-          viewer.removeEventListener('keydown', keyHandler);
+          removeKeyHandler();
           localStorage.removeItem(usesKey);
           inventoryEditMode = false;
           viewer.classList.remove('editing');
           renderInventoryViewer(blockId);
       };
 
-      const keyHandler = (e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
-      };
+      removeKeyHandler = wireEditControls(viewer, {
+          saveSel: '.inventory-edit-save', cancelSel: '.inventory-edit-cancel',
+          onSave: doSave, onCancel: doCancel,
+      });
 
-      controls.querySelector('.inventory-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-      controls.querySelector('.inventory-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-      viewer.addEventListener('keydown', keyHandler);
-
-      // ── Focus title ──
-      if (titleEl) {
-          titleEl.focus();
-          const range = document.createRange();
-          const sel   = window.getSelection();
-          range.selectNodeContents(titleEl);
-          range.collapse(false);
-          sel.removeAllRanges();
-          sel.addRange(range);
-      }
+      focusAndCursorToEnd(titleEl);
   };
 
   const startInventoryAdd = () => {
@@ -1769,13 +2024,11 @@ const applyPendingBlockAnim = () => {
 
           wireInventoryToggles(viewer);
 
-          const saveBtn   = viewer.querySelector('.inventory-edit-save');
-          const cancelBtn = viewer.querySelector('.inventory-edit-cancel');
-
+          let removeKeyHandler;
           const doSave = () => {
               const data = collectInventoryFormData(viewer);
               if (!data) return;
-              viewer.removeEventListener('keydown', keyHandler);
+              removeKeyHandler();
               const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
               localStorage.removeItem(usesKey);
               const newId = saveBlock('tab6', data.title, data.text, [], usesState, [], data.blockType, null, null, data.inventoryExtras);
@@ -1786,7 +2039,7 @@ const applyPendingBlockAnim = () => {
           };
 
           const doCancel = () => {
-              viewer.removeEventListener('keydown', keyHandler);
+              removeKeyHandler();
               localStorage.removeItem(usesKey);
               inventoryEditMode = false;
               viewer.classList.remove('editing');
@@ -1797,14 +2050,10 @@ const applyPendingBlockAnim = () => {
               }
           };
 
-          const keyHandler = (e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-              else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
-          };
-
-          saveBtn?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-          cancelBtn?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-          viewer.addEventListener('keydown', keyHandler);
+          removeKeyHandler = wireEditControls(viewer, {
+              saveSel: '.inventory-edit-save', cancelSel: '.inventory-edit-cancel',
+              onSave: doSave, onCancel: doCancel,
+          });
 
           const titleEl = viewer.querySelector('.inline-edit-title');
           if (titleEl) titleEl.focus();
@@ -3157,10 +3406,11 @@ const applyPendingBlockAnim = () => {
           });
 
           // Save / Cancel
+          let removeKeyHandler;
           const doSave = () => {
               const data = collectNotesFormData(viewer);
               if (!data) return;
-              viewer.removeEventListener('keydown', keyHandler);
+              removeKeyHandler();
               const latestBlock = getBlocks('tab3').find(b => b.id === blockId);
               saveBlock('tab3', data.title, data.text, latestBlock?.tags || [], [], [], data.blockType, blockId, block.timestamp, null, data.tab3Extras);
               notesEditMode = false;
@@ -3169,32 +3419,18 @@ const applyPendingBlockAnim = () => {
           };
 
           const doCancel = () => {
-              viewer.removeEventListener('keydown', keyHandler);
+              removeKeyHandler();
               notesEditMode = false;
               viewer.classList.remove('editing');
               renderNotesViewer(blockId);
           };
 
-          const keyHandler = (e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-              else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
-          };
+          removeKeyHandler = wireEditControls(viewer, {
+              saveSel: '.notes-edit-save', cancelSel: '.notes-edit-cancel',
+              onSave: doSave, onCancel: doCancel,
+          });
 
-          viewer.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-          viewer.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-          viewer.addEventListener('keydown', keyHandler);
-
-          // Focus title
-          const titleEl = viewer.querySelector('.notes-edit-title');
-          if (titleEl) {
-              titleEl.focus();
-              const range = document.createRange();
-              const sel = window.getSelection();
-              range.selectNodeContents(titleEl);
-              range.collapse(false);
-              sel.removeAllRanges();
-              sel.addRange(range);
-          }
+          focusAndCursorToEnd(viewer.querySelector('.notes-edit-title'));
       };
 
       if (existing && existing.classList.contains('notes-viewer-content')) {
@@ -3232,10 +3468,11 @@ const applyPendingBlockAnim = () => {
           document.querySelectorAll('#results_section_3 .block').forEach(b => b.classList.remove('notes-block-active'));
 
           // Save / Cancel
+          let removeKeyHandler;
           const doSave = () => {
               const data = collectNotesFormData(viewer);
               if (!data) return;
-              viewer.removeEventListener('keydown', keyHandler);
+              removeKeyHandler();
               const newId = saveBlock('tab3', data.title, data.text, [], [], [], data.blockType, null, null, null, data.tab3Extras);
               notesEditMode = false;
               viewer.classList.remove('editing');
@@ -3244,7 +3481,7 @@ const applyPendingBlockAnim = () => {
           };
 
           const doCancel = () => {
-              viewer.removeEventListener('keydown', keyHandler);
+              removeKeyHandler();
               notesEditMode = false;
               viewer.classList.remove('editing');
               if (activeNotesBlockId) {
@@ -3254,16 +3491,11 @@ const applyPendingBlockAnim = () => {
               }
           };
 
-          const keyHandler = (e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-              else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
-          };
+          removeKeyHandler = wireEditControls(viewer, {
+              saveSel: '.notes-edit-save', cancelSel: '.notes-edit-cancel',
+              onSave: doSave, onCancel: doCancel,
+          });
 
-          viewer.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-          viewer.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-          viewer.addEventListener('keydown', keyHandler);
-
-          // Focus title
           const titleEl = viewer.querySelector('.notes-edit-title');
           if (titleEl) titleEl.focus();
       };
@@ -3277,7 +3509,7 @@ const applyPendingBlockAnim = () => {
   };
 
   // ── Narrow mode: edit inline ───────────────────────────────────
-  const enterNotesInlineEdit = (blockId) => {
+  const enterNotesInlineEdit = (blockId, skipAnim = false) => {
       if (notesEditMode) return;
       const tab = 'tab3';
       const blocksArr = getBlocks(tab);
@@ -3294,28 +3526,9 @@ const applyPendingBlockAnim = () => {
           import('./filterManager.js').then(({ filterManager }) => {
               filterManager.applyFilters('3');
               requestAnimationFrame(() => {
-                  enterNotesInlineEdit(blockId);
+                  enterNotesInlineEdit(blockId, true);
                   const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
-                  if (!blockEl || !oldHeight) return;
-                  const newHeight = blockEl.offsetHeight;
-                  if (Math.abs(newHeight - oldHeight) < 2) return;
-                  const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
-                  blockEl.style.height = oldHeight + 'px';
-                  blockEl.style.overflow = 'hidden';
-                  blockEl.style.transition = 'none';
-                  fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
-                  void blockEl.offsetHeight;
-                  blockEl.style.transition = 'height 0.5s ease';
-                  blockEl.style.height = newHeight + 'px';
-                  fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
-                  const cleanup = () => {
-                      blockEl.style.height = ''; blockEl.style.overflow = ''; blockEl.style.transition = '';
-                      fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
-                  };
-                  blockEl.addEventListener('transitionend', (e) => {
-                      if (e.target === blockEl && e.propertyName === 'height') cleanup();
-                  }, { once: true });
-                  setTimeout(cleanup, 600);
+                  if (blockEl) animateHeightTransition(blockEl, oldHeight);
               });
           });
           return;
@@ -3333,10 +3546,11 @@ const applyPendingBlockAnim = () => {
       wireNotesEditBehaviour(blockEl);
 
       // Save / Cancel
+      let removeKeyHandler;
       const doSave = () => {
           const data = collectNotesFormData(blockEl);
           if (!data) return;
-          blockEl.removeEventListener('keydown', keyHandler);
+          removeKeyHandler();
           const latestBlock = getBlocks(tab).find(b => b.id === blockId);
           saveBlock(tab, data.title, data.text, latestBlock?.tags || [], [], [], data.blockType, blockId, block.timestamp, null, data.tab3Extras);
           notesEditMode = false;
@@ -3345,54 +3559,20 @@ const applyPendingBlockAnim = () => {
       };
 
       const doCancel = () => {
-          blockEl.removeEventListener('keydown', keyHandler);
+          removeKeyHandler();
           notesEditMode = false;
           setPendingBlockAnim(blockId, blockEl.offsetHeight);
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
       };
 
-      const keyHandler = (e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
-      };
+      removeKeyHandler = wireEditControls(blockEl, {
+          saveSel: '.notes-edit-save', cancelSel: '.notes-edit-cancel',
+          onSave: doSave, onCancel: doCancel,
+      });
 
-      blockEl.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-      blockEl.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-      blockEl.addEventListener('keydown', keyHandler);
+      focusAndCursorToEnd(blockEl.querySelector('.notes-edit-title'));
 
-      // Focus title
-      const titleEl = blockEl.querySelector('.notes-edit-title');
-      if (titleEl) {
-          titleEl.focus();
-          const range = document.createRange();
-          const sel = window.getSelection();
-          range.selectNodeContents(titleEl);
-          range.collapse(false);
-          sel.removeAllRanges();
-          sel.addRange(range);
-      }
-
-      // Animate from old height
-      const newHeight = blockEl.offsetHeight;
-      if (oldHeight && Math.abs(newHeight - oldHeight) > 2) {
-          const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('notes-edit-header'));
-          blockEl.style.height = oldHeight + 'px';
-          blockEl.style.overflow = 'hidden';
-          blockEl.style.transition = 'none';
-          fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
-          void blockEl.offsetHeight;
-          blockEl.style.transition = 'height 0.5s ease';
-          blockEl.style.height = newHeight + 'px';
-          fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
-          const cleanup = () => {
-              blockEl.style.height = ''; blockEl.style.overflow = ''; blockEl.style.transition = '';
-              fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
-          };
-          blockEl.addEventListener('transitionend', (e) => {
-              if (e.target === blockEl && e.propertyName === 'height') cleanup();
-          }, { once: true });
-          setTimeout(cleanup, 600);
-      }
+      if (!skipAnim) animateHeightTransition(blockEl, oldHeight, 'notes-edit-header');
   };
 
   // ── Narrow mode: add inline ────────────────────────────────────
@@ -3421,31 +3601,27 @@ const applyPendingBlockAnim = () => {
       wireNotesEditBehaviour(blockEl);
 
       // Save / Cancel
+      let removeKeyHandler;
       const doSave = () => {
           const data = collectNotesFormData(blockEl);
           if (!data) return;
-          blockEl.removeEventListener('keydown', keyHandler);
+          removeKeyHandler();
           saveBlock('tab3', data.title, data.text, [], [], [], data.blockType, null, null, null, data.tab3Extras);
           notesEditMode = false;
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('3'));
       };
 
       const doCancel = () => {
-          blockEl.removeEventListener('keydown', keyHandler);
+          removeKeyHandler();
           notesEditMode = false;
           blockEl.remove();
       };
 
-      const keyHandler = (e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
-      };
+      removeKeyHandler = wireEditControls(blockEl, {
+          saveSel: '.notes-edit-save', cancelSel: '.notes-edit-cancel',
+          onSave: doSave, onCancel: doCancel,
+      });
 
-      blockEl.querySelector('.notes-edit-save')?.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-      blockEl.querySelector('.notes-edit-cancel')?.addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-      blockEl.addEventListener('keydown', keyHandler);
-
-      // Focus title
       const titleEl = blockEl.querySelector('.notes-edit-title');
       if (titleEl) titleEl.focus();
   };
@@ -4449,7 +4625,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
   // ── Inline block editing (tab9) ──────────────────────────────────
   let inlineEditState = null;
 
-  const enterInlineEdit = (blockId) => {
+  const enterInlineEdit = (blockId, skipAnim = false) => {
       const tab = 'tab9';
       const blocksArr = getBlocks(tab);
       const block = blocksArr.find(b => b.id === blockId);
@@ -4465,30 +4641,9 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
           import('./filterManager.js').then(({ filterManager }) => {
               filterManager.applyFilters('9');
               requestAnimationFrame(() => {
-                  enterInlineEdit(blockId);
+                  enterInlineEdit(blockId, true);
                   const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
-                  if (!blockEl || !oldHeight) return;
-                  const newHeight = blockEl.offsetHeight;
-                  if (Math.abs(newHeight - oldHeight) < 2) return;
-                  const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
-                  blockEl.style.height = oldHeight + 'px';
-                  blockEl.style.overflow = 'hidden';
-                  blockEl.style.transition = 'none';
-                  fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
-                  void blockEl.offsetHeight;
-                  blockEl.style.transition = 'height 0.5s ease';
-                  blockEl.style.height = newHeight + 'px';
-                  fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
-                  const cleanup = () => {
-                      blockEl.style.height = '';
-                      blockEl.style.overflow = '';
-                      blockEl.style.transition = '';
-                      fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
-                  };
-                  blockEl.addEventListener('transitionend', (e) => {
-                      if (e.target === blockEl && e.propertyName === 'height') cleanup();
-                  }, { once: true });
-                  setTimeout(cleanup, 600);
+                  if (blockEl) animateHeightTransition(blockEl, oldHeight);
               });
           });
           return;
@@ -4515,22 +4670,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
 
       blockEl.classList.add('inline-editing');
 
-      // Gather tag data
-      const predefinedTagList = Object.entries(categoryTags)
-          .filter(([_, data]) => data.tabs.includes(tab))
-          .flatMap(([_, data]) => data.tags);
-      const predefinedTagSet = new Set(predefinedTagList);
-
-      const userDefinedTags = [
-          ...new Set(
-              getBlocks(tab).flatMap(b => b.tags).map(t => t.toLowerCase())
-          )
-      ].filter(t => !predefinedTagList.map(pt => pt.toLowerCase()).includes(t))
-       .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
-       .sort((a, b) => a.localeCompare(b));
-
       const blockTags = block.tags || [];
-      const blockUserTags = blockTags.filter(t => !predefinedTagSet.has(t));
       const blockTypes = Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []);
 
       // Block type buttons HTML
@@ -4541,34 +4681,10 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
             ).join('')
           : '';
 
-      // Tag accordion groups HTML
-      let tagsHTML = '';
-      Object.entries(categoryTags).forEach(([category, data]) => {
-          if (!data.tabs.includes(tab)) return;
-          const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-          tagsHTML += `<div class="tag-accordion-group ${data.className}" data-category="${category}">`;
-          tagsHTML += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
-          tagsHTML += `<div class="tag-accordion-body">`;
-          tagsHTML += `<span class="tag-accordion-label">${label}</span>`;
-          tagsHTML += data.tags.map(t =>
-              `<button class="tag-button ${data.className}${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
-          ).join('');
-          tagsHTML += `</div></div>`;
-      });
+      const tagsHTML = buildTab9TagsHTML(tab, blockTags);
 
-      tagsHTML += `<div class="tag-category user-tags-edit">`;
-      if (userDefinedTags.length > 0) {
-          tagsHTML += userDefinedTags.map(t =>
-              `<button class="tag-button tag-user${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
-          ).join('');
-      }
-      tagsHTML += `<span class="inline-edit-add-tag"></span>`;
-      tagsHTML += `</div>`;
-
-      // Body HTML
       const bodyHTML = sanitizeBlockHTML(block.text);
 
-      // Uses localStorage key
       const usesKey = `inline_edit_uses_${blockId}`;
       localStorage.setItem(usesKey, JSON.stringify(block.uses || []));
 
@@ -4591,271 +4707,36 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
               <div class="block-body"><span contenteditable="true" class="inline-edit-body">${bodyHTML}</span></div>
       `;
 
-      // Init uses field
-      const usesContainer = blockEl.querySelector('.inline-edit-uses');
-      if (usesContainer) initUsesField(usesContainer, usesKey);
+      wireTab9FormHandlers(blockEl, usesKey);
 
-      // Tag toggle handler
-      const tagsContainer = blockEl.querySelector('.inline-edit-tags');
-      if (tagsContainer) {
-          tagsContainer.addEventListener('click', (e) => {
-              const btn = e.target.closest('.tag-button');
-              if (btn) btn.classList.toggle('selected');
-          });
-      }
-
-      // Block type toggle handler
-      const blockTypesContainer = blockEl.querySelector('.inline-edit-block-types');
-      if (blockTypesContainer) {
-          blockTypesContainer.addEventListener('click', (e) => {
-              const btn = e.target.closest('.tag-button');
-              if (btn) btn.classList.toggle('selected');
-          });
-      }
-
-      // Properties editing
-      const propsContainer = blockEl.querySelector('.inline-edit-properties');
-      const newPropBtn = blockEl.querySelector('.inline-edit-new-prop');
-
-      const createPropertyWrap = (text) => {
-          const wrap = document.createElement('span');
-          wrap.className = 'block-property-wrap';
-          wrap.innerHTML = '<span class="block-property" contenteditable="true"></span><span class="property-remove-btn">×</span>';
-          if (text) wrap.querySelector('.block-property').textContent = text;
-          return wrap;
-      };
-
-      if (propsContainer) {
-          // + button creates a new empty property
-          if (newPropBtn) {
-              newPropBtn.addEventListener('click', (e) => {
-                  e.stopPropagation();
-                  const wrap = createPropertyWrap('');
-                  newPropBtn.before(wrap);
-                  wrap.querySelector('.block-property').focus();
-              });
-          }
-
-          propsContainer.addEventListener('keydown', (e) => {
-              const prop = e.target.closest('.block-property');
-              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
-
-              if (e.key === ',' || e.key === 'Enter') {
-                  e.preventDefault();
-                  const wrap = createPropertyWrap('');
-                  prop.closest('.block-property-wrap').after(wrap);
-                  wrap.querySelector('.block-property').focus();
-              } else if (e.key === 'Backspace' && prop.textContent.trim() === '') {
-                  e.preventDefault();
-                  const wrap = prop.closest('.block-property-wrap');
-                  const prev = wrap?.previousElementSibling;
-                  wrap.remove();
-                  if (prev) {
-                      const prevProp = prev.querySelector?.('.block-property') || prev;
-                      const range = document.createRange();
-                      const sel = window.getSelection();
-                      range.selectNodeContents(prevProp);
-                      range.collapse(false);
-                      sel.removeAllRanges();
-                      sel.addRange(range);
-                  }
-              }
-          });
-
-          // Blur: empty properties get removed
-          propsContainer.addEventListener('focusout', (e) => {
-              const prop = e.target.closest('.block-property');
-              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
-              if (prop.textContent.trim() === '') {
-                  prop.closest('.block-property-wrap')?.remove();
-              }
-          });
-
-          // X button
-          propsContainer.addEventListener('click', (e) => {
-              if (e.target.classList.contains('property-remove-btn')) {
-                  e.stopPropagation();
-                  e.target.closest('.block-property-wrap')?.remove();
-              }
-          });
-      }
-
-      // User tag + button
-      const addTagEl = blockEl.querySelector('.inline-edit-add-tag');
-      if (addTagEl) {
-          addTagEl.addEventListener('click', (e) => {
-              e.stopPropagation();
-              const input = document.createElement('span');
-              input.className = 'inline-edit-tag-input';
-              input.contentEditable = 'true';
-              Object.assign(input.style, {
-                  padding: '4px 10px',
-                  fontSize: '13px',
-                  borderRadius: '12px',
-                  backgroundColor: 'color-mix(in srgb, var(--user-color) 18%, transparent)',
-                  color: 'var(--gray-800)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  minWidth: '20px',
-                  outline: 'none',
-              });
-              addTagEl.before(input);
-              input.focus();
-
-              const commit = () => {
-                  const tagName = input.textContent.trim();
-                  if (tagName) {
-                      const normalized = tagName.charAt(0).toUpperCase() + tagName.slice(1).toLowerCase();
-                      const existing = blockEl.querySelector(`.inline-edit-tags .tag-button[data-tag="${normalized}"]`);
-                      if (existing) {
-                          existing.classList.add('selected');
-                      } else {
-                          const newBtn = document.createElement('button');
-                          newBtn.className = 'tag-button tag-user selected';
-                          newBtn.dataset.tag = normalized;
-                          newBtn.textContent = normalized;
-                          input.before(newBtn);
-                      }
-                  }
-                  input.remove();
-              };
-
-              input.addEventListener('focusout', commit);
-              input.addEventListener('keydown', (ke) => {
-                  if (ke.key === 'Enter' || ke.key === ',') {
-                      ke.preventDefault();
-                      commit();
-                  } else if (ke.key === 'Escape') {
-                      ke.preventDefault();
-                      input.remove();
-                  }
-              });
-          });
-      }
-
-      // Inject chips into collapsed groups with selected tags
-      tagsContainer?.querySelectorAll('.tag-accordion-group:not(.open)').forEach(group => {
-          const pill = group.querySelector('.tag-accordion-pill');
-          const body = group.querySelector('.tag-accordion-body');
-          if (!pill || !body) return;
-          const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group' && c !== 'open') || '';
-          body.querySelectorAll('.tag-button.selected').forEach(btn => {
-              const chip = document.createElement('button');
-              chip.classList.add('tag-accordion-chip');
-              if (tagClass) chip.classList.add(tagClass);
-              chip.dataset.tag = btn.dataset.tag;
-              chip.textContent = btn.dataset.tag;
-              group.appendChild(chip);
-          });
-      });
-
-      // ── Save ──
+      // ── Save / Cancel ──
       const doSave = () => {
-          const newTitle = blockEl.querySelector('.inline-edit-title')?.textContent.trim();
-          if (!newTitle) { alert('A title is required.'); return; }
-
-          const body = blockEl.querySelector('.inline-edit-body');
-          const newBody = (body ? body.innerHTML.trim() : '');
-          if (!newBody) { alert('Title and text are required.'); return; }
-
-          const selectedTypes = Array.from(blockEl.querySelectorAll('.inline-edit-block-types .tag-button.selected'))
-              .map(b => b.dataset.tag);
-          if (selectedTypes.length === 0) {
-              alert('Please select a block type: ' + blockTypeConfig.tab9.types.join(', ') + '.');
-              return;
-          }
-
-          const selectedTags = Array.from(blockEl.querySelectorAll('.inline-edit-tags .tag-button.selected'))
-              .map(b => b.dataset.tag.trim().toLowerCase());
-
-          const combinedLower = [...new Set(selectedTags)];
-          const predefinedMap = new Map(
-              Object.values(categoryTags).flatMap(cat => cat.tags).map(t => [t.toLowerCase(), t])
-          );
-          const allTags = combinedLower.map(t => predefinedMap.get(t) || normalizeTag(t));
-
-          const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
-          const properties = Array.from(blockEl.querySelectorAll('.inline-edit-properties .block-property-wrap .block-property'))
-              .map(el => el.textContent.trim()).filter(p => p.length > 0);
-
-          localStorage.removeItem(usesKey);
+          const data = collectTab9FormData(blockEl, usesKey);
+          if (!data) return;
           inlineEditState = null;
-
-          saveBlock(tab, newTitle, newBody, allTags, usesState, properties, selectedTypes, blockId, block.timestamp);
+          saveBlock(tab, data.title, data.text, data.tags, data.uses, data.properties, data.blockType, blockId, block.timestamp);
           setPendingBlockAnim(blockId, blockEl.offsetHeight);
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
       };
 
-      // ── Cancel ──
       const doCancel = () => {
-          localStorage.removeItem(usesKey);
           inlineEditState = null;
           setPendingBlockAnim(blockId, blockEl.offsetHeight);
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
       };
 
-      blockEl.querySelector('.inline-edit-save').addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-      blockEl.querySelector('.inline-edit-cancel').addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-
-      // Keyboard shortcuts
-      blockEl.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      wireEditControls(blockEl, {
+          saveSel: '.inline-edit-save', cancelSel: '.inline-edit-cancel',
+          onSave: doSave, onCancel: doCancel,
       });
 
-      // Focus title
-      const titleInput = blockEl.querySelector('.inline-edit-title');
-      if (titleInput) {
-          titleInput.focus();
-          const range = document.createRange();
-          const sel   = window.getSelection();
-          range.selectNodeContents(titleInput);
-          range.collapse(false);
-          sel.removeAllRanges();
-          sel.addRange(range);
-      }
+      focusAndCursorToEnd(blockEl.querySelector('.inline-edit-title'));
 
-      // Animate from old height to edit-form height
-      const newHeight = blockEl.offsetHeight;
-      if (oldHeight && Math.abs(newHeight - oldHeight) > 2) {
-          const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
-          blockEl.style.height = oldHeight + 'px';
-          blockEl.style.overflow = 'hidden';
-          blockEl.style.transition = 'none';
-          fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
-          void blockEl.offsetHeight;
-          blockEl.style.transition = 'height 0.5s ease';
-          blockEl.style.height = newHeight + 'px';
-          fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
-          const cleanup = () => {
-              blockEl.style.height = '';
-              blockEl.style.overflow = '';
-              blockEl.style.transition = '';
-              fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
-          };
-          blockEl.addEventListener('transitionend', (e) => {
-              if (e.target === blockEl && e.propertyName === 'height') cleanup();
-          }, { once: true });
-          setTimeout(cleanup, 600);
-      }
+      if (!skipAnim) animateHeightTransition(blockEl, oldHeight);
   };
 
     const startInlineAdd = () => {
       const tab = 'tab9';
-
-      // Build empty tag accordion HTML (all closed)
-      const predefinedTagList = Object.entries(categoryTags)
-          .filter(([_, data]) => data.tabs.includes(tab))
-          .flatMap(([_, data]) => data.tags);
-      const predefinedTagSet = new Set(predefinedTagList);
-
-      const userDefinedTags = [
-          ...new Set(
-              getBlocks(tab).flatMap(b => b.tags).map(t => t.toLowerCase())
-          )
-      ].filter(t => !predefinedTagList.map(pt => pt.toLowerCase()).includes(t))
-       .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
-       .sort((a, b) => a.localeCompare(b));
 
       const tabBTConfig = blockTypeConfig[tab];
       const blockTypeHTML = tabBTConfig
@@ -4864,33 +4745,11 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
             ).join('')
           : '';
 
-      let tagsHTML = '';
-      Object.entries(categoryTags).forEach(([category, data]) => {
-          if (!data.tabs.includes(tab)) return;
-          const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-          tagsHTML += `<div class="tag-accordion-group ${data.className}" data-category="${category}">`;
-          tagsHTML += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
-          tagsHTML += `<div class="tag-accordion-body">`;
-          tagsHTML += `<span class="tag-accordion-label">${label}</span>`;
-          tagsHTML += data.tags.map(t =>
-              `<button class="tag-button ${data.className}" data-tag="${t}">${t}</button>`
-          ).join('');
-          tagsHTML += `</div></div>`;
-      });
-
-      tagsHTML += `<div class="tag-category user-tags-edit">`;
-      if (userDefinedTags.length > 0) {
-          tagsHTML += userDefinedTags.map(t =>
-              `<button class="tag-button tag-user" data-tag="${t}">${t}</button>`
-          ).join('');
-      }
-      tagsHTML += `<span class="inline-edit-add-tag"></span>`;
-      tagsHTML += `</div>`;
+      const tagsHTML = buildTab9TagsHTML(tab);
 
       const usesKey = `inline_add_uses_new`;
       localStorage.setItem(usesKey, JSON.stringify([]));
 
-      // Create block element
       const blockEl = document.createElement('div');
       blockEl.className = 'block expanded inline-editing';
       blockEl.setAttribute('data-id', 'new-inline-add');
@@ -4912,211 +4771,33 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
               <div class="block-body"><span contenteditable="true" class="inline-edit-body"></span></div>
       `;
 
-      // Insert at top of results section (after pinned zone if present)
       const tabSuffix = tab.replace('tab', '');
       const resultsSection = document.getElementById(`results_section_${tabSuffix}`);
       if (!resultsSection) return;
       const pinnedZone = resultsSection.querySelector('.pinned-blocks-zone-wrapper');
-      if (pinnedZone) {
-          pinnedZone.after(blockEl);
-      } else {
-          resultsSection.prepend(blockEl);
-      }
+      if (pinnedZone) { pinnedZone.after(blockEl); } else { resultsSection.prepend(blockEl); }
 
-      // Scroll into view
       blockEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-      // Init uses field
-      const usesContainer = blockEl.querySelector('.inline-edit-uses');
-      if (usesContainer) {
-          initUsesField(usesContainer, usesKey);
-      }
+      wireTab9FormHandlers(blockEl, usesKey);
 
-      // Tag toggle handler
-      const tagsContainer = blockEl.querySelector('.inline-edit-tags');
-      if (tagsContainer) {
-          tagsContainer.addEventListener('click', (e) => {
-              const btn = e.target.closest('.tag-button');
-              if (btn) btn.classList.toggle('selected');
-          });
-      }
-
-      // Block type toggle handler
-      const blockTypesContainer = blockEl.querySelector('.inline-edit-block-types');
-      if (blockTypesContainer) {
-          blockTypesContainer.addEventListener('click', (e) => {
-              const btn = e.target.closest('.tag-button');
-              if (btn) btn.classList.toggle('selected');
-          });
-      }
-
-      // Properties editing
-      const propsContainer = blockEl.querySelector('.inline-edit-properties');
-      const newPropBtn = blockEl.querySelector('.inline-edit-new-prop');
-
-      const createPropertyWrap = (text) => {
-          const wrap = document.createElement('span');
-          wrap.className = 'block-property-wrap';
-          wrap.innerHTML = '<span class="block-property" contenteditable="true"></span><span class="property-remove-btn">×</span>';
-          if (text) wrap.querySelector('.block-property').textContent = text;
-          return wrap;
-      };
-
-      if (propsContainer) {
-          if (newPropBtn) {
-              newPropBtn.addEventListener('click', (e) => {
-                  e.stopPropagation();
-                  const wrap = createPropertyWrap('');
-                  newPropBtn.before(wrap);
-                  wrap.querySelector('.block-property').focus();
-              });
-          }
-
-          propsContainer.addEventListener('keydown', (e) => {
-              const prop = e.target.closest('.block-property');
-              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
-
-              if (e.key === ',' || e.key === 'Enter') {
-                  e.preventDefault();
-                  const wrap = createPropertyWrap('');
-                  prop.closest('.block-property-wrap').after(wrap);
-                  wrap.querySelector('.block-property').focus();
-              } else if (e.key === 'Backspace' && prop.textContent.trim() === '') {
-                  e.preventDefault();
-                  const wrap = prop.closest('.block-property-wrap');
-                  const prev = wrap?.previousElementSibling;
-                  wrap.remove();
-                  if (prev) {
-                      const prevProp = prev.querySelector?.('.block-property') || prev;
-                      const range = document.createRange();
-                      const sel = window.getSelection();
-                      range.selectNodeContents(prevProp);
-                      range.collapse(false);
-                      sel.removeAllRanges();
-                      sel.addRange(range);
-                  }
-              }
-          });
-
-          propsContainer.addEventListener('focusout', (e) => {
-              const prop = e.target.closest('.block-property');
-              if (!prop || prop.classList.contains('inline-edit-new-prop')) return;
-              if (prop.textContent.trim() === '') {
-                  prop.closest('.block-property-wrap')?.remove();
-              }
-          });
-
-          propsContainer.addEventListener('click', (e) => {
-              if (e.target.classList.contains('property-remove-btn')) {
-                  e.stopPropagation();
-                  e.target.closest('.block-property-wrap')?.remove();
-              }
-          });
-      }
-
-      // User tag + button
-      const addTagEl = blockEl.querySelector('.inline-edit-add-tag');
-      if (addTagEl) {
-          addTagEl.addEventListener('click', (e) => {
-              e.stopPropagation();
-              const input = document.createElement('span');
-              input.className = 'inline-edit-tag-input';
-              input.contentEditable = 'true';
-              Object.assign(input.style, {
-                  padding: '4px 10px',
-                  fontSize: '13px',
-                  borderRadius: '12px',
-                  backgroundColor: 'color-mix(in srgb, var(--user-color) 18%, transparent)',
-                  color: 'var(--gray-800)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  minWidth: '20px',
-                  outline: 'none',
-              });
-              addTagEl.before(input);
-              input.focus();
-
-              const commit = () => {
-                  const tagName = input.textContent.trim();
-                  if (tagName) {
-                      const normalized = tagName.charAt(0).toUpperCase() + tagName.slice(1).toLowerCase();
-                      const existing = blockEl.querySelector(`.inline-edit-tags .tag-button[data-tag="${normalized}"]`);
-                      if (existing) {
-                          existing.classList.add('selected');
-                      } else {
-                          const newBtn = document.createElement('button');
-                          newBtn.className = 'tag-button tag-user selected';
-                          newBtn.dataset.tag = normalized;
-                          newBtn.textContent = normalized;
-                          input.before(newBtn);
-                      }
-                  }
-                  input.remove();
-              };
-
-              input.addEventListener('focusout', commit);
-              input.addEventListener('keydown', (ke) => {
-                  if (ke.key === 'Enter' || ke.key === ',') {
-                      ke.preventDefault();
-                      commit();
-                  } else if (ke.key === 'Escape') {
-                      ke.preventDefault();
-                      input.remove();
-                  }
-              });
-          });
-      }
-
-      // Save
       const doSave = () => {
-          const newTitle = blockEl.querySelector('.inline-edit-title')?.textContent.trim();
-          if (!newTitle) { alert('A title is required.'); return; }
-
-          const body = blockEl.querySelector('.inline-edit-body');
-          const newBody = (body ? body.innerHTML.trim() : '');
-          if (!newBody) { alert('Title and text are required.'); return; }
-
-          const selectedTypes = Array.from(blockEl.querySelectorAll('.inline-edit-block-types .tag-button.selected'))
-              .map(b => b.dataset.tag);
-          if (selectedTypes.length === 0) {
-              alert('Please select a block type: ' + blockTypeConfig.tab9.types.join(', ') + '.');
-              return;
-          }
-
-          const selectedTags = Array.from(blockEl.querySelectorAll('.inline-edit-tags .tag-button.selected'))
-              .map(b => b.dataset.tag.trim().toLowerCase());
-
-          const combinedLower = [...new Set(selectedTags)];
-          const predefinedMap = new Map(
-              Object.values(categoryTags).flatMap(cat => cat.tags).map(t => [t.toLowerCase(), t])
-          );
-          const allTags = combinedLower.map(t => predefinedMap.get(t) || normalizeTag(t));
-
-          const usesState = JSON.parse(localStorage.getItem(usesKey) || '[]');
-          const properties = Array.from(blockEl.querySelectorAll('.inline-edit-properties .block-property-wrap .block-property'))
-              .map(el => el.textContent.trim()).filter(p => p.length > 0);
-
-          localStorage.removeItem(usesKey);
-
-          saveBlock(tab, newTitle, newBody, allTags, usesState, properties, selectedTypes);
+          const data = collectTab9FormData(blockEl, usesKey);
+          if (!data) return;
+          saveBlock(tab, data.title, data.text, data.tags, data.uses, data.properties, data.blockType);
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters(tabSuffix));
       };
 
-      // Cancel — just remove the element
       const doCancel = () => {
           localStorage.removeItem(usesKey);
           blockEl.remove();
       };
 
-      blockEl.querySelector('.inline-edit-save').addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
-      blockEl.querySelector('.inline-edit-cancel').addEventListener('click', (e) => { e.stopPropagation(); doCancel(); });
-
-      blockEl.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); doSave(); }
-          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); doCancel(); }
+      wireEditControls(blockEl, {
+          saveSel: '.inline-edit-save', cancelSel: '.inline-edit-cancel',
+          onSave: doSave, onCancel: doCancel,
       });
 
-      // Focus title
       const titleInput = blockEl.querySelector('.inline-edit-title');
       if (titleInput) titleInput.focus();
   };
