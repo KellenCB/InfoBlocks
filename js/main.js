@@ -720,6 +720,17 @@ document.addEventListener("click", (e) => {
             chip.dataset.tag = btn.dataset.tag;
             chip.textContent = btn.dataset.tag;
             target.appendChild(chip);
+            const naturalWidth = chip.offsetWidth;
+            chip.style.maxWidth = '0px';
+            chip.style.overflow = 'hidden';
+            chip.style.opacity = '0';
+            chip.style.padding = '2px 0';
+            void chip.offsetHeight;
+            chip.style.transition = 'max-width 0.2s ease, opacity 0.18s ease 0.04s, padding 0.2s ease';
+            chip.style.maxWidth = naturalWidth + 'px';
+            chip.style.opacity = '1';
+            chip.style.padding = '';
+            setTimeout(() => chip.removeAttribute('style'), 250);
         });
     }
     // When opening: chips stay in DOM, CSS hides them via visibility:hidden
@@ -736,17 +747,9 @@ document.addEventListener("click", (e) => {
     const tag = chip.dataset.tag;
     const bodyBtn = group.querySelector(`.tag-accordion-body .tag-button[data-tag="${tag}"]`);
     if (bodyBtn) {
-        const allInstances = document.querySelectorAll(
-            `.tag-accordion-chips .tag-button[data-tag="${tag}"], ` +
-            `.block-tags-condensed .tag-button.selected[data-tag="${tag}"], ` +
-            `.block-tags-condensed .tag-button.selected-or[data-tag="${tag}"]`
-        );
-        allInstances.forEach(el => {
-            el.style.transition = 'opacity 0.15s ease';
-            el.style.opacity = '0';
-            el.style.pointerEvents = 'none';
-        });
-        setTimeout(() => bodyBtn.click(), 150);
+        chip.style.opacity = '0';
+        chip.style.pointerEvents = 'none';
+        bodyBtn.click(); // triggers applyFilters → _applySelectionClasses which rebuilds chips
     }
 }, true);
 

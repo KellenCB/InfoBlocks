@@ -71,9 +71,9 @@ export const blockTemplate = (block, tab = "tab4") => {
     const viewState = block.viewState || 'expanded';
     const isTab6 = tab === 'tab6';
 
-    const andTags = filterManager.getAndTags();
-    const orTags  = filterManager.getOrTags();
-    const notTags = filterManager.getNotTags();
+    const andTags = filterManager.getAndTags(tab);
+    const orTags  = filterManager.getOrTags(tab);
+    const notTags = filterManager.getNotTags(tab);
     const selClass = tag =>
         andTags.includes(tag)  ? 'selected'     :
         orTags.includes(tag)   ? 'selected-or'  :

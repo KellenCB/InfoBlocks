@@ -529,6 +529,26 @@ export function initScrollFades(selector, topVar, bottomVar, handlerKey, delay =
             el[handlerKey] = check;
             el.addEventListener('scroll', check);
             check();
+            // Re-check on element size changes (window resize)
+            if (!el[handlerKey + '_ro']) {
+                el[handlerKey + '_ro'] = new ResizeObserver(check);
+                el[handlerKey + '_ro'].observe(el);
+            }
+            // Re-check on content changes (accordion toggle, blocks added/removed)
+            if (!el[handlerKey + '_mo']) {
+                let debounce = null;
+                el[handlerKey + '_mo'] = new MutationObserver(() => {
+                    clearTimeout(debounce);
+                    debounce = setTimeout(check, 50);
+                    // Also re-check after CSS transitions settle (accordion 0.3s, block 0.5s)
+                    setTimeout(check, 350);
+                    setTimeout(check, 600);
+                });
+                el[handlerKey + '_mo'].observe(el, {
+                    childList: true, subtree: true,
+                    attributes: true, attributeFilter: ['class', 'style']
+                });
+            }
         });
     };
     delay ? setTimeout(run, delay) : run();
@@ -956,37 +976,30 @@ const applyPendingBlockAnim = () => {
       const oldHeight = blockEl.offsetHeight;
       const cs = getComputedStyle(blockEl);
 
-      // Clone selected tags into a preview that fades in during collapse
+      // Build condensed tags from selected tags and inject into header
       const selectedTags = blockEl.querySelectorAll('.block-tags .tag-button.selected, .block-tags .tag-button.selected-or');
-      let previewTags = null;
+      let previewContainer = null;
       if (selectedTags.length > 0) {
-          previewTags = document.createElement('div');
-          previewTags.className = 'block-tags block-tags-condensed';
-          previewTags.style.opacity = '0';
-          previewTags.style.transition = 'none';
-          previewTags.style.position = 'absolute';
-          previewTags.style.pointerEvents = 'none';
-          previewTags.style.maskImage = 'none';
-          previewTags.style.webkitMaskImage = 'none';
-          selectedTags.forEach(tag => previewTags.appendChild(tag.cloneNode(true)));
-
-          // Position after the title/uses without affecting layout
-          const titleEl = headerEl.querySelector('.block-title');
-          const usesEl = headerEl.querySelector('.block-uses');
-          const anchor = usesEl || titleEl;
-          if (anchor) {
-              const blockRect = blockEl.getBoundingClientRect();
-              const anchorRect = anchor.getBoundingClientRect();
-              previewTags.style.left = (anchorRect.right - blockRect.left + 11) + 'px';
-              previewTags.style.top = (anchorRect.top - blockRect.top) + 'px';
-          }
-
-          blockEl.appendChild(previewTags);
+          previewContainer = document.createElement('div');
+          previewContainer.className = 'block-tags block-tags-condensed';
+          previewContainer.style.opacity = '0';
+          previewContainer.style.transition = 'none';
+          previewContainer.style.pointerEvents = 'none';
+          selectedTags.forEach(tag => {
+              const clone = tag.cloneNode(true);
+              clone.style.fontSize = '12px';
+              clone.style.padding = '2px 8px';
+              previewContainer.appendChild(clone);
+          });
+          // Insert inside block-header-left (after title/uses) for correct flex positioning
+          const headerLeft = headerEl.querySelector('.block-header-left');
+          if (headerLeft) headerLeft.appendChild(previewContainer);
+          else headerEl.appendChild(previewContainer);
       }
 
       const targetHeight = headerEl.offsetHeight
           + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)
-          + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+          + (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
 
       const fadeEls = [...blockEl.children].filter(el => !el.classList.contains('block-header'));
 
@@ -1004,9 +1017,9 @@ const applyPendingBlockAnim = () => {
           el.style.transition = 'opacity 0.35s ease';
           el.style.opacity = '0';
       });
-      if (previewTags) {
-          previewTags.style.transition = 'opacity 0.3s ease 0.15s';
-          previewTags.style.opacity = '1';
+      if (previewContainer) {
+          previewContainer.style.transition = 'opacity 0.3s ease 0.15s';
+          previewContainer.style.opacity = '1';
       }
 
       setTimeout(() => {
@@ -1059,13 +1072,12 @@ const applyPendingBlockAnim = () => {
       const className = categoryTags[category].className;
       const isOpen    = currentlyOpen.has(category);
       const openClass = isOpen ? ' open' : '';
-      const CHEVRON_SVG = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="9 6 15 12 9 18"/></svg>`;
 
       html += `<div class="tag-accordion-group ${className}${openClass}" data-category="${category}">`;
       html += `<div class="tag-accordion-header" data-category="${category}">`;
       html += `<span class="tag-accordion-name">${label}</span>`;
       html += `<span class="tag-accordion-chips"></span>`;
-      html += `<span class="tag-accordion-chevron">${CHEVRON_SVG}</span>`;
+      html += `<span class="tag-accordion-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>`;
       html += `</div>`;
       html += `<div class="tag-accordion-body" id="${category}_tags_list_${tabSuffix}">`;
       html += `<div class="tag-accordion-body-inner">`;
@@ -1524,7 +1536,6 @@ const applyPendingBlockAnim = () => {
 
       updateTags();
       attachDynamicTooltips();
-      initScrollFades('.results-section', null, '--results-fade-opacity', '_scrollFadeHandler');
       document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab7' } }));
   };
 
@@ -2360,7 +2371,6 @@ const applyPendingBlockAnim = () => {
 
       applyInlineDiceRolls(resultsSection, 'tab6');
       attachDynamicTooltips();
-      initScrollFades('.results-section', null, '--results-fade-opacity', '_scrollFadeHandler');
       document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab6' } }));
   };
 
@@ -2983,7 +2993,6 @@ const applyPendingBlockAnim = () => {
       applyInlineDiceRolls(resultsSection, 'tab3');
       updateTags();
       attachDynamicTooltips();
-      initScrollFades('.results-section', null, '--results-fade-opacity', '_scrollFadeHandler');
       document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab3' } }));
       initQuestStatusDropdown();
 
@@ -3723,7 +3732,6 @@ const applyPendingBlockAnim = () => {
       }
   };
 
-  let renderAbortController = null;
 
 /* ==================================================================*/
 /* ============================= BLOCKS =============================*/
@@ -3736,6 +3744,8 @@ const applyPendingBlockAnim = () => {
 
   const initPinnedDragReorder = (zone) => {
       if (!zone || zone.querySelectorAll('.block.pinned').length < 2) return;
+      if (zone._dragInitialized) return;
+      zone._dragInitialized = true;
 
       let dragState = null;
 
@@ -3865,9 +3875,10 @@ const applyPendingBlockAnim = () => {
                   b.style.transition = '';
               });
 
+              const activeTab = getActiveTab();
               const newOrder = [...zone.querySelectorAll('.block.pinned')]
                   .map(b => b.getAttribute('data-id'));
-              localStorage.setItem('pinnedBlockOrder_tab9', JSON.stringify(newOrder));
+              localStorage.setItem(`pinnedBlockOrder_${activeTab}`, JSON.stringify(newOrder));
 
           } else if (!didDrag && pinBtn) {
               // No movement — treat as a click to unpin
@@ -3885,10 +3896,6 @@ const applyPendingBlockAnim = () => {
 
   const renderBlocks = (tab = getActiveTab(), filteredBlocks = null, skipTagUpdate = false) => {
     console.log("🔍 Checking tab value:", tab, typeof tab);
-
-    if (renderAbortController) renderAbortController.abort();
-    renderAbortController = new AbortController();
-    const signal = renderAbortController.signal;
 
     if (typeof tab !== "string") {
       console.error("❌ Error: 'tab' should be a string but got:", tab);
@@ -3924,17 +3931,22 @@ const applyPendingBlockAnim = () => {
     const resultsSection = document.getElementById(sectionId);
     if (!resultsSection) return;
 
-    const _filterTabs  = new Set(['tab3', 'tab6', 'tab7', 'tab9']);
-    const _openBtnHTML = _filterTabs.has(tab)
-        ? `<button class="filter-open-btn" data-tab="${tab}" title="Show filters">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M15 18l-6-6 6-6"/>
-              </svg>
-          </button>`
-        : '';
+    // ── HEADER: create once, skip on subsequent renders ──────────────
+    if (!resultsSection.querySelector('.results-header')) {
 
-resultsSection.innerHTML = `
-      <div id="results_header_${tabSuffix}" class="results-header">
+      const _filterTabs  = new Set(['tab3', 'tab6', 'tab7', 'tab9']);
+      const _openBtnHTML = _filterTabs.has(tab)
+          ? `<button class="filter-open-btn" data-tab="${tab}" title="Show filters">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
+            </button>`
+          : '';
+
+      const headerEl = document.createElement('div');
+      headerEl.id = `results_header_${tabSuffix}`;
+      headerEl.className = 'results-header';
+      headerEl.innerHTML = `
         <div id="header-controls_${tabSuffix}" class="header-controls">
           <button id="results-sort-btn_${tabSuffix}" class="results-settings">
             <img src="./images/Sort_Icon.svg" alt="Sort icon">
@@ -3956,112 +3968,138 @@ resultsSection.innerHTML = `
           <button id="add_block_button" class="add-block-button green-button">+</button>
           ${_openBtnHTML}
         </div>
-      </div>
-    `;
-        
-    const addBtn = document.getElementById(`results_header_${tabSuffix}`)
-      .querySelector('#add_block_button');
-    if (addBtn) {
-      addBtn.onclick = () => {
-        if (tab === 'tab9') {
-            startInlineAdd();
-        }
-      };
-    }
+      `;
+      resultsSection.prepend(headerEl);
 
-    const settingsBtn  = document.getElementById(`results-settings_${tabSuffix}`);
-    const viewDropdown = document.getElementById(`view-toggle-dropdown_${tabSuffix}`);
-    const activeTab    = tab;
-    const savedView    = localStorage.getItem(`activeViewState_${activeTab}`) || "condensed";
-
-    const closeDropdowns = () => {
-      viewDropdown.classList.add("hidden");
-      sortDropdown.classList.add("hidden");
-    };
-
-    settingsBtn.addEventListener("click", e => {
-      e.stopPropagation();
-      const wasOpen = !viewDropdown.classList.contains("hidden");
-      closeDropdowns();
-      if (!wasOpen) {
-        const rect = settingsBtn.getBoundingClientRect();
-        viewDropdown.style.top  = `${rect.bottom + 5}px`;
-        viewDropdown.style.left = `${rect.left}px`;
-        viewDropdown.classList.remove("hidden");
+      // ── Wire add button ──
+      const addBtn = headerEl.querySelector('#add_block_button');
+      if (addBtn) {
+        addBtn.onclick = () => {
+          if (tab === 'tab9') startInlineAdd();
+        };
       }
-    });
 
-    document.addEventListener("click", closeDropdowns, { signal });
+      // ── Wire view dropdown ──
+      const settingsBtn  = document.getElementById(`results-settings_${tabSuffix}`);
+      const viewDropdown = document.getElementById(`view-toggle-dropdown_${tabSuffix}`);
+      const sortBtn      = document.getElementById(`results-sort-btn_${tabSuffix}`);
+      const sortDropdown = document.getElementById(`sort-dropdown_${tabSuffix}`);
 
-    viewDropdown.querySelectorAll(".view-toggle-item").forEach(item => {
-      const state = item.dataset.state;
-      item.classList.toggle("selected", state === savedView);
-      item.addEventListener("click", e => {
-        e.stopPropagation();
-        closeDropdowns();
-        updateBlocksViewState(state);
-        viewDropdown.querySelectorAll(".view-toggle-item")
-          .forEach(i => i.classList.toggle("selected", i === item));
+      const closeDropdowns = () => {
         viewDropdown.classList.add("hidden");
-      });
-    });
-
-    const sortBtn       = document.getElementById(`results-sort-btn_${tabSuffix}`);
-    const sortDropdown  = document.getElementById(`sort-dropdown_${tabSuffix}`);
-    const savedSortMode = localStorage.getItem(`activeSortOrder_${tab}`) || "newest";
-
-    sortBtn.addEventListener("click", e => {
-      e.stopPropagation();
-      const wasOpen = !sortDropdown.classList.contains("hidden");
-      closeDropdowns();
-      if (!wasOpen) {
-        const rect = sortBtn.getBoundingClientRect();
-        sortDropdown.style.top  = `${rect.bottom + 5}px`;
-        sortDropdown.style.left = `${rect.left}px`;
-        sortDropdown.classList.remove("hidden");
-      }
-    });
-
-    sortDropdown.querySelectorAll(".sort-item").forEach(item => {
-      const mode = item.dataset.sort;
-      item.classList.toggle("selected", mode === savedSortMode);
-      item.addEventListener("click", e => {
-        e.stopPropagation();
-        localStorage.setItem(`activeSortOrder_${tab}`, mode);
-        sortDropdown.querySelectorAll(".sort-item")
-          .forEach(i => i.classList.toggle("selected", i === item));
         sortDropdown.classList.add("hidden");
-        renderBlocks(tab, getBlocks(tab));
-        updateTags();
-        updateViewToggleDropdown(tabSuffix);
+      };
+
+      settingsBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        const wasOpen = !viewDropdown.classList.contains("hidden");
+        closeDropdowns();
+        if (!wasOpen) {
+          const rect = settingsBtn.getBoundingClientRect();
+          viewDropdown.style.top  = `${rect.bottom + 5}px`;
+          viewDropdown.style.left = `${rect.left}px`;
+          viewDropdown.classList.remove("hidden");
+        }
       });
-    });
 
-    if (tab === "tab6") {
-      const permanentItems  = [
-        { id: "perm1", defaultValue: "00" },
-        { id: "perm2", defaultValue: "00" },
-        { id: "perm3", defaultValue: "00" }
-      ];
-      const colorClasses = { perm1: "gold-bg", perm2: "silver-bg", perm3: "copper-bg" };
+      document.addEventListener("click", closeDropdowns);
 
-      let permanentHTML = "";
-      permanentItems.forEach(({ id, defaultValue }) => {
-        const savedValue = localStorage.getItem(`permanentItem_${id}`) || defaultValue;
-        permanentHTML += `
-          <div class="block minimized permanent-block ${colorClasses[id]}" data-id="${id}">
-            <h4 class="permanent-title" contenteditable="true">${savedValue}</h4>
-          </div>
-        `;
+      const savedView = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
+      viewDropdown.querySelectorAll(".view-toggle-item").forEach(item => {
+        const state = item.dataset.state;
+        item.classList.toggle("selected", state === savedView);
+        item.addEventListener("click", e => {
+          e.stopPropagation();
+          closeDropdowns();
+          updateBlocksViewState(state);
+          viewDropdown.querySelectorAll(".view-toggle-item")
+            .forEach(i => i.classList.toggle("selected", i === item));
+        });
       });
-      resultsSection.insertAdjacentHTML("beforeend", `<div class="permanent-items-container">${permanentHTML}</div>`);
-    }
 
+      // ── Wire sort dropdown ──
+      const savedSortMode = localStorage.getItem(`activeSortOrder_${tab}`) || "newest";
+
+      sortBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        const wasOpen = !sortDropdown.classList.contains("hidden");
+        closeDropdowns();
+        if (!wasOpen) {
+          const rect = sortBtn.getBoundingClientRect();
+          sortDropdown.style.top  = `${rect.bottom + 5}px`;
+          sortDropdown.style.left = `${rect.left}px`;
+          sortDropdown.classList.remove("hidden");
+        }
+      });
+
+      sortDropdown.querySelectorAll(".sort-item").forEach(item => {
+        const mode = item.dataset.sort;
+        item.classList.toggle("selected", mode === savedSortMode);
+        item.addEventListener("click", e => {
+          e.stopPropagation();
+          localStorage.setItem(`activeSortOrder_${tab}`, mode);
+          sortDropdown.querySelectorAll(".sort-item")
+            .forEach(i => i.classList.toggle("selected", i === item));
+          sortDropdown.classList.add("hidden");
+          renderBlocks(tab, getBlocks(tab));
+          updateTags();
+          updateViewToggleDropdown(tabSuffix);
+        });
+      });
+
+      // ── Event delegation: block expand/collapse toggle ──
+      resultsSection.addEventListener("click", function(e) {
+        const blockEl = e.target.closest('.block:not(.permanent-block)');
+        if (!blockEl || !resultsSection.contains(blockEl)) return;
+
+        if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
+        if (e.target.classList.contains('circle')) return;
+        if (blockEl.classList.contains('inline-editing')) return;
+
+        if (!blockEl.classList.contains('condensed')) {
+          const validTargets = ['.block', '.block-header', '.block-header-left'];
+          const isEmptySpace = validTargets.some(sel =>
+            e.target === blockEl.querySelector(sel) || e.target === blockEl
+          );
+          if (!isEmptySpace) return;
+        }
+
+        const blockId    = blockEl.getAttribute("data-id");
+        const blocksArr  = getBlocks(tab);
+        const targetBlock = blocksArr.find(b => b.id === blockId);
+        if (!targetBlock) return;
+
+        const isCollapsing = targetBlock.viewState === "expanded";
+
+        if (isCollapsing) {
+          const activeState = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
+          targetBlock.viewState = activeState;
+        } else {
+          targetBlock.viewState = "expanded";
+        }
+
+        localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
+
+        const doRerender = () => {
+            import('./filterManager.js').then(({ filterManager }) => {
+                filterManager.applyFilters(tabSuffix);
+            });
+        };
+
+        if (isCollapsing) {
+            animateBlockCollapse(blockEl, doRerender);
+        } else {
+            setPendingBlockAnim(blockId, blockEl.offsetHeight);
+            doRerender();
+        }
+      });
+    } // end header creation
+
+    // ── BLOCK DATA ──────────────────────────────────────────────────
     const allBlocks     = getBlocks(tab);
     const pinnedBlocks  = allBlocks.filter(b => b.pinned);
     const displayBlocks = (filteredBlocks || allBlocks).filter(b => !b.pinned);
 
-    // Sort pinned blocks by their saved manual order
     const pinnedOrder = JSON.parse(localStorage.getItem(`pinnedBlockOrder_${tab}`) || '[]');
     pinnedBlocks.sort((a, b) => {
         const ai = pinnedOrder.indexOf(a.id);
@@ -4074,81 +4112,235 @@ resultsSection.innerHTML = `
 
     console.log(`📦 Blocks to render for ${tab}:`, displayBlocks);
 
-    if (pinnedBlocks.length > 0) {
-      const pinnedHTML = pinnedBlocks.map(b => blockTemplate(b, tab)).join('');
-      resultsSection.insertAdjacentHTML('beforeend', `<div class="pinned-blocks-zone-wrapper"><div class="pinned-blocks-zone">${pinnedHTML}</div></div>`);
-      initPinnedDragReorder(resultsSection.querySelector('.pinned-blocks-zone'));
+    // ── MAP EXISTING DOM BLOCKS ─────────────────────────────────────
+    const existingDisplayEls = new Map();
+    resultsSection.querySelectorAll(':scope > .block[data-id]').forEach(el => {
+        if (!el.classList.contains('block-removing')) {
+            existingDisplayEls.set(el.getAttribute('data-id'), el);
+        }
+    });
+
+    const existingPinnedEls = new Map();
+    const oldPinnedZone = resultsSection.querySelector('.pinned-blocks-zone');
+    if (oldPinnedZone) {
+        oldPinnedZone.querySelectorAll('.block[data-id]').forEach(el => {
+            if (!el.classList.contains('block-removing')) {
+                existingPinnedEls.set(el.getAttribute('data-id'), el);
+            }
+        });
     }
 
-    if (displayBlocks.length === 0 && pinnedBlocks.length === 0) {
-      const p = document.createElement('p');
-      p.classList.add('results-placeholder');
-      p.textContent = 'Use the + button to add items here…';
-      p.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0.25;';
-      resultsSection.appendChild(p);
+    // ── IDENTIFY & ANIMATE ORPHANS FIRST ────────────────────────────
+    // Mark departing blocks before the sync loop so they collapse in-place
+    // and the sync loop can skip over them when checking positions.
+    const displayIdSet = new Set(displayBlocks.map(b => b.id));
+    existingDisplayEls.forEach((el, id) => {
+        if (!displayIdSet.has(id) && !el.classList.contains('inline-editing')) {
+            el.classList.add('block-removing');
+            const h = el.offsetHeight;
+            el.style.maxHeight = h + 'px';
+            el.style.overflow = 'hidden';
+            el.style.pointerEvents = 'none';
+            void el.offsetHeight;
+            el.style.transition = 'opacity 0.35s ease, max-height 0.5s ease 0.1s, margin 0.5s ease 0.1s, padding 0.5s ease 0.1s';
+            el.style.opacity = '0';
+            el.style.maxHeight = '0';
+            el.style.marginTop = '0';
+            el.style.marginBottom = '0';
+            el.style.paddingTop = '0';
+            el.style.paddingBottom = '0';
+            console.log('🗑️ Animating block removal:', id);
+            setTimeout(() => el.remove(), 650);
+        }
+    });
+
+    // ── SYNC PINNED ZONE ────────────────────────────────────────────
+    let pinnedWrapper = resultsSection.querySelector('.pinned-blocks-zone-wrapper');
+    if (pinnedBlocks.length > 0) {
+        if (!pinnedWrapper) {
+            pinnedWrapper = document.createElement('div');
+            pinnedWrapper.className = 'pinned-blocks-zone-wrapper';
+            pinnedWrapper.innerHTML = '<div class="pinned-blocks-zone"></div>';
+            const header = resultsSection.querySelector('.results-header');
+            if (header) header.after(pinnedWrapper);
+            else resultsSection.prepend(pinnedWrapper);
+        }
+        const pinnedZone = pinnedWrapper.querySelector('.pinned-blocks-zone');
+
+        pinnedBlocks.forEach(block => {
+            const el = existingPinnedEls.get(block.id);
+            const viewState = block.viewState || 'condensed';
+            if (el && el.classList.contains(viewState)) {
+                pinnedZone.appendChild(el);
+                existingPinnedEls.delete(block.id);
+            } else {
+                if (el) { el.remove(); existingPinnedEls.delete(block.id); }
+                pinnedZone.insertAdjacentHTML('beforeend', blockTemplate(block, tab));
+            }
+        });
+
+        existingPinnedEls.forEach(el => {
+            el.classList.add('block-removing');
+            const h = el.offsetHeight;
+            el.style.maxHeight = h + 'px';
+            el.style.overflow = 'hidden';
+            el.style.pointerEvents = 'none';
+            void el.offsetHeight;
+            el.style.transition = 'opacity 0.35s ease, max-height 0.5s ease 0.1s, margin 0.5s ease 0.1s, padding 0.5s ease 0.1s';
+            el.style.opacity = '0';
+            el.style.maxHeight = '0';
+            el.style.marginTop = '0';
+            el.style.marginBottom = '0';
+            el.style.paddingTop = '0';
+            el.style.paddingBottom = '0';
+            setTimeout(() => el.remove(), 650);
+        });
+
+        initPinnedDragReorder(pinnedZone);
+    } else if (pinnedWrapper) {
+        pinnedWrapper.remove();
     }
+
+    // ── SYNC DISPLAY BLOCKS (position-aware, skips departing blocks) ──
+    let prevEl = resultsSection.querySelector('.pinned-blocks-zone-wrapper')
+              || resultsSection.querySelector('.results-header');
 
     displayBlocks.forEach(block => {
-      resultsSection.insertAdjacentHTML('beforeend', blockTemplate(block, tab));
+        const el = existingDisplayEls.get(block.id);
+        const viewState = block.viewState || 'condensed';
+
+        if (el && el.classList.contains(viewState) && !el.classList.contains('block-removing')) {
+            existingDisplayEls.delete(block.id);
+            // Find expected next sibling, skipping over departing blocks
+            let expectedNext = prevEl ? prevEl.nextElementSibling : resultsSection.firstElementChild;
+            while (expectedNext && expectedNext.classList.contains('block-removing')) {
+                expectedNext = expectedNext.nextElementSibling;
+            }
+            if (el !== expectedNext) {
+                if (prevEl) prevEl.after(el);
+                else resultsSection.prepend(el);
+            }
+            prevEl = el;
+        } else if (el && !el.classList.contains('block-removing')) {
+            // View state changed — rebuild instantly (collapse/expand animation is handled separately)
+            existingDisplayEls.delete(block.id);
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = blockTemplate(block, tab);
+            const newEl = wrapper.firstElementChild;
+            el.replaceWith(newEl);
+            prevEl = newEl;
+        } else if (!el) {
+            // Genuinely new block — create with expand + fade in
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = blockTemplate(block, tab);
+            const newEl = wrapper.firstElementChild;
+            if (prevEl) prevEl.after(newEl);
+            else resultsSection.prepend(newEl);
+            const naturalHeight = newEl.scrollHeight;
+            newEl.style.overflow = 'hidden';
+            newEl.style.maxHeight = '0';
+            newEl.style.opacity = '0';
+            newEl.style.marginTop = '0';
+            newEl.style.marginBottom = '0';
+            newEl.style.paddingTop = '0';
+            newEl.style.paddingBottom = '0';
+            void newEl.offsetHeight;
+            requestAnimationFrame(() => {
+                newEl.style.transition = 'max-height 0.5s ease, opacity 0.4s ease 0.1s, margin 0.5s ease, padding 0.5s ease';
+                newEl.style.maxHeight = naturalHeight + 'px';
+                newEl.style.opacity = '1';
+                newEl.style.marginTop = '0';
+                newEl.style.marginBottom = '8px';
+                newEl.style.paddingTop = '10px';
+                newEl.style.paddingBottom = '10px';
+                const cleanup = () => {
+                    newEl.style.maxHeight = '';
+                    newEl.style.overflow = '';
+                    newEl.style.transition = '';
+                    newEl.style.opacity = '';
+                    newEl.style.marginTop = '';
+                    newEl.style.marginBottom = '';
+                    newEl.style.paddingTop = '';
+                    newEl.style.paddingBottom = '';
+                };
+                newEl.addEventListener('transitionend', (e) => {
+                    if (e.target === newEl && e.propertyName === 'max-height') cleanup();
+                }, { once: true });
+                setTimeout(cleanup, 600);
+            });
+            prevEl = newEl;
+        }
     });
+
+    // ── PLACEHOLDER ─────────────────────────────────────────────────
+    let placeholder = resultsSection.querySelector('.results-placeholder');
+    if (displayBlocks.length === 0 && pinnedBlocks.length === 0) {
+      if (!placeholder) {
+        placeholder = document.createElement('p');
+        placeholder.classList.add('results-placeholder');
+        placeholder.textContent = 'Use the + button to add items here…';
+        placeholder.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0.25;';
+        resultsSection.appendChild(placeholder);
+      }
+    } else if (placeholder) {
+      placeholder.remove();
+    }
+
+    // ── FADE OVERLAY (always last child for sticky bottom) ────────
+    let fadeEl = resultsSection.querySelector('.results-fade');
+    if (!fadeEl) {
+        fadeEl = document.createElement('div');
+        fadeEl.className = 'results-fade';
+    }
+    resultsSection.appendChild(fadeEl);
+
+    // Control fade visibility based on actual overflow
+    const updateFade = () => {
+        const scrollableAmount = resultsSection.scrollHeight - resultsSection.clientHeight;
+        if (scrollableAmount <= 5) {
+            fadeEl.style.opacity = '0';
+            return;
+        }
+        const distanceFromBottom = resultsSection.scrollHeight - resultsSection.scrollTop - resultsSection.clientHeight;
+        fadeEl.style.opacity = Math.min(distanceFromBottom / 42, 1);
+    };
+    resultsSection.removeEventListener('scroll', resultsSection._resultsFadeHandler);
+    resultsSection._resultsFadeHandler = updateFade;
+    resultsSection.addEventListener('scroll', updateFade);
+    updateFade();
+    // Track scrollHeight changes during block animations (~700ms)
+    if (resultsSection._fadeRAF) cancelAnimationFrame(resultsSection._fadeRAF);
+    const startTime = performance.now();
+    const trackFade = (now) => {
+        updateFade();
+        if (now - startTime < 700) resultsSection._fadeRAF = requestAnimationFrame(trackFade);
+    };
+    resultsSection._fadeRAF = requestAnimationFrame(trackFade);
+    // Re-check on element size changes (window resize)
+    if (!resultsSection._fadeResizeObserver) {
+        resultsSection._fadeResizeObserver = new ResizeObserver(updateFade);
+        resultsSection._fadeResizeObserver.observe(resultsSection);
+    }
+    // Re-check on content changes (blocks added/removed, style changes)
+    if (!resultsSection._fadeMutationObserver) {
+        let debounce = null;
+        resultsSection._fadeMutationObserver = new MutationObserver(() => {
+            clearTimeout(debounce);
+            debounce = setTimeout(updateFade, 50);
+            setTimeout(updateFade, 350);
+            setTimeout(updateFade, 600);
+        });
+        resultsSection._fadeMutationObserver.observe(resultsSection, {
+            childList: true, subtree: true,
+            attributes: true, attributeFilter: ['class', 'style']
+        });
+    }
 
     applyInlineDiceRolls(resultsSection, tab);
     console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
 
-    // Click-to-toggle view for non-permanent blocks
-    document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`)
-      .forEach(blockEl => {
-        blockEl.addEventListener("click", function(e) {
-            // Action buttons (pin, edit, duplicate, remove, ⋯ trigger) handle their own clicks
-            if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
-            // Interactive circles (uses) handle their own clicks
-            if (e.target.classList.contains('circle')) return;
-            if (blockEl.classList.contains('inline-editing')) return;
-
-          // For condensed blocks: click anywhere expands
-          // For expanded blocks: only empty space collapses (tags/text remain interactive)
-          if (!blockEl.classList.contains('condensed')) {
-            const validTargets = ['.block', '.block-header', '.block-header-left'];
-            const isEmptySpace = validTargets.some(sel =>
-              e.target === blockEl.querySelector(sel) || e.target === blockEl
-            );
-            if (!isEmptySpace) return;
-          }
-
-          const blockId    = blockEl.getAttribute("data-id");
-          const blocksArr  = getBlocks(tab);
-          const targetBlock = blocksArr.find(b => b.id === blockId);
-          if (!targetBlock) return;
-
-          const isCollapsing = targetBlock.viewState === "expanded";
-
-          if (isCollapsing) {
-            const activeState = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
-            targetBlock.viewState = activeState;
-          } else {
-            targetBlock.viewState = "expanded";
-          }
-
-          localStorage.setItem(`userBlocks_${tab}`, JSON.stringify(blocksArr));
-
-          const doRerender = () => {
-              import('./filterManager.js').then(({ filterManager }) => {
-                  filterManager.applyFilters(tabSuffix);
-              });
-          };
-
-          if (isCollapsing) {
-              animateBlockCollapse(blockEl, doRerender);
-          } else {
-              setPendingBlockAnim(blockId, blockEl.offsetHeight);
-              doRerender();
-          }
-        });
-      });
-
     if (!skipTagUpdate) updateTags();
     attachDynamicTooltips();
-    initScrollFades('.results-section',              null,                        '--results-fade-opacity',      '_scrollFadeHandler');
     initScrollFades('.filter-section',               '--filter-fade-top-opacity', '--filter-fade-bottom-opacity','_filterFadeHandler', 100);
     initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
     initScrollFades('.roll-results', '--dice-fade-top-opacity', '--dice-fade-bottom-opacity', '_diceFadeHandler', 100);
