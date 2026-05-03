@@ -2,6 +2,16 @@ import { filterManager } from './filterManager.js';
 import { categoryTags, blockTypeConfig, BOOK_ACCENT_COLORS, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
 import { toggleBlockUse } from './uiHandlers.js';
 
+export function sanitizeBlockHTML(html) {
+    return (html || '')
+        .replace(/<div[^>]*>/gi, '')
+        .replace(/^(&nbsp;|\s)+/gi, '')
+        .replace(/<\/div>/gi, '<br>')
+        .replace(/<p[^>]*>/gi, '')
+        .replace(/<\/p>/gi, '<br>')
+        .trim();
+}
+
 // Chain SVG — tab6 attunement marker
 const ATTUNEMENT_CHAIN_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5"/></svg>`;
 
@@ -147,14 +157,7 @@ export const blockTemplate = (block, tab = "tab4") => {
         </div>
     ` : "";
 
-    let bodyHTML = block.text || "";
-    bodyHTML = bodyHTML
-        .replace(/<div[^>]*>/gi, '')
-        .replace(/^(&nbsp;|\s)+/gi, '')
-        .replace(/<\/div>/gi, '<br>')
-        .replace(/<p[^>]*>/gi, '')
-        .replace(/<\/p>/gi, '<br>')
-        .trim();
+    const bodyHTML = sanitizeBlockHTML(block.text);
 
     const hasBody = bodyHTML.trim() !== "";
 

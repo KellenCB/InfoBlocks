@@ -1,9 +1,8 @@
 import { initSplitView } from './layoutMode.js';
 import { appManager, actionButtonHandlers } from './appManager.js';
-import { blockActionsHandler, saveEditHandler } from './blockActionsHandler.js';
-import { overlayHandler, handleSaveBlock } from './overlayHandler.js';
+import { blockActionsHandler } from './blockActionsHandler.js';
 import { filterManager } from './filterManager.js';
-import { categoryTags, blockTypeConfig } from './tagConfig.js';
+import { blockTypeConfig } from './tagConfig.js';
 import { stripHTML } from './appManager.js';
 import { initScrollFades, setupSearchInput, initDragToScroll } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
@@ -103,7 +102,6 @@ const attachEventListeners = () => {
     console.log("Attaching event listeners");
 
     actionButtonHandlers.attachActionButtonListeners();
-    overlayHandler.initializeEventHandlers();
     keyboardShortcutsHandler.handleKeyboardShortcuts();
 
     blockActionsHandler.attachBlockActions();
@@ -143,12 +141,8 @@ if (menuButton && menuOverlay) {
 // Note: cancel_remove_button is handled in blockActionsHandler because it
 // also needs to clear pendingDeleteBlockId.
 const overlayCloseConfigs = [
-    { buttonId: 'cancel_add_block',            overlaySelector: '.add-block-overlay' },
-    { buttonId: 'cancel_edit_block',           overlaySelector: '.edit-block-overlay' },
     { buttonId: 'cancel_clear_button',         overlaySelector: '.cleardata-overlay' },
     { buttonId: 'close_spell_slot_edit',       overlaySelector: '.spell-slot-edit-overlay' },
-    { buttonId: 'close_suit_uses_edit',        overlaySelector: '.suit-uses-edit-overlay' },
-    { buttonId: 'cancel_remove_action_button', overlaySelector: '.remove-action-overlay' },
 ];
 
 function initOverlayCancelButtons() {
@@ -676,66 +670,6 @@ document.querySelectorAll(".clear_filters_button").forEach(button => {
     button.addEventListener("click", clearFilters);
 });
 
-// 📌 Initialize dynamic tags and overlays
-const initializeDynamicTags = () => {
-    console.log("Initializing dynamic tags and overlays");
-
-    [4, 6, 7, 8, 9].forEach(tabNumber => {
-        const tagsSection = document.getElementById(`dynamic_tags_section_${tabNumber}`);
-        if (!tagsSection) return;
-
-        tagsSection.innerHTML = "";
-
-        Object.keys(categoryTags).forEach(category => {
-            if (!categoryTags[category].tabs.includes(`tab${tabNumber}`)) return;
-
-            const label = categoryTags[category].label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-
-            const group = document.createElement("div");
-            group.classList.add("tag-accordion-group", categoryTags[category].className);
-            group.dataset.category = category;
-
-            const header = document.createElement("div");
-            header.classList.add("tag-accordion-header");
-            header.dataset.category = category;
-
-            const nameSpan = document.createElement("span");
-            nameSpan.classList.add("tag-accordion-name");
-            nameSpan.textContent = label;
-            header.appendChild(nameSpan);
-
-            const chipsSpan = document.createElement("span");
-            chipsSpan.classList.add("tag-accordion-chips");
-            header.appendChild(chipsSpan);
-
-            const chevron = document.createElement("span");
-            chevron.classList.add("tag-accordion-chevron");
-            chevron.textContent = "▸";
-            header.appendChild(chevron);
-
-            const body = document.createElement("div");
-            body.classList.add("tag-accordion-body");
-            body.id = `${category}_tags_list_${tabNumber}`;
-
-            const bodyInner = document.createElement("div");
-            bodyInner.classList.add("tag-accordion-body-inner");
-
-            categoryTags[category].tags.forEach(tag => {
-                const button = document.createElement("button");
-                button.classList.add("tag-button", categoryTags[category].className);
-                button.dataset.tag = tag;
-                button.textContent = tag;
-                bodyInner.appendChild(button);
-            });
-
-            body.appendChild(bodyInner);
-            group.appendChild(header);
-            group.appendChild(body);
-            tagsSection.appendChild(group);
-        });
-    });
-};
-
 // Toggle group open/closed.
 // On collapse: read selected tags from the body and build chips dynamically.
 // On expand: remove any existing chips.
@@ -819,16 +753,10 @@ document.addEventListener("click", (e) => {
 const keyboardShortcutsHandler = (() => {
     const handleKeyboardShortcuts = () => {
         document.addEventListener("keydown", (event) => {
-            const addBlockOverlay        = document.querySelector(".add-block-overlay");
             const clearDataOverlay       = document.querySelector(".cleardata-overlay");
-            const editBlockOverlay       = document.querySelector(".edit-block-overlay");
             const spellSlotEditOverlay   = document.querySelector(".spell-slot-edit-overlay");
-            const saveBlockButton        = document.getElementById("save-block-button");
-            const cancelAddBlockButton   = document.getElementById("cancel_add_block");
             const confirmClearButton     = document.getElementById("confirm_clear_button");
             const cancelClearButton      = document.getElementById("cancel_clear_button");
-            const saveEditButton         = document.getElementById("save-edit-button");
-            const cancelEditButton       = document.getElementById("cancel_edit_block");
             const saveSpellSlotButton    = document.getElementById("save_spell_slot_changes");
             const cancelSpellSlotButton  = document.getElementById("close_spell_slot_edit");
             const removeBlockOverlay     = document.querySelector(".remove-block-overlay");
@@ -837,51 +765,13 @@ const keyboardShortcutsHandler = (() => {
             const menuOverlay            = document.getElementById("menu_overlay");
             const menuButton             = document.getElementById("Menu_button");
 
-            if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-                event.preventDefault();
-                if (addBlockOverlay?.classList.contains("show") && saveBlockButton) {
-                    saveBlockButton.click();
-                } else if (editBlockOverlay?.classList.contains("show") && saveEditButton) {
-                    saveEditButton.click();
-                }
-                return;
-            }
-
             if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
-
-            if (addBlockOverlay?.classList.contains("show")) {
-                if (event.key === "Enter" && saveBlockButton) {
-                    const inUL = document.queryCommandState('insertUnorderedList');
-                    const inOL = document.queryCommandState('insertOrderedList');
-                    if (!(inUL || inOL)) {
-                        event.preventDefault();
-                        saveBlockButton.click();
-                    }
-                } else if (event.key === "Escape" && cancelAddBlockButton) {
-                    const openFrPanel = addBlockOverlay.querySelector('.find-replace-panel:not(.hidden)');
-                    if (!openFrPanel) cancelAddBlockButton.click();
-                }
-            }
 
             if (clearDataOverlay?.classList.contains("show")) {
                 if (event.key === "Enter" && confirmClearButton) {
                     confirmClearButton.click();
                 } else if (event.key === "Escape" && cancelClearButton) {
                     cancelClearButton.click();
-                }
-            }
-
-            if (editBlockOverlay?.classList.contains("show")) {
-                if (event.key === "Enter" && saveEditButton) {
-                    const inUL = document.queryCommandState('insertUnorderedList');
-                    const inOL = document.queryCommandState('insertOrderedList');
-                    if (!(inUL || inOL)) {
-                        event.preventDefault();
-                        saveEditButton.click();
-                    }
-                } else if (event.key === "Escape" && cancelEditButton) {
-                    const openFrPanel = editBlockOverlay.querySelector('.find-replace-panel:not(.hidden)');
-                    if (!openFrPanel) cancelEditButton.click();
                 }
             }
 
@@ -902,19 +792,6 @@ const keyboardShortcutsHandler = (() => {
                 }
             }
 
-            const suitUsesOverlay   = document.querySelector('.suit-uses-edit-overlay');
-            const saveSuitUsesBtn   = document.getElementById('save_suit_uses');
-            const cancelSuitUsesBtn = document.getElementById('close_suit_uses_edit');
-
-            if (suitUsesOverlay?.classList.contains('show')) {
-                if (event.key === 'Enter' && saveSuitUsesBtn) {
-                    event.preventDefault();
-                    saveSuitUsesBtn.click();
-                } else if (event.key === 'Escape' && cancelSuitUsesBtn) {
-                    cancelSuitUsesBtn.click();
-                }
-            }
-
             if (event.key === "Escape" && menuOverlay?.classList.contains("active")) {
                 menuOverlay.classList.remove("active");
                 menuButton?.classList.remove("menu-button-open");
@@ -926,78 +803,6 @@ const keyboardShortcutsHandler = (() => {
 
     return { handleKeyboardShortcuts };
 })();
-
-/* ==================================================================*/
-/* ====================== RESIZE HANDLE =============================*/
-/* ==================================================================*/
-
-/*
-document.addEventListener("DOMContentLoaded", function() {
-  const resizableTabs = ["tab4", "tab8"];
-  const isLandscape = () => window.innerWidth > window.innerHeight;
-
-  resizableTabs.forEach(function(tabId) {
-    const tab = document.getElementById(tabId);
-    if (!tab) return;
-
-    const tabNum      = tabId.replace("tab", "");
-    const wrapper     = tab.querySelector(".actions-grid-wrapper");
-    const resultsGrid = document.getElementById(`results_section_${tabNum}`);
-    const handle      = tab.querySelector(".resizable-handle");
-    if (!wrapper || !resultsGrid || !handle) return;
-
-    let isDragging   = false;
-    let startY, initActionsH, initResultsH;
-
-    handle.addEventListener("mousedown", function(e) {
-      if (isLandscape()) return;
-
-      isDragging      = true;
-      startY          = e.clientY;
-      initActionsH    = wrapper.getBoundingClientRect().height;
-      initResultsH    = resultsGrid.getBoundingClientRect().height;
-      document.body.style.cursor     = "row-resize";
-      document.body.style.userSelect = "none";
-    });
-
-    document.addEventListener("mousemove", function(e) {
-      if (!isDragging) return;
-      if (isLandscape()) {
-        isDragging = false;
-        cleanup();
-        return;
-      }
-
-      const delta       = e.clientY - startY;
-      const containerH  = tab.getBoundingClientRect().height;
-      const minH        = 50;
-      let newActionsH   = Math.max(minH, Math.min(initActionsH + delta, containerH - handle.offsetHeight - minH));
-      let newResultsH   = containerH - newActionsH - handle.offsetHeight;
-
-      wrapper.style.height     = newActionsH + "px";
-      resultsGrid.style.height = newResultsH + "px";
-    });
-
-    document.addEventListener("mouseup", function() {
-      if (!isDragging) return;
-      isDragging = false;
-      cleanup();
-    });
-
-    window.addEventListener("resize", () => {
-      if (isLandscape()) {
-        wrapper.style.height     = "";
-        resultsGrid.style.height = "";
-      }
-    });
-
-    function cleanup() {
-      document.body.style.cursor     = "";
-      document.body.style.userSelect = "";
-    }
-  });
-});
-*/
 
 /* ==================================================================*/
 /* ============================== FIN ================================*/
@@ -1013,7 +818,6 @@ window.onload = async () => {
 
     // Run migrations before anything else
     migrateToTab9();
-    migrateToTab9();
     migrateTab5ToTab3();
     migrateTab3Schema();
 
@@ -1022,20 +826,8 @@ window.onload = async () => {
     attachEventListeners();
     blockActionsHandler.attachBlockActions();
 
-    const saveEditButton = document.getElementById("save-edit-button");
-    if (saveEditButton) {
-        saveEditButton.addEventListener("click", saveEditHandler);
-    }
-
-    const saveBlockButton = document.getElementById("save-block-button");
-    if (saveBlockButton) {
-        saveBlockButton.addEventListener("click", handleSaveBlock);
-    }
-
-    initializeDynamicTags();
     initBlockTypeFilterButtons();
 
-    await appManager.loadBlocks();
     filterManager.registerRenderer(
         (tab, blocks, skipTagUpdate) => appManager.renderBlocks(tab, blocks, skipTagUpdate),
         ()            => appManager.updateTags(),

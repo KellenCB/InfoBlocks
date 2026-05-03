@@ -1,7 +1,7 @@
 // appManager.js
 import { categoryTags, blockTypeConfig, BOOK_ACCENT_COLORS, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
-import { blockTemplate } from './blockTemplate.js';
-import { overlayHandler, initUsesField, initToolbarForEditor } from './overlayHandler.js';
+import { blockTemplate, sanitizeBlockHTML } from './blockTemplate.js';
+
 import { applyInlineDiceRolls } from './diceRoller.js';
 import { filterManager } from './filterManager.js';
 import { blockActionsHandler } from './blockActionsHandler.js';
@@ -12,6 +12,460 @@ export function stripHTML(html) {
   const tmp = document.createElement('div');
   tmp.innerHTML = html || '';
   return tmp.textContent || tmp.innerText || '';
+}
+
+/* ==================================================================*/
+/* ================ USES FIELD (moved from overlayHandler) =========*/
+/* ==================================================================*/
+
+export function initUsesField(overlayElement, storageKeyPrefix, defaultSlots = 5) {
+    let usesState = JSON.parse(localStorage.getItem(storageKeyPrefix)) || [];
+  
+    overlayElement.innerHTML = "";
+  
+    const usesRow = document.createElement("div");
+    usesRow.classList.add("uses-row");
+
+    const controlsContainer = document.createElement("div");
+    controlsContainer.classList.add("uses-controls-container");
+
+    const addButton = document.createElement("div");
+    addButton.classList.add("circle", "circle-button", "circle-add");
+    addButton.innerHTML = "+";
+    addButton.addEventListener("click", () => {
+        usesState.push(false);
+        localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
+        renderCircles();
+    });
+    controlsContainer.appendChild(addButton);
+
+    const removeButton = document.createElement("div");
+    removeButton.classList.add("circle", "circle-button", "circle-remove");
+    removeButton.innerHTML = "−";
+    removeButton.addEventListener("click", () => {
+        if (usesState.length > 0) {
+            usesState.pop();
+            localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
+            renderCircles();
+        }
+    });
+    controlsContainer.appendChild(removeButton);
+
+    const circlesContainer = document.createElement("div");
+    circlesContainer.classList.add("uses-circles-container");
+
+    function renderCircles() {
+        circlesContainer.innerHTML = "";
+        usesState.forEach((state, index) => {
+            const circle = document.createElement("div");
+            circle.classList.add("circle");
+            if (state) circle.classList.add("unfilled");
+            circle.addEventListener("click", () => {
+                circle.classList.toggle("unfilled");
+                usesState[index] = circle.classList.contains("unfilled");
+                localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
+            });
+            circlesContainer.appendChild(circle);
+        });
+    }
+  
+    renderCircles();
+
+    usesRow.appendChild(controlsContainer);
+    usesRow.appendChild(circlesContainer);
+    overlayElement.appendChild(usesRow);
+}
+
+/* ==================================================================*/
+/* ============ TEXT TOOLBAR (moved from overlayHandler) ============*/
+/* ==================================================================*/
+
+export function initToolbarForEditor(editor) {
+      const toolbar = document.createElement('div');
+      toolbar.className = 'text-toolbar';
+      toolbar.innerHTML = `
+        <button type="button" data-action="bold" data-tooltip="Bold"><i class="fas fa-bold"></i></button>
+        <button type="button" data-action="italic" data-tooltip="Italic"><i class="fas fa-italic"></i></button>
+        <button type="button" data-action="underline" data-tooltip="Underline"><i class="fas fa-underline"></i></button>
+        <button type="button" data-action="link" data-tooltip="Link"><i class="fas fa-link"></i></button>
+        <button type="button" data-action="insertUnorderedList" data-tooltip="Unordered List"><i class="fas fa-list-ul"></i></button>
+        <button type="button" data-action="insertOrderedList" data-tooltip="Ordered List"><i class="fas fa-list-ol"></i></button>
+        <button type="button" data-action="increaseFont" data-tooltip="Increase Font"><i class="fas fa-arrow-up"></i></button>
+        <select id="font-size-select">
+            <option value="1">10px</option>
+            <option value="2">13px</option>
+            <option value="3">16px</option>
+            <option value="4">18px</option>
+            <option value="5">24px</option>
+            <option value="6">32px</option>
+            <option value="7">48px</option>
+        </select>
+        <button type="button" data-action="decreaseFont" data-tooltip="Decrease Font"><i class="fas fa-arrow-down"></i></button>
+        <button type="button" data-action="uppercase" data-tooltip="Uppercase">A↑</button>
+        <button type="button" data-action="sentencecase" data-tooltip="Sentence case">Aa</button>
+        <button type="button" data-action="lowercase" data-tooltip="Lowercase">a↓</button>
+        <button type="button" data-action="removeStyling" data-tooltip="Remove styling">✕</button>
+        <button type="button" data-action="findReplace" data-tooltip="Find and Replace">A→B</button>
+      `;
+  
+      const wrapper = document.createElement('div');
+      wrapper.className = 'editor-toolbar-wrapper';
+      editor.parentNode.replaceChild(wrapper, editor);
+      wrapper.appendChild(toolbar);
+      wrapper.appendChild(editor);
+
+      const frPanel = document.createElement('div');
+      frPanel.className = 'find-replace-panel hidden';
+      frPanel.innerHTML = `
+        <div class="find-replace-row">
+            <input type="text" class="fr-find" placeholder="Find..." />
+            <input type="text" class="fr-replace" placeholder="Replace..." />
+            <button type="button" class="fr-btn fr-find-next">Find Next</button>
+            <button type="button" class="fr-btn fr-replace-one">Replace One</button>
+            <button type="button" class="fr-btn fr-replace-all">Replace All</button>
+            <button type="button" class="fr-btn fr-close">✕</button>
+        </div>
+        <div class="fr-feedback"></div>
+      `;
+      wrapper.insertBefore(frPanel, editor);
+
+      let frMatches = [];
+      let frIndex = -1;
+
+      const frFind    = frPanel.querySelector('.fr-find');
+      const frReplace = frPanel.querySelector('.fr-replace');
+      const frFeedback = frPanel.querySelector('.fr-feedback');
+      frFeedback.style.display = 'none';
+
+      const clearFrHighlights = () => {
+        editor.querySelectorAll('span.fr-highlight, span.fr-highlight-active').forEach(span => {
+          span.replaceWith(...span.childNodes);
+        });
+        editor.normalize();
+      };
+
+      const findTextMatches = () => {
+        const results = [];
+        const query = frFind.value;
+        if (!query) return results;
+        const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        const walk = (node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.nodeValue;
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+              results.push({ node, index: match.index, length: match[0].length });
+            }
+          } else {
+            if (node.nodeType === Node.ELEMENT_NODE &&
+                (node.classList.contains('fr-highlight') || node.classList.contains('fr-highlight-active'))) {
+              results.push({ node: node.firstChild, index: 0, length: node.textContent.length });
+              return;
+            }
+            node.childNodes.forEach(walk);
+          }
+        };
+        walk(editor);
+        return results;
+      };
+
+      const highlightAll = (activeIdx = -1) => {
+        clearFrHighlights();
+        if (frMatches.length === 0) return;
+        [...frMatches].reverse().forEach(({ node, index, length }, reversedI) => {
+          const actualI = frMatches.length - 1 - reversedI;
+          if (!node || !node.parentNode) return;
+          const range = document.createRange();
+          range.setStart(node, index);
+          range.setEnd(node, index + length);
+          const span = document.createElement('span');
+          span.className = actualI === activeIdx ? 'fr-highlight-active' : 'fr-highlight';
+          range.surroundContents(span);
+        });
+        if (activeIdx >= 0) {
+          const active = editor.querySelector('span.fr-highlight-active');
+          if (active) active.scrollIntoView({ block: 'nearest' });
+        }
+      };
+
+      const buildMatches = () => {
+        clearFrHighlights();
+        frMatches = findTextMatches();
+        frIndex = -1;
+        frFeedback.textContent = '';
+        if (frMatches.length === 0) {
+          if (frFind.value) frFeedback.textContent = 'No matches found';
+        } else {
+          frFeedback.textContent = `${frMatches.length} match${frMatches.length !== 1 ? 'es' : ''} found`;
+          highlightAll();
+        }
+      };
+
+      frFind.addEventListener('input', () => {
+        if (!frFind.value) {
+          clearFrHighlights();
+          frMatches = [];
+          frIndex = -1;
+          frFeedback.textContent = '';
+          frFeedback.style.display = 'none';
+          return;
+        }
+        frFeedback.style.display = '';
+        buildMatches();
+      });
+
+      frPanel.querySelector('.fr-find-next').addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        clearFrHighlights();
+        frMatches = findTextMatches();
+        if (frMatches.length === 0) { frFeedback.textContent = 'No matches found'; return; }
+        frIndex = (frIndex + 1) % frMatches.length;
+        highlightAll(frIndex);
+        frFeedback.style.display = '';
+        frFeedback.textContent = frIndex === frMatches.length - 1
+          ? `Match ${frIndex + 1} of ${frMatches.length} — no more matches after this`
+          : `Match ${frIndex + 1} of ${frMatches.length}`;
+      });
+
+      frPanel.querySelector('.fr-replace-one').addEventListener('mousedown', e => {
+        e.preventDefault();
+        if (frIndex < 0 || frMatches.length === 0) { frFeedback.textContent = 'Use Find Next to select a match first'; return; }
+        const active = editor.querySelector('span.fr-highlight-active');
+        if (!active) { frFeedback.textContent = 'Use Find Next to select a match first'; return; }
+        const replacedIndex = frIndex;
+        const replaceText = frReplace.value;
+        active.textContent = replaceText;
+        active.className = 'fr-highlight-active';
+        editor.querySelectorAll('span.fr-highlight').forEach(span => span.replaceWith(...span.childNodes));
+        editor.normalize();
+        frMatches = findTextMatches();
+        if (frMatches.length === 0) {
+          frIndex = -1;
+          frFeedback.textContent = 'No more matches';
+          editor.querySelectorAll('span.fr-highlight-active').forEach(span => span.replaceWith(...span.childNodes));
+          editor.normalize();
+        } else {
+          frIndex = replacedIndex - 1;
+          if (frIndex < -1) frIndex = frMatches.length - 1;
+          frFeedback.textContent = `${frMatches.length} match${frMatches.length !== 1 ? 'es' : ''} remaining — use Find Next to continue`;
+          editor.querySelectorAll('span.fr-highlight').forEach(span => span.replaceWith(...span.childNodes));
+          editor.normalize();
+          frMatches = findTextMatches();
+          [...frMatches].reverse().forEach(({ node, index, length }) => {
+            if (!node || !node.parentNode) return;
+            const range = document.createRange();
+            range.setStart(node, index);
+            range.setEnd(node, index + length);
+            const span = document.createElement('span');
+            span.className = 'fr-highlight';
+            range.surroundContents(span);
+          });
+        }
+      });
+
+      frPanel.querySelector('.fr-replace-all').addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        clearFrHighlights();
+        frMatches = findTextMatches();
+        if (frMatches.length === 0) { frFeedback.textContent = 'No matches found'; return; }
+        const count = frMatches.length;
+        const replaceText = frReplace.value;
+        [...frMatches].reverse().forEach(({ node, index, length }) => {
+          if (!node || !node.parentNode) return;
+          const range = document.createRange();
+          range.setStart(node, index);
+          range.setEnd(node, index + length);
+          const span = document.createElement('span');
+          span.className = 'fr-highlight';
+          range.surroundContents(span);
+          span.textContent = replaceText;
+        });
+        editor.normalize();
+        frMatches = [];
+        frIndex = -1;
+        frFeedback.textContent = `${count} replacement${count !== 1 ? 's' : ''} made`;
+      });
+
+      frPanel.querySelector('.fr-close').addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        clearFrHighlights();
+        frPanel.classList.add('hidden');
+        frMatches = [];
+        frIndex = -1;
+        frFeedback.textContent = '';
+        frFeedback.style.display = 'none';
+        frFind.value = '';
+        frReplace.value = '';
+      });
+
+      const buttons = toolbar.querySelectorAll('button');
+      const sizeSelect = toolbar.querySelector('#font-size-select');
+  
+      sizeSelect.addEventListener('change', () => {
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('fontSize', false, sizeSelect.value);
+        updateToolbarState();
+      });
+  
+      function updateToolbarState() {
+        buttons.forEach(btn => {
+          const action = btn.dataset.action;
+          const active = document.queryCommandState(action);
+          btn.classList.toggle('selected', active);
+        });
+        const sel = window.getSelection();
+        if (sel.rangeCount && sel.toString()) {
+          const node = sel.getRangeAt(0).startContainer.parentNode;
+          const sizePx = window.getComputedStyle(node).fontSize;
+          const map = { '10px':'1','13px':'2','16px':'3','18px':'4','24px':'5','32px':'6','48px':'7' };
+          if (map[sizePx]) sizeSelect.value = map[sizePx];
+        }
+      }
+  
+      let activeTooltip = null;
+      buttons.forEach(btn => {
+        const tooltipText = btn.dataset.tooltip;
+        if (tooltipText) {
+          btn.addEventListener('mouseenter', () => {
+            clearTimeout(btn._tooltipTimer);
+            btn._tooltipTimer = setTimeout(() => {
+              const tip = document.createElement('div');
+              tip.classList.add('text-tooltip');
+              tip.textContent = tooltipText;
+              document.body.appendChild(tip);
+              const rect = btn.getBoundingClientRect();
+              tip.style.left = `${rect.left}px`;
+              tip.style.top  = `${rect.bottom + 5}px`;
+              activeTooltip = tip;
+            }, 750);
+          });
+          btn.addEventListener('mouseleave', () => {
+            clearTimeout(btn._tooltipTimer);
+            if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
+          });
+        }
+
+        btn.addEventListener('mousedown', e => {
+          if (e.button !== 0) return;
+          e.preventDefault();
+          if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
+          const action = btn.dataset.action;
+          if (action === 'link') {
+            const url = prompt('Enter URL');
+            if (url) document.execCommand('createLink', false, url.startsWith('http') ? url : `https://${url}`);
+          } else if (action === 'increaseFont') {
+            let idx = sizeSelect.selectedIndex;
+            if (idx < sizeSelect.options.length - 1) { sizeSelect.selectedIndex = idx + 1; sizeSelect.dispatchEvent(new Event('change')); }
+          } else if (action === 'decreaseFont') {
+            let idx = sizeSelect.selectedIndex;
+            if (idx > 0) { sizeSelect.selectedIndex = idx - 1; sizeSelect.dispatchEvent(new Event('change')); }
+          } else if (action === 'removeStyling') {
+            const sel = window.getSelection();
+            if (!sel.rangeCount) return;
+            const range = sel.getRangeAt(0);
+            const selectedText = range.toString();
+            if (!selectedText) return;
+            const frag = range.cloneContents();
+            const tempDiv = document.createElement('div');
+            tempDiv.appendChild(frag);
+            tempDiv.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+            tempDiv.querySelectorAll('p, div, li').forEach(el => { el.insertAdjacentText('afterend', '\n'); el.replaceWith(el.textContent); });
+            tempDiv.querySelectorAll('ul, ol').forEach(el => el.replaceWith(el.textContent));
+            tempDiv.querySelectorAll('*').forEach(el => el.replaceWith(el.textContent));
+            const newFrag = document.createDocumentFragment();
+            const lines = tempDiv.textContent.split('\n');
+            lines.forEach((line, i) => {
+              newFrag.appendChild(document.createTextNode(line));
+              if (i < lines.length - 1) newFrag.appendChild(document.createElement('br'));
+            });
+            range.deleteContents();
+            range.insertNode(newFrag);
+          } else if (action === 'findReplace') {
+            frPanel.classList.toggle('hidden');
+            if (!frPanel.classList.contains('hidden')) {
+              frFind.focus();
+            } else {
+              clearFrHighlights();
+              frMatches = [];
+              frIndex = -1;
+              frFeedback.textContent = '';
+            }
+          } else if (['uppercase','sentencecase','lowercase'].includes(action)) {
+            // fallback span-transform if needed
+          } else {
+            document.execCommand(action, false, null);
+          }
+          updateToolbarState();
+        });
+      });
+
+      editor.addEventListener('keyup', updateToolbarState);
+      editor.addEventListener('mouseup', updateToolbarState);
+
+      editor.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !frPanel.classList.contains('hidden')) {
+          e.stopPropagation();
+          clearFrHighlights();
+          frPanel.classList.add('hidden');
+          frMatches = [];
+          frIndex = -1;
+          frFeedback.textContent = '';
+        }
+      });
+
+      frPanel.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          e.stopPropagation();
+          clearFrHighlights();
+          frPanel.classList.add('hidden');
+          frMatches = [];
+          frIndex = -1;
+          frFeedback.textContent = '';
+          frFind.value = '';
+          frReplace.value = '';
+        }
+      });
+
+      editor.addEventListener('paste', e => {
+        e.preventDefault();
+        const html = e.clipboardData.getData('text/html');
+        const text = e.clipboardData.getData('text/plain');
+        let cleaned = '';
+        if (html) {
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          tempDiv.querySelectorAll('*').forEach(el => {
+            el.removeAttribute('style');
+            el.removeAttribute('color');
+            el.removeAttribute('face');
+            el.removeAttribute('size');
+            el.removeAttribute('bgcolor');
+            el.removeAttribute('background');
+            el.removeAttribute('class');
+          });
+          tempDiv.querySelectorAll('span').forEach(span => span.replaceWith(...span.childNodes));
+          tempDiv.querySelectorAll('font').forEach(font => font.replaceWith(...font.childNodes));
+          tempDiv.querySelectorAll('a').forEach(a => a.replaceWith(...a.childNodes));
+          cleaned = tempDiv.innerHTML;
+        } else {
+          cleaned = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\n/g, '<br>');
+        }
+        document.execCommand('insertHTML', false, cleaned);
+        updateToolbarState();
+      });
+
+    return function teardown() {
+        if (wrapper.parentNode) {
+            wrapper.parentNode.replaceChild(editor, wrapper);
+        }
+    };
 }
 
 export function initDragToScroll() {
@@ -62,8 +516,6 @@ export function initDragToScroll() {
         }
     }, true);
 }
-
-export let selectedFilterTagsBeforeAdd = [];
 
 export function initScrollFades(selector, topVar, bottomVar, handlerKey, delay = 0) {
     const run = () => {
@@ -118,7 +570,6 @@ export const actionButtonHandlers = (() => {
 
     const elements = {
       binButtons: document.querySelectorAll(".bin-button"),
-      addBlockOverlay: document.querySelector(".add-block-overlay"),
       clearDataOverlay: document.querySelector(".cleardata-overlay"),
       confirmClearButton: document.getElementById("confirm_clear_button"),
     };
@@ -147,8 +598,6 @@ export const actionButtonHandlers = (() => {
 
 
 export const appManager = (() => {
-  let userBlocks = JSON.parse(localStorage.getItem("userBlocks")) || [];
-  let title = localStorage.getItem("pageTitle") || "Information Blocks";
 
   // ── Session Log viewer state ─────────────────────────────────────
   let activeSessionLogBlockId = null;
@@ -302,30 +751,6 @@ const applyPendingBlockAnim = () => {
 /* ==================================================================*/
 /* ============================== TAGS ==============================*/
 /* ==================================================================*/
-
-  const renderTags = (tags, containerId) => {
-    const container = document.getElementById(containerId);
-    if (!container) {
-      console.error(`Container with ID "${containerId}" not found`);
-      return;
-    }
-    const predefinedTagsSet = new Set(Object.values(categoryTags).flatMap(data => data.tags));
-    const userGeneratedTags = tags
-      .filter(tag => !predefinedTagsSet.has(tag))
-      .map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase())
-      .sort((a, b) => a.localeCompare(b));
-    const predefinedTags = tags.filter(tag => predefinedTagsSet.has(tag));
-
-    container.innerHTML = [...predefinedTags, ...userGeneratedTags]
-      .map(tag => {
-        const category = Object.entries(categoryTags).find(([_, data]) => data.tags.includes(tag));
-        const tagClass = category ? category[1].className : "tag-user";
-        return `<button class="tag-button ${tagClass}" data-tag="${tag}">${tag}</button>`;
-      })
-      .join("");
-
-    console.log("✅ Final Rendered Tags");
-  };
 
   // updateTags renders tag HTML without any selected-state classes.
   // filterManager._applySelectionClasses() applies those after every render.
@@ -499,15 +924,7 @@ const applyPendingBlockAnim = () => {
           b.classList.toggle('session-log-active', b.getAttribute('data-id') === blockId);
       });
 
-      // Build body (same transforms as blockTemplate)
-      let bodyHTML = block.text || '';
-      bodyHTML = bodyHTML
-          .replace(/<div[^>]*>/gi, '')
-          .replace(/^(&nbsp;|\s)+/gi, '')
-          .replace(/<\/div>/gi, '<br>')
-          .replace(/<p[^>]*>/gi, '')
-          .replace(/<\/p>/gi, '<br>')
-          .trim();
+      const bodyHTML = sanitizeBlockHTML(block.text);
 
       viewer.innerHTML = `
           <div class="session-viewer-header">
@@ -959,15 +1376,7 @@ const applyPendingBlockAnim = () => {
 
       activeInventoryBlockId = blockId;
 
-      // Body HTML transforms (same as blockTemplate)
-      let bodyHTML = block.text || '';
-      bodyHTML = bodyHTML
-          .replace(/<div[^>]*>/gi, '')
-          .replace(/^(&nbsp;|\s)+/gi, '')
-          .replace(/<\/div>/gi, '<br>')
-          .replace(/<p[^>]*>/gi, '')
-          .replace(/<\/p>/gi, '<br>')
-          .trim();
+      const bodyHTML = sanitizeBlockHTML(block.text);
 
       const usesHTML = (block.uses && block.uses.length > 0)
           ? `<div class="block-uses" style="margin-bottom:12px;">${block.uses.map((state, idx) =>
@@ -1022,8 +1431,6 @@ const applyPendingBlockAnim = () => {
   };
 
   // ── Inventory viewer: in-place edit / add ─────────────────────────
-
-  const INVENTORY_AUTO_EQUIPABLE_VIEWER = new Set(["Weapons", "Armor & clothing"]);
 
   const buildInventoryInserts = (block) => {
       const reqAtt   = block?.requiresAttunement === true;
@@ -1133,7 +1540,7 @@ const applyPendingBlockAnim = () => {
               // Auto-equipable logic
               if (equipableEl && equipableEl.dataset.userTouched !== 'true') {
                   const sel = blockTypesContainer.querySelector('.tag-button.selected');
-                  if (sel && INVENTORY_AUTO_EQUIPABLE_VIEWER.has(sel.dataset.tag)) {
+                  if (sel && INVENTORY_AUTO_EQUIPABLE_TYPES.has(sel.dataset.tag)) {
                       equipableEl.checked = true;
                       equipableEl.dispatchEvent(new Event('change'));
                       equipableEl.dataset.userTouched = '';
@@ -2465,14 +2872,7 @@ const applyPendingBlockAnim = () => {
       `).join('');
 
       // ── Body ──
-      let bodyHTML = isEdit ? (block.text || '') : '';
-      bodyHTML = bodyHTML
-          .replace(/<div[^>]*>/gi, '')
-          .replace(/^(&nbsp;|\s)+/gi, '')
-          .replace(/<\/div>/gi, '<br>')
-          .replace(/<p[^>]*>/gi, '')
-          .replace(/<\/p>/gi, '<br>')
-          .trim();
+      const bodyHTML = sanitizeBlockHTML(isEdit ? block.text : '');
 
       // ── Title ──
       const title = isEdit ? block.title : '';
@@ -3314,11 +3714,6 @@ const applyPendingBlockAnim = () => {
               dragState = null;
               pinBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
               return;
-          } else if (!didDrag && pinBtn) {
-              // No movement — treat as a click to unpin
-              dragState = null;
-              pinBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-              return;
           }
 
           dragState = null;
@@ -3410,10 +3805,7 @@ resultsSection.innerHTML = `
       addBtn.onclick = () => {
         if (tab === 'tab9') {
             startInlineAdd();
-            return;
         }
-        overlayHandler.initializeOverlayTagHandlers("add_block_overlay_tags");
-        document.querySelector('.add-block-overlay').classList.add('show');
       };
     }
 
@@ -3543,15 +3935,6 @@ resultsSection.innerHTML = `
     applyInlineDiceRolls(resultsSection, tab);
     console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
 
-    if (tab === "tab6") {
-      resultsSection.querySelectorAll(".permanent-title").forEach(titleEl => {
-        titleEl.addEventListener("blur", () => {
-          const blockId = titleEl.parentElement.getAttribute("data-id");
-          localStorage.setItem(`permanentItem_${blockId}`, titleEl.textContent.trim());
-        });
-      });
-    }
-
     // Click-to-toggle view for non-permanent blocks
     document.querySelectorAll(`#${sectionId} .block:not(.permanent-block)`)
       .forEach(blockEl => {
@@ -3676,14 +4059,7 @@ resultsSection.innerHTML = `
       ? `<div class="block-properties">${block.properties.map(p => `<span class="block-property">${p}</span>`).join('')}</div>`
       : '';
 
-    let bodyText = block.text || '';
-    bodyText = bodyText
-      .replace(/<div[^>]*>/gi, '')
-      .replace(/^(&nbsp;|\s)+/gi, '')
-      .replace(/<\/div>/gi, '<br>')
-      .replace(/<p[^>]*>/gi, '')
-      .replace(/<\/p>/gi, '<br>')
-      .trim();
+    const bodyText = sanitizeBlockHTML(block.text);
     const bodyHTML = bodyText ? `<div class="block-body"><span>${bodyText}</span></div>` : '';
 
     return headerHTML + tagsHTML + propertiesHTML + bodyHTML;
@@ -3900,21 +4276,6 @@ resultsSection.innerHTML = `
   };
 
 
-  const loadBlocks = () => {
-    const savedBlocks = localStorage.getItem("userBlocks");
-    if (savedBlocks) {
-      const parsedBlocks = JSON.parse(savedBlocks);
-      if (Array.isArray(parsedBlocks)) {
-        userBlocks = parsedBlocks;
-        console.log("Blocks loaded from localStorage:", userBlocks);
-        return;
-      }
-    }
-    console.log("No valid 'userBlocks' found in localStorage");
-  };
-
-  let currentSortMode = "newest";
-
   const getBlocks = (tab = getActiveTab()) => {
     const storedBlocks  = localStorage.getItem(`userBlocks_${tab}`);
     const parsedBlocks  = storedBlocks ? JSON.parse(storedBlocks) : [];
@@ -3956,33 +4317,6 @@ resultsSection.innerHTML = `
       item.classList.toggle("selected", item.dataset.state === saved);
     });
   }
-
-  const clearToggleClasses = () => {
-    document.getElementById("view_condensed_button")?.classList.remove("active");
-    document.getElementById("view_minimized_button")?.classList.remove("active");
-  };
-
-  document.getElementById("view_expanded_button")?.addEventListener("click", () => {
-    updateBlocksViewState("expanded");
-  });
-  document.getElementById("view_condensed_button")?.addEventListener("click", () => {
-    updateBlocksViewState("condensed");
-    clearToggleClasses();
-    document.getElementById("view_condensed_button")?.classList.add("active");
-  });
-  document.getElementById("view_minimized_button")?.addEventListener("click", () => {
-    updateBlocksViewState("minimized");
-    clearToggleClasses();
-    document.getElementById("view_minimized_button")?.classList.add("active");
-  });
-
-  const tab = getActiveTab();
-  const savedViewState = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
-  document
-    .querySelectorAll(`#view-toggle-dropdown_${tab.replace("tab","")} .view-toggle-item`)
-    .forEach(item => {
-      item.classList.toggle(item.dataset.state === savedViewState);
-    });
 
 /* =================================================================*/
 /* ======================== DATA MANAGEMENT ========================*/
@@ -4112,29 +4446,6 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
 /* ======================== HELPER FUNCTIONS ========================*/
 /* ==================================================================*/
 
-  const clearFilters = () => {
-    const activeTab   = getActiveTab();
-    const tabNumber   = activeTab.replace("tab", "");
-    const searchInput = document.getElementById(`search_input_${tabNumber}`);
-    if (searchInput) searchInput.value = "";
-    // Use dynamic import to avoid circular dependency
-    import('./filterManager.js').then(({ filterManager }) => {
-      filterManager.clearSelectedTags(activeTab);
-      filterManager.applyFilters(tabNumber);
-    });
-  };
-
-  const clearData = () => {
-    userBlocks = [];
-    title      = "Information Blocks";
-    localStorage.removeItem("userBlocks");
-    localStorage.removeItem("pageTitle");
-    document.querySelectorAll(".circle").forEach(circle => circle.classList.remove("filled"));
-    document.querySelector("header.title-section h1").textContent = "INFORMATION BLOCKS";
-    renderBlocks([]);
-    updateTags();
-  };
-
   // ── Inline block editing (tab9) ──────────────────────────────────
   let inlineEditState = null;
 
@@ -4255,14 +4566,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       tagsHTML += `</div>`;
 
       // Body HTML
-      let bodyHTML = block.text || '';
-      bodyHTML = bodyHTML
-          .replace(/<div[^>]*>/gi, '')
-          .replace(/^(&nbsp;|\s)+/gi, '')
-          .replace(/<\/div>/gi, '<br>')
-          .replace(/<p[^>]*>/gi, '')
-          .replace(/<\/p>/gi, '<br>')
-          .trim();
+      const bodyHTML = sanitizeBlockHTML(block.text);
 
       // Uses localStorage key
       const usesKey = `inline_edit_uses_${blockId}`;
@@ -4821,18 +5125,14 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
     getActiveTab,
     renderBlocks,
     renderQuickRef,
-    loadBlocks,
     getBlocks,
     updateBlocksViewState,
     updateViewToggleDropdown,
-    renderTags,
     updateTags,
     getTags,
     saveBlock,
     removeBlock,
     restoreBlock,
-    clearFilters,
-    clearData,
     setActiveInventoryBlock,
     setActiveNotesBlock,
     enterInlineEdit,

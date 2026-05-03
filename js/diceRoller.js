@@ -478,9 +478,8 @@ document.addEventListener('keydown', (e) => {
   if (!panel?.classList.contains('open')) return;
   if (e.key === 'Escape') {
     const overlayOpen = document.querySelector(
-      '.add-block-overlay.show, .edit-block-overlay.show, .cleardata-overlay.show, ' +
-      '.remove-block-overlay.show, .spell-slot-edit-overlay.show, ' +
-      '.suit-uses-edit-overlay.show, #menu_overlay.active'
+      '.cleardata-overlay.show, .remove-block-overlay.show, ' +
+      '.spell-slot-edit-overlay.show, #menu_overlay.active'
     );
     if (overlayOpen) return;
     e.preventDefault();
@@ -490,9 +489,8 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key === 'Enter') {
     // Don't roll if any overlay is open
     const overlayOpen = document.querySelector(
-      '.add-block-overlay.show, .edit-block-overlay.show, .cleardata-overlay.show, ' +
-      '.remove-block-overlay.show, .spell-slot-edit-overlay.show, ' +
-      '.suit-uses-edit-overlay.show, #menu_overlay.active'
+      '.cleardata-overlay.show, .remove-block-overlay.show, ' +
+      '.spell-slot-edit-overlay.show, #menu_overlay.active'
     );
     if (overlayOpen) return;
     // Don't roll if focus is inside an input, textarea, or contenteditable

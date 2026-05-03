@@ -201,8 +201,6 @@ export const filterManager = (() => {
             const target = e.target;
             if (
                 !target.classList.contains('tag-button') ||
-                target.closest('.add-block-overlay') ||
-                target.closest('.edit-block-overlay') ||
                 target.closest('.block.condensed') ||
                 target.closest('.block.inline-editing')
             ) return;
@@ -270,55 +268,6 @@ export const filterManager = (() => {
         });
     };
 
-    // ── Overlay tag clicks — toggle only, no filtering ────────────────────────
-    // If the clicked button is inside an overlay's block-type-tags container
-    // AND the tab's blockTypeConfig has singleSelect: true, clicking one
-    // button deselects any other block-type button in the same container.
-    const handleOverlayTagClick = () => {
-        document.addEventListener('click', e => {
-            const target = e.target;
-            if (
-                target.classList.contains('tag-button') &&
-                (target.closest('.add-block-overlay') || target.closest('.edit-block-overlay'))
-            ) {
-                e.stopPropagation();
-
-                const btContainer = target.closest('.block-type-tags');
-                if (btContainer) {
-                    // Determine active tab for the overlay (add or edit)
-                    const overlay = target.closest('.add-block-overlay, .edit-block-overlay');
-                    const activeTab = overlay?.dataset?.activeTab
-                        || document.querySelector('.tab-button.active')?.dataset.tab
-                        || 'tab4';
-                    const cfg = blockTypeConfig[activeTab];
-                    if (cfg && cfg.singleSelect) {
-                        const wasSelected = target.classList.contains('selected');
-                        // Clear every sibling block-type button, then flip the clicked one
-                        btContainer.querySelectorAll('.tag-button.selected')
-                            .forEach(b => b.classList.remove('selected'));
-                        if (!wasSelected) target.classList.add('selected');
-                        return;
-                    }
-                }
-
-                // Default (existing) behaviour — plain toggle
-                target.classList.toggle('selected');
-            }
-        }, true);
-    };
-
-    // ── Re-apply selected classes after a save ────────────────────────────────
-    const applyFiltersAfterSave = () => {
-        const activeTab = document.querySelector('.tab-button.active')?.dataset.tab || 'tab4';
-        _applySelectionClasses(activeTab);
-    };
-
-    const filterBlocksBySelectedTags = (blocks) => {
-        const andTags = getAndTags();
-        if (!andTags.length) return blocks;
-        return blocks.filter(b => b.tags.some(t => andTags.includes(t)));
-    };
-
     // Re-apply selected/selected-or classes whenever updateTags re-renders the
     // tag DOM. Placed inside the IIFE so _applySelectionClasses is in scope.
     document.addEventListener('tagsUpdated', e => {
@@ -335,15 +284,11 @@ export const filterManager = (() => {
         setSelectedTags,
         clearSelectedTags,
         applyFilters,
-        applyFiltersAfterSave,
         applySelectionClasses: _applySelectionClasses,
         handleTagClick,
-        handleOverlayTagClick,
-        filterBlocksBySelectedTags,
     };
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
     filterManager.handleTagClick();
-    filterManager.handleOverlayTagClick();
 });
