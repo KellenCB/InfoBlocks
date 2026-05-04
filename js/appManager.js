@@ -587,28 +587,74 @@ export const actionButtonHandlers = (() => {
     const activeTab = getActiveTab();
     const tabSuffix = activeTab.replace("tab", "");
 
-    const elements = {
-      binButtons: document.querySelectorAll(".bin-button"),
-      clearDataOverlay: document.querySelector(".cleardata-overlay"),
-      confirmClearButton: document.getElementById("confirm_clear_button"),
-    };
+const binButtons = document.querySelectorAll(".bin-button");
 
-    if (elements.binButtons.length > 0 && elements.clearDataOverlay) {
-      elements.binButtons.forEach(binButton => {
-        binButton.addEventListener("click", () => {
-          elements.clearDataOverlay.classList.add("show");
+binButtons.forEach(binButton => {
+      if (binButton.dataset.clearListenerAttached) return;
+      binButton.dataset.clearListenerAttached = 'true';
+      binButton.addEventListener("click", () => {
+        const existing = document.getElementById('clear-data-confirm');
+        if (existing) {
+          existing.style.height = existing.scrollHeight + 'px';
+          existing.offsetHeight;                       // force reflow
+          existing.classList.remove('visible');
+          existing.style.height = '0';
+          existing.addEventListener('transitionend', () => existing.remove(), { once: true });
+          setTimeout(() => existing.remove(), 300);    // fallback
+          return;
+        }
+
+        const confirmSection = document.createElement('div');
+        confirmSection.id = 'clear-data-confirm';
+        confirmSection.className = 'clear-data-confirm';
+        confirmSection.innerHTML = `
+          <span class="clear-data-confirm-message">Are you sure you want to clear all data?<br>This cannot be undone.</span>
+          <div class="clear-data-confirm-buttons">
+            <button class="clear-data-confirm-yes"><span>Yes</span></button>
+          </div>
+        `;
+
+        const menuButtons = binButton.closest('.menu-popover-buttons');
+        menuButtons.after(confirmSection);
+
+        // Measure natural height, then animate to it
+        confirmSection.classList.add('visible');
+        const targetHeight = confirmSection.scrollHeight;
+        confirmSection.style.height = '0';
+        confirmSection.offsetHeight;                   // force reflow
+        confirmSection.style.height = targetHeight + 'px';
+
+        confirmSection.addEventListener('transitionend', () => {
+          confirmSection.style.height = 'auto';
+        }, { once: true });
+
+        const yesBtn = confirmSection.querySelector('.clear-data-confirm-yes');
+        let yesArmed = false;
+        let armTimer = null;
+
+        yesBtn.addEventListener('mouseenter', () => {
+          yesArmed = false;
+          yesBtn.classList.remove('armed');
+          armTimer = setTimeout(() => {
+            yesArmed = true;
+            yesBtn.classList.add('armed');
+          }, 500);
+        });
+
+        yesBtn.addEventListener('mouseleave', () => {
+          clearTimeout(armTimer);
+          yesArmed = false;
+          yesBtn.classList.remove('armed');
+        });
+
+        yesBtn.addEventListener('click', () => {
+          if (!yesArmed) return;
+          localStorage.clear();
+          location.reload();
         });
       });
-    }
-
-    if (elements.confirmClearButton && elements.clearDataOverlay) {
-      elements.confirmClearButton.onclick = () => {
-        localStorage.clear();
-        alert("All data has been cleared.");
-        location.reload();
-      };
-    }
-
+    });
+    
     console.log("✅ Action button event listeners attached");
   };
 

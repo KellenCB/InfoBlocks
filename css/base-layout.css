@@ -2446,6 +2446,20 @@ a:hover {
     opacity: 1;
 }
 
+#tab4 .resources-strip.edit-mode .spell-slot-section,
+#tab8 .resources-strip.edit-mode .spell-slot-section {
+    align-items: flex-start;
+    column-gap: 6px;
+}
+
+.resources-strip.edit-mode .ghost-chip {
+    margin: 4px 0px 0px 0px;
+}
+
+.resources-strip.edit-mode .spell-slot-group:not(.hidden) {
+    width: 100%;
+}
+
 .resources-strip .circle-add,
 .resources-strip .circle-remove {
     width: 16px;
@@ -3326,6 +3340,88 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 
 .delete-confirm-no:hover {
     background: var(--gray-500);
+}
+
+/* ── Clear-all-data inline confirmation (inside menu popover) ── */
+
+.clear-data-confirm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid transparent;
+    transition: height 0.25s ease, opacity 0.25s ease, padding 0.25s ease,
+                margin 0.25s ease, border-color 0.25s ease;
+}
+
+.clear-data-confirm.visible {
+    opacity: 1;
+    padding: 12px 0 0;
+    margin-top: 8px;
+    border-top-color: var(--gray-400);
+}
+
+.clear-data-confirm-message {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-900);
+    text-align: center;
+    line-height: 1.4;
+}
+
+.clear-data-confirm-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.clear-data-confirm-buttons button {
+    padding: 7px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    width: 100%;
+}
+
+.clear-data-confirm-yes {
+    position: relative;
+    overflow: hidden;
+    background: #a33535;
+    color: #fff;
+    cursor: default;
+}
+
+.clear-data-confirm-yes span {
+    position: relative;
+    z-index: 1;
+}
+
+.clear-data-confirm-yes::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: var(--color-red);
+    border-radius: 0;
+    transition: width 0.25s ease-in;
+}
+
+.clear-data-confirm-yes:hover::after {
+    width: 100%;
+    transition: width 0.5s linear;
+}
+
+.clear-data-confirm-yes.armed {
+    cursor: pointer;
 }
 
 .long-rest-popup {

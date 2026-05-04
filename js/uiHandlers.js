@@ -313,7 +313,9 @@ const renderBar = () => {
 
         // Outer glow
         barGlow.style.width     = greenW + '%';
-        barGlow.style.boxShadow = `0 0 12px 2px ${c.shadow}, inset 0 1px 0 ${c.highlight}`;
+        barGlow.style.boxShadow = greenW > 0
+            ? `0 0 12px 2px ${c.shadow}, inset 0 1px 0 ${c.highlight}`
+            : 'none';
 
         // Temp HP
         if (tempHp > 0) {

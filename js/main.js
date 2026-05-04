@@ -126,14 +126,15 @@ const menuButton = document.getElementById("Menu_button");
 const menuOverlay = document.getElementById("menu_overlay");
 
 function closeMenu() {
+    document.getElementById('clear-data-confirm')?.remove();
     closePopoverAnimated(menuOverlay, 'active');
     menuButton?.classList.remove("menu-button-open");
 }
 
 function openMenu() {
     closeAllUchPopovers('menu');
-    positionPopoverBelow(menuOverlay, menuButton);
     menuOverlay.classList.add("active");
+    positionPopoverBelow(menuOverlay, menuButton);
     menuButton.classList.add("menu-button-open");
 }
 
@@ -166,7 +167,6 @@ document.addEventListener("click", (e) => {
 // Note: cancel_remove_button is handled in blockActionsHandler because it
 // also needs to clear pendingDeleteBlockId.
 const overlayCloseConfigs = [
-    { buttonId: 'cancel_clear_button',         overlaySelector: '.cleardata-overlay:not(.long-rest-overlay)' },
     { buttonId: 'close_spell_slot_edit',       overlaySelector: '.spell-slot-edit-overlay' },
     { buttonId: 'cancel_long_rest_button',     overlaySelector: '.long-rest-overlay' },
 ];
@@ -1029,10 +1029,7 @@ document.addEventListener("click", (e) => {
 const keyboardShortcutsHandler = (() => {
     const handleKeyboardShortcuts = () => {
         document.addEventListener("keydown", (event) => {
-            const clearDataOverlay       = document.querySelector(".cleardata-overlay");
             const spellSlotEditOverlay   = document.querySelector(".spell-slot-edit-overlay");
-            const confirmClearButton     = document.getElementById("confirm_clear_button");
-            const cancelClearButton      = document.getElementById("cancel_clear_button");
             const saveSpellSlotButton    = document.getElementById("save_spell_slot_changes");
             const cancelSpellSlotButton  = document.getElementById("close_spell_slot_edit");
             const removeBlockOverlay     = document.querySelector(".remove-block-overlay");
@@ -1043,12 +1040,11 @@ const keyboardShortcutsHandler = (() => {
 
             if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
 
-            if (clearDataOverlay?.classList.contains("show")) {
-                if (event.key === "Enter" && confirmClearButton) {
-                    confirmClearButton.click();
-                } else if (event.key === "Escape" && cancelClearButton) {
-                    cancelClearButton.click();
-                }
+            const clearDataConfirm = document.getElementById('clear-data-confirm');
+            if (clearDataConfirm && event.key === "Escape") {
+                clearDataConfirm.classList.remove('visible');
+                setTimeout(() => clearDataConfirm.remove(), 200);
+                return;
             }
 
             if (spellSlotEditOverlay?.classList.contains("show")) {
