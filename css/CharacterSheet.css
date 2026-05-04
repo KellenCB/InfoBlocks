@@ -307,12 +307,25 @@
     min-width: 1ch;
 }
 
-/* ── Progress bar ────────────────────────────────────────────────── */
+/* ── HP bar — glowing progress bar ───────────────────────────────── */
 
 .hp-bar-area {
     position: relative;
     height: 38px;
-    background-color: var(--gray-400);
+    border-radius: 8px;
+    overflow: visible;
+}
+
+.hp-bar-tint {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    transition: background 0.5s ease;
+}
+
+.hp-bar-track {
+    position: absolute;
+    inset: 0;
     border-radius: 8px;
     overflow: hidden;
 }
@@ -322,18 +335,55 @@
     left: 0;
     top: 0;
     bottom: 0;
-    border-radius: 8px;
-    transition: width 0.4s ease, background-color 0.4s ease;
+    border-radius: 8px 0 0 8px;
+    transition: width 0.5s ease, background 0.5s ease;
+}
+
+.hp-bar-hl {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: 8px 0 0 8px;
+    transition: width 0.5s ease;
+    pointer-events: none;
 }
 
 .hp-bar-temp {
     position: absolute;
     top: 0;
     bottom: 0;
-    border-radius: 8px;
-    background-color: var(--color-blue);
-    opacity: 0.6;
-    transition: width 0.4s ease, left 0.4s ease;
+    border-radius: 0;
+    transition: width 0.5s ease, left 0.5s ease, background 0.5s ease, opacity 0.5s ease, box-shadow 0.5s ease;
+}
+
+.hp-bar-temp-hl {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 0;
+    transition: width 0.5s ease, left 0.5s ease, opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.hp-bar-edge {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    z-index: 2;
+    transition: left 0.5s ease, box-shadow 0.5s ease, opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.hp-bar-glow {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: 8px 0 0 8px;
+    transition: width 0.5s ease, box-shadow 0.5s ease;
+    pointer-events: none;
 }
 
 .hp-bar-text {
@@ -345,24 +395,40 @@
     font-size: 18px;
     font-weight: 500;
     color: var(--gray-900);
-    z-index: 2;
+    z-index: 3;
     letter-spacing: 0.02em;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
-.hp-bar-temp-text {
-    color: var(--gray-900);
+.hp-bar-text .hp-bar-temp-text {
+    opacity: 0.7;
 }
 
-.hp-flash {
-    animation: hp-flash-pop 0.3s ease;
+.hp-bar-dead {
+    color: var(--color-red);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
-@keyframes hp-flash-pop {
-    0%   { transform: scale(1); }
-    50%  { transform: scale(1.03); }
-    100% { transform: scale(1); }
+.hp-bar-stabilized {
+    color: var(--color-green);
+    letter-spacing: 0.05em;
 }
+
+/* ── HP bar full / temp-end radius overrides ─────────────────────── */
+
+.hp-bar-area.hp-full .hp-bar-fill,
+.hp-bar-area.hp-full .hp-bar-hl,
+.hp-bar-area.hp-full .hp-bar-glow {
+    border-radius: 8px;
+}
+
+.hp-bar-area.hp-temp-end .hp-bar-temp,
+.hp-bar-area.hp-temp-end .hp-bar-temp-hl {
+    border-radius: 0 8px 8px 0;
+}
+
+
 
 /* ── Death save panel ────────────────────────────────────────────── */
 

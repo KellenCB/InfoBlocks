@@ -222,8 +222,12 @@ function initHpSection(tabPrefix) {
     if (!hpSection) return;
 
     const barArea    = hpSection.querySelector('.hp-bar-area');
+    const barTint    = barArea.querySelector('.hp-bar-tint');
     const barFill    = barArea.querySelector('.hp-bar-fill');
+    const barHl      = barArea.querySelector('.hp-bar-hl');
     const barTemp    = barArea.querySelector('.hp-bar-temp');
+    const barTempHl  = barArea.querySelector('.hp-bar-temp-hl');
+    const barGlow    = barArea.querySelector('.hp-bar-glow');
     const barText    = barArea.querySelector('.hp-bar-text');
     const maxEl      = hpSection.querySelector(`[data-storage-key="${tabPrefix}_maxhp"]`);
     const inputEl    = hpSection.querySelector('.hp-input-field');
@@ -256,38 +260,89 @@ function initHpSection(tabPrefix) {
 
     const getHdCurrent = () => parseInt(hdCurrentEl?.textContent) || 0;
 
-    const getBarColor = (pct) => {
-        if (pct > 50) return '#4a9e3f';
-        if (pct > 25) return '#c97a1a';
-        return '#a32d2d';
+const getBarColors = (pct) => {
+        if (pct > 50) return {
+            base: '#3b8a1e', bright: '#5ec430',
+            highlight: 'rgba(180,255,130,0.3)',
+            shadow: 'rgba(76,175,80,0.5)',
+            tint: 'rgba(76,175,80,0.08)',
+            edge: 'rgba(180,255,130,0.55)',
+            edgeDim: 'rgba(180,255,130,0.3)'
+        };
+        if (pct > 25) return {
+            base: '#b8760e', bright: '#e8a020',
+            highlight: 'rgba(255,220,140,0.3)',
+            shadow: 'rgba(244,162,97,0.5)',
+            tint: 'rgba(244,162,97,0.08)',
+            edge: 'rgba(255,220,140,0.55)',
+            edgeDim: 'rgba(255,220,140,0.3)'
+        };
+        return {
+            base: '#8b1a1a', bright: '#d43030',
+            highlight: 'rgba(255,160,140,0.3)',
+            shadow: 'rgba(255,80,80,0.5)',
+            tint: 'rgba(255,80,80,0.08)',
+            edge: 'rgba(255,160,140,0.55)',
+            edgeDim: 'rgba(255,160,140,0.3)'
+        };
     };
 
     // ── Bar rendering ────────────────────────────────────────────────
-    const renderBar = () => {
-        const pct   = maxHp > 0 ? Math.round((currentHp / maxHp) * 100) : 0;
-        const pool  = Math.max(maxHp, currentHp + tempHp);
+const renderBar = () => {
+        const pct    = maxHp > 0 ? Math.round((currentHp / maxHp) * 100) : 0;
+        const c      = getBarColors(pct);
+        const pool   = Math.max(maxHp, currentHp + tempHp);
         const greenW = pool > 0 ? (currentHp / pool) * 100 : 0;
-        const blueW  = tempHp > 0 && pool > 0 ? (tempHp / pool) * 100 : 0;
+        const tempW  = tempHp > 0 && pool > 0 ? (tempHp / pool) * 100 : 0;
+        const atEnd  = Math.round(greenW + tempW) >= 100;
+        const isFull = tempHp === 0 && currentHp >= maxHp;
 
-        barFill.style.width           = Math.min(greenW, 100) + '%';
-        barFill.style.backgroundColor = getBarColor(pct);
+        barArea.classList.toggle('hp-full', isFull);
+        barArea.classList.toggle('hp-temp-end', atEnd && tempHp > 0);
 
-        barTemp.style.left    = Math.min(greenW, 100) + '%';
-        barTemp.style.width   = Math.min(blueW, 100 - Math.min(greenW, 100)) + '%';
-        barTemp.style.display = tempHp > 0 ? 'block' : 'none';
+        // Tint
+        barTint.style.background = c.tint;
 
+        // Main fill
+        barFill.style.width      = greenW + '%';
+        barFill.style.background = `linear-gradient(90deg, ${c.bright} 0%, ${c.base} 60%)`;
+
+        // Top highlight
+        barHl.style.width      = greenW + '%';
+        barHl.style.background = `linear-gradient(180deg, ${c.highlight} 0%, transparent 50%, rgba(0,0,0,0.15) 100%)`;
+
+        // Outer glow
+        barGlow.style.width     = greenW + '%';
+        barGlow.style.boxShadow = `0 0 12px 2px ${c.shadow}, inset 0 1px 0 ${c.highlight}`;
+
+        // Temp HP
         if (tempHp > 0) {
+            barTemp.style.opacity    = '0.35';
+            barTemp.style.left       = greenW + '%';
+            barTemp.style.width      = tempW + '%';
+            barTemp.style.background = `linear-gradient(90deg, ${c.bright} 0%, ${c.base} 70%)`;
+            barTemp.style.boxShadow  = `inset 2px 0 4px ${c.edge}, inset -2px 0 4px ${c.edgeDim}`;
+
+            barTempHl.style.opacity    = '0.35';
+            barTempHl.style.left       = greenW + '%';
+            barTempHl.style.width      = tempW + '%';
+            barTempHl.style.background = `linear-gradient(180deg, ${c.highlight} 0%, transparent 50%, rgba(0,0,0,0.15) 100%)`;
+
             barText.innerHTML = `${currentHp}&nbsp;<span class="hp-bar-temp-text">+ ${tempHp}</span>`;
         } else {
+            barTemp.style.opacity   = '0';
+            barTemp.style.width     = '0%';
+            barTemp.style.left      = greenW + '%';
+            barTemp.style.boxShadow = 'none';
+            barTempHl.style.opacity = '0';
+            barTempHl.style.width   = '0%';
+            barTempHl.style.left    = greenW + '%';
+
             barText.textContent = `${currentHp}`;
         }
     };
-
-    const flashBar = () => {
-        barArea.classList.remove('hp-flash');
-        void barArea.offsetWidth;
-        barArea.classList.add('hp-flash');
-    };
+    
+    
 
     const saveHp = () => {
         localStorage.setItem(`${tabPrefix}_hp`, currentHp);
