@@ -35,7 +35,7 @@
                     </button>
                     <div class="uch-pill-divider"></div>
                     <button id="long_rest_button" class="uch-btn uch-pill-btn">
-                        <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                        <span class="lr-icon-wrap"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
                         <span class="uch-tooltip">Long Rest</span>
                     </button>
                 </div>
@@ -205,29 +205,70 @@
 
                     <!-- Row 2 -->
                     <div class="stats-container-row">
-                        <div class="cs-panel stat-panel-row">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">HP</span>
-                                <div class="current-stat-display" style="display: flex; gap: 10px;">
-                                    <span class="large-value editable" contenteditable="true" data-storage-key="tab4_hp">86</span>
-                                    <span class="large-value" style="font-weight:100; opacity: 0.5;">/</span>
-                                    <span class="large-value editable" contenteditable="true" data-storage-key="tab4_maxhp">00</span>
+                        <div class="hp-section">
+                            <div class="hp-section-header">
+                                <span class="hp-section-label">HP</span>
+                                <div class="hp-max-edit">
+                                    <span class="hp-max-prefix">Max:</span>
+                                    <span class="hp-max-val editable" contenteditable="true" data-storage-key="tab4_maxhp">00</span>
                                 </div>
                             </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Temp HP</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_temp_hp">+5</span>
+                            <div class="hp-bar-area">
+                                <div class="hp-bar-fill"></div>
+                                <div class="hp-bar-temp"></div>
+                                <div class="hp-bar-text"></div>
                             </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Hit Die</span>
-                                <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_hit_die">1d10</span>
-                                <div class="current-stat-display" style="display: flex; gap: 10px;">
-                                    <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_hit_die_current">00</span>
-                                    <span class="stat-value" style="font-weight:100; opacity: 0.5;">/</span>
-                                    <span class="stat-value" data-storage-key="tab4_hit_die_max"></span>
-                                </div>                            </div>
+                                                        <div class="ds-panel">
+                                <div class="ds-trackers">
+                                    <div class="ds-group">
+                                        <span class="ds-group-label">Saves</span>
+                                        <div class="ds-circles">
+                                            <span class="ds-circle ds-success"></span>
+                                            <span class="ds-circle ds-success"></span>
+                                            <span class="ds-circle ds-success"></span>
+                                        </div>
+                                    </div>
+                                    <button class="ds-roll-btn">Death Save</button>
+                                    <div class="ds-group">
+                                        <span class="ds-group-label">Fails</span>
+                                        <div class="ds-circles">
+                                            <span class="ds-circle ds-fail"></span>
+                                            <span class="ds-circle ds-fail"></span>
+                                            <span class="ds-circle ds-fail"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="hp-input-row">
+                                <input class="hp-input-field" type="number" placeholder="0" min="0">
+                                <div class="hp-action-toggle">
+                                    <button class="hp-action-btn" data-action="dmg">Dmg</button>
+                                    <button class="hp-action-btn" data-action="heal">Heal</button>
+                                    <button class="hp-action-btn" data-action="temp">Temp</button>
+                                </div>
+                            </div>
+                            <div class="hp-section-sep"></div>
+                            <div class="hd-section">
+                                <div class="hd-top-row">
+                                    <span class="hd-label">Hit dice</span>
+                                    <div class="hd-info">
+                                        <span class="hd-type editable" contenteditable="true" data-storage-key="tab4_hit_die">1d10</span>
+                                        <span class="hd-remaining">
+                                            <span class="hd-current editable" contenteditable="true" data-storage-key="tab4_hit_die_current">00</span>
+                                            <span class="hd-divider">/</span>
+                                            <span class="hd-max" data-storage-key="tab4_hit_die_max"></span>
+                                            remaining
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="hd-roll-row">
+                                    <button class="hd-qty-btn hd-minus">−</button>
+                                    <div class="hd-qty-display">1</div>
+                                    <button class="hd-qty-btn hd-plus">+</button>
+                                    <button class="hd-roll-btn">Roll <span class="hd-roll-detail"></span></button>
+                                </div>
+                            </div>
                         </div>
                         <div class="cs-panel stat-panel-row">
                             <div class="stat-panel-box">
@@ -260,39 +301,34 @@
                                 <span class="stat-value cacluated" data-storage-key="tab4_str_bonus"></span>
                                 <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_str_score"></span>
                             </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
+                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
                                 <span class="stat-label">DEX</span>
                                 <span class="stat-value cacluated" data-storage-key="tab4_dex_bonus"></span>
                                 <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_dex_score"></span>
                             </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
+                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
                                 <span class="stat-label">CON</span>
                                 <span class="stat-value cacluated" data-storage-key="tab4_con_bonus"></span>
                                 <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_con_score"></span>
                             </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
+                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
                                 <span class="stat-label">INT</span>
                                 <span class="stat-value cacluated" data-storage-key="tab4_int_bonus"></span>
                                 <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_int_score"></span>
                             </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
+                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
                                 <span class="stat-label">WIS</span>
                                 <span class="stat-value cacluated" data-storage-key="tab4_wis_bonus"></span>
                                 <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_wis_score"></span>
                             </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
+                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
                                 <span class="stat-label">CHA</span>
                                 <span class="stat-value cacluated" data-storage-key="tab4_cha_bonus"></span>
                                 <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_cha_score"></span>
                             </div>
                         </div>
                     </div>
-                    <!-- Row 4: Spell Save + Attack + Death Saves -->
+                    <!-- Row 4: Spell Save + Attack -->
                     <div class="stats-container-row">
                         <div class="cs-panel stat-panel-row SpellSaveandAttackRow">
                             <div class="stat-panel-box">
@@ -303,19 +339,6 @@
                             <div class="stat-panel-box">
                                 <span class="stat-label">Spell Attack</span>
                                 <span class="large-value editable" contenteditable="true" data-storage-key="tab4_spell_attack">3</span>
-                            </div>
-                        </div>
-                        <div class="cs-panel death-saves-box">
-                            <span class="stat-label">Death Saves</span>
-                            <div class="death-saves-row">
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab4_deathSave_1"></span>
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab4_deathSave_2"></span>
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab4_deathSave_3"></span>
-                            </div>
-                            <div class="death-saves-row">
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab4_deathSave_4"></span>
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab4_deathSave_5"></span>
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab4_deathSave_6"></span>
                             </div>
                         </div>
                     </div>
@@ -509,28 +532,67 @@
 
                     <!-- Row 2 -->
                     <div class="stats-container-row">
-                        <div class="cs-panel stat-panel-row">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">HP</span>
-                                <div class="current-stat-display" style="display: flex; gap: 10px;">
-                                    <span class="large-value editable" contenteditable="true" data-storage-key="tab8_hp">00</span>
-                                    <span class="large-value" style="font-weight:100; opacity: 0.5;">/</span>
-                                    <span class="large-value editable" contenteditable="true" data-storage-key="tab8_maxhp">00</span>
+                        <div class="hp-section">
+                            <div class="hp-section-header">
+                                <span class="hp-section-label">HP</span>
+                                <div class="hp-max-edit">
+                                    <span class="hp-max-prefix">Max:</span>
+                                    <span class="hp-max-val editable" contenteditable="true" data-storage-key="tab4_maxhp">00</span>
                                 </div>
                             </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Temp HP</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab8_temp_hp">0</span>
+                            <div class="hp-bar-area">
+                                <div class="hp-bar-fill"></div>
+                                <div class="hp-bar-temp"></div>
+                                <div class="hp-bar-text"></div>
                             </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Hit Die</span>
-                                <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die">00</span>
-                                <div class="current-stat-display" style="display: flex; gap: 10px;">
-                                    <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die_current">00</span>
-                                    <span class="stat-value" style="font-weight:100; opacity: 0.5;">/</span>
-                                    <span class="stat-value" data-storage-key="tab8_hit_die_max"></span>
+                                                        <div class="ds-panel">
+                                <div class="ds-trackers">
+                                    <div class="ds-group">
+                                        <span class="ds-group-label">Saves</span>
+                                        <div class="ds-circles">
+                                            <span class="ds-circle ds-success"></span>
+                                            <span class="ds-circle ds-success"></span>
+                                            <span class="ds-circle ds-success"></span>
+                                        </div>
+                                    </div>
+                                    <button class="ds-roll-btn">Death Save</button>
+                                    <div class="ds-group">
+                                        <span class="ds-group-label">Fails</span>
+                                        <div class="ds-circles">
+                                            <span class="ds-circle ds-fail"></span>
+                                            <span class="ds-circle ds-fail"></span>
+                                            <span class="ds-circle ds-fail"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="hp-input-row">
+                                <input class="hp-input-field" type="number" placeholder="0" min="0">
+                                <div class="hp-action-toggle">
+                                    <button class="hp-action-btn" data-action="dmg">Dmg</button>
+                                    <button class="hp-action-btn" data-action="heal">Heal</button>
+                                    <button class="hp-action-btn" data-action="temp">Temp</button>
+                                </div>
+                            </div>
+                            <div class="hp-section-sep"></div>
+                            <div class="hd-section">
+                                <div class="hd-top-row">
+                                    <span class="hd-label">Hit dice</span>
+                                    <div class="hd-info">
+                                        <span class="hd-type editable" contenteditable="true" data-storage-key="tab4_hit_die">1d10</span>
+                                        <span class="hd-remaining">
+                                            <span class="hd-current editable" contenteditable="true" data-storage-key="tab4_hit_die_current">00</span>
+                                            <span class="hd-divider">/</span>
+                                            <span class="hd-max" data-storage-key="tab4_hit_die_max"></span>
+                                            remaining
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="hd-roll-row">
+                                    <button class="hd-qty-btn hd-minus">−</button>
+                                    <div class="hd-qty-display">1</div>
+                                    <button class="hd-qty-btn hd-plus">+</button>
+                                    <button class="hd-roll-btn">Roll <span class="hd-roll-detail"></span></button>
                                 </div>
                             </div>
                         </div>
@@ -565,39 +627,34 @@
                                 <span class="stat-value calculated" data-storage-key="tab8_str_bonus">00</span>
                                 <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_str_score">0</span>
                             </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
+                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
                                 <span class="stat-label">DEX</span>
                                 <span class="stat-value calculated" data-storage-key="tab8_dex_bonus">00</span>
                                 <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_dex_score">0</span>
                             </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
+                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
                                 <span class="stat-label">CON</span>
                                 <span class="stat-value calculated" data-storage-key="tab8_con_bonus">00</span>
                                 <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_con_score">0</span>
                             </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
+                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
                                 <span class="stat-label">INT</span>
                                 <span class="stat-value calculated" data-storage-key="tab8_int_bonus">00</span>
                                 <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_int_score">0</span>
                             </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
+                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
                                 <span class="stat-label">WIS</span>
                                 <span class="stat-value calculated" data-storage-key="tab8_wis_bonus">00</span>
                                 <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_wis_score">0</span>
                             </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
+                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
                                 <span class="stat-label">CHA</span>
                                 <span class="stat-value calculated" data-storage-key="tab8_cha_bonus">00</span>
                                 <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_cha_score">0</span>
                             </div>
                         </div>
                     </div>
-                    <!-- Row 4: Spell Save + Attack + Death Saves -->
+                    <!-- Row 4: Spell Save + Attack -->
                     <div class="stats-container-row">
                         <div class="cs-panel stat-panel-row SpellSaveandAttackRow">
                             <div class="stat-panel-box">
@@ -608,19 +665,6 @@
                             <div class="stat-panel-box">
                                 <span class="stat-label">Spell Attack</span>
                                 <span class="large-value editable" contenteditable="true" data-storage-key="tab4_spell_attack">3</span>
-                            </div>
-                        </div>
-                        <div class="cs-panel death-saves-box">
-                            <span class="stat-label">Death Saves</span>
-                            <div class="death-saves-row">
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab8_deathSave_1"></span>
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab8_deathSave_2"></span>
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab8_deathSave_3"></span>
-                            </div>
-                            <div class="death-saves-row">
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab8_deathSave_4"></span>
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab8_deathSave_5"></span>
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab8_deathSave_6"></span>
                             </div>
                         </div>
                     </div>
@@ -813,6 +857,11 @@
             <div class="tab-content" id="tab9">
                 <div class="filter-and-results">
                     <div id="results_section_9" class="results-section"></div>
+                    <button class="filter-open-btn" data-tab="tab9" title="Show filters">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </button>
                     <div class="filter-divider"></div>
                     <div class="filter-section-wrapper">
                         <div class="filter-panel-header">

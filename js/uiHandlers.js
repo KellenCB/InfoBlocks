@@ -211,6 +211,385 @@ document.addEventListener("input", (e) => {
 });
 
 /* ==================================================================*/
+/* ========================= HP BAR SECTION ========================*/
+/* ==================================================================*/
+
+function initHpSection(tabPrefix) {
+    const tabEl = document.getElementById(tabPrefix);
+    if (!tabEl) return;
+
+    const hpSection = tabEl.querySelector('.hp-section');
+    if (!hpSection) return;
+
+    const barArea    = hpSection.querySelector('.hp-bar-area');
+    const barFill    = barArea.querySelector('.hp-bar-fill');
+    const barTemp    = barArea.querySelector('.hp-bar-temp');
+    const barText    = barArea.querySelector('.hp-bar-text');
+    const maxEl      = hpSection.querySelector(`[data-storage-key="${tabPrefix}_maxhp"]`);
+    const inputEl    = hpSection.querySelector('.hp-input-field');
+    const actionBtns = hpSection.querySelectorAll('.hp-action-btn');
+
+    const hdTypeEl     = hpSection.querySelector(`[data-storage-key="${tabPrefix}_hit_die"]`);
+    const hdCurrentEl  = hpSection.querySelector(`[data-storage-key="${tabPrefix}_hit_die_current"]`);
+    const hdMaxEl      = hpSection.querySelector(`[data-storage-key="${tabPrefix}_hit_die_max"]`);
+    const hdQtyDisplay = hpSection.querySelector('.hd-qty-display');
+    const hdMinusBtn   = hpSection.querySelector('.hd-minus');
+    const hdPlusBtn    = hpSection.querySelector('.hd-plus');
+    const hdRollBtn    = hpSection.querySelector('.hd-roll-btn');
+    const hdRollDetail = hpSection.querySelector('.hd-roll-detail');
+
+
+    // ── State ────────────────────────────────────────────────────────
+    let currentHp = parseInt(localStorage.getItem(`${tabPrefix}_hp`)) || 0;
+    let maxHp     = parseInt(localStorage.getItem(`${tabPrefix}_maxhp`)) || 0;
+    let tempHp    = parseInt(localStorage.getItem(`${tabPrefix}_temp_hp`)) || 0;
+    let hdQty      = 1;
+
+    // ── Helpers ──────────────────────────────────────────────────────
+    const getConMod  = () => parseInt(localStorage.getItem(`${tabPrefix}_con_bonus`)) || 0;
+
+    const getHdSides = () => {
+        const raw = hdTypeEl?.textContent || localStorage.getItem(`${tabPrefix}_hit_die`) || 'd8';
+        const m = raw.match(/d(\d+)/i);
+        return m ? parseInt(m[1]) : 8;
+    };
+
+    const getHdCurrent = () => parseInt(hdCurrentEl?.textContent) || 0;
+
+    const getBarColor = (pct) => {
+        if (pct > 50) return '#4a9e3f';
+        if (pct > 25) return '#c97a1a';
+        return '#a32d2d';
+    };
+
+    // ── Bar rendering ────────────────────────────────────────────────
+    const renderBar = () => {
+        const pct   = maxHp > 0 ? Math.round((currentHp / maxHp) * 100) : 0;
+        const pool  = Math.max(maxHp, currentHp + tempHp);
+        const greenW = pool > 0 ? (currentHp / pool) * 100 : 0;
+        const blueW  = tempHp > 0 && pool > 0 ? (tempHp / pool) * 100 : 0;
+
+        barFill.style.width           = Math.min(greenW, 100) + '%';
+        barFill.style.backgroundColor = getBarColor(pct);
+
+        barTemp.style.left    = Math.min(greenW, 100) + '%';
+        barTemp.style.width   = Math.min(blueW, 100 - Math.min(greenW, 100)) + '%';
+        barTemp.style.display = tempHp > 0 ? 'block' : 'none';
+
+        if (tempHp > 0) {
+            barText.innerHTML = `${currentHp}&nbsp;<span class="hp-bar-temp-text">+ ${tempHp}</span>`;
+        } else {
+            barText.textContent = `${currentHp}`;
+        }
+    };
+
+    const flashBar = () => {
+        barArea.classList.remove('hp-flash');
+        void barArea.offsetWidth;
+        barArea.classList.add('hp-flash');
+    };
+
+    const saveHp = () => {
+        localStorage.setItem(`${tabPrefix}_hp`, currentHp);
+        localStorage.setItem(`${tabPrefix}_temp_hp`, tempHp);
+    };
+
+    // ── Death saves ──────────────────────────────────────────────────
+    const dsPanel          = hpSection.querySelector('.ds-panel');
+    const dsSuccessCircles = hpSection.querySelectorAll('.ds-success');
+    const dsFailCircles    = hpSection.querySelectorAll('.ds-fail');
+    const dsRollBtn        = hpSection.querySelector('.ds-roll-btn');
+
+    let dsSuccesses = parseInt(localStorage.getItem(`${tabPrefix}_ds_successes`)) || 0;
+    let dsFailures  = parseInt(localStorage.getItem(`${tabPrefix}_ds_failures`))  || 0;
+
+    const saveDs = () => {
+        localStorage.setItem(`${tabPrefix}_ds_successes`, dsSuccesses);
+        localStorage.setItem(`${tabPrefix}_ds_failures`, dsFailures);
+    };
+
+    const renderDs = () => {
+        const active = currentHp === 0;
+        dsPanel.classList.toggle('ds-active', active);
+
+        dsSuccessCircles.forEach((c, i) => c.classList.toggle('filled', i < dsSuccesses));
+        dsFailCircles.forEach((c, i) => c.classList.toggle('filled', i < dsFailures));
+
+        if (dsFailures >= 3) {
+            barText.innerHTML  = '<span class="hp-bar-dead">Dead</span>';
+            dsRollBtn.disabled = true;
+        } else if (dsSuccesses >= 3) {
+            barText.innerHTML  = '<span class="hp-bar-stabilized">Stabilized</span>';
+            dsRollBtn.disabled = true;
+        } else {
+            if (active) renderBar();
+            dsRollBtn.disabled = !active;
+        }
+    };
+
+    const resetDs = () => {
+        dsSuccesses = 0;
+        dsFailures  = 0;
+        saveDs();
+    };
+
+    const addDsSuccess = (count = 1) => {
+        dsSuccesses = Math.min(3, dsSuccesses + count);
+        saveDs();
+        renderDs();
+    };
+
+    const addDsFailure = (count = 1) => {
+        dsFailures = Math.min(3, dsFailures + count);
+        saveDs();
+        renderDs();
+    };
+
+    // Manual circle toggling
+    dsSuccessCircles.forEach((circle, i) => {
+        circle.addEventListener('click', () => {
+            if (dsFailures >= 3) return;
+            dsSuccesses = circle.classList.contains('filled') ? i : i + 1;
+            saveDs();
+            renderDs();
+        });
+    });
+
+    dsFailCircles.forEach((circle, i) => {
+        circle.addEventListener('click', () => {
+            if (dsSuccesses >= 3) return;
+            dsFailures = circle.classList.contains('filled') ? i : i + 1;
+            saveDs();
+            renderDs();
+        });
+    });
+
+    // Roll button — uses the app's dice roller
+    dsRollBtn?.addEventListener('click', async () => {
+        if (dsFailures >= 3 || dsSuccesses >= 3) return;
+
+        try {
+            const { rollDice } = await import('./diceRoller.js');
+            const result = await rollDice([{ qty: 1, sides: 20 }], 0, 'Death Save');
+            if (!result) return;
+
+            const roll = result.rolls[0];
+
+            if (roll === 20) {
+                // Nat 20: regain 1 HP and exit death saves
+                resetDs();
+                currentHp = 1;
+                saveHp();
+                renderBar();
+                flashBar();
+                renderDs();
+            } else if (roll === 1) {
+                // Nat 1: two failures
+                addDsFailure(2);
+            } else if (roll >= 10) {
+                addDsSuccess();
+            } else {
+                addDsFailure();
+            }
+        } catch (err) {
+            console.error('Death save roll failed:', err);
+        }
+    });
+
+    // ── Damage / Heal / Temp ─────────────────────────────────────────
+    const applyAction = (mode) => {
+        const v = parseInt(inputEl.value) || 0;
+        if (v <= 0) return;
+
+        if (mode === 'dmg') {
+            let dmg = v;
+
+            // Temp HP absorbs first
+            if (tempHp > 0) {
+                const absorbed = Math.min(tempHp, dmg);
+                tempHp -= absorbed;
+                dmg    -= absorbed;
+            }
+
+            const wasAboveZero = currentHp > 0;
+            const overflow     = Math.max(0, dmg - currentHp);
+            currentHp          = Math.max(0, currentHp - dmg);
+
+            if (currentHp === 0) {
+                if (wasAboveZero) {
+                    if (overflow >= maxHp) {
+                        // Massive damage → instant death
+                        resetDs();
+                        dsFailures = 3;
+                        saveDs();
+                    } else {
+                        // Entered death saves — reset trackers
+                        resetDs();
+                    }
+                } else {
+                    // Already at 0 and took damage → auto-fail
+                    addDsFailure();
+                }
+            }
+
+        } else if (mode === 'heal') {
+            const wasAtZero = currentHp === 0;
+            currentHp = Math.min(maxHp, currentHp + v);
+            if (wasAtZero && currentHp > 0) {
+                resetDs();
+            }
+
+        } else if (mode === 'temp') {
+            if (v > tempHp) tempHp = v;
+        }
+
+        inputEl.value = '';
+        saveHp();
+        renderBar();
+        renderDs();
+        flashBar();
+    };
+
+    // ── Hit dice rendering ───────────────────────────────────────────
+    const renderHd = () => {
+        const hdCur    = getHdCurrent();
+        const conMod   = getConMod();
+        const sides    = getHdSides();
+        const totalCon = conMod * hdQty;
+        const sign     = totalCon >= 0 ? '+ ' + totalCon : '− ' + Math.abs(totalCon);
+
+        if (hdRollDetail) hdRollDetail.textContent = `${hdQty}d${sides} ${sign}`;
+        hdRollBtn?.classList.toggle('hd-disabled', hdCur <= 0);
+
+        if (hdQty > hdCur && hdCur > 0) {
+            hdQty = hdCur;
+            hdQtyDisplay.textContent = hdQty;
+        }
+    };
+
+    // ── Event wiring ─────────────────────────────────────────────────
+
+    // Action buttons — mousedown prevents blur so single-click works
+    actionBtns.forEach(btn => {
+        btn.addEventListener('pointerdown', e => e.preventDefault());
+        btn.addEventListener('click', () => applyAction(btn.dataset.action));
+    });
+
+    // Max HP edit → re-render bar (save handled by generic input handler)
+    maxEl?.addEventListener('input', () => {
+        const newMax = Math.max(0, parseInt(maxEl.textContent) || 0);
+        maxHp = newMax;
+        if (currentHp > maxHp) currentHp = maxHp;
+        saveHp();
+        renderBar();
+    });
+
+    // Hit die quantity buttons
+    hdMinusBtn?.addEventListener('click', () => {
+        if (hdQty > 1) { hdQty--; hdQtyDisplay.textContent = hdQty; renderHd(); }
+    });
+
+    hdPlusBtn?.addEventListener('click', () => {
+        if (hdQty < getHdCurrent()) { hdQty++; hdQtyDisplay.textContent = hdQty; renderHd(); }
+    });
+
+    // Hit die roll
+    hdRollBtn?.addEventListener('click', async () => {
+        let hdCur = getHdCurrent();
+        if (hdCur <= 0) return;
+
+        const count    = Math.min(hdQty, hdCur);
+        const sides    = getHdSides();
+        const conMod   = getConMod();
+        const totalCon = conMod * count;
+
+        try {
+            const { rollDice } = await import('./diceRoller.js');
+            const result = await rollDice([{ qty: count, sides }], totalCon, 'Hit Dice');
+            if (!result) return;
+
+            const total = Math.max(count, result.total + totalCon);
+
+            hdCur -= count;
+            if (hdCurrentEl) {
+                hdCurrentEl.textContent = hdCur;
+                localStorage.setItem(`${tabPrefix}_hit_die_current`, String(hdCur));
+            }
+
+            const wasAtZero = currentHp === 0;
+            currentHp = Math.min(maxHp, currentHp + total);
+            if (wasAtZero && currentHp > 0) resetDs();
+            saveHp();
+            renderDs();
+
+            hdQty = 1;
+            hdQtyDisplay.textContent = hdQty;
+            renderBar();
+            flashBar();
+            renderHd();
+
+            const originalText = hdRollBtn.innerHTML;
+            hdRollBtn.innerHTML = `<span class="hd-roll-fadeout">${originalText}</span>`;
+            setTimeout(() => {
+                hdRollBtn.innerHTML = `<span class="hd-roll-result">+${total} HP</span>`;
+                setTimeout(() => {
+                    hdRollBtn.innerHTML = `<span class="hd-roll-fadein">${originalText}</span>`;
+                    setTimeout(() => { hdRollBtn.innerHTML = originalText; }, 300);
+                }, 3000);
+            }, 300);
+        } catch (err) {
+            console.error('Hit die roll failed:', err);
+        }
+    });
+
+    // Manual edits to hit die fields → re-render
+    hdCurrentEl?.addEventListener('input', () => renderHd());
+    hdTypeEl?.addEventListener('input', () => renderHd());
+
+    // ── Long rest listener ───────────────────────────────────────────
+    document.addEventListener('longRest', () => {
+        // Refill HP to max
+        currentHp = maxHp;
+
+        // Remove temp HP
+        tempHp = 0;
+
+        // Recover half total hit dice (minimum 1) — 5e rules
+        const hdMax     = parseInt(hdMaxEl?.textContent) || 0;
+        const hdCur     = getHdCurrent();
+        const recovered = Math.max(1, Math.floor(hdMax / 2));
+        const newHdCur  = Math.min(hdMax, hdCur + recovered);
+        if (hdCurrentEl) {
+            hdCurrentEl.textContent = newHdCur;
+            localStorage.setItem(`${tabPrefix}_hit_die_current`, String(newHdCur));
+        }
+
+        // Reset death saves
+        resetDs();
+
+        saveHp();
+        renderBar();
+        renderHd();
+        renderDs();
+        flashBar();
+    });
+
+    // ── Initial render ───────────────────────────────────────────────
+    renderBar();
+    renderHd();
+    renderDs();
+}
+
+// Initialise after all editable fields have loaded from localStorage
+window.addEventListener("load", () => {
+    setTimeout(() => {
+        initHpSection('tab4');
+        initHpSection('tab8');
+        console.log('✅ HP bar sections initialised.');
+    }, 0);
+});
+
+/* ==================================================================*/
 /* ========================= CIRCLE TOGGLE ==========================*/
 /* ==================================================================*/
 
@@ -656,6 +1035,8 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let n = 1; n <= 9; n++) renderLevel(n, inEdit);
         if (inEdit) renderGhostChips();
 
+        document.dispatchEvent(new CustomEvent('longRest'));
+
         console.log('✅ Long rest — all slots refilled.');
     };
 
@@ -707,12 +1088,12 @@ document.addEventListener('DOMContentLoaded', () => {
         popup.id = 'long-rest-popup';
         popup.className = 'long-rest-popup';
         popup.innerHTML = `<span class="long-rest-popup-message">Long rest — refill all<br>suit uses and spell slots?</span>`;
-        document.body.appendChild(popup);
+        document.getElementById('header-row').appendChild(popup);
 
         const moonRect = longRestBtn.getBoundingClientRect();
         popup.style.top    = `${moonRect.top - 5}px`;
         popup.style.height = `${moonRect.height + 10}px`;
-        popup.style.right  = `${window.innerWidth - moonRect.right - 6}px`;
+        popup.style.left  = `${moonRect.left - 6}px`;
 
         requestAnimationFrame(() => popup.classList.add('visible'));
         setTimeout(() => document.addEventListener('mousedown', onLongRestOutside), 0);

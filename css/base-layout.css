@@ -3330,23 +3330,24 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 
 .long-rest-popup {
     position: fixed;
-    z-index: 99999;
+    z-index: 100000;
     border-radius: 999px;
     display: flex;
     align-items: center;
-    padding: 5px 70px 5px 18px;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    padding: 5px 18px 5px 70px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.25), inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
     opacity: 0;
-    transform: translateX(4px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.4s ease;
     pointer-events: none;
     white-space: nowrap;
 }
 
 .long-rest-popup.visible {
     opacity: 1;
-    transform: translateX(0);
 }
 
 .long-rest-popup-message {
@@ -3364,6 +3365,11 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     background-color: var(--color-green-dark);
     color: #fff;
     overflow: hidden;
+}
+
+#long_rest_button.arming svg,
+#long_rest_button.arming:hover svg {
+    stroke: #fff;
 }
 
 #long_rest_button.arming:hover {

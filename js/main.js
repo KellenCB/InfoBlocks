@@ -887,48 +887,6 @@ document.addEventListener("DOMContentLoaded", () => {
         setupPopoverHover(uchViewBtn, viewPopover, closeViewPopover);
     }
 
-    // ── UCH long rest button (confirmation overlay) ──────────────────────────
-    const longRestBtn = document.getElementById('long_rest_button');
-    const longRestOverlay = document.querySelector('.long-rest-overlay');
-    if (longRestBtn && longRestOverlay) {
-        longRestBtn.addEventListener('click', () => {
-            longRestOverlay.classList.add('show');
-        });
-
-        document.getElementById('cancel_long_rest_button')?.addEventListener('click', () => {
-            longRestOverlay.classList.remove('show');
-        });
-
-        document.getElementById('confirm_long_rest_button')?.addEventListener('click', () => {
-            // Refill all spell slots
-            for (let level = 1; level <= 9; level++) {
-                const key = `spellSlots_${level}`;
-                const raw = localStorage.getItem(key);
-                if (raw) {
-                    try {
-                        const slots = JSON.parse(raw);
-                        if (Array.isArray(slots)) {
-                            localStorage.setItem(key, JSON.stringify(slots.map(() => false)));
-                        }
-                    } catch (_) {}
-                }
-            }
-            // Refill suit uses
-            const suitKey = 'suitUses';
-            const suitRaw = localStorage.getItem(suitKey);
-            if (suitRaw) {
-                try {
-                    const uses = JSON.parse(suitRaw);
-                    if (Array.isArray(uses)) {
-                        localStorage.setItem(suitKey, JSON.stringify(uses.map(() => false)));
-                    }
-                } catch (_) {}
-            }
-            longRestOverlay.classList.remove('show');
-            location.reload();
-        });
-    }
-
     appManager.renderBlocks(activeTabId);
 });
 

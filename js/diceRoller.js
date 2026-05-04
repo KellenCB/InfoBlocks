@@ -380,6 +380,7 @@ export function initDiceRoller() {
           const total   = rolls.reduce((a, b) => a + b, 0);
           appendHistoryEntry(rolls, sides, total, modifier, label);
           fadeOutDice();
+          return { rolls, total };
       } catch (err) {
           console.error('Dice-box error:', err);
           appendResult('Error rolling dice — check console.');
