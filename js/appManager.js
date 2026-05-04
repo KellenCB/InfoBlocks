@@ -2113,29 +2113,8 @@ const applyPendingBlockAnim = () => {
           </div>
       `;
 
-      // Results section layout: search row + sort/add controls + top bar + sections
+      // Results section layout: top bar + sections
       resultsSection.innerHTML = `
-          <div class="inventory-search-row">
-              <div class="search-container">
-                  <input id="search_input_6" class="search_input" type="text" placeholder="Search..." />
-                  <button id="clear_search_button_6" class="clear-search">
-                      <svg class="clear-icon" viewBox="0 0 24 24" fill="none">
-                          <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
-                          <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
-                      </svg>
-                  </button>
-              </div>
-              <button id="results-sort-btn_6" class="results-settings">
-                  <img src="./images/Sort_Icon.svg" alt="Sort icon">
-              </button>
-              <div id="sort-dropdown_6" class="sort-dropdown hidden">
-                  <button class="sort-item" data-sort="newest">Newest</button>
-                  <button class="sort-item" data-sort="oldest">Oldest</button>
-                  <button class="sort-item" data-sort="alpha">A‑Z</button>
-                  <button class="sort-item" data-sort="unalpha">Z-A</button>
-              </div>
-              <button id="add_block_button" class="add-block-button green-button">+</button>
-          </div>
           <div class="inventory-top-bar">
               <div class="inventory-pouches">${pouchesHTML}</div>
               ${attunePillHTML}
@@ -2207,42 +2186,6 @@ const applyPendingBlockAnim = () => {
       }
 
       wireInventoryHeaderControls();
-
-      // Wire search input — preserve value/focus/caret across re-renders
-      const searchInput = document.getElementById('search_input_6');
-      const clearSearchBtn = document.getElementById('clear_search_button_6');
-      if (searchInput) {
-          // Restore previous value if this is a re-render during typing
-          const preservedValue = window._inventorySearchState?.value || '';
-          const hadFocus = window._inventorySearchState?.hadFocus || false;
-          const caretPos = window._inventorySearchState?.caretPos ?? preservedValue.length;
-          if (preservedValue) searchInput.value = preservedValue;
-          if (hadFocus) {
-              searchInput.focus();
-              try { searchInput.setSelectionRange(caretPos, caretPos); } catch (_) {}
-          }
-
-          const capture = () => {
-              window._inventorySearchState = {
-                  value: searchInput.value,
-                  hadFocus: document.activeElement === searchInput,
-                  caretPos: searchInput.selectionStart
-              };
-          };
-
-          setupSearchInput(
-              searchInput,
-              clearSearchBtn,
-              () => {
-                  capture();
-                  import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('6'));
-              },
-              () => {
-                  window._inventorySearchState = { value: '', hadFocus: true, caretPos: 0 };
-                  import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('6'));
-              }
-          );
-      }
 
       // Coin pouches blur save
       resultsSection.querySelectorAll('.permanent-title').forEach(titleEl => {
@@ -2374,52 +2317,7 @@ const applyPendingBlockAnim = () => {
       document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab6' } }));
   };
 
-  const wireInventoryHeaderControls = () => {
-      const sortBtn      = document.getElementById('results-sort-btn_6');
-      const sortDropdown = document.getElementById('sort-dropdown_6');
-      const addBtn       = document.getElementById('add_block_button');
-
-      if (!sortBtn || !sortDropdown) return;
-
-      const closeAll = () => {
-          sortDropdown.classList.add('hidden');
-      };
-
-      sortBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          const wasOpen = !sortDropdown.classList.contains('hidden');
-          closeAll();
-          if (!wasOpen) {
-              const rect = sortBtn.getBoundingClientRect();
-              sortDropdown.style.top  = `${rect.bottom + 5}px`;
-              sortDropdown.style.left = `${rect.left}px`;
-              sortDropdown.classList.remove('hidden');
-          }
-      });
-
-      document.addEventListener('click', closeAll, { once: true });
-
-      const savedSort = localStorage.getItem('activeSortOrder_tab6') || 'newest';
-      sortDropdown.querySelectorAll('.sort-item').forEach(item => {
-          const mode = item.dataset.sort;
-          item.classList.toggle('selected', mode === savedSort);
-          item.addEventListener('click', e => {
-              e.stopPropagation();
-              localStorage.setItem('activeSortOrder_tab6', mode);
-              closeAll();
-              import('./filterManager.js').then(({ filterManager }) => {
-                  filterManager.applyFilters('6');
-              });
-          });
-      });
-
-      if (addBtn) {
-          addBtn.onclick = () => {
-              if (inventoryEditMode) return;
-              startInventoryAdd();
-          };
-      }
-  };
+  const wireInventoryHeaderControls = () => {};
 
 /* ==================================================================*/
   /* ======================= NOTES / TAB3 RENDER ======================*/
@@ -2757,13 +2655,8 @@ const applyPendingBlockAnim = () => {
           ? prelocationFiltered.filter(b => normalizeLocation(b.location) === activeLocation)
           : prelocationFiltered;
 
-      // Header — just the add button (sort/view dropdowns removed in 9a)
+      // Header
       resultsSection.innerHTML = `
-          <div id="results_header_3" class="results-header">
-            <div id="header-controls_3" class="header-controls">
-              <button id="add_block_button" class="add-block-button green-button">+</button>
-            </div>
-          </div>
           ${buildTab3LocationPillsHTML(locationCounts, activeLocation)}
           <div id="tab3-sections-host"></div>
       `;
@@ -3053,13 +2946,8 @@ const applyPendingBlockAnim = () => {
       applyPendingBlockAnim();
   };
 
-  // ── Wire the add button in the results header ───────────────────
-  const wireNotesHeaderControls = () => {
-      const addBtn = document.getElementById('add_block_button');
-      if (addBtn) {
-          addBtn.onclick = () => startNotesAdd();
-      }
-  };
+  // ── Notes header controls (add button moved to UCH) ────────────
+  const wireNotesHeaderControls = () => {};
 
   // ── Notes viewer/inline: shared edit & add helpers ─────────────
 
@@ -3931,121 +3819,9 @@ const applyPendingBlockAnim = () => {
     const resultsSection = document.getElementById(sectionId);
     if (!resultsSection) return;
 
-    // ── HEADER: create once, skip on subsequent renders ──────────────
-    if (!resultsSection.querySelector('.results-header')) {
-
-      const _filterTabs  = new Set(['tab3', 'tab6', 'tab7', 'tab9']);
-      const _openBtnHTML = _filterTabs.has(tab)
-          ? `<button class="filter-open-btn" data-tab="${tab}" title="Show filters">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M15 18l-6-6 6-6"/>
-                </svg>
-            </button>`
-          : '';
-
-      const headerEl = document.createElement('div');
-      headerEl.id = `results_header_${tabSuffix}`;
-      headerEl.className = 'results-header';
-      headerEl.innerHTML = `
-        <div id="header-controls_${tabSuffix}" class="header-controls">
-          <button id="results-sort-btn_${tabSuffix}" class="results-settings">
-            <img src="./images/Sort_Icon.svg" alt="Sort icon">
-          </button>
-          <div id="sort-dropdown_${tabSuffix}" class="sort-dropdown hidden">
-            <button class="sort-item" data-sort="newest">Newest</button>
-            <button class="sort-item" data-sort="oldest">Oldest</button>
-            <button class="sort-item" data-sort="alpha">A‑Z</button>
-            <button class="sort-item" data-sort="unalpha">Z-A</button>
-          </div>
-          <button id="results-settings_${tabSuffix}" class="results-settings">
-            <img src="./images/View_Icon.svg" alt="View‑state icon">
-          </button>
-          <div id="view-toggle-dropdown_${tabSuffix}" class="view-toggle-dropdown hidden">
-            <button class="view-toggle-item" data-state="expanded">Expand</button>
-            <button class="view-toggle-item" data-state="condensed">Condense</button>
-            <button class="view-toggle-item" data-state="minimized">Minimize</button>
-          </div>
-          <button id="add_block_button" class="add-block-button green-button">+</button>
-          ${_openBtnHTML}
-        </div>
-      `;
-      resultsSection.prepend(headerEl);
-
-      // ── Wire add button ──
-      const addBtn = headerEl.querySelector('#add_block_button');
-      if (addBtn) {
-        addBtn.onclick = () => {
-          if (tab === 'tab9') startInlineAdd();
-        };
-      }
-
-      // ── Wire view dropdown ──
-      const settingsBtn  = document.getElementById(`results-settings_${tabSuffix}`);
-      const viewDropdown = document.getElementById(`view-toggle-dropdown_${tabSuffix}`);
-      const sortBtn      = document.getElementById(`results-sort-btn_${tabSuffix}`);
-      const sortDropdown = document.getElementById(`sort-dropdown_${tabSuffix}`);
-
-      const closeDropdowns = () => {
-        viewDropdown.classList.add("hidden");
-        sortDropdown.classList.add("hidden");
-      };
-
-      settingsBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        const wasOpen = !viewDropdown.classList.contains("hidden");
-        closeDropdowns();
-        if (!wasOpen) {
-          const rect = settingsBtn.getBoundingClientRect();
-          viewDropdown.style.top  = `${rect.bottom + 5}px`;
-          viewDropdown.style.left = `${rect.left}px`;
-          viewDropdown.classList.remove("hidden");
-        }
-      });
-
-      document.addEventListener("click", closeDropdowns);
-
-      const savedView = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
-      viewDropdown.querySelectorAll(".view-toggle-item").forEach(item => {
-        const state = item.dataset.state;
-        item.classList.toggle("selected", state === savedView);
-        item.addEventListener("click", e => {
-          e.stopPropagation();
-          closeDropdowns();
-          updateBlocksViewState(state);
-          viewDropdown.querySelectorAll(".view-toggle-item")
-            .forEach(i => i.classList.toggle("selected", i === item));
-        });
-      });
-
-      // ── Wire sort dropdown ──
-      const savedSortMode = localStorage.getItem(`activeSortOrder_${tab}`) || "newest";
-
-      sortBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        const wasOpen = !sortDropdown.classList.contains("hidden");
-        closeDropdowns();
-        if (!wasOpen) {
-          const rect = sortBtn.getBoundingClientRect();
-          sortDropdown.style.top  = `${rect.bottom + 5}px`;
-          sortDropdown.style.left = `${rect.left}px`;
-          sortDropdown.classList.remove("hidden");
-        }
-      });
-
-      sortDropdown.querySelectorAll(".sort-item").forEach(item => {
-        const mode = item.dataset.sort;
-        item.classList.toggle("selected", mode === savedSortMode);
-        item.addEventListener("click", e => {
-          e.stopPropagation();
-          localStorage.setItem(`activeSortOrder_${tab}`, mode);
-          sortDropdown.querySelectorAll(".sort-item")
-            .forEach(i => i.classList.toggle("selected", i === item));
-          sortDropdown.classList.add("hidden");
-          renderBlocks(tab, getBlocks(tab));
-          updateTags();
-          updateViewToggleDropdown(tabSuffix);
-        });
-      });
+    // ── ONE-TIME EVENT SETUP (first render only) ──────────────────────
+    if (!resultsSection.dataset.eventsAttached) {
+      resultsSection.dataset.eventsAttached = 'true';
 
       // ── Event delegation: block expand/collapse toggle ──
       resultsSection.addEventListener("click", function(e) {
@@ -4093,7 +3869,7 @@ const applyPendingBlockAnim = () => {
             doRerender();
         }
       });
-    } // end header creation
+    } // end one-time event setup
 
     // ── BLOCK DATA ──────────────────────────────────────────────────
     const allBlocks     = getBlocks(tab);

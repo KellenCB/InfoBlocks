@@ -766,7 +766,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             );
 
-            data.pageTitle     = document.querySelector('.title-section h1')?.textContent.trim() || 'InformationBlocks';
             data.resultsTitles = Object.fromEntries(
                 [...document.querySelectorAll("[id^='results_title_']")]
                     .map(el => [el.id, el.textContent.trim()])
@@ -781,8 +780,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }
 
-            const pageTitle = data.pageTitle;
-            let filename = prompt('Enter a name for your file:', `InfoBlocks_${pageTitle}`);
+            const charName = localStorage.getItem('tab4_character_name') || 'InfoBlocks';
+            let filename = prompt('Enter a name for your file:', charName);
             if (!filename) return;
             if (!filename.endsWith('.json')) filename += '.json';
 
@@ -821,9 +820,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const el = document.getElementById(id);
                                 if (el) el.textContent = text;
                             });
-                        } else if (key === 'pageTitle') {
-                            const el = document.querySelector('.title-section h1');
-                            if (el) el.textContent = value;
                         }
                         localStorage.setItem(key, typeof value === 'object' ? JSON.stringify(value) : value);
                     });
@@ -841,23 +837,7 @@ document.addEventListener('DOMContentLoaded', () => {
         input.click();
     });
 
-    /* ── Page Title ────────────────────────────────────────────────── */
-
-    const pageTitle = document.getElementById('page_title');
-    if (!pageTitle) { console.error('❌ Page title element not found.'); return; }
-
-    pageTitle.textContent = localStorage.getItem('pageTitle') || '';
-
-    pageTitle.addEventListener('blur', () => {
-        const val = pageTitle.textContent.trim();
-        val ? localStorage.setItem('pageTitle', val) : localStorage.removeItem('pageTitle');
-    });
-
-    pageTitle.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); pageTitle.blur(); }
-    });
-
-    console.log('✅ Page title initialized.');
+    console.log('✅ Upload/Download handlers initialized.');
 });
 
 // ── Forgiving click targets for small circles ──

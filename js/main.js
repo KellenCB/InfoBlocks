@@ -3,27 +3,24 @@ import { appManager, actionButtonHandlers } from './appManager.js';
 import { blockActionsHandler } from './blockActionsHandler.js';
 import { filterManager } from './filterManager.js';
 import { blockTypeConfig } from './tagConfig.js';
-import { stripHTML } from './appManager.js';
-import { initScrollFades, setupSearchInput, initDragToScroll } from './appManager.js';
+import { initScrollFades, initDragToScroll } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
 import { evaluateStatExpression } from './uiHandlers.js';
 import { initLayoutMode, activateCharTab } from './layoutMode.js';
 export function repositionAllSliders() {
     requestAnimationFrame(() => {
-        document.querySelectorAll('.tab-nav').forEach(nav => {
-            const slider = nav.querySelector('.tab-nav-slider');
-            const activeBtn = nav.querySelector('.tab-button.active');
+        document.querySelectorAll('.uch-tab-group').forEach(group => {
+            const slider = group.querySelector('.uch-slider');
+            const activeBtn = group.querySelector('.tab-button.active, .tab-button.uch-selected');
             if (!slider || !activeBtn) return;
             slider.style.transition = 'none';
-            const navRect = nav.getBoundingClientRect();
+            const groupRect = group.getBoundingClientRect();
             const btnRect = activeBtn.getBoundingClientRect();
-            slider.style.left = (btnRect.left - navRect.left + nav.scrollLeft) + 'px';
-            slider.style.top = (btnRect.top - navRect.top) + 'px';
+            slider.style.left = (btnRect.left - groupRect.left) + 'px';
+            slider.style.top = (btnRect.top - groupRect.top) + 'px';
             slider.style.width = btnRect.width + 'px';
             slider.style.height = btnRect.height + 'px';
-            requestAnimationFrame(() => {
-                slider.style.transition = '';
-            });
+            requestAnimationFrame(() => { slider.style.transition = ''; });
         });
     });
 }
@@ -63,10 +60,19 @@ const highlightInHTML = (html, query) => {
     return container.innerHTML;
 };
 
+function stripHighlightsFrom(el) {
+    el.querySelectorAll('.highlight').forEach(span => span.replaceWith(span.textContent));
+    el.normalize();
+}
+
 function applyHighlights(tabNumber, query) {
-    if (!query) return;
     const sec = document.getElementById(`results_section_${tabNumber}`);
     if (!sec) return;
+
+    // Strip old highlights from the elements we're about to process
+    sec.querySelectorAll('.block-title, .block-body, .block-property').forEach(stripHighlightsFrom);
+
+    if (!query) return;
     sec.querySelectorAll('.block-title').forEach(el => { el.innerHTML = highlightInText(el.innerHTML, query); });
     sec.querySelectorAll('.block-body').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
     sec.querySelectorAll('.block-property').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
@@ -77,6 +83,11 @@ function applyViewerHighlights(query) {
     if (!viewer) return;
     const titleEl = viewer.querySelector('.session-viewer-title');
     const bodyEl  = viewer.querySelector('#session_viewer_body');
+
+    if (titleEl) stripHighlightsFrom(titleEl);
+    if (bodyEl) stripHighlightsFrom(bodyEl);
+
+    if (!query) return;
     if (titleEl && titleEl.contentEditable !== 'true') {
         titleEl.innerHTML = highlightInText(titleEl.innerHTML, query);
     }
@@ -88,12 +99,12 @@ function applyViewerHighlights(query) {
 // Re-apply highlights whenever filterManager re-renders blocks
 document.addEventListener('blocksRerendered', e => {
     const tabNumber = e.detail.tab.replace('tab', '');
-    const query = document.getElementById(`search_input_${tabNumber}`)?.value.trim() || '';
+    const query = document.getElementById('uch-search')?.value.trim() || '';
     applyHighlights(tabNumber, query);
 });
 
 document.addEventListener('sessionViewerRendered', () => {
-    const query = document.getElementById('search_input_7')?.value.trim() || '';
+    const query = document.getElementById('uch-search')?.value.trim() || '';
     if (query) applyViewerHighlights(query);
 });
 
@@ -113,25 +124,39 @@ const attachEventListeners = () => {
 
 const menuButton = document.getElementById("Menu_button");
 const menuOverlay = document.getElementById("menu_overlay");
-const menuCloseButton = document.getElementById("menu_close_button");
 
 function closeMenu() {
-    menuOverlay.classList.remove("active");
-    menuButton.classList.remove("menu-button-open");
+    closePopoverAnimated(menuOverlay, 'active');
+    menuButton?.classList.remove("menu-button-open");
+}
+
+function openMenu() {
+    closeAllUchPopovers('menu');
+    positionPopoverBelow(menuOverlay, menuButton);
+    menuOverlay.classList.add("active");
+    menuButton.classList.add("menu-button-open");
 }
 
 if (menuButton && menuOverlay) {
-    menuButton.addEventListener("click", () => {
-    menuOverlay.classList.toggle("active");
-    menuButton.classList.toggle("menu-button-open");
+    menuButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (menuOverlay.classList.contains("active")) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
     });
 
-    menuOverlay.addEventListener("click", (e) => {
-    if (!e.target.closest(".menu-content")) closeMenu();
-    });
-
-    menuCloseButton?.addEventListener("click", closeMenu);
+    menuOverlay.addEventListener("click", (e) => e.stopPropagation());
+    setupPopoverHover(menuButton, menuOverlay, closeMenu);
 }
+
+// Click outside to close menu popover
+document.addEventListener("click", (e) => {
+    if (menuOverlay?.classList.contains("active") && !e.target.closest("#menu_overlay") && !e.target.closest("#Menu_button")) {
+        closeMenu();
+    }
+});
 
 /* ===================================================================*/
 /* ================= CENTRAL OVERLAY CANCEL BUTTONS =================*/
@@ -141,8 +166,9 @@ if (menuButton && menuOverlay) {
 // Note: cancel_remove_button is handled in blockActionsHandler because it
 // also needs to clear pendingDeleteBlockId.
 const overlayCloseConfigs = [
-    { buttonId: 'cancel_clear_button',         overlaySelector: '.cleardata-overlay' },
+    { buttonId: 'cancel_clear_button',         overlaySelector: '.cleardata-overlay:not(.long-rest-overlay)' },
     { buttonId: 'close_spell_slot_edit',       overlaySelector: '.spell-slot-edit-overlay' },
+    { buttonId: 'cancel_long_rest_button',     overlaySelector: '.long-rest-overlay' },
 ];
 
 function initOverlayCancelButtons() {
@@ -160,32 +186,199 @@ function initOverlayCancelButtons() {
 }
 
 /* ===================================================================*/
-/* ========================= DICE ROLLER PANEL =======================*/
+/* ======================= DICE ROLLER POPOVERS =======================*/
 /* ===================================================================*/
 
-const diceMenuButton = document.getElementById("dice-menu-button");
-const dicePanel      = document.getElementById("dice-panel");
-const diceMenuImg    = diceMenuButton?.querySelector("img");
+const diceMenuButton    = document.getElementById("dice-menu-button");
+const diceHistoryButton = document.getElementById("dice-history-button");
+const dicePanel         = document.getElementById("dice-panel");
+const diceHistoryPanel  = document.getElementById("dice-history-popover");
+const diceMenuImg       = diceMenuButton?.querySelector("img");
+
+function positionPopoverBelow(popover, button) {
+    const rect = button.getBoundingClientRect();
+    const popWidth = popover.offsetWidth || 340;
+    let left = rect.left + rect.width / 2 - popWidth / 2;
+    if (left + popWidth > window.innerWidth - 10) left = window.innerWidth - popWidth - 10;
+    if (left < 10) left = 10;
+    popover.style.top = (rect.bottom + 8) + 'px';
+    popover.style.left = left + 'px';
+}
+
+function positionPopoverAbove(popover, button) {
+    const rect = button.getBoundingClientRect();
+    const popWidth = popover.offsetWidth || 340;
+    const popHeight = popover.offsetHeight || 200;
+    let left = rect.left + rect.width / 2 - popWidth / 2;
+    if (left + popWidth > window.innerWidth - 10) left = window.innerWidth - popWidth - 10;
+    if (left < 10) left = 10;
+    popover.style.top = (rect.top - popHeight - 8) + 'px';
+    popover.style.left = left + 'px';
+}
+
+/** Animate a popover closed, then remove the open class */
+function closePopoverAnimated(el, openClass = 'open') {
+    if (!el || !el.classList.contains(openClass) || el.classList.contains('closing')) return;
+    el.classList.add('closing');
+    el.addEventListener('animationend', () => {
+        el.classList.remove(openClass, 'closing', 'popover-above');
+    }, { once: true });
+    // Fallback if animationend doesn't fire
+    setTimeout(() => el.classList.remove(openClass, 'closing', 'popover-above'), 250);
+}
+
+/** Close every UCH popover except the named one */
+function closeAllUchPopovers(except) {
+    const sortPop = document.getElementById('uch-sort-popover');
+    const viewPop = document.getElementById('uch-view-popover');
+    if (except !== 'sort' && sortPop?.classList.contains('open'))
+        closePopoverAnimated(sortPop);
+    if (except !== 'view' && viewPop?.classList.contains('open'))
+        closePopoverAnimated(viewPop);
+    if (except !== 'menu' && menuOverlay?.classList.contains('active')) {
+        closePopoverAnimated(menuOverlay, 'active');
+        menuButton?.classList.remove('menu-button-open');
+    }
+    if (except !== 'dice' && dicePanel?.classList.contains('open')) {
+        closePopoverAnimated(dicePanel);
+        diceMenuButton?.classList.remove('active');
+        if (diceMenuImg) diceMenuImg.src = "images/Dice_Button_v2.svg";
+    }
+    if (except !== 'history' && diceHistoryPanel?.classList.contains('open')) {
+        closePopoverAnimated(diceHistoryPanel);
+        diceHistoryButton?.classList.remove('active');
+    }
+    if (except !== 'latest') closeLatestRoll();
+}
+
+/** Hover delay: close popover after mouse leaves both button and popover */
+function setupPopoverHover(button, popover, closeFn) {
+    let hoverTimer = null;
+    const startClose = () => {
+        clearTimeout(hoverTimer);
+        hoverTimer = setTimeout(closeFn, 300);
+    };
+    const cancelClose = () => clearTimeout(hoverTimer);
+    button.addEventListener('mouseleave', startClose);
+    button.addEventListener('mouseenter', cancelClose);
+    popover.addEventListener('mouseenter', cancelClose);
+    popover.addEventListener('mouseleave', startClose);
+}
 
 function setDicePanelState(open) {
-    dicePanel.classList.toggle("open", open);
-    diceMenuButton.classList.toggle("active", open);
-    if (diceMenuImg) {
-        diceMenuImg.src = open ? "images/Dice_Button_v2_Green.svg" : "images/Dice_Button_v2.svg";
-    }
-    localStorage.setItem("dicePanelOpen", open);
     if (open) {
+        closeAllUchPopovers('dice');
+        dicePanel.classList.add("open", "popover-above");
+        diceMenuButton.classList.toggle("active", true);
+        if (diceMenuImg) diceMenuImg.src = "images/Dice_Button_v2_Green.svg";
+        positionPopoverAbove(dicePanel, diceMenuButton);
+    } else {
+        closePopoverAnimated(dicePanel);
+        diceMenuButton.classList.remove("active");
+        if (diceMenuImg) diceMenuImg.src = "images/Dice_Button_v2.svg";
+    }
+}
+
+const diceLatestRoll = document.getElementById('dice-latest-roll');
+let latestRollTimer = null;
+
+function setDiceHistoryState(open) {
+    if (open) {
+        closeAllUchPopovers('history');
+        closeLatestRoll();
+        diceHistoryPanel.classList.add("open", "popover-above");
+        diceHistoryButton.classList.toggle("active", true);
+        positionPopoverAbove(diceHistoryPanel, diceHistoryButton);
         setTimeout(() => {
             initScrollFades('.roll-results', '--dice-fade-top-opacity', '--dice-fade-bottom-opacity', '_diceFadeHandler');
         }, 100);
+    } else {
+        closePopoverAnimated(diceHistoryPanel);
+        diceHistoryButton.classList.remove("active");
+    }
+}
+
+function showLatestRoll() {
+    const latestEntry = document.querySelector('#dice-history-popover .roll-history-entry.latest-roll');
+    if (!latestEntry || !diceLatestRoll) return;
+
+    clearTimeout(latestRollTimer);
+    diceLatestRoll.innerHTML = '';
+    const clone = latestEntry.cloneNode(true);
+    clone.classList.remove('new-entry');
+    clone.style.cssText = 'margin-bottom: 0;';
+    diceLatestRoll.appendChild(clone);
+    diceLatestRoll.classList.add('open', 'popover-above');
+    positionPopoverAbove(diceLatestRoll, document.getElementById('dice-floating-pill'));
+
+    latestRollTimer = setTimeout(() => closeLatestRoll(), 3000);
+}
+
+function closeLatestRoll() {
+    clearTimeout(latestRollTimer);
+    if (diceLatestRoll?.classList.contains('open')) {
+        closePopoverAnimated(diceLatestRoll);
     }
 }
 
 if (diceMenuButton && dicePanel) {
-  diceMenuButton.addEventListener("click", () => {
-    setDicePanelState(!dicePanel.classList.contains("open"));
-  });
+    diceMenuButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (dicePanel.classList.contains("open")) {
+            setDicePanelState(false);
+        } else {
+            setDicePanelState(true);
+        }
+    });
 }
+
+if (diceHistoryButton && diceHistoryPanel) {
+    diceHistoryButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeLatestRoll();
+        if (diceHistoryPanel.classList.contains("open")) {
+            setDiceHistoryState(false);
+        } else {
+            setDiceHistoryState(true);
+        }
+    });
+}
+
+// Show latest roll result when any dice are rolled
+document.addEventListener("diceRolled", () => {
+    // If full history is open, just let the new entry appear there
+    if (diceHistoryPanel?.classList.contains("open")) return;
+    showLatestRoll();
+});
+
+// Click outside to close dice popovers
+document.addEventListener("click", (e) => {
+    if (dicePanel?.classList.contains("open") && !e.target.closest("#dice-panel") && !e.target.closest("#dice-menu-button")) {
+        setDicePanelState(false);
+    }
+    if (diceHistoryPanel?.classList.contains("open") && !e.target.closest("#dice-history-popover") && !e.target.closest("#dice-history-button")) {
+        setDiceHistoryState(false);
+    }
+    if (diceLatestRoll?.classList.contains("open") && !e.target.closest("#dice-latest-roll")) {
+        closeLatestRoll();
+    }
+});
+
+// Stop clicks inside popovers from bubbling
+dicePanel?.addEventListener("click", (e) => e.stopPropagation());
+diceHistoryPanel?.addEventListener("click", (e) => e.stopPropagation());
+diceLatestRoll?.addEventListener("click", (e) => e.stopPropagation());
+
+// Hover delay close
+if (diceMenuButton && dicePanel) setupPopoverHover(diceMenuButton, dicePanel, () => setDicePanelState(false));
+if (diceHistoryButton && diceHistoryPanel) setupPopoverHover(diceHistoryButton, diceHistoryPanel, () => setDiceHistoryState(false));
+
+// Pause latest-roll auto-close when hovering it
+diceLatestRoll?.addEventListener("mouseenter", () => clearTimeout(latestRollTimer));
+diceLatestRoll?.addEventListener("mouseleave", () => {
+    latestRollTimer = setTimeout(() => closeLatestRoll(), 3000);
+});
+
 initDiceRoller();
 
 /* ===================================================================*/
@@ -204,59 +397,45 @@ const fadeInElementsSequentially = (container = document) => {
 };
 
 /* ===================================================================*/
-/* ===================== TAB NAV FUNCTIONS ===========================*/
+/* =================== UCH SLIDER FUNCTIONS =========================*/
 /* ===================================================================*/
 
-function initTabNavSlider(nav) {
+function initUchSlider(group) {
     const slider = document.createElement('div');
-    slider.classList.add('tab-nav-slider');
-    nav.style.position = 'relative';
-    nav.insertBefore(slider, nav.firstChild);
+    slider.classList.add('uch-slider');
+    group.style.position = 'relative';
+    group.insertBefore(slider, group.firstChild);
 
     function moveSlider(btn) {
-        const navRect = nav.getBoundingClientRect();
+        const groupRect = group.getBoundingClientRect();
         const btnRect = btn.getBoundingClientRect();
-        slider.style.left = (btnRect.left - navRect.left + nav.scrollLeft) + 'px';
-        slider.style.top = (btnRect.top - navRect.top) + 'px';
+        slider.style.left = (btnRect.left - groupRect.left) + 'px';
+        slider.style.top = (btnRect.top - groupRect.top) + 'px';
         slider.style.width = btnRect.width + 'px';
         slider.style.height = btnRect.height + 'px';
     }
 
-    const activeBtn = nav.querySelector('.tab-button.active');
+    const activeBtn = group.querySelector('.tab-button.active, .tab-button.uch-selected');
     if (activeBtn) {
         slider.style.transition = 'none';
         requestAnimationFrame(() => {
             moveSlider(activeBtn);
-            requestAnimationFrame(() => {
-                slider.style.transition = '';
-            });
+            requestAnimationFrame(() => { slider.style.transition = ''; });
         });
     }
 
-    nav.addEventListener('click', e => {
+    group.addEventListener('click', e => {
         const btn = e.target.closest('.tab-button');
         if (btn) moveSlider(btn);
     });
 
     new ResizeObserver(() => {
-        const active = nav.querySelector('.tab-button.active');
+        const active = group.querySelector('.tab-button.active, .tab-button.uch-selected');
         if (!active) return;
         slider.style.transition = 'none';
         moveSlider(active);
-        requestAnimationFrame(() => {
-            slider.style.transition = '';
-        });
-    }).observe(nav);
-}
-
-function saveTabOrder() {
-    // Only read from the main nav, not split view navs
-    const mainNav = document.querySelector(".tab-nav:not(.split-tab-nav)");
-    if (!mainNav) return;
-    const order = Array.from(mainNav.querySelectorAll(".tab-button"))
-        .map(button => button.dataset.tab);
-    localStorage.setItem("tabOrder", JSON.stringify(order));
-    console.log("Tab order saved:", order);
+        requestAnimationFrame(() => { slider.style.transition = ''; });
+    }).observe(group);
 }
 
 /* ===================================================================*/
@@ -429,17 +608,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const charPanel  = document.getElementById('char-sheet-panel');
     const tabsContent = document.getElementById('right-panel');
 
-    // Restore tab order on page load if it exists
-    const savedOrder = JSON.parse(localStorage.getItem("tabOrder"));
-    const tabNav = document.querySelector(".tab-nav");
-    if (savedOrder && tabNav) {
-        savedOrder.forEach(tabId => {
-            const button = tabNav.querySelector(`.tab-button[data-tab="${tabId}"]`);
-            if (button) tabNav.appendChild(button);
-        });
-        console.log("Tab order restored:", savedOrder);
-    }
-
     // Restore filter section visibility for each tab
     [4, 6, 7, 8, 9].forEach(num => {
         const tabId = `tab${num}`;
@@ -451,19 +619,12 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!wrapper) return;
             wrapper.classList.add('filter-panel-closed');
         }
-});
-
-    const tabButtons = document.querySelectorAll(".tab-button");
-    tabButtons.forEach(button => {
-        button.addEventListener("dragstart", () => button.classList.add("dragging"));
-        button.addEventListener("dragend", () => {
-            button.classList.remove("dragging");
-            saveTabOrder();
-        });
     });
 
-    document.querySelectorAll('.tab-nav').forEach(nav => initTabNavSlider(nav));
+    // Init UCH sliders (green glow behind active tab)
+    document.querySelectorAll('.uch-tab-group').forEach(group => initUchSlider(group));
 
+    const tabButtons = document.querySelectorAll(".tab-button");
     const tabContents = document.querySelectorAll(".tab-content");
 
     const storedActiveTab = localStorage.getItem("activeTab");
@@ -473,9 +634,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ? storedActiveTab
         : defaultActiveTab;
 
-    // Hide all tab contents initially.
-    // In landscape the CSS media query will override these inline styles for
-    // the char-panel tabs, so it's safe to set them all to none here.
+    // Hide all tab contents initially
     tabContents.forEach(content => {
         content.classList.remove("active");
         content.style.display = "none";
@@ -488,134 +647,287 @@ document.addEventListener("DOMContentLoaded", () => {
             activeContent.style.display = "flex";
         }
 
-        // Portrait panel routing: show the right top-level container.
-        // In landscape the CSS media query keeps both containers visible
-        // regardless of these inline styles.
+        // Panel routing — explicitly set display and ensure .visible for fade-in
         if (CHAR_TABS.has(activeTabId)) {
-            if (charPanel)   charPanel.style.display   = 'flex';
-            if (tabsContent) tabsContent.style.display = 'none';
+            if (charPanel)   { charPanel.style.display = 'flex'; charPanel.classList.add('visible'); }
+            if (tabsContent) { tabsContent.style.display = 'none'; }
         } else {
-            if (charPanel) charPanel.style.display = 'none';
-            // tabsContent defaults to visible — nothing to set.
+            if (charPanel)   { charPanel.style.display = 'none'; }
+            if (tabsContent) { tabsContent.style.display = 'flex'; tabsContent.classList.add('visible'); }
         }
     }
 
-    // Update tab buttons
+    // Set initial active state on UCH buttons
+    const inLandscapeInit = document.body.classList.contains('landscape-mode');
     tabButtons.forEach(button => {
-        if (button.dataset.tab === activeTabId) {
-            button.classList.add("active");
+        if (inLandscapeInit) {
+            const activeCharTab = localStorage.getItem('activeCharTab') || 'tab4';
+            const activeListTab = localStorage.getItem('activeTab') || 'tab9';
+            if (CHAR_TABS.has(button.dataset.tab)) {
+                button.classList.toggle('uch-selected', button.dataset.tab === activeCharTab);
+                button.classList.remove('active');
+            } else {
+                button.classList.toggle('active', button.dataset.tab === activeListTab);
+                button.classList.remove('uch-selected');
+            }
         } else {
-            button.classList.remove("active");
+            button.classList.toggle('active', button.dataset.tab === activeTabId);
         }
     });
 
+    // ── UCH tab click handler ──────────────────────────────────────────────
     tabButtons.forEach(button => {
         button.addEventListener("click", (event) => {
             const targetTab     = event.currentTarget.dataset.tab;
             const targetContent = document.getElementById(targetTab);
-            if (!targetTab) {
-                console.error("❌ Error: targetTab is undefined.");
-                return;
-            }
-
-            // Char-sheet-nav buttons are handled by layoutMode.js — don't
-            // interfere with them here.
-            if (event.currentTarget.closest('#char-sheet-nav')) return;
+            if (!targetTab) return;
 
             const inLandscape = document.body.classList.contains('landscape-mode');
+            const isCharTab   = CHAR_TABS.has(targetTab);
 
-            // Remove active class from ALL tab buttons (both navs).
-            tabButtons.forEach(btn => {
-                if (inLandscape && btn.closest('#char-sheet-nav')) return;
-                btn.classList.remove("active");
-            });
-
-            // Hide all tab-contents — but in landscape don't touch the char-panel
-            // tabs because the CSS media query controls their visibility there.
-            tabContents.forEach(content => {
-                if (inLandscape && CHAR_TABS.has(content.id)) return;
-                content.classList.remove("active");
-                content.style.display = "none";
-            });
-
-            // Show the target tab.
-            event.currentTarget.classList.add("active");
-            if (targetContent) {
-                targetContent.classList.add("active");
-                targetContent.style.display = "flex";
-            }
-
-            // Portrait panel routing.
-            // In landscape both containers are always visible (CSS !important),
-            // so these inline styles are harmlessly overridden.
-            if (!inLandscape) {
-                if (CHAR_TABS.has(targetTab)) {
-                    if (charPanel)    charPanel.style.display   = 'flex';
-                    if (tabsContent)  tabsContent.style.display = 'none';
+            if (inLandscape) {
+                if (isCharTab) {
+                    document.querySelectorAll('#uch-char-tabs .tab-button').forEach(btn => {
+                        btn.classList.remove('active', 'uch-selected');
+                    });
+                    event.currentTarget.classList.add('uch-selected');
+                    activateCharTab(targetTab);
                 } else {
-                    if (charPanel)    charPanel.style.display   = 'none';
-                    if (tabsContent)  tabsContent.style.display = '';
+                    document.querySelectorAll('#uch-list-tabs .tab-button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    event.currentTarget.classList.add('active');
+
+                    tabContents.forEach(content => {
+                        if (CHAR_TABS.has(content.id)) return;
+                        content.classList.remove("active");
+                        content.style.display = "none";
+                    });
+                    if (targetContent) {
+                        targetContent.classList.add("active");
+                        targetContent.style.display = "flex";
+                    }
+                    localStorage.setItem("activeTab", targetTab);
                 }
+            } else {
+                // Portrait: one active tab at a time
+                tabButtons.forEach(btn => btn.classList.remove("active", "uch-selected"));
+                event.currentTarget.classList.add("active");
+
+                tabContents.forEach(content => {
+                    content.classList.remove("active");
+                    content.style.display = "none";
+                });
+                if (targetContent) {
+                    targetContent.classList.add("active");
+                    targetContent.style.display = "flex";
+                }
+
+                // Panel routing — always use explicit display values + ensure .visible
+                if (isCharTab) {
+                    if (charPanel)   { charPanel.style.display = 'flex'; charPanel.classList.add('visible'); }
+                    if (tabsContent) { tabsContent.style.display = 'none'; }
+                    activateCharTab(targetTab);
+                } else {
+                    if (charPanel)   { charPanel.style.display = 'none'; }
+                    if (tabsContent) { tabsContent.style.display = 'flex'; tabsContent.classList.add('visible'); }
+                }
+                localStorage.setItem("activeTab", targetTab);
             }
 
-            localStorage.setItem("activeTab", targetTab);
-        
             appManager.updateTags();
             actionButtonHandlers.attachActionButtonListeners();
 
             const tabSuffix = targetTab.replace("tab", "");
             filterManager.applyFilters(tabSuffix);
             appManager.updateViewToggleDropdown(tabSuffix);
-            setTimeout(() => {
-                const cs = window.getComputedStyle(targetContent);
-                if (cs.display === "none") targetContent.style.display = "flex";
-            }, 100);
+            if (targetContent) {
+                setTimeout(() => {
+                    const cs = window.getComputedStyle(targetContent);
+                    if (cs.display === "none") targetContent.style.display = "flex";
+                }, 100);
+            }
         });
     });
-    
-    // Handle tab reordering
-    document.querySelector(".tab-nav").addEventListener("dragover", (e) => {
-        e.preventDefault();
-        const draggingTab = document.querySelector(".dragging");
-        const afterElement = getDragAfterElement(e.clientX);
-        const tabNav = document.querySelector(".tab-nav");
-        if (afterElement == null) {
-            tabNav.appendChild(draggingTab);
-        } else {
-            tabNav.insertBefore(draggingTab, afterElement);
-        }
-    });
 
-    function getDragAfterElement(x) {
-        const draggableElements = [...document.querySelectorAll(".tab-button:not(.dragging)")];
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = x - box.left - box.width / 2;
-            return offset < 0 && offset > closest.offset ? { offset, element: child } : closest;
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-      
-    function setupTabSearchAndFilters(tabNumber) {
-        const searchInput       = document.getElementById(`search_input_${tabNumber}`);
-        const clearSearchButton = document.getElementById(`clear_search_button_${tabNumber}`);
-
-        if (!searchInput) return;
-
-        setupSearchInput(
-            searchInput,
-            clearSearchButton,
-            (value) => {
-                filterManager.applyFilters(tabNumber);
-                applyHighlights(tabNumber, value.trim());
-            },
-            () => {
-                filterManager.applyFilters(tabNumber);
+    // ── UCH universal search bar ────────────────────────────────────────────
+    const uchSearch = document.getElementById('uch-search');
+    const uchSearchClear = document.getElementById('uch-search-clear');
+    if (uchSearch) {
+        uchSearch.addEventListener('input', () => {
+            const activeTab = appManager.getActiveTab();
+            const tabSuffix = activeTab.replace('tab', '');
+            filterManager.applyFilters(tabSuffix);
+            applyHighlights(tabSuffix, uchSearch.value.trim());
+            uchSearch.classList.toggle('has-value', uchSearch.value.trim().length > 0);
+        });
+        uchSearch.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                uchSearch.value = '';
+                uchSearch.classList.remove('has-value');
+                const activeTab = appManager.getActiveTab();
+                const tabSuffix = activeTab.replace('tab', '');
+                filterManager.applyFilters(tabSuffix);
+                applyHighlights(tabSuffix, '');
+                uchSearch.blur();
             }
-        );
-        // clearFiltersButton is handled by the module-level clearFilters listener below.
+        });
     }
-            
-    [4, 6, 7, 8, 9].forEach(tabNumber => setupTabSearchAndFilters(tabNumber));
+    if (uchSearchClear) {
+        uchSearchClear.addEventListener('click', () => {
+            uchSearch.value = '';
+            uchSearch.classList.remove('has-value');
+            const activeTab = appManager.getActiveTab();
+            const tabSuffix = activeTab.replace('tab', '');
+            filterManager.applyFilters(tabSuffix);
+            applyHighlights(tabSuffix, '');
+            uchSearch.focus();
+        });
+    }
+
+    // ── UCH universal add button ─────────────────────────────────────────────
+    const uchAddBtn = document.getElementById('uch-add-button');
+    if (uchAddBtn) {
+        uchAddBtn.addEventListener('click', () => {
+            const activeTab = appManager.getActiveTab();
+            if (activeTab === 'tab9') {
+                appManager.startInlineAdd();
+            } else if (activeTab === 'tab3') {
+                appManager.startNotesAdd();
+            } else if (activeTab === 'tab6') {
+                appManager.startInventoryAdd();
+            } else if (activeTab === 'tab7') {
+                document.getElementById('add_block_button_7')?.click();
+            }
+        });
+    }
+
+    // ── UCH sort button (popover dropdown) ───────────────────────────────────
+    const uchSortBtn = document.getElementById('uch-sort-button');
+    if (uchSortBtn) {
+        const sortPopover = document.createElement('div');
+        sortPopover.className = 'uch-dropdown-popover';
+        sortPopover.id = 'uch-sort-popover';
+        sortPopover.innerHTML = `
+            <button class="sort-item" data-sort="newest">Newest</button>
+            <button class="sort-item" data-sort="oldest">Oldest</button>
+            <button class="sort-item" data-sort="alpha">A–Z</button>
+            <button class="sort-item" data-sort="unalpha">Z–A</button>
+        `;
+        document.body.appendChild(sortPopover);
+
+        const closeSortPopover = () => closePopoverAnimated(sortPopover);
+
+        uchSortBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (sortPopover.classList.contains('open')) {
+                closeSortPopover();
+            } else {
+                closeAllUchPopovers('sort');
+                sortPopover.classList.add('open');
+                positionPopoverBelow(sortPopover, uchSortBtn);
+            }
+        });
+
+        sortPopover.addEventListener('click', (e) => {
+            const item = e.target.closest('.sort-item');
+            if (!item) return;
+            e.stopPropagation();
+            const mode = item.dataset.sort;
+            const activeTab = appManager.getActiveTab();
+            localStorage.setItem(`activeSortOrder_${activeTab}`, mode);
+            sortPopover.querySelectorAll('.sort-item').forEach(i => i.classList.toggle('selected', i === item));
+            closeSortPopover();
+            const tabSuffix = activeTab.replace('tab', '');
+            filterManager.applyFilters(tabSuffix);
+        });
+
+        document.addEventListener('click', () => { if (sortPopover.classList.contains('open')) closeSortPopover(); });
+        sortPopover.addEventListener('click', (e) => e.stopPropagation());
+        setupPopoverHover(uchSortBtn, sortPopover, closeSortPopover);
+    }
+
+    // ── UCH viewstate button (popover dropdown) ──────────────────────────────
+    const uchViewBtn = document.getElementById('uch-view-button');
+    if (uchViewBtn) {
+        const viewPopover = document.createElement('div');
+        viewPopover.className = 'uch-dropdown-popover';
+        viewPopover.id = 'uch-view-popover';
+        viewPopover.innerHTML = `
+            <button class="view-toggle-item" data-state="expanded">Expand all</button>
+            <button class="view-toggle-item" data-state="condensed">Condense all</button>
+            <button class="view-toggle-item" data-state="minimized">Minimize all</button>
+        `;
+        document.body.appendChild(viewPopover);
+
+        const closeViewPopover = () => closePopoverAnimated(viewPopover);
+
+        uchViewBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (viewPopover.classList.contains('open')) {
+                closeViewPopover();
+            } else {
+                closeAllUchPopovers('view');
+                viewPopover.classList.add('open');
+                positionPopoverBelow(viewPopover, uchViewBtn);
+            }
+        });
+
+        viewPopover.addEventListener('click', (e) => {
+            const item = e.target.closest('.view-toggle-item');
+            if (!item) return;
+            e.stopPropagation();
+            const state = item.dataset.state;
+            appManager.updateBlocksViewState(state);
+            closeViewPopover();
+        });
+
+        document.addEventListener('click', () => { if (viewPopover.classList.contains('open')) closeViewPopover(); });
+        viewPopover.addEventListener('click', (e) => e.stopPropagation());
+        setupPopoverHover(uchViewBtn, viewPopover, closeViewPopover);
+    }
+
+    // ── UCH long rest button (confirmation overlay) ──────────────────────────
+    const longRestBtn = document.getElementById('long_rest_button');
+    const longRestOverlay = document.querySelector('.long-rest-overlay');
+    if (longRestBtn && longRestOverlay) {
+        longRestBtn.addEventListener('click', () => {
+            longRestOverlay.classList.add('show');
+        });
+
+        document.getElementById('cancel_long_rest_button')?.addEventListener('click', () => {
+            longRestOverlay.classList.remove('show');
+        });
+
+        document.getElementById('confirm_long_rest_button')?.addEventListener('click', () => {
+            // Refill all spell slots
+            for (let level = 1; level <= 9; level++) {
+                const key = `spellSlots_${level}`;
+                const raw = localStorage.getItem(key);
+                if (raw) {
+                    try {
+                        const slots = JSON.parse(raw);
+                        if (Array.isArray(slots)) {
+                            localStorage.setItem(key, JSON.stringify(slots.map(() => false)));
+                        }
+                    } catch (_) {}
+                }
+            }
+            // Refill suit uses
+            const suitKey = 'suitUses';
+            const suitRaw = localStorage.getItem(suitKey);
+            if (suitRaw) {
+                try {
+                    const uses = JSON.parse(suitRaw);
+                    if (Array.isArray(uses)) {
+                        localStorage.setItem(suitKey, JSON.stringify(uses.map(() => false)));
+                    }
+                } catch (_) {}
+            }
+            longRestOverlay.classList.remove('show');
+            location.reload();
+        });
+    }
 
     appManager.renderBlocks(activeTabId);
 });
@@ -908,10 +1220,6 @@ window.onload = async () => {
     });
 
     initSplitView();
-
-    if (localStorage.getItem("dicePanelOpen") === "true" && diceMenuButton && dicePanel) {
-        setDicePanelState(true);
-    }
 
     fadeInElementsSequentially();
 

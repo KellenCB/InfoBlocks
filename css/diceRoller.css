@@ -1,31 +1,82 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   DICE PANEL — side column
+   DICE POPOVERS — dropdown panels anchored below UCH
 ───────────────────────────────────────────────────────────────────────────── */
 
-#dice-panel {
-  width: 0;
-  flex-shrink: 0;
-  overflow: hidden;
-  transition: width 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+.dice-popover {
+  display: none;
+  position: fixed;
+  z-index: 9998;
+  background-color: var(--gray-300);
+  border-radius: 16px;
+  padding: 16px;
+  width: 340px;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
-#dice-panel.open {
-  width: 380px;
+.dice-popover.open {
+  display: block;
+  animation: dice-popover-in 0.3s ease-out forwards;
 }
 
-#dice-panel-inner {
-  width: 100%;
-  min-width: 0;
-  flex: 1;
-  min-height: 0;
-  padding-left: 20px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+@keyframes dice-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes popover-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes popover-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes popover-out-down {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.dice-popover.closing {
+  display: block;
+  animation: popover-out 0.2s ease-in forwards;
+}
+
+/* Upward-opening popovers (anchored above bottom buttons) */
+.dice-popover.popover-above.open {
+  animation: popover-in-up 0.3s ease-out forwards;
+}
+
+.dice-popover.popover-above.closing {
+  display: block;
+  animation: popover-out-down 0.2s ease-in forwards;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -41,22 +92,15 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   DICE ROLLER CONTAINER — single scrollable column
+   DICE ROLLER CONTAINER
 ───────────────────────────────────────────────────────────────────────────── */
 
 .dice-roller-container {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
   width: 100%;
-  padding: 20px;
-  background-color: var(--gray-300);
-  border-radius: 20px;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
 }
-
 
 /* ─────────────────────────────────────────────────────────────────────────────
    DICE SELECTION ROW
@@ -159,21 +203,21 @@
 
 .selected-dice-wrapper {
   width: 100%;
-  min-height: 90px;
+  min-height: 60px;
   position: relative;
   background-color: var(--gray-200);
-  padding: 20px 10px;
-  border: 1px solid var(--gray-550);
-  border-radius: 15px;
+  padding: 12px 10px;
+  border-radius: 12px;
   box-sizing: border-box;
   overflow-y: auto;
+  max-height: 120px;
   box-shadow: inset 0 4px 10px color-mix(in srgb, black 50%, transparent);
 }
 
 .selected-dice-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
 }
 
@@ -186,8 +230,8 @@
 
 .selected-die-wrapper {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
 }
 
 .selected-die-wrapper img,
@@ -204,17 +248,17 @@
   transform: translate(-50%, -50%);
   color: var(--gray-900);
   font-weight: bold;
-  font-size: 12px;
+  font-size: 11px;
   pointer-events: none;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   ROLL RESULTS
+   ROLL RESULTS (inside history popover)
 ───────────────────────────────────────────────────────────────────────────── */
 
 .roll-results {
-    flex: 1;
-    min-height: 0;
+    min-height: 60px;
+    max-height: 50vh;
     overflow-y: auto;
     display: block;
     color: var(--gray-900);
@@ -223,9 +267,18 @@
     text-align: center;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    box-shadow:
-        inset 0 40px 20px -20px var(--gray-300),
-        inset 0 -40px 20px -20px var(--gray-300);
+}
+
+/* Latest roll popover — compact, no scroll */
+#dice-latest-roll {
+    padding: 10px;
+    width: auto;
+    min-width: 200px;
+    max-width: 340px;
+}
+
+#dice-latest-roll .roll-history-entry {
+    margin-bottom: 0;
 }
 
 .roll-results::-webkit-scrollbar {
@@ -237,8 +290,8 @@
     position: sticky;
     top: 0;
     display: block;
-    height: 40px;
-    margin-bottom: -40px;
+    height: 30px;
+    margin-bottom: -30px;
     background: linear-gradient(
         var(--gray-300) 0%,
         color-mix(in srgb, var(--gray-300) 50%, transparent) 50%,
@@ -254,8 +307,8 @@
     position: sticky;
     bottom: 0;
     display: block;
-    height: 40px;
-    margin-top: -40px;
+    height: 30px;
+    margin-top: -30px;
     background: linear-gradient(
         color-mix(in srgb, var(--gray-300) 0%, transparent) 0%,
         color-mix(in srgb, var(--gray-300) 50%, transparent) 50%,
@@ -271,50 +324,36 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 8px;
-  margin: 10px 0 15px 0;
+  gap: 6px;
+  margin: 8px 0 10px 0;
 }
 
 .total {
   font-weight: bold;
-  font-size: 16px;
+  font-size: 14px;
   text-align: center;
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: 6px;
+  padding-top: 6px;
   border-top: 1px solid var(--gray-500);
   width: 100%;
 }
 
 .roll-history-entry {
   background-color: var(--gray-350);
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 10px;
+  padding: 10px;
   width: 100%;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  margin-bottom: 10px;
-}
-
-.roll-history-entry.new-entry {
-  scale: 0.9;
-  transform: translateY(-20px);
-  animation: slide-in 0.6s ease-out forwards;
+  margin-bottom: 8px;
 }
 
 .roll-history-entry:last-child {
     margin-bottom: 0;
 }
 
-@keyframes slide-in {
-  to {
-    scale: 1;
-    transform: translateY(0);
-  }
-}
-
 .roll-die-wrapper {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   margin: 0 auto;
 }
 
@@ -331,6 +370,6 @@
   transform: translate(-50%, -50%);
   color: var(--gray-900);
   font-weight: bold;
-  font-size: 13px;
+  font-size: 12px;
   pointer-events: none;
 }

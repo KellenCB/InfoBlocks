@@ -26,7 +26,406 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 #header-row {
     position: relative;
     z-index: 9999;
+    width: 100%;
+    padding-bottom: 20px;
 }
+
+/* ==================================================================*/
+/* ============== UCH (UNIVERSAL CONTROL HEADER) ====================*/
+/* ==================================================================*/
+
+#uch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+}
+
+.uch-edge-group {
+    flex: 0 0 auto;
+}
+
+.uch-center-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+}
+
+.uch-tab-group {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+    position: relative;
+    padding: 5px;
+    background-color: var(--gray-300);
+    border-radius: 25px;
+    align-items: center;
+}
+
+/* ── UCH slider (green glow behind active tab) ──────────────────── */
+.uch-slider {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    border: none;
+    background-color: color-mix(in srgb, var(--color-green) 15%, transparent);
+    background-image: radial-gradient(90% 110% at 50% 0%, var(--color-green) 0%, transparent 100%);
+    box-shadow: color-mix(in srgb, var(--color-green) 20%, transparent) 0px -6px 24px 0px;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                top 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+}
+
+/* Vertical divider inside pill groups */
+.uch-pill-divider {
+    width: 1px;
+    height: 20px;
+    background-color: var(--gray-500);
+    opacity: 0.4;
+    flex-shrink: 0;
+    margin: 0 2px;
+}
+
+/* Override old .tab-button base styles for UCH icon tabs */
+.tab-button.uch-tab {
+    all: unset;
+    box-sizing: border-box;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    transition: background-color 0.15s ease;
+    flex: 0 0 auto;
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.tab-button.uch-tab:hover {
+    background-color: color-mix(in srgb, var(--gray-900) 8%, transparent);
+}
+
+.tab-button.uch-tab svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--gray-700);
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+
+.tab-button.uch-tab.active svg,
+.tab-button.uch-tab.uch-selected svg {
+    stroke: var(--gray-900);
+}
+
+/* Tooltip on hover — delayed appearance */
+.uch-tooltip {
+    position: absolute;
+    bottom: -36px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background-color: color-mix(in srgb, var(--gray-250) 95%, transparent);
+    color: var(--gray-900);
+    padding: 8px 12px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    font-size: 13px;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+    z-index: 10000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    transition-delay: 0s;
+}
+
+.tab-button.uch-tab:hover .uch-tooltip,
+.uch-pill-btn:hover .uch-tooltip,
+.uch-has-tooltip:hover .uch-tooltip {
+    opacity: 1;
+    transition-delay: 0.5s;
+}
+
+/* ── UCH search pill (looks like a tab group pill) ───────────────── */
+.uch-search-pill {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 5px;
+    background-color: var(--gray-300);
+    border-radius: 25px;
+    max-width: 500px;
+    flex: 1 1 500px;
+    min-width: 200px;
+}
+
+.uch-search {
+    flex: 1;
+    height: 42px;
+    border: none;
+    border-radius: 25px;
+    padding: 0 16px;
+    font-size: 13px;
+    background: transparent;
+    color: var(--gray-900);
+    outline: none;
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+.uch-search::placeholder {
+    color: var(--gray-600);
+}
+
+/* ── Solo pill containers (single icon in pill bg) ───────────────── */
+.uch-pill-solo {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    background-color: var(--gray-300);
+    border-radius: 25px;
+    flex-shrink: 0;
+}
+
+.uch-pill-solo .uch-btn {
+    background: transparent;
+}
+
+.uch-pill-solo .uch-btn:hover {
+    background: transparent;
+}
+
+.uch-pill-solo .uch-btn svg {
+    transition: stroke 0.15s ease;
+}
+
+.uch-pill-solo .uch-btn:hover svg {
+    stroke: var(--gray-900);
+}
+
+.uch-pill-green {
+    background-color: color-mix(in srgb, var(--color-green) 20%, transparent);
+}
+
+.uch-pill-green .uch-btn svg {
+    stroke: var(--color-green);
+    stroke-width: 2.2;
+}
+
+.uch-pill-green:hover {
+    background-color: color-mix(in srgb, var(--color-green) 30%, transparent);
+}
+
+/* ── Floating dice pill — fixed bottom right ─────────────────────── */
+#dice-floating-pill {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+    background-color: var(--gray-300);
+    border-radius: 25px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    z-index: 9000;
+}
+
+#dice-floating-pill .uch-btn img {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+}
+
+/* Tooltip variant that appears above the button */
+.uch-tooltip-above {
+    bottom: auto;
+    top: -36px;
+}
+
+/* ── Inline buttons inside search pill (sort, view, clear) ────────── */
+.uch-inline-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: none;
+}
+
+.uch-has-tooltip {
+    position: relative;
+}
+
+.uch-inline-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: var(--gray-600);
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.15s ease;
+}
+
+.uch-inline-btn:hover svg {
+    stroke: var(--gray-900);
+}
+
+/* Search clear — hidden until search has value */
+#uch-search-clear {
+    display: none;
+}
+
+.uch-search.has-value ~ #uch-search-clear {
+    display: flex;
+}
+
+/* ── Long rest inside char-tabs pill ─────────────────────────────── */
+#long_rest_button.uch-pill-btn {
+    width: 42px;
+    height: 42px;
+    background: transparent;
+    border: none;
+}
+
+#long_rest_button.uch-pill-btn svg {
+    stroke: var(--gray-700);
+}
+
+#long_rest_button.uch-pill-btn:hover {
+    background-color: color-mix(in srgb, var(--color-orange) 25%, transparent);
+}
+
+#long_rest_button.uch-pill-btn:hover svg {
+    stroke: var(--color-orange);
+}
+
+/* ── UCH action buttons ──────────────────────────────────────────── */
+.uch-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease;
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Buttons inside a pill — no extra margin, same style */
+.uch-pill-btn {
+    position: relative;
+}
+
+.uch-btn:hover,
+.uch-pill-btn:hover {
+    background-color: color-mix(in srgb, var(--gray-900) 8%, transparent);
+}
+
+.uch-btn.active {
+    background-color: color-mix(in srgb, var(--color-green) 18%, transparent);
+}
+
+.uch-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--gray-700);
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.uch-btn.active svg {
+    stroke: var(--gray-900);
+}
+
+.uch-btn img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+/* UCH small dropdown popovers (sort, viewstate) */
+.uch-dropdown-popover {
+    position: fixed;
+    background-color: color-mix(in srgb, var(--gray-250) 95%, transparent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 5px;
+    display: none;
+    flex-direction: column;
+    z-index: 9998;
+    gap: 5px;
+    width: max-content;
+}
+
+.uch-dropdown-popover .sort-item,
+.uch-dropdown-popover .view-toggle-item {
+    white-space: nowrap;
+}
+
+.uch-dropdown-popover.open {
+    display: flex;
+    animation: dice-popover-in 0.3s ease-out forwards;
+}
+
+.uch-dropdown-popover.closing {
+    display: flex;
+    animation: popover-out 0.2s ease-in forwards;
+}
+
+/* Menu button icon swap */
+.uch-btn .menu-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.uch-btn .menu-icon-wrapper svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--gray-700);
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+#menu-icon-close { display: none; }
+.menu-button-open #menu-icon-default { display: none; }
+.menu-button-open #menu-icon-close { display: flex; }
 
 /* ==================================================================*/
 /* ======================= LAYOUT STRUCTURE =========================*/
@@ -72,11 +471,6 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 
 #char-sheet-panel.active {
     display: flex;
-}
-
-#char-sheet-nav,
-#list-tab-nav {
-    display: none;
 }
 
 #landscape-divider {
@@ -131,113 +525,6 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     flex-direction: column;
 }
 
-.tab-nav {
-    position: relative;
-    display: flex;
-    border-radius: 25px;
-    background-color: var(--gray-300);
-    padding: 5px;
-    justify-content: flex-start;
-    gap: 5px;
-    width: 100%;
-    flex-shrink: 0;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    overflow: auto;
-    margin-bottom: 0px;
-}
-
-.tab-nav-slider {
-    position: absolute;
-    border-radius: 20px;
-    pointer-events: none;
-    border: none;
-    background-color: color-mix(in srgb, var(--color-green) 15%, transparent);
-    background-image: radial-gradient(90% 110% at 50% 0%, var(--color-green) 0%, transparent 100%);
-    box-shadow: color-mix(in srgb, var(--color-green) 20%, transparent) 0px -6px 24px 0px;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                top 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.tab-button {
-    background: transparent;
-    color: var(--gray-700);
-    border: none;
-    padding: 10px 14px 12px 14px;
-    cursor: pointer;
-    font-weight: bold;
-    border-radius: 10px;
-    transition: color 0.2s ease;
-    white-space: nowrap;
-    position: relative;
-    z-index: 1;
-    -webkit-appearance: none;
-    appearance: none;
-    flex: 1;
-    text-align: center;
-}
-
-.tab-button:hover {
-    color: var(--gray-800);
-}
-
-.tab-button.active {
-    color: var(--gray-900);
-}
-
-.tab-button.dragging {
-    opacity: 0.5;
-}
-
-.title-section {
-    display: flex;
-    height: auto;
-    flex: 1;
-    min-width: 0;
-    align-items: center;
-    justify-content: flex-start;
-    background-color: var(--gray-300);
-    padding: 0px 15px;
-    border-radius: 20px;
-    gap: 7.5px;
-    box-sizing: border-box;
-}
-
-#page_title {
-    min-height: 1.5em;
-    transform: translateY(+5px);
-    overflow: hidden;
-    white-space: nowrap;
-}
-
-/* ==================================================================*/
-/* ================================ TABS ============================*/
-/* ==================================================================*/
-
-#page_title:not(:focus) { text-overflow: ellipsis; }
-
-#page_title:focus { text-overflow: unset; }
-
-#page_title:empty:before {
-    content: "Enter Custom Title Here...";
-    color: var(--gray-750);
-    pointer-events: none;
-}
-
-.hero-button-section {
-    display: flex;
-    height: auto;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--gray-300);
-    padding: 12px 20px;
-    border-radius: 20px;
-    gap: 10px;
-    box-sizing: border-box;
-    min-height: 60px;
-}
 
 #suit_uses_circles {
     display: flex;
@@ -1323,135 +1610,59 @@ a:hover {
 /* ========================== MENU STYLING ==========================*/
 /* ==================================================================*/
 
-.menu-overlay {
+/* ── Menu popover (dropdown from UCH menu button) ──────────────────── */
+
+.menu-popover {
+    display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease-in-out;
     z-index: 9998;
-    display: flex;
-    justify-content: flex-end;
-    align-items: stretch;
-}
-
-.menu-overlay.active {
-    opacity: 1;
-    pointer-events: all;
-}
-
-.menu-content {
-    width: 300px;
     background-color: var(--gray-300);
-    color: var(--gray-850);
-    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.5);
-    overflow-y: auto;
-    padding: 35px;
-    padding-top: 90px;
+    border-radius: 16px;
+    padding: 16px;
+    width: 260px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.menu-popover.active {
+    display: block;
+    animation: dice-popover-in 0.3s ease-out forwards;
+}
+
+.menu-popover.closing {
+    display: block;
+    animation: popover-out 0.2s ease-in forwards;
+}
+
+.menu-popover-buttons {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    position: relative;
-}
-
-.menu-panel-close {
-    position: absolute;
-    top: 35px;
-    right: 40px;
-    background-color: var(--gray-400);
-    z-index: 1;
-}
-
-.menu-panel-close:hover {
-    background-color: var(--gray-500);
-}
-
-.overlay-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px;
+    gap: 8px;
 }
 
 .menu-item-button {
     width: 100%;
-    padding: 12px 20px;
-    border-radius: 15px;
-    font-size: 16px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
     text-align: left;
     display: flex;
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
-    transition: background-color 0.3s, border-color 0.3s, transform 0.2s;
-    border: 2px solid transparent;
+    transition: background-color 0.2s;
+    border: none;
     background-color: var(--gray-400);
     color: var(--gray-900);
+}
+
+.menu-item-button:hover {
+    background-color: var(--gray-450);
 }
 
 .button-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.menu_footer {
-    margin-top: auto;
-    padding-top: 20px;
-    border-top: 1px solid var(--gray-400);
-}
-
-.menu-icon-wrapper {
-    position: relative;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.menu-icon-wrapper svg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    stroke: currentColor;
-}
-
-#menu-icon-default {
-    opacity: 1;
-    transform: scale(1);
-}
-
-#menu-icon-close {
-    opacity: 0;
-    transform: scale(0.8);
-}
-
-.menu_footer nav ul {
-    list-style: none;
-    padding: 0;
-}
-
-.menu_footer nav ul li {
-    margin-bottom: 10px;
-}
-
-.menu_footer nav ul li a {
-    color: var(--gray-800);
-    text-decoration: none;
-    font-size: 16px;
-    transition: color 0.3s;
-}
-
-.menu_footer nav ul li a:hover {
-    color: var(--color-green);
 }
 
 /* ==================================================================*/
@@ -2195,12 +2406,25 @@ a:hover {
 
 .resources-strip-actions {
     position: absolute;
-    top: 9px;
+    top: 50%;
+    transform: translateY(-50%);
     right: 11px;
     display: flex;
     align-items: center;
     gap: 6px;
     flex-shrink: 0;
+}
+
+/* Resources strip inside character sheet — tighter layout */
+#tab4 .resources-strip {
+    padding: 10px 36px 10px 14px;
+    min-height: 36px;
+    border-radius: 12px;
+}
+
+#tab4 .resources-strip .spell-slot-section {
+    row-gap: 8px;
+    column-gap: 16px;
 }
 
 /* ==================================================================*/
@@ -3182,7 +3406,6 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     flex-shrink: 0;
     min-height: 0;
     overflow: hidden;
-    transition: width 250ms ease-out;
 }
 
 .notes-list-column .results-section {
@@ -3207,7 +3430,6 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     border-radius: 10px;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    transition: width 250ms ease-out, padding 250ms ease-out, opacity 200ms ease-out 50ms;
 }
 
 .notes-viewer::-webkit-scrollbar { display: none; }
