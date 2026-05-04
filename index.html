@@ -175,37 +175,38 @@
 
             <!-- Tab 4: Hazard Character Sheet -->
             <div class="tab-content active" id="tab4">
-                <div class="character-sheet-stats">
-                    <div class="character-name-field">
+                <!-- CARD 1: Header -->
+                <div class="cs-card">
+                    <div class="cs-header-name-row">
                         <span class="character-name editable" contenteditable="true" data-storage-key="tab4_character_name">Hazard</span>
-                    </div>
-                    <!-- Row 1 -->
-                    <div class="cs-panel stats-container-row TopLine">
                         <div class="descriptor-box">
                             <span class="descriptor-label">Level</span>
                             <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_level">10</span>
+                        </div>
+                    </div>
+                    <div class="cs-header-details">
+                        <div class="descriptor-box">
+                            <span class="descriptor-label">Alignment</span>
+                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_alignment">Neutral</span>
                         </div>
                         <div class="descriptor-box">
                             <span class="descriptor-label">Class</span>
                             <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_class">Fighter</span>
                         </div>
                         <div class="descriptor-box">
-                            <span class="descriptor-label">Alignment</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_alignment">Neutral</span>
+                            <span class="descriptor-label">Species</span>
+                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_species">Human</span>
                         </div>
                         <div class="descriptor-box">
                             <span class="descriptor-label">Background</span>
                             <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_background">Soldier</span>
                         </div>
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Species</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_species">Human</span>
-                        </div>
                     </div>
+                </div>
 
-                    <!-- Row 2 -->
-                    <div class="stats-container-row">
-                        <div class="hp-section">
+                <!-- CARD 2: HP -->
+                <div class="cs-card">
+                    <div class="hp-section">
                             <div class="hp-section-header">
                                 <span class="hp-section-label">HP</span>
                                 <div class="hp-max-edit">
@@ -274,77 +275,74 @@
                                     <button class="hd-roll-btn">Roll <span class="hd-roll-detail"></span></button>
                                 </div>
                             </div>
-                        </div>
-                        <div class="cs-panel stat-panel-row">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">AC</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_ac">18</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Initiative</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_initiative">+2</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Prof</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_prof">+4</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Speed</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_speed">30</span>
-                            </div>
-                        </div>
                     </div>
+                </div>
 
-                    <!-- Row 3: Ability Modifiers -->
-                    <div class="stats-container-row">
-                        <div class="cs-panel stat-panel-row ModifiersRow">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">STR</span>
-                                <span class="stat-value cacluated" data-storage-key="tab4_str_bonus"></span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_str_score"></span>
+                <!-- CARD 3: Combat Stats -->
+                <div class="cs-card">
+                    <div class="cs-combat-top">
+                        <div class="cs-ac-hero">
+                            <span class="stat-label">AC</span>
+                            <span class="cs-ac-val editable" contenteditable="true" data-storage-key="tab4_ac">18</span>
+                        </div>
+                        <div class="cs-ref-stats">
+                            <div class="cs-ref-row">
+                                <div class="cs-ref-item">
+                                    <span class="cs-ref-label">Initiative</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_initiative">+2</span>
+                                </div>
+                                <div class="cs-ref-item">
+                                    <span class="cs-ref-label">Proficiency</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_prof">+4</span>
+                                </div>
+                                <div class="cs-ref-item">
+                                    <span class="cs-ref-label">Speed</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_speed">30</span>
+                                </div>
                             </div>
-                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
-                                <span class="stat-label">DEX</span>
-                                <span class="stat-value cacluated" data-storage-key="tab4_dex_bonus"></span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_dex_score"></span>
-                            </div>
-                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
-                                <span class="stat-label">CON</span>
-                                <span class="stat-value cacluated" data-storage-key="tab4_con_bonus"></span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_con_score"></span>
-                            </div>
-                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
-                                <span class="stat-label">INT</span>
-                                <span class="stat-value cacluated" data-storage-key="tab4_int_bonus"></span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_int_score"></span>
-                            </div>
-                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
-                                <span class="stat-label">WIS</span>
-                                <span class="stat-value cacluated" data-storage-key="tab4_wis_bonus"></span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_wis_score"></span>
-                            </div>
-                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
-                                <span class="stat-label">CHA</span>
-                                <span class="stat-value cacluated" data-storage-key="tab4_cha_bonus"></span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_cha_score"></span>
+                            <div class="cs-ref-row">
+                                <div class="cs-ref-item cs-ref-spell">
+                                    <span class="cs-ref-label">Spell Save DC</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_spell_save">3</span>
+                                </div>
+                                <div class="cs-ref-item cs-ref-spell">
+                                    <span class="cs-ref-label">Spell Attack</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_spell_attack">3</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <!-- Row 4: Spell Save + Attack -->
-                    <div class="stats-container-row">
-                        <div class="cs-panel stat-panel-row SpellSaveandAttackRow">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Spell Save</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_spell_save">3</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Spell Attack</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_spell_attack">3</span>
-                            </div>
+                    <div class="cs-combat-sep"></div>
+                    <div class="cs-mods-row">
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">STR</span>
+                            <span class="stat-value cacluated" data-storage-key="tab4_str_bonus"></span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_str_score"></span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">DEX</span>
+                            <span class="stat-value cacluated" data-storage-key="tab4_dex_bonus"></span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_dex_score"></span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">CON</span>
+                            <span class="stat-value cacluated" data-storage-key="tab4_con_bonus"></span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_con_score"></span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">INT</span>
+                            <span class="stat-value cacluated" data-storage-key="tab4_int_bonus"></span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_int_score"></span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">WIS</span>
+                            <span class="stat-value cacluated" data-storage-key="tab4_wis_bonus"></span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_wis_score"></span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">CHA</span>
+                            <span class="stat-value cacluated" data-storage-key="tab4_cha_bonus"></span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_cha_score"></span>
                         </div>
                     </div>
                 </div>
@@ -370,13 +368,14 @@
                     </div>
                 </div>
 
-                <div class="character-sheet-row">
-                    <div class="saving-throws-and-skills-column-wrapper">
-                        <div class="saving-throws-and-skills-column">
-                            <h3>Saving Throws</h3>
-                            <div class="saving-throws">
-                                <div class="save-row">
-                                    <span class="circle toggle-circle" data-storage-key="tab4_save_str_toggle"></span>
+                <div class="cs-card">
+                    <div class="character-sheet-row">
+                        <div class="saving-throws-and-skills-column-wrapper">
+                            <div class="saving-throws-and-skills-column">
+                                <h3>Saving Throws</h3>
+                                <div class="saving-throws">
+                                    <div class="save-row">
+                                        <span class="circle toggle-circle" data-storage-key="tab4_save_str_toggle"></span>
                                     <span class="save-label">Strength</span>
                                     <span class="skill-plus calculated" data-storage-key="tab4_save_str"></span>
                                 </div>
@@ -503,41 +502,43 @@
                         </div>
                     </div>
                 </div>
+                </div>
             </div>
 
             <!-- Tab 8: Crank Character Sheet -->
             <div class="tab-content" id="tab8">
-                <div class="character-sheet-stats">
-                    <div class="character-name-field">
+                <!-- CARD 1: Header -->
+                <div class="cs-card">
+                    <div class="cs-header-name-row">
                         <span class="character-name editable" contenteditable="true" data-storage-key="tab8_character_name">Crank</span>
-                    </div>
-                    <!-- Row 1 -->
-                    <div class="cs-panel stats-container-row TopLine">
                         <div class="descriptor-box">
                             <span class="descriptor-label">Level</span>
                             <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_level"></span>
+                        </div>
+                    </div>
+                    <div class="cs-header-details">
+                        <div class="descriptor-box">
+                            <span class="descriptor-label">Alignment</span>
+                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_alignment"></span>
                         </div>
                         <div class="descriptor-box">
                             <span class="descriptor-label">Class</span>
                             <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_class"></span>
                         </div>
                         <div class="descriptor-box">
-                            <span class="descriptor-label">Alignment</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_alignment"></span>
+                            <span class="descriptor-label">Species</span>
+                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_species"></span>
                         </div>
                         <div class="descriptor-box">
                             <span class="descriptor-label">Background</span>
                             <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_background"></span>
                         </div>
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Species</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_species"></span>
-                        </div>
                     </div>
+                </div>
 
-                    <!-- Row 2 -->
-                    <div class="stats-container-row">
-                        <div class="hp-section">
+                <!-- CARD 2: HP -->
+                <div class="cs-card">
+                    <div class="hp-section">
                             <div class="hp-section-header">
                                 <span class="hp-section-label">HP</span>
                                 <div class="hp-max-edit">
@@ -606,82 +607,81 @@
                                     <button class="hd-roll-btn">Roll <span class="hd-roll-detail"></span></button>
                                 </div>
                             </div>
-                        </div>
-                        <div class="cs-panel stat-panel-row">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">AC</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_ac">18</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Initiative</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_initiative">+2</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Prof</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_prof">+4</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Speed</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_speed">30</span>
-                            </div>
-                        </div>
                     </div>
+                </div>
 
-                    <!-- Row 3: Ability Modifiers -->
-                    <div class="stats-container-row">
-                        <div class="cs-panel stat-panel-row ModifiersRow">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">STR</span>
-                                <span class="stat-value calculated" data-storage-key="tab8_str_bonus">00</span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_str_score">0</span>
+                <!-- CARD 3: Combat Stats -->
+                <div class="cs-card">
+                    <div class="cs-combat-top">
+                        <div class="cs-ac-hero">
+                            <span class="stat-label">AC</span>
+                            <span class="cs-ac-val editable" contenteditable="true" data-storage-key="tab4_ac">18</span>
+                        </div>
+                        <div class="cs-ref-stats">
+                            <div class="cs-ref-row">
+                                <div class="cs-ref-item">
+                                    <span class="cs-ref-label">Initiative</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_initiative">+2</span>
+                                </div>
+                                <div class="cs-ref-item">
+                                    <span class="cs-ref-label">Proficiency</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_prof">+4</span>
+                                </div>
+                                <div class="cs-ref-item">
+                                    <span class="cs-ref-label">Speed</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_speed">30</span>
+                                </div>
                             </div>
-                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
-                                <span class="stat-label">DEX</span>
-                                <span class="stat-value calculated" data-storage-key="tab8_dex_bonus">00</span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_dex_score">0</span>
-                            </div>
-                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
-                                <span class="stat-label">CON</span>
-                                <span class="stat-value calculated" data-storage-key="tab8_con_bonus">00</span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_con_score">0</span>
-                            </div>
-                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
-                                <span class="stat-label">INT</span>
-                                <span class="stat-value calculated" data-storage-key="tab8_int_bonus">00</span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_int_score">0</span>
-                            </div>
-                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
-                                <span class="stat-label">WIS</span>
-                                <span class="stat-value calculated" data-storage-key="tab8_wis_bonus">00</span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_wis_score">0</span>
-                            </div>
-                            <div class="vertical-break"></div>                            <div class="stat-panel-box">
-                                <span class="stat-label">CHA</span>
-                                <span class="stat-value calculated" data-storage-key="tab8_cha_bonus">00</span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_cha_score">0</span>
+                            <div class="cs-ref-row">
+                                <div class="cs-ref-item cs-ref-spell">
+                                    <span class="cs-ref-label">Spell Save DC</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_spell_save">3</span>
+                                </div>
+                                <div class="cs-ref-item cs-ref-spell">
+                                    <span class="cs-ref-label">Spell Attack</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_spell_attack">3</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <!-- Row 4: Spell Save + Attack -->
-                    <div class="stats-container-row">
-                        <div class="cs-panel stat-panel-row SpellSaveandAttackRow">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Spell Save</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_spell_save">3</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Spell Attack</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_spell_attack">3</span>
-                            </div>
+                    <div class="cs-combat-sep"></div>
+                    <div class="cs-mods-row">
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">STR</span>
+                            <span class="stat-value calculated" data-storage-key="tab8_str_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_str_score">0</span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">DEX</span>
+                            <span class="stat-value calculated" data-storage-key="tab8_dex_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_dex_score">0</span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">CON</span>
+                            <span class="stat-value calculated" data-storage-key="tab8_con_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_con_score">0</span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">INT</span>
+                            <span class="stat-value calculated" data-storage-key="tab8_int_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_int_score">0</span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">WIS</span>
+                            <span class="stat-value calculated" data-storage-key="tab8_wis_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_wis_score">0</span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">CHA</span>
+                            <span class="stat-value calculated" data-storage-key="tab8_cha_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_cha_score">0</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="character-sheet-row">
+                <!-- CARD 4: Saves & Skills -->
+                <div class="cs-card">
+                    <div class="character-sheet-row">
                     <div class="saving-throws-and-skills-column-wrapper">
                         <div class="saving-throws-and-skills-column">
                             <h3>Saving Throws</h3>
@@ -813,6 +813,7 @@
                             </div>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
 
