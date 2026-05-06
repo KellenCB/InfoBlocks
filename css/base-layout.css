@@ -502,13 +502,46 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     padding-bottom: 0px;
 }
 
-.fade-in {
+/* ==================================================================*/
+/* ========================= PAGE LOAD REVEAL =======================*/
+/* ==================================================================*/
+
+/* Phase 1: Loading — hide UI, kill all transitions so saved state
+   restoration (filter panels, tabs, char-sheet) is instant.         */
+
+body.app-loading #header-row,
+body.app-loading #app-row {
     opacity: 0;
-    transition: opacity 1s ease;
 }
 
-.fade-in.visible {
-    opacity: 1;
+body.app-loading,
+body.app-loading *,
+body.app-loading *::before,
+body.app-loading *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+}
+
+/* Phase 2: Reveal — coordinated entrance                           */
+/* Add more targets here to extend the sequence later.               */
+
+body.app-ready #header-row {
+    animation: revealDown 1s cubic-bezier(0, 0.8, 0.8, 1) forwards;
+}
+
+body.app-ready #app-row {
+    animation: revealUp 1s cubic-bezier(0, 0.8, 0.8, 1) forwards;
+    opacity: 0;
+}
+
+@keyframes revealDown {
+    from { opacity: 0; transform: translateY(-15px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes revealUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ==================================================================*/

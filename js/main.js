@@ -384,21 +384,6 @@ diceLatestRoll?.addEventListener("mouseleave", () => {
 initDiceRoller();
 
 /* ===================================================================*/
-/* ===================== SEQUENTIAL FADE IN ==========================*/
-/* ===================================================================*/
-
-const fadeInElementsSequentially = (container = document) => {
-    const allFadeInElements = container.querySelectorAll('.fade-in');
-    const visibleElements = Array.from(allFadeInElements).filter(el => el.offsetParent !== null);
-    console.log("Found visible fade-in elements:", visibleElements.length);
-    visibleElements.forEach((el, index) => {
-        setTimeout(() => {
-            el.classList.add('visible');
-        }, index * 300);
-    });
-};
-
-/* ===================================================================*/
 /* =================== UCH SLIDER FUNCTIONS =========================*/
 /* ===================================================================*/
 
@@ -649,13 +634,13 @@ document.addEventListener("DOMContentLoaded", () => {
             activeContent.style.display = "flex";
         }
 
-        // Panel routing — explicitly set display and ensure .visible for fade-in
+        // Panel routing — set correct display values before reveal
         if (CHAR_TABS.has(activeTabId)) {
-            if (charPanel)   { charPanel.style.display = 'flex'; charPanel.classList.add('visible'); }
+            if (charPanel)   { charPanel.style.display = 'flex'; }
             if (tabsContent) { tabsContent.style.display = 'none'; }
         } else {
             if (charPanel)   { charPanel.style.display = 'none'; }
-            if (tabsContent) { tabsContent.style.display = 'flex'; tabsContent.classList.add('visible'); }
+            if (tabsContent) { tabsContent.style.display = 'flex'; }
         }
     }
 
@@ -725,14 +710,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     targetContent.style.display = "flex";
                 }
 
-                // Panel routing — always use explicit display values + ensure .visible
+// Panel routing
                 if (isCharTab) {
-                    if (charPanel)   { charPanel.style.display = 'flex'; charPanel.classList.add('visible'); }
-                    if (tabsContent) { tabsContent.style.display = 'none'; }
-                    activateCharTab(targetTab);
+                    if (charPanel)   { charPanel.style.display = 'flex'; }
+                    if (tabsContent) { tabsContent.style.display = 'none'; }                    activateCharTab(targetTab);
                 } else {
                     if (charPanel)   { charPanel.style.display = 'none'; }
-                    if (tabsContent) { tabsContent.style.display = 'flex'; tabsContent.classList.add('visible'); }
+                    if (tabsContent) { tabsContent.style.display = 'flex'; }
                 }
                 localStorage.setItem("activeTab", targetTab);
             }
@@ -1176,8 +1160,10 @@ window.onload = async () => {
     });
 
     initSplitView();
-    fadeInElementsSequentially();
-    repositionAllSliders();
+// Lift the loading gate and trigger the reveal sequence
+    document.body.classList.remove('app-loading');
+    void document.body.offsetHeight; // force reflow between class changes
+    document.body.classList.add('app-ready');    repositionAllSliders();
 
     // ── Swipe to toggle filter panel on tab 9 ────────────────────────
     const swipeTarget9   = document.getElementById('results_section_9');
@@ -1213,7 +1199,7 @@ window.onload = async () => {
                 localStorage.setItem('filterVisible_tab9', 'false');
             },
         });
-        
+
         console.log('✅ Swipe gesture registered on tab 9 results section.');
     }
 
