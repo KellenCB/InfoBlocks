@@ -1,10 +1,10 @@
 // appManager.js
 import { categoryTags, blockTypeConfig, BOOK_ACCENT_COLORS, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
 import { blockTemplate, sanitizeBlockHTML } from './blockTemplate.js';
-
 import { applyInlineDiceRolls } from './diceRoller.js';
 import { filterManager } from './filterManager.js';
 import { blockActionsHandler } from './blockActionsHandler.js';
+import { isSwipeGestureActive } from './swipeGesture.js';
 
 const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
 
@@ -471,7 +471,7 @@ export function initToolbarForEditor(editor) {
 export function initDragToScroll() {
     let isDown   = false;
     let moved    = false;
-    let startX, startY, scrollEl, initScrollLeft, initScrollTop;
+    let startX, startY, scrollEl, initScrollTop;
 
     document.addEventListener('mousedown', e => {
         // Don't hijack drag on text-selectable content
@@ -485,19 +485,37 @@ export function initDragToScroll() {
         scrollEl               = el;
         startX                 = e.clientX;
         startY                 = e.clientY;
-        initScrollLeft         = el.scrollLeft;
         initScrollTop          = el.scrollTop;
         document.body.style.userSelect = 'none';
     });
 
     document.addEventListener('mousemove', e => {
         if (!isDown) return;
+
+        // A swipe gesture has claimed this interaction — yield entirely
+        if (isSwipeGestureActive()) {
+            isDown = false;
+            document.body.style.userSelect = '';
+            return;
+        }
+
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
-        if (!moved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
-        moved = true;
-        scrollEl.scrollLeft = initScrollLeft - dx;
-        scrollEl.scrollTop  = initScrollTop  - dy;
+        if (!moved && Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+
+        if (!moved) {
+            // Direction lock: if predominantly horizontal on a swipe-enabled
+            // element, yield so the swipe gesture module can take over
+            if (Math.abs(dx) >= Math.abs(dy) && scrollEl.closest('[data-swipe-enabled]')) {
+                isDown = false;
+                document.body.style.userSelect = '';
+                return;
+            }
+            moved = true;
+        }
+
+        // Vertical scroll only
+        scrollEl.scrollTop = initScrollTop - dy;
     });
 
     const onUp = () => {

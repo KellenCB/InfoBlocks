@@ -7,6 +7,8 @@ import { initScrollFades, initDragToScroll } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
 import { evaluateStatExpression } from './uiHandlers.js';
 import { initLayoutMode, activateCharTab } from './layoutMode.js';
+import { registerSwipe } from './swipeGesture.js';
+
 export function repositionAllSliders() {
     requestAnimationFrame(() => {
         document.querySelectorAll('.uch-tab-group').forEach(group => {
@@ -1174,9 +1176,45 @@ window.onload = async () => {
     });
 
     initSplitView();
-
     fadeInElementsSequentially();
-
     repositionAllSliders();
+
+    // ── Swipe to toggle filter panel on tab 9 ────────────────────────
+    const swipeTarget9   = document.getElementById('results_section_9');
+    const filterWrapper9 = document.querySelector('#tab9 .filter-section-wrapper');
+
+    if (swipeTarget9 && filterWrapper9) {
+        registerSwipe(swipeTarget9, {
+            threshold: 50,
+            deadZone:  8,
+            canSwipeLeft:  () => filterWrapper9.classList.contains('filter-panel-closed'),
+            canSwipeRight: () => !filterWrapper9.classList.contains('filter-panel-closed'),
+            onPreviewLeft:  (active) => filterWrapper9.classList.toggle('filter-panel-preview', active),
+            onPreviewRight: (active) => filterWrapper9.classList.toggle('filter-panel-preview', active),
+            onSwipeLeft: () => {
+                filterWrapper9.classList.remove('filter-panel-closed');
+                localStorage.setItem('filterVisible_tab9', 'true');
+            },
+            onSwipeRight: () => {
+                filterWrapper9.classList.add('filter-panel-closed');
+                localStorage.setItem('filterVisible_tab9', 'false');
+            },
+        });
+
+        // Swipe right on the filter panel itself also closes it
+        registerSwipe(filterWrapper9, {
+            threshold: 50,
+            deadZone: 8,
+            canSwipeLeft:   () => false,
+            canSwipeRight:  () => !filterWrapper9.classList.contains('filter-panel-closed'),
+            onPreviewRight: (active) => filterWrapper9.classList.toggle('filter-panel-preview', active),
+            onSwipeRight: () => {
+                filterWrapper9.classList.add('filter-panel-closed');
+                localStorage.setItem('filterVisible_tab9', 'false');
+            },
+        });
+        
+        console.log('✅ Swipe gesture registered on tab 9 results section.');
+    }
 
 };

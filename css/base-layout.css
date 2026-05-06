@@ -547,6 +547,7 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     padding: 0px 10px;
     gap: 15px;
     overflow: hidden;
+    transition: gap 0.3s ease;
 }
 
 .filter-and-results:has(.filter-section-wrapper.filter-panel-closed) {
@@ -559,15 +560,7 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 }
 
 .filter-divider {
-    max-width: 2px;
-    width: 2px;
-    background-color: var(--gray-400);
-    flex-shrink: 0;
-    border-radius: 2px;
-    align-self: stretch;
-    opacity: 1;
-    overflow: hidden;
-    transition: max-width 0.3s ease, opacity 0.3s ease;
+    display: none;
 }
 
 .filter-and-results:has(.filter-section-wrapper.filter-panel-closed) .filter-divider {
@@ -579,6 +572,13 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 /* ========================= FILTER SECTION =========================*/
 /* ==================================================================*/
 
+.filter-divider {
+    display: none;
+}
+
+.filter-open-btn {
+    display: none;
+}
 
 .filter-section-wrapper {
     position: relative;
@@ -586,19 +586,20 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     flex-direction: column;
     width: 33%;
     min-width: 290px;
-    background-color: transparent;
+    background-color: var(--gray-300);
+    border-radius: 15px;
+    padding: 15px;
+    box-sizing: border-box;
     overflow: hidden;
-    transition: width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease;
+    transition: margin-right 0.3s ease, opacity 0.3s ease, visibility 0s;
 }
 
 .filter-section-wrapper.filter-panel-closed {
-    width: 0;
-    min-width: 0;
+    margin-right: calc(max(33%, 290px) * -1);
     opacity: 0;
-}
-
-.filter-section-wrapper.filter-panel-closed .filter-section {
-    display: none;
+    visibility: hidden;
+    pointer-events: none;
+    transition: margin-right 0.3s ease, opacity 0.3s ease, visibility 0s 0.3s;
 }
 
 /* ── Filter header ────────────────────────────────────────────────── */
@@ -671,9 +672,9 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     height: 40px;
     margin-bottom: -40px;
     background: linear-gradient(
-        var(--gray-150) 0%,
-        color-mix(in srgb, var(--gray-150) 50%, transparent) 50%,
-        color-mix(in srgb, var(--gray-150) 0%, transparent) 100%
+        var(--gray-300) 0%,
+        color-mix(in srgb, var(--gray-300) 50%, transparent) 50%,
+        color-mix(in srgb, var(--gray-300) 0%, transparent) 100%
     );
     pointer-events: none;
     z-index: 1;
@@ -688,65 +689,44 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     height: 40px;
     margin-top: -40px;
     background: linear-gradient(
-        color-mix(in srgb, var(--gray-150) 0%, transparent) 0%,
-        color-mix(in srgb, var(--gray-150) 50%, transparent) 50%,
-        var(--gray-150) 100%
+        color-mix(in srgb, var(--gray-300) 0%, transparent) 0%,
+        color-mix(in srgb, var(--gray-300) 50%, transparent) 50%,
+        var(--gray-300) 100%
     );
     pointer-events: none;
     z-index: 1;
     opacity: var(--filter-fade-bottom-opacity, 1);
 }
 
-/* ── Open filter button ───────────────────────────────────────────── */
+/* ── Filter panel swipe preview ──────────────────────────────────── */
 
-.filter-open-btn {
-    width: 26px;
-    height: 26px;
-    background-color: var(--gray-400);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    padding: 0;
-    opacity: 0;
-    transform: scale(0);
-    max-width: 0;
-    margin-left: 0;
-    overflow: hidden;
+/* Opening preview: reduce negative margin to show a 70px peek */
+.filter-section-wrapper.filter-panel-closed.filter-panel-preview {
+    margin-right: calc(max(33%, 290px) * -1 + 70px);
+    opacity: 0.6;
+    visibility: visible;
     pointer-events: none;
-    transition: max-width 0.3s ease, opacity 0.3s ease, transform 0.3s ease, margin-left 0.3s ease, background-color 0.2s ease;
+    transition: margin-right 0.15s ease, opacity 0.15s ease, visibility 0s;
 }
 
-.filter-open-btn svg {
-    width: 12px;
-    height: 12px;
-    fill: var(--gray-900);
-    stroke: none;
-    flex-shrink: 0;
+/* Closing preview: stay full width, just dim */
+.filter-section-wrapper.filter-panel-preview:not(.filter-panel-closed) {
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
 }
 
-.filter-and-results:not(:has(.filter-section-wrapper.filter-panel-closed)) .filter-open-btn {
+/* Restore gap during opening preview */
+.filter-and-results:has(.filter-section-wrapper.filter-panel-closed.filter-panel-preview) {
+    gap: 10px;
+}
+
+/* Hide the open button while opening preview is showing */
+.filter-and-results:has(.filter-section-wrapper.filter-panel-closed.filter-panel-preview) .filter-open-btn {
     max-width: 0;
     opacity: 0;
     transform: scale(0);
-    margin-left: 0;
     pointer-events: none;
 }
-
-.filter-and-results:has(.filter-section-wrapper.filter-panel-closed) .filter-open-btn {
-    max-width: 26px;
-    opacity: 1;
-    transform: scale(1);
-    pointer-events: auto;
-}
-
-.filter-and-results:has(.filter-section-wrapper.filter-panel-closed) .filter-open-btn:hover {
-    background-color: var(--gray-450);
-}
-
 
 /* ==================================================================*/
 /* ======================= RESULTS SECTION ==========================*/
