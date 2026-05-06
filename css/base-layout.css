@@ -23,6 +23,16 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     overflow-y: auto;
 }
 
+/* ── Frosted glass utility ────────────────────────────────────────── */
+
+.frosted-glass {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
+}
+
 #header-row {
     position: relative;
     z-index: 9999;
@@ -141,11 +151,14 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap;
-    background-color: color-mix(in srgb, var(--gray-250) 95%, transparent);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     color: var(--gray-900);
     padding: 8px 12px;
     border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
     font-size: 13px;
     line-height: 1.4;
     letter-spacing: 0.02em;
@@ -161,6 +174,19 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 .uch-has-tooltip:hover .uch-tooltip {
     opacity: 1;
     transition-delay: 0.5s;
+}
+
+/* Suppress tooltips when their associated menu/popover is open */
+#Menu_button.menu-button-open:hover .uch-tooltip,
+#dice-menu-button.active:hover .uch-tooltip,
+#dice-history-button.active:hover .uch-tooltip {
+    opacity: 0 !important;
+    transition-delay: 0s !important;
+}
+
+body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
+    opacity: 0 !important;
+    transition-delay: 0s !important;
 }
 
 /* ── UCH search pill (looks like a tab group pill) ───────────────── */
@@ -380,8 +406,11 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 /* UCH small dropdown popovers (sort, viewstate) */
 .uch-dropdown-popover {
     position: fixed;
-    background-color: color-mix(in srgb, var(--gray-250) 95%, transparent);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
     border-radius: 10px;
     padding: 5px;
     display: none;
@@ -1629,11 +1658,14 @@ a:hover {
     display: none;
     position: fixed;
     z-index: 9998;
-    background-color: var(--gray-300);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border-radius: 16px;
     padding: 16px;
     width: 260px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
 }
 
 .menu-popover.active {
@@ -2690,11 +2722,14 @@ a:hover {
 
 .text-tooltip {
     position: absolute;
-    background-color: color-mix(in srgb, var(--gray-250) 95%, transparent);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     color: var(--gray-900);
     padding: 15px 15px;
     border-radius: 10px;
-    box-shadow: 10px rgba(0, 0, 0, 0.8);
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
     font-size: 14px;
     line-height: 1.5;
     letter-spacing: 1.2;
@@ -2717,8 +2752,11 @@ a:hover {
 .sort-dropdown,
 .view-toggle-dropdown {
     position: fixed;
-    background-color: color-mix(in srgb, var(--gray-250) 95%, transparent);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
     border-radius: 10px;
     padding: 5px;
     display: flex;

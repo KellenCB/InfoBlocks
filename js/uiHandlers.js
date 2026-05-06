@@ -351,6 +351,23 @@ const renderBar = () => {
         localStorage.setItem(`${tabPrefix}_temp_hp`, tempHp);
     };
 
+    // ── Count animation helper ────────────────────────────────────
+    function hpCountTo(from, to) {
+        if (from === to) { barText.textContent = to; return; }
+        const diff = Math.abs(to - from);
+        const duration = Math.min(600, Math.max(200, diff * 15));
+        const start = performance.now();
+        const delta = to - from;
+        function tick(now) {
+            const t = Math.min((now - start) / duration, 1);
+            const eased = t < 0.5 ? 2 * t * t : (1 - Math.pow(-2 * t + 2, 2) / 2);
+            barText.textContent = Math.round(from + delta * eased);
+            if (t < 1) requestAnimationFrame(tick);
+            else barText.textContent = to;
+        }
+        requestAnimationFrame(tick);
+    }
+
     // ── Death saves ──────────────────────────────────────────────────
     const dsPanel          = hpSection.querySelector('.ds-panel');
     const dsSuccessCircles = hpSection.querySelectorAll('.ds-success');
@@ -456,7 +473,9 @@ const renderBar = () => {
     // ── Damage / Heal / Temp ─────────────────────────────────────────
     const applyAction = (mode) => {
         const v = parseInt(inputEl.value) || 0;
-        if (v <= 0) return;
+        
+        const oldHp = currentHp;
+        const oldTemp = tempHp;
 
         if (mode === 'dmg') {
             let dmg = v;
@@ -505,6 +524,12 @@ const renderBar = () => {
         renderBar();
         renderDs();
         flashBar();
+
+        const netChange = (currentHp + tempHp) - (oldHp + oldTemp);
+        if (netChange !== 0) {
+            showHpDelta(netChange);
+            requestAnimationFrame(() => floatHpDelta());
+        }
     };
 
     // ── Hit dice rendering ───────────────────────────────────────────
@@ -602,6 +627,111 @@ const renderBar = () => {
     // Manual edits to hit die fields → re-render
     hdCurrentEl?.addEventListener('input', () => renderHd());
     hdTypeEl?.addEventListener('input', () => renderHd());
+
+// ── HP bar drag to heal/damage ────────────────────────────────
+    const HP_DRAG_THRESHOLD = 5;
+    let hpDragState = null;
+
+    const hpDragDelta = document.createElement('div');
+    hpDragDelta.className = 'hp-drag-delta';
+    barArea.appendChild(hpDragDelta);
+
+    function showHpDelta(d) {
+        hpDragDelta.style.animation = 'none';
+        hpDragDelta.offsetHeight;
+        hpDragDelta.style.animation = '';
+        if (d === 0) { hpDragDelta.className = 'hp-drag-delta'; return; }
+        hpDragDelta.textContent = (d > 0 ? '+' : '') + d;
+        hpDragDelta.className = 'hp-drag-delta hp-drag-live ' + (d > 0 ? 'hp-drag-pos' : 'hp-drag-neg');
+    }
+
+    function floatHpDelta() {
+        if (!hpDragDelta.classList.contains('hp-drag-live')) return;
+        const color = hpDragDelta.classList.contains('hp-drag-pos') ? 'hp-drag-pos' : 'hp-drag-neg';
+        hpDragDelta.style.animation = 'none';
+        hpDragDelta.offsetHeight;
+        hpDragDelta.style.animation = '';
+        hpDragDelta.className = 'hp-drag-delta hp-drag-floating ' + color;
+    }
+
+    barArea.addEventListener('pointerdown', (e) => {
+        hpDragState = {
+            startX: e.clientX,
+            startHp: currentHp,
+            startTemp: tempHp,
+            targetHp: currentHp,
+            targetTemp: tempHp,
+            moved: false
+        };
+        barArea.setPointerCapture(e.pointerId);
+    });
+
+    barArea.addEventListener('pointermove', (e) => {
+        if (!hpDragState) return;
+        if (!hpDragState.moved && Math.abs(e.clientX - hpDragState.startX) < HP_DRAG_THRESHOLD) return;
+        hpDragState.moved = true;
+
+        const barWidth = barArea.offsetWidth;
+        const hpPerPixel = maxHp > 0 ? maxHp / barWidth : 0.5;
+        const diff = Math.round((e.clientX - hpDragState.startX) * hpPerPixel);
+
+        if (diff > 0) {
+            hpDragState.targetTemp = hpDragState.startTemp;
+            hpDragState.targetHp = Math.min(maxHp, hpDragState.startHp + diff);
+        } else if (diff < 0) {
+            let dmg = Math.abs(diff);
+            hpDragState.targetTemp = hpDragState.startTemp;
+            hpDragState.targetHp = hpDragState.startHp;
+            if (hpDragState.targetTemp > 0) {
+                const absorbed = Math.min(hpDragState.targetTemp, dmg);
+                hpDragState.targetTemp -= absorbed;
+                dmg -= absorbed;
+            }
+            hpDragState.targetHp = Math.max(0, hpDragState.targetHp - dmg);
+        } else {
+            hpDragState.targetHp = hpDragState.startHp;
+            hpDragState.targetTemp = hpDragState.startTemp;
+        }
+
+        const netChange = (hpDragState.targetHp + hpDragState.targetTemp) - (hpDragState.startHp + hpDragState.startTemp);
+        showHpDelta(netChange);
+    });
+
+    barArea.addEventListener('pointerup', () => {
+        if (!hpDragState) return;
+        const wasMoved = hpDragState.moved;
+        const startHp = hpDragState.startHp;
+        const startTemp = hpDragState.startTemp;
+        const oldDisplayHp = currentHp;
+        currentHp = hpDragState.targetHp;
+        tempHp = hpDragState.targetTemp;
+        hpDragState = null;
+
+        if (!wasMoved) return;
+
+        if (currentHp === 0 && startHp > 0) {
+            resetDs();
+        } else if (currentHp > 0 && startHp === 0) {
+            resetDs();
+        }
+
+        saveHp();
+        renderBar();
+        hpCountTo(oldDisplayHp, currentHp);
+        renderDs();
+
+        const netChange = (currentHp + tempHp) - (startHp + startTemp);
+        if (netChange !== 0) {
+            requestAnimationFrame(() => floatHpDelta());
+        }
+    });
+
+    barArea.addEventListener('pointercancel', () => {
+        if (!hpDragState) return;
+        hpDragState = null;
+        hpDragDelta.style.animation = 'none';
+        hpDragDelta.className = 'hp-drag-delta';
+    });
 
     // ── Long rest listener ───────────────────────────────────────────
     document.addEventListener('longRest', () => {
@@ -1332,74 +1462,97 @@ function initHeaderCardToggle(tabPrefix) {
         if (e.target.closest('.descriptor-box') && nameRow.contains(e.target)) return;
         if (e.target.closest('.editable')) return;
 
-        const isCondensing = !card.classList.contains('cs-header-condensed');
+        const isCondensed = card.classList.contains('cs-header-condensed');
         const oldHeight = card.offsetHeight;
+        const fadeEls = [...card.children].filter(el => !el.classList.contains('cs-header-name-row'));
 
-        if (isCondensing) {
-            // ── Collapse: fade out details, then shrink ────────────
-            details.style.transition = 'opacity 0.15s ease';
-            details.style.opacity = '0';
+        if (!isCondensed) {
+            // ── Collapsing ──────────────────────────────────────────
+            // Measure target height without actually hiding content
+            card.classList.add('cs-header-condensed');
+            const newHeight = card.offsetHeight;
+            card.classList.remove('cs-header-condensed');
 
-            setTimeout(() => {
+            // Lock to old height
+            card.style.height = oldHeight + 'px';
+            card.style.overflow = 'hidden';
+            card.style.transition = 'none';
+
+            fadeEls.forEach(el => {
+                el.style.opacity = '1';
+                el.style.transition = 'none';
+            });
+
+            void card.offsetHeight;
+
+            // Animate height down + fade out simultaneously
+            card.style.transition = 'height 0.5s ease';
+            card.style.height = newHeight + 'px';
+
+            fadeEls.forEach(el => {
+                el.style.transition = 'opacity 0.4s ease';
+                el.style.opacity = '0';
+            });
+
+            const cleanup = () => {
                 card.classList.add('cs-header-condensed');
-                const newHeight = card.offsetHeight;
+                card.style.height = '';
+                card.style.overflow = '';
+                card.style.transition = '';
+                fadeEls.forEach(el => {
+                    el.style.opacity = '';
+                    el.style.transition = '';
+                });
+            };
+            card.addEventListener('transitionend', (ev) => {
+                if (ev.target === card && ev.propertyName === 'height') cleanup();
+            }, { once: true });
+            setTimeout(cleanup, 600);
 
-                card.style.height = oldHeight + 'px';
-                card.style.overflow = 'hidden';
-                card.style.transition = 'none';
-                void card.offsetHeight;
-
-                card.style.transition = 'height 0.35s ease';
-                card.style.height = newHeight + 'px';
-
-                const cleanup = () => {
-                    card.style.height = '';
-                    card.style.overflow = '';
-                    card.style.transition = '';
-                    details.style.transition = '';
-                    details.style.opacity = '';
-                };
-                card.addEventListener('transitionend', (ev) => {
-                    if (ev.target === card && ev.propertyName === 'height') cleanup();
-                }, { once: true });
-                setTimeout(cleanup, 450);
-            }, 150);
+            localStorage.setItem(storageKey, 'true');
 
         } else {
-            // ── Expand: grow first, then fade in details ───────────
+            // ── Expanding ───────────────────────────────────────────
             card.classList.remove('cs-header-condensed');
-            details.style.opacity = '0';
-            details.style.transition = 'none';
+
+            fadeEls.forEach(el => {
+                el.style.opacity = '0';
+                el.style.transition = 'none';
+            });
 
             const newHeight = card.offsetHeight;
 
             card.style.height = oldHeight + 'px';
             card.style.overflow = 'hidden';
             card.style.transition = 'none';
+
             void card.offsetHeight;
 
-            card.style.transition = 'height 0.35s ease';
+            // Animate height up + fade in simultaneously
+            card.style.transition = 'height 0.5s ease';
             card.style.height = newHeight + 'px';
 
-            setTimeout(() => {
-                details.style.transition = 'opacity 0.25s ease';
-                details.style.opacity = '1';
-            }, 120);
+            fadeEls.forEach(el => {
+                el.style.transition = 'opacity 0.4s ease 0.1s';
+                el.style.opacity = '1';
+            });
 
             const cleanup = () => {
                 card.style.height = '';
                 card.style.overflow = '';
                 card.style.transition = '';
-                details.style.transition = '';
-                details.style.opacity = '';
+                fadeEls.forEach(el => {
+                    el.style.opacity = '';
+                    el.style.transition = '';
+                });
             };
             card.addEventListener('transitionend', (ev) => {
                 if (ev.target === card && ev.propertyName === 'height') cleanup();
             }, { once: true });
-            setTimeout(cleanup, 450);
-        }
+            setTimeout(cleanup, 600);
 
-        localStorage.setItem(storageKey, String(isCondensing));
+            localStorage.setItem(storageKey, 'false');
+        }
     });
 }
 
@@ -1407,6 +1560,138 @@ function initHeaderCardToggle(tabPrefix) {
 document.addEventListener('DOMContentLoaded', () => {
     initHeaderCardToggle('tab4');
     initHeaderCardToggle('tab8');
+});
+
+/* ==================================================================*/
+/* ==================== HP CARD TOGGLE =============================*/
+/* ==================================================================*/
+
+function initHpCardToggle(tabPrefix) {
+    const tabEl = document.getElementById(tabPrefix);
+    if (!tabEl) return;
+
+    const card = tabEl.querySelector('.cs-hp-card');
+    if (!card) return;
+
+    const hpSection = card.querySelector('.hp-section');
+    if (!hpSection) return;
+
+    const TOGGLE_ZONE_HEIGHT = 35;
+    const storageKey = `${tabPrefix}_hp_condensed`;
+
+    // Restore saved state (default: expanded)
+    if (localStorage.getItem(storageKey) === 'true') {
+        card.classList.add('cs-hp-condensed');
+    }
+
+    card.addEventListener('click', (e) => {
+        // Only toggle if clicking in the top 35px of the card
+        const cardRect = card.getBoundingClientRect();
+        if (e.clientY - cardRect.top > TOGGLE_ZONE_HEIGHT) return;
+
+        // Don't toggle if clicking on editable fields
+        if (e.target.closest('.editable')) return;
+
+        const isCondensed = card.classList.contains('cs-hp-condensed');
+        const oldHeight = card.offsetHeight;
+        const fadeEls = [...hpSection.children].filter(el =>
+            !el.classList.contains('hp-section-header') && !el.classList.contains('hp-bar-area')
+        );
+
+        if (!isCondensed) {
+            // ── Collapsing ──────────────────────────────────────────
+            // Measure target height without actually hiding content
+            card.classList.add('cs-hp-condensed');
+            const newHeight = card.offsetHeight;
+            card.classList.remove('cs-hp-condensed');
+
+            // Lock to old height
+            card.style.height = oldHeight + 'px';
+            card.style.overflow = 'hidden';
+            card.style.transition = 'none';
+
+            fadeEls.forEach(el => {
+                el.style.opacity = '1';
+                el.style.transition = 'none';
+            });
+
+            void card.offsetHeight;
+
+            // Animate height down + fade out simultaneously
+            card.style.transition = 'height 0.5s ease';
+            card.style.height = newHeight + 'px';
+
+            fadeEls.forEach(el => {
+                el.style.transition = 'opacity 0.4s ease';
+                el.style.opacity = '0';
+            });
+
+            const cleanup = () => {
+                card.classList.add('cs-hp-condensed');
+                card.style.height = '';
+                card.style.overflow = '';
+                card.style.transition = '';
+                fadeEls.forEach(el => {
+                    el.style.opacity = '';
+                    el.style.transition = '';
+                });
+            };
+            card.addEventListener('transitionend', (ev) => {
+                if (ev.target === card && ev.propertyName === 'height') cleanup();
+            }, { once: true });
+            setTimeout(cleanup, 600);
+
+            localStorage.setItem(storageKey, 'true');
+
+        } else {
+            // ── Expanding ───────────────────────────────────────────
+            card.classList.remove('cs-hp-condensed');
+
+            fadeEls.forEach(el => {
+                el.style.opacity = '0';
+                el.style.transition = 'none';
+            });
+
+            const newHeight = card.offsetHeight;
+
+            card.style.height = oldHeight + 'px';
+            card.style.overflow = 'hidden';
+            card.style.transition = 'none';
+
+            void card.offsetHeight;
+
+            // Animate height up + fade in simultaneously
+            card.style.transition = 'height 0.5s ease';
+            card.style.height = newHeight + 'px';
+
+            fadeEls.forEach(el => {
+                el.style.transition = 'opacity 0.4s ease 0.1s';
+                el.style.opacity = '1';
+            });
+
+            const cleanup = () => {
+                card.style.height = '';
+                card.style.overflow = '';
+                card.style.transition = '';
+                fadeEls.forEach(el => {
+                    el.style.opacity = '';
+                    el.style.transition = '';
+                });
+            };
+            card.addEventListener('transitionend', (ev) => {
+                if (ev.target === card && ev.propertyName === 'height') cleanup();
+            }, { once: true });
+            setTimeout(cleanup, 600);
+
+            localStorage.setItem(storageKey, 'false');
+        }
+    });
+}
+
+// Initialise HP card toggle for both characters
+document.addEventListener('DOMContentLoaded', () => {
+    initHpCardToggle('tab4');
+    initHpCardToggle('tab8');
 });
 
 /* ==================================================================*/
@@ -1453,6 +1738,22 @@ function initCurrencyTracker(tabPrefix) {
         pill.querySelector('.coin-pill-num').textContent = v;
     }
 
+    function coinCountTo(el, from, to) {
+        if (from === to) { el.textContent = to; return; }
+        const diff = Math.abs(to - from);
+        const duration = Math.min(600, Math.max(200, diff * 15));
+        const start = performance.now();
+        const delta = to - from;
+        function tick(now) {
+            const t = Math.min((now - start) / duration, 1);
+            const eased = t < 0.5 ? 2 * t * t : (1 - Math.pow(-2 * t + 2, 2) / 2);
+            el.textContent = Math.round(from + delta * eased);
+            if (t < 1) requestAnimationFrame(tick);
+            else el.textContent = to;
+        }
+        requestAnimationFrame(tick);
+    }
+
     function showDeltaLive(pill, d) {
         const el = pill.querySelector('.coin-delta-popup');
         el.style.animation = 'none';
@@ -1496,7 +1797,8 @@ function initCurrencyTracker(tabPrefix) {
         if (raw !== '') {
             const delta = parseInt(raw, 10);
             if (!isNaN(delta)) {
-                setVal(currency, getVal(currency) + delta);
+                const oldVal = getVal(currency);
+                setVal(currency, oldVal + delta);
                 showDeltaLive(pill, delta);
                 requestAnimationFrame(() => floatAway(pill));
             }
@@ -1513,38 +1815,48 @@ function initCurrencyTracker(tabPrefix) {
     // ── Wire interactions per pill ─────────────────────────────────
     pills.forEach(pill => {
         const currency = pill.dataset.currency;
-        let startY = 0, startVal = 0, dragging = false, moved = false;
+        let startX = 0, startVal = 0, targetVal = 0, dragging = false, moved = false;
 
-        // Pointer down — begin potential drag or click
         pill.addEventListener('pointerdown', (e) => {
             if (pill.classList.contains('coin-pill-editing') || e.target.classList.contains('coin-pill-input')) return;
-            startY = e.clientY;
+            startX = e.clientX;
             startVal = getVal(currency);
+            targetVal = startVal;
             dragging = true;
             moved = false;
             pill.setPointerCapture(e.pointerId);
         });
 
-        // Pointer move — drag to adjust
         pill.addEventListener('pointermove', (e) => {
             if (!dragging || pill.classList.contains('coin-pill-editing')) return;
-            if (!moved && Math.abs(e.clientY - startY) < DRAG_THRESHOLD) return;
+            if (!moved && Math.abs(e.clientX - startX) < DRAG_THRESHOLD) return;
             moved = true;
-            const diff = Math.round((startY - e.clientY) / 4);
-            const newVal = Math.max(0, startVal + diff);
-            setVal(currency, newVal);
-            showDeltaLive(pill, newVal - startVal);
+            const diff = Math.round((e.clientX - startX) / 4);
+            targetVal = Math.max(0, startVal + diff);
+            showDeltaLive(pill, targetVal - startVal);
         });
 
-        // Pointer up — commit drag or open editor
         pill.addEventListener('pointerup', () => {
             if (!dragging) return;
             dragging = false;
-            if (!moved) enterEditMode(pill);
-            else requestAnimationFrame(() => floatAway(pill));
+            if (!moved) {
+                enterEditMode(pill);
+            } else {
+                const oldVal = startVal;
+                setVal(currency, targetVal);
+                const num = pill.querySelector('.coin-pill-num');
+                coinCountTo(num, oldVal, targetVal);
+                if (targetVal !== startVal) {
+                    requestAnimationFrame(() => floatAway(pill));
+                }
+            }
         });
 
-        pill.addEventListener('pointercancel', () => { dragging = false; hideDelta(pill); });
+        pill.addEventListener('pointercancel', () => {
+            if (!dragging) return;
+            dragging = false;
+            hideDelta(pill);
+        });
 
         // Input field handlers
         const inp = pill.querySelector('.coin-pill-input');
@@ -1569,7 +1881,6 @@ function initCurrencyTracker(tabPrefix) {
     });
 }
 
-// Initialise currency tracker for Hazard only
 document.addEventListener('DOMContentLoaded', () => {
     initCurrencyTracker('tab4');
 });

@@ -96,4 +96,11 @@
     /* ── Circle Colour ───────────────────────────────────────────── */
 
     --circle-color: #e4e0e0;
+
+    /* ── Frosted Glass ───────────────────────────────────────────── */
+
+    --glass-bg: rgba(30, 30, 30, 0.6);
+    --glass-blur: blur(12px);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --glass-border: 0.5px solid rgba(255, 255, 255, 0.08);
 }
