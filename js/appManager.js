@@ -2153,17 +2153,6 @@ const applyPendingBlockAnim = () => {
       const attunedMax   = getInventoryAttunementMax();
       const overAttuned  = attunedCount > attunedMax;
 
-      // Coin pouches
-      const pouches = [
-          { id: 'perm1', cls: 'gold-bg',   defaultValue: '00' },
-          { id: 'perm2', cls: 'silver-bg', defaultValue: '00' },
-          { id: 'perm3', cls: 'copper-bg', defaultValue: '00' },
-      ];
-      const pouchesHTML = pouches.map(({ id, cls, defaultValue }) => {
-          const v = localStorage.getItem(`permanentItem_${id}`) || defaultValue;
-          return `<div class="block minimized permanent-block ${cls}" data-id="${id}"><h4 class="permanent-title" contenteditable="true">${v}</h4></div>`;
-      }).join('');
-
       const chainSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5"/></svg>`;
       const attunePillHTML = `
           <div class="inventory-attune-wrap">
@@ -2180,7 +2169,6 @@ const applyPendingBlockAnim = () => {
       // Results section layout: top bar + sections
       resultsSection.innerHTML = `
           <div class="inventory-top-bar">
-              <div class="inventory-pouches">${pouchesHTML}</div>
               ${attunePillHTML}
           </div>
           <div id="inventory-sections-host"></div>

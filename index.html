@@ -176,7 +176,7 @@
             <!-- Tab 4: Hazard Character Sheet -->
             <div class="tab-content active" id="tab4">
                 <!-- CARD 1: Header -->
-                <div class="cs-card">
+                <div class="cs-card cs-header-card">
                     <div class="cs-header-name-row">
                         <span class="character-name editable" contenteditable="true" data-storage-key="tab4_character_name">Hazard</span>
                         <div class="descriptor-box">
@@ -368,7 +368,7 @@
                     </div>
                 </div>
 
-                <div class="cs-card">
+                <div class="cs-card cs-card-scrollable">
                     <div class="character-sheet-row">
                         <div class="saving-throws-and-skills-column-wrapper">
                             <div class="saving-throws-and-skills-column">
@@ -503,12 +503,37 @@
                     </div>
                 </div>
                 </div>
+
+                <!-- CARD 5: Currency -->
+                <div class="cs-currency-card">
+                    <div class="currency-vals-row">
+                        <div class="coin-pill" data-currency="gold">
+                            <div class="coin-icon coin-icon-gold"><span class="coin-icon-letter">G</span></div>
+                            <span class="coin-pill-num"></span>
+                            <input class="coin-pill-input" type="text" inputmode="numeric">
+                            <div class="coin-delta-popup"></div>
+                        </div>
+                        <div class="coin-pill" data-currency="silver">
+                            <div class="coin-icon coin-icon-silver"><span class="coin-icon-letter">S</span></div>
+                            <span class="coin-pill-num"></span>
+                            <input class="coin-pill-input" type="text" inputmode="numeric">
+                            <div class="coin-delta-popup"></div>
+                        </div>
+                        <div class="coin-pill" data-currency="copper">
+                            <div class="coin-icon coin-icon-copper"><span class="coin-icon-letter">C</span></div>
+                            <span class="coin-pill-num"></span>
+                            <input class="coin-pill-input" type="text" inputmode="numeric">
+                            <div class="coin-delta-popup"></div>
+                        </div>
+                    </div>
+                    <span class="currency-tooltip">Click to adjust · Drag up/down · Scroll</span>
+                </div>
             </div>
 
             <!-- Tab 8: Crank Character Sheet -->
             <div class="tab-content" id="tab8">
                 <!-- CARD 1: Header -->
-                <div class="cs-card">
+                <div class="cs-card cs-header-card">
                     <div class="cs-header-name-row">
                         <span class="character-name editable" contenteditable="true" data-storage-key="tab8_character_name">Crank</span>
                         <div class="descriptor-box">
@@ -680,7 +705,7 @@
                 </div>
 
                 <!-- CARD 4: Saves & Skills -->
-                <div class="cs-card">
+                <div class="cs-card cs-card-scrollable">
                     <div class="character-sheet-row">
                     <div class="saving-throws-and-skills-column-wrapper">
                         <div class="saving-throws-and-skills-column">

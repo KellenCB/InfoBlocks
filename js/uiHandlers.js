@@ -1303,3 +1303,273 @@ document.addEventListener('click', (e) => {
         closest.click();
     }
 });
+
+/* ==================================================================*/
+/* =================== HEADER CARD TOGGLE ==========================*/
+/* ==================================================================*/
+
+function initHeaderCardToggle(tabPrefix) {
+    const tabEl = document.getElementById(tabPrefix);
+    if (!tabEl) return;
+
+    const card = tabEl.querySelector('.cs-header-card');
+    if (!card) return;
+
+    const details = card.querySelector('.cs-header-details');
+    const nameRow = card.querySelector('.cs-header-name-row');
+    if (!details || !nameRow) return;
+
+    const storageKey = `${tabPrefix}_header_condensed`;
+
+    // Restore saved state (default: expanded)
+    if (localStorage.getItem(storageKey) === 'true') {
+        card.classList.add('cs-header-condensed');
+    }
+
+    card.addEventListener('click', (e) => {
+        // Don't toggle if clicking on...
+        if (e.target.closest('.character-name')) return;
+        if (e.target.closest('.descriptor-box') && nameRow.contains(e.target)) return;
+        if (e.target.closest('.editable')) return;
+
+        const isCondensing = !card.classList.contains('cs-header-condensed');
+        const oldHeight = card.offsetHeight;
+
+        if (isCondensing) {
+            // ── Collapse: fade out details, then shrink ────────────
+            details.style.transition = 'opacity 0.15s ease';
+            details.style.opacity = '0';
+
+            setTimeout(() => {
+                card.classList.add('cs-header-condensed');
+                const newHeight = card.offsetHeight;
+
+                card.style.height = oldHeight + 'px';
+                card.style.overflow = 'hidden';
+                card.style.transition = 'none';
+                void card.offsetHeight;
+
+                card.style.transition = 'height 0.35s ease';
+                card.style.height = newHeight + 'px';
+
+                const cleanup = () => {
+                    card.style.height = '';
+                    card.style.overflow = '';
+                    card.style.transition = '';
+                    details.style.transition = '';
+                    details.style.opacity = '';
+                };
+                card.addEventListener('transitionend', (ev) => {
+                    if (ev.target === card && ev.propertyName === 'height') cleanup();
+                }, { once: true });
+                setTimeout(cleanup, 450);
+            }, 150);
+
+        } else {
+            // ── Expand: grow first, then fade in details ───────────
+            card.classList.remove('cs-header-condensed');
+            details.style.opacity = '0';
+            details.style.transition = 'none';
+
+            const newHeight = card.offsetHeight;
+
+            card.style.height = oldHeight + 'px';
+            card.style.overflow = 'hidden';
+            card.style.transition = 'none';
+            void card.offsetHeight;
+
+            card.style.transition = 'height 0.35s ease';
+            card.style.height = newHeight + 'px';
+
+            setTimeout(() => {
+                details.style.transition = 'opacity 0.25s ease';
+                details.style.opacity = '1';
+            }, 120);
+
+            const cleanup = () => {
+                card.style.height = '';
+                card.style.overflow = '';
+                card.style.transition = '';
+                details.style.transition = '';
+                details.style.opacity = '';
+            };
+            card.addEventListener('transitionend', (ev) => {
+                if (ev.target === card && ev.propertyName === 'height') cleanup();
+            }, { once: true });
+            setTimeout(cleanup, 450);
+        }
+
+        localStorage.setItem(storageKey, String(isCondensing));
+    });
+}
+
+// Initialise header card toggle for both characters
+document.addEventListener('DOMContentLoaded', () => {
+    initHeaderCardToggle('tab4');
+    initHeaderCardToggle('tab8');
+});
+
+/* ==================================================================*/
+/* ====================== CURRENCY TRACKER =========================*/
+/* ==================================================================*/
+
+function initCurrencyTracker(tabPrefix) {
+    const tabEl = document.getElementById(tabPrefix);
+    if (!tabEl) return;
+
+    const card = tabEl.querySelector('.cs-currency-card');
+    if (!card) return;
+
+    const DRAG_THRESHOLD = 5;
+    const STORAGE_KEYS = {
+        gold:   `${tabPrefix}_currency_gold`,
+        silver: `${tabPrefix}_currency_silver`,
+        copper: `${tabPrefix}_currency_copper`,
+    };
+
+    // ── Migrate old inventory pouch values (one-time) ──────────────
+    if (!localStorage.getItem(`${tabPrefix}_currency_migrated`)) {
+        const oldMap = { gold: 'permanentItem_perm1', silver: 'permanentItem_perm2', copper: 'permanentItem_perm3' };
+        for (const [currency, oldKey] of Object.entries(oldMap)) {
+            const oldVal = localStorage.getItem(oldKey);
+            if (oldVal !== null && localStorage.getItem(STORAGE_KEYS[currency]) === null) {
+                const parsed = parseInt(oldVal, 10);
+                localStorage.setItem(STORAGE_KEYS[currency], String(isNaN(parsed) ? 0 : parsed));
+            }
+        }
+        localStorage.setItem(`${tabPrefix}_currency_migrated`, 'true');
+    }
+
+    const pills = card.querySelectorAll('.coin-pill');
+
+    function getVal(currency) {
+        return parseInt(localStorage.getItem(STORAGE_KEYS[currency]), 10) || 0;
+    }
+
+    function setVal(currency, v) {
+        v = Math.max(0, v);
+        localStorage.setItem(STORAGE_KEYS[currency], String(v));
+        const pill = card.querySelector(`.coin-pill[data-currency="${currency}"]`);
+        pill.querySelector('.coin-pill-num').textContent = v;
+    }
+
+    function showDeltaLive(pill, d) {
+        const el = pill.querySelector('.coin-delta-popup');
+        el.style.animation = 'none';
+        el.offsetHeight;
+        el.style.animation = '';
+        if (d === 0) { el.className = 'coin-delta-popup'; return; }
+        el.textContent = (d > 0 ? '+' : '') + d;
+        el.className = 'coin-delta-popup coin-delta-live ' + (d > 0 ? 'coin-delta-pos' : 'coin-delta-neg');
+    }
+
+    function floatAway(pill) {
+        const el = pill.querySelector('.coin-delta-popup');
+        if (!el.classList.contains('coin-delta-live')) return;
+        const color = el.classList.contains('coin-delta-pos') ? 'coin-delta-pos' : 'coin-delta-neg';
+        el.style.animation = 'none';
+        el.offsetHeight;
+        el.style.animation = '';
+        el.className = 'coin-delta-popup coin-delta-floating ' + color;
+    }
+
+    function hideDelta(pill) {
+        const el = pill.querySelector('.coin-delta-popup');
+        el.style.animation = 'none';
+        el.className = 'coin-delta-popup';
+    }
+
+    function enterEditMode(pill) {
+        if (pill.classList.contains('coin-pill-editing')) return;
+        pill.classList.add('coin-pill-editing');
+        const inp = pill.querySelector('.coin-pill-input');
+        inp.value = '';
+        inp.placeholder = '';
+        setTimeout(() => inp.focus(), 10);
+    }
+
+    function commitEdit(pill) {
+        if (!pill.classList.contains('coin-pill-editing')) return;
+        const currency = pill.dataset.currency;
+        const inp = pill.querySelector('.coin-pill-input');
+        const raw = inp.value.trim();
+        if (raw !== '') {
+            const delta = parseInt(raw, 10);
+            if (!isNaN(delta)) {
+                setVal(currency, getVal(currency) + delta);
+                showDeltaLive(pill, delta);
+                requestAnimationFrame(() => floatAway(pill));
+            }
+        }
+        pill.classList.remove('coin-pill-editing');
+    }
+
+    // ── Load initial values ────────────────────────────────────────
+    pills.forEach(pill => {
+        const currency = pill.dataset.currency;
+        pill.querySelector('.coin-pill-num').textContent = getVal(currency);
+    });
+
+    // ── Wire interactions per pill ─────────────────────────────────
+    pills.forEach(pill => {
+        const currency = pill.dataset.currency;
+        let startY = 0, startVal = 0, dragging = false, moved = false;
+
+        // Pointer down — begin potential drag or click
+        pill.addEventListener('pointerdown', (e) => {
+            if (pill.classList.contains('coin-pill-editing') || e.target.classList.contains('coin-pill-input')) return;
+            startY = e.clientY;
+            startVal = getVal(currency);
+            dragging = true;
+            moved = false;
+            pill.setPointerCapture(e.pointerId);
+        });
+
+        // Pointer move — drag to adjust
+        pill.addEventListener('pointermove', (e) => {
+            if (!dragging || pill.classList.contains('coin-pill-editing')) return;
+            if (!moved && Math.abs(e.clientY - startY) < DRAG_THRESHOLD) return;
+            moved = true;
+            const diff = Math.round((startY - e.clientY) / 4);
+            const newVal = Math.max(0, startVal + diff);
+            setVal(currency, newVal);
+            showDeltaLive(pill, newVal - startVal);
+        });
+
+        // Pointer up — commit drag or open editor
+        pill.addEventListener('pointerup', () => {
+            if (!dragging) return;
+            dragging = false;
+            if (!moved) enterEditMode(pill);
+            else requestAnimationFrame(() => floatAway(pill));
+        });
+
+        pill.addEventListener('pointercancel', () => { dragging = false; hideDelta(pill); });
+
+        // Input field handlers
+        const inp = pill.querySelector('.coin-pill-input');
+        inp.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); commitEdit(pill); }
+            if (e.key === 'Escape') { pill.classList.remove('coin-pill-editing'); }
+        });
+        inp.addEventListener('blur', () => commitEdit(pill));
+        inp.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+        // Scroll wheel
+        let scrollTimer;
+        pill.addEventListener('wheel', (e) => {
+            if (pill.classList.contains('coin-pill-editing')) return;
+            e.preventDefault();
+            const d = e.deltaY < 0 ? 1 : -1;
+            setVal(currency, getVal(currency) + d);
+            showDeltaLive(pill, d);
+            clearTimeout(scrollTimer);
+            scrollTimer = setTimeout(() => floatAway(pill), 300);
+        }, { passive: false });
+    });
+}
+
+// Initialise currency tracker for Hazard only
+document.addEventListener('DOMContentLoaded', () => {
+    initCurrencyTracker('tab4');
+});
