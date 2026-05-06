@@ -330,7 +330,7 @@ export function initDiceRoller() {
         const results = await Promise.race([
             box.roll(notation),
             new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Roll timed out')), 10000)
+                setTimeout(() => reject(new Error('Roll timed out')), 6000)
             )
         ]);
 
@@ -372,7 +372,7 @@ export function initDiceRoller() {
           const results = await Promise.race([
               box.roll(notation),
               new Promise((_, reject) =>
-                  setTimeout(() => reject(new Error('Roll timed out')), 10000)
+                  setTimeout(() => reject(new Error('Roll timed out')), 6000)
               )
           ]);
           const rolls   = results.map(r => r.value);
