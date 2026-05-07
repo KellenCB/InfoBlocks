@@ -370,7 +370,7 @@
 
                 <div class="cs-card cs-card-scrollable">
                     <div class="character-sheet-row">
-                        <div class="saving-throws-and-skills-column-wrapper">
+                        <div class="saving-throws-and-skills-column-wrapper scroll-fade">
                             <div class="saving-throws-and-skills-column">
                                 <h3>Saving Throws</h3>
                                 <div class="saving-throws">
@@ -707,7 +707,7 @@
                 <!-- CARD 4: Saves & Skills -->
                 <div class="cs-card cs-card-scrollable">
                     <div class="character-sheet-row">
-                    <div class="saving-throws-and-skills-column-wrapper">
+                    <div class="saving-throws-and-skills-column-wrapper scroll-fade">
                         <div class="saving-throws-and-skills-column">
                             <h3>Saving Throws</h3>
                             <div class="saving-throws">
@@ -893,7 +893,10 @@
             <!-- Tab 9: Feats & Magic -->
             <div class="tab-content" id="tab9">
                 <div class="filter-and-results">
-                    <div id="results_section_9" class="results-section"></div>
+                    <div class="results-glass-wrapper">
+                        <div id="results_section_9" class="results-section scroll-fade"></div>
+                    </div>
+
                     <button class="filter-open-btn" data-tab="tab9" title="Show filters">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <path d="M15 18l-6-6 6-6"/>
@@ -903,13 +906,8 @@
                     <div class="filter-section-wrapper">
                         <div class="filter-panel-header">
                             <button id="clear_filters_button_9" class="clear_filters_button" title="Clear filters">✕</button>
-                            <button class="toggle-filter-button" data-tab="tab9" title="Hide filters">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 18l6-6-6-6"/>
-                                </svg>
-                            </button>
                         </div>
-                        <div id="filter_section_9" class="filter-section">
+                        <div id="filter_section_9" class="filter-section scroll-fade">
                             <div class="block-type-tags" id="character_type_tags_9"></div>
                             <div id="all_tags_container">
                                 <div id="dynamic_tags_section_9" class="tag-section"></div>

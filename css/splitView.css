@@ -11,9 +11,11 @@ body.landscape-mode #char-sheet-panel {
     width: 360px;
     max-width: 360px;
     min-width: 0;
-    overflow: hidden;
+    overflow: clip;
     min-height: 0;
     gap: 8px;
+    padding: 10px;
+    margin: -10px;
 }
 
 body.landscape-mode #char-sheet-panel .tab-content {
@@ -31,7 +33,7 @@ body.landscape-mode #char-sheet-panel .tab-content.active {
 
 /* ── Vertical divider ─────────────────────────────────────────────────────── */
 body.landscape-mode #landscape-divider {
-    display: block;
+    display: none;
     width: 2px;
     background-color: var(--gray-400);
     margin: 0 15px;

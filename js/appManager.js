@@ -572,6 +572,46 @@ export function initScrollFades(selector, topVar, bottomVar, handlerKey, delay =
     delay ? setTimeout(run, delay) : run();
 }
 
+export function initScrollMask(selector, handlerKey, delay = 0) {
+    const run = () => {
+        document.querySelectorAll(selector).forEach(el => {
+            const fadeSize = parseInt(getComputedStyle(el).getPropertyValue('--mask-fade-size')) || 30;
+            const check = () => {
+                const scrollable = el.scrollHeight - el.clientHeight;
+                if (scrollable <= 5) {
+                    el.style.setProperty('--mask-top', '0px');
+                    el.style.setProperty('--mask-bottom', '0px');
+                    return;
+                }
+                const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+                el.style.setProperty('--mask-top', Math.min(el.scrollTop, fadeSize) + 'px');
+                el.style.setProperty('--mask-bottom', Math.min(distFromBottom, fadeSize) + 'px');
+            };
+            el.removeEventListener('scroll', el[handlerKey]);
+            el[handlerKey] = check;
+            el.addEventListener('scroll', check);
+            check();
+            if (!el[handlerKey + '_ro']) {
+                el[handlerKey + '_ro'] = new ResizeObserver(check);
+                el[handlerKey + '_ro'].observe(el);
+            }
+            if (!el[handlerKey + '_mo']) {
+                let debounce = null;
+                el[handlerKey + '_mo'] = new MutationObserver(() => {
+                    clearTimeout(debounce);
+                    debounce = setTimeout(check, 50);
+                    setTimeout(check, 350);
+                    setTimeout(check, 600);
+                });
+                el[handlerKey + '_mo'].observe(el, {
+                    childList: true, subtree: true,
+                    attributes: true, attributeFilter: ['class', 'style']
+                });
+            }
+        });
+    };
+    delay ? setTimeout(run, delay) : run();
+}
 
 export function setupSearchInput(inputEl, clearBtnEl, onInput, onClear) {
     if (!inputEl) return;
@@ -3862,7 +3902,7 @@ const applyPendingBlockAnim = () => {
 
     // ── Character sheet tabs have no block results ────────────────────
     if (tab === 'tab4' || tab === 'tab8') {
-        initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
+        initScrollMask('.saving-throws-and-skills-column-wrapper', '_skillsMaskHandler', 100);
         return;
     }
 
@@ -4115,53 +4155,56 @@ const applyPendingBlockAnim = () => {
     }
 
     // ── FADE OVERLAY (always last child for sticky bottom) ────────
-    let fadeEl = resultsSection.querySelector('.results-fade');
-    if (!fadeEl) {
-        fadeEl = document.createElement('div');
-        fadeEl.className = 'results-fade';
-    }
-    resultsSection.appendChild(fadeEl);
-
-    // Control fade visibility based on actual overflow
-    const updateFade = () => {
-        const scrollableAmount = resultsSection.scrollHeight - resultsSection.clientHeight;
-        if (scrollableAmount <= 5) {
-            fadeEl.style.opacity = '0';
-            return;
+    // Skip for elements using the newer .scroll-fade mask approach
+    if (!resultsSection.classList.contains('scroll-fade')) {
+        let fadeEl = resultsSection.querySelector('.results-fade');
+        if (!fadeEl) {
+            fadeEl = document.createElement('div');
+            fadeEl.className = 'results-fade';
         }
-        const distanceFromBottom = resultsSection.scrollHeight - resultsSection.scrollTop - resultsSection.clientHeight;
-        fadeEl.style.opacity = Math.min(distanceFromBottom / 42, 1);
-    };
-    resultsSection.removeEventListener('scroll', resultsSection._resultsFadeHandler);
-    resultsSection._resultsFadeHandler = updateFade;
-    resultsSection.addEventListener('scroll', updateFade);
-    updateFade();
-    // Track scrollHeight changes during block animations (~700ms)
-    if (resultsSection._fadeRAF) cancelAnimationFrame(resultsSection._fadeRAF);
-    const startTime = performance.now();
-    const trackFade = (now) => {
+        resultsSection.appendChild(fadeEl);
+
+        // Control fade visibility based on actual overflow
+        const updateFade = () => {
+            const scrollableAmount = resultsSection.scrollHeight - resultsSection.clientHeight;
+            if (scrollableAmount <= 5) {
+                fadeEl.style.opacity = '0';
+                return;
+            }
+            const distanceFromBottom = resultsSection.scrollHeight - resultsSection.scrollTop - resultsSection.clientHeight;
+            fadeEl.style.opacity = Math.min(distanceFromBottom / 42, 1);
+        };
+        resultsSection.removeEventListener('scroll', resultsSection._resultsFadeHandler);
+        resultsSection._resultsFadeHandler = updateFade;
+        resultsSection.addEventListener('scroll', updateFade);
         updateFade();
-        if (now - startTime < 700) resultsSection._fadeRAF = requestAnimationFrame(trackFade);
-    };
-    resultsSection._fadeRAF = requestAnimationFrame(trackFade);
-    // Re-check on element size changes (window resize)
-    if (!resultsSection._fadeResizeObserver) {
-        resultsSection._fadeResizeObserver = new ResizeObserver(updateFade);
-        resultsSection._fadeResizeObserver.observe(resultsSection);
-    }
-    // Re-check on content changes (blocks added/removed, style changes)
-    if (!resultsSection._fadeMutationObserver) {
-        let debounce = null;
-        resultsSection._fadeMutationObserver = new MutationObserver(() => {
-            clearTimeout(debounce);
-            debounce = setTimeout(updateFade, 50);
-            setTimeout(updateFade, 350);
-            setTimeout(updateFade, 600);
-        });
-        resultsSection._fadeMutationObserver.observe(resultsSection, {
-            childList: true, subtree: true,
-            attributes: true, attributeFilter: ['class', 'style']
-        });
+        // Track scrollHeight changes during block animations (~700ms)
+        if (resultsSection._fadeRAF) cancelAnimationFrame(resultsSection._fadeRAF);
+        const startTime = performance.now();
+        const trackFade = (now) => {
+            updateFade();
+            if (now - startTime < 700) resultsSection._fadeRAF = requestAnimationFrame(trackFade);
+        };
+        resultsSection._fadeRAF = requestAnimationFrame(trackFade);
+        // Re-check on element size changes (window resize)
+        if (!resultsSection._fadeResizeObserver) {
+            resultsSection._fadeResizeObserver = new ResizeObserver(updateFade);
+            resultsSection._fadeResizeObserver.observe(resultsSection);
+        }
+        // Re-check on content changes (blocks added/removed, style changes)
+        if (!resultsSection._fadeMutationObserver) {
+            let debounce = null;
+            resultsSection._fadeMutationObserver = new MutationObserver(() => {
+                clearTimeout(debounce);
+                debounce = setTimeout(updateFade, 50);
+                setTimeout(updateFade, 350);
+                setTimeout(updateFade, 600);
+            });
+            resultsSection._fadeMutationObserver.observe(resultsSection, {
+                childList: true, subtree: true,
+                attributes: true, attributeFilter: ['class', 'style']
+            });
+        }
     }
 
     applyInlineDiceRolls(resultsSection, tab);
@@ -4169,9 +4212,10 @@ const applyPendingBlockAnim = () => {
 
     if (!skipTagUpdate) updateTags();
     attachDynamicTooltips();
-    initScrollFades('.filter-section',               '--filter-fade-top-opacity', '--filter-fade-bottom-opacity','_filterFadeHandler', 100);
-    initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
+    initScrollMask('.filter-section', '_filterMaskHandler', 100);
+    initScrollMask('.saving-throws-and-skills-column-wrapper', '_skillsMaskHandler', 100);
     initScrollFades('.roll-results', '--dice-fade-top-opacity', '--dice-fade-bottom-opacity', '_diceFadeHandler', 100);
+    initScrollMask('#results_section_9', '_results9MaskHandler', 100);
 
     applyPendingBlockAnim();
   };

@@ -33,6 +33,28 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     border: var(--glass-border);
 }
 
+/* ── Scroll-fade mask utility ────────────────────────────────────── */
+
+.scroll-fade {
+    --mask-top: 0px;
+    --mask-bottom: 0px;
+    --mask-fade-size: 30px;
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent,
+        black var(--mask-top),
+        black calc(100% - var(--mask-bottom)),
+        transparent
+    );
+    mask-image: linear-gradient(
+        to bottom,
+        transparent,
+        black var(--mask-top),
+        black calc(100% - var(--mask-bottom)),
+        transparent
+    );
+}
+
 #header-row {
     position: relative;
     z-index: 9999;
@@ -71,7 +93,10 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     flex-shrink: 0;
     position: relative;
     padding: 5px;
-    background-color: var(--gray-300);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
     border-radius: 25px;
     align-items: center;
 }
@@ -179,7 +204,8 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
 /* Suppress tooltips when their associated menu/popover is open */
 #Menu_button.menu-button-open:hover .uch-tooltip,
 #dice-menu-button.active:hover .uch-tooltip,
-#dice-history-button.active:hover .uch-tooltip {
+#dice-history-button.active:hover .uch-tooltip,
+#long_rest_button.arming:hover .uch-tooltip {
     opacity: 0 !important;
     transition-delay: 0s !important;
 }
@@ -195,7 +221,10 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     align-items: center;
     gap: 0;
     padding: 5px;
-    background-color: var(--gray-300);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
     border-radius: 25px;
     max-width: 500px;
     flex: 1 1 500px;
@@ -225,7 +254,10 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     display: flex;
     align-items: center;
     padding: 5px;
-    background-color: var(--gray-300);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
     border-radius: 25px;
     flex-shrink: 0;
 }
@@ -555,7 +587,7 @@ body.app-loading *::after {
 /* Add more targets here to extend the sequence later.               */
 
 body.app-ready #header-row {
-    animation: revealDown 1s cubic-bezier(0, 0.8, 0.8, 1) forwards;
+    animation: revealDown 1s cubic-bezier(0, 0.8, 0.8, 1);
 }
 
 body.app-ready #app-row {
@@ -648,7 +680,10 @@ body.app-ready #app-row {
     flex-direction: column;
     width: 33%;
     min-width: 290px;
-    background-color: var(--gray-300);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
     border-radius: 15px;
     padding: 15px;
     box-sizing: border-box;
@@ -726,40 +761,6 @@ body.app-ready #app-row {
     -ms-overflow-style: none;
 }
 
-.filter-section::before {
-    content: '';
-    position: sticky;
-    top: 0;
-    display: block;
-    height: 40px;
-    margin-bottom: -40px;
-    background: linear-gradient(
-        var(--gray-300) 0%,
-        color-mix(in srgb, var(--gray-300) 50%, transparent) 50%,
-        color-mix(in srgb, var(--gray-300) 0%, transparent) 100%
-    );
-    pointer-events: none;
-    z-index: 1;
-    opacity: var(--filter-fade-top-opacity, 0);
-}
-
-.filter-section::after {
-    content: '';
-    position: sticky;
-    bottom: 0;
-    display: block;
-    height: 40px;
-    margin-top: -40px;
-    background: linear-gradient(
-        color-mix(in srgb, var(--gray-300) 0%, transparent) 0%,
-        color-mix(in srgb, var(--gray-300) 50%, transparent) 50%,
-        var(--gray-300) 100%
-    );
-    pointer-events: none;
-    z-index: 1;
-    opacity: var(--filter-fade-bottom-opacity, 1);
-}
-
 /* ── Filter panel swipe preview ──────────────────────────────────── */
 
 /* Opening preview: reduce negative margin to show a 70px peek */
@@ -821,6 +822,29 @@ body.app-ready #app-row {
         color-mix(in srgb, var(--gray-150) 50%, transparent) 50%,
         var(--gray-150) 100%
     );
+}
+
+/* ── Glass card wrapper (reusable for any tab) ─────────────────── */
+
+.results-glass-wrapper {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: 15px;
+    padding: 15px;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.results-glass-wrapper > .results-section {
+    flex: 1;
+    min-height: 0;
+    height: 0;
 }
 
 .character-sheet-column .results-section {
@@ -2380,10 +2404,12 @@ a:hover {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    background-color: var(--gray-300);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
     border-radius: 25px;
     padding: 16px 84px 16px 18px;
-    border: 1px solid transparent;
     box-sizing: border-box;
     width: 100%;
     flex: 0 0 auto;
@@ -3482,11 +3508,11 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     display: flex;
     align-items: center;
     padding: 5px 18px 5px 70px;
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.25), inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
     opacity: 0;
     transition: opacity 0.4s ease;
     pointer-events: none;
