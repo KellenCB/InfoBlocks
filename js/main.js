@@ -1169,12 +1169,14 @@ window.onload = async () => {
     const swipeTarget9   = document.getElementById('results_section_9');
     const filterWrapper9 = document.querySelector('#tab9 .filter-section-wrapper');
 
+    const isEditing = () => !!document.querySelector('.inline-editing') || !!document.activeElement?.closest('[contenteditable="true"]');
+
     if (swipeTarget9 && filterWrapper9) {
         registerSwipe(swipeTarget9, {
             threshold: 50,
             deadZone:  8,
-            canSwipeLeft:  () => filterWrapper9.classList.contains('filter-panel-closed'),
-            canSwipeRight: () => !filterWrapper9.classList.contains('filter-panel-closed'),
+            canSwipeLeft:  () => !isEditing() && filterWrapper9.classList.contains('filter-panel-closed'),
+            canSwipeRight: () => !isEditing() && !filterWrapper9.classList.contains('filter-panel-closed'),
             onPreviewLeft:  (active) => filterWrapper9.classList.toggle('filter-panel-preview', active),
             onPreviewRight: (active) => filterWrapper9.classList.toggle('filter-panel-preview', active),
             onSwipeLeft: () => {
@@ -1192,12 +1194,35 @@ window.onload = async () => {
             threshold: 50,
             deadZone: 8,
             canSwipeLeft:   () => false,
-            canSwipeRight:  () => !filterWrapper9.classList.contains('filter-panel-closed'),
+            canSwipeRight:  () => !isEditing() && !filterWrapper9.classList.contains('filter-panel-closed'),
             onPreviewRight: (active) => filterWrapper9.classList.toggle('filter-panel-preview', active),
             onSwipeRight: () => {
                 filterWrapper9.classList.add('filter-panel-closed');
                 localStorage.setItem('filterVisible_tab9', 'false');
             },
+        });
+    }
+
+    // ── Session log list swipe (tab 7) ──────────────────────────────────
+    const sessionViewer  = document.getElementById('session_log_viewer');
+    const sessionListCol = document.querySelector('.session-log-list-column');
+
+    if (sessionViewer && sessionListCol) {
+        registerSwipe(sessionViewer, {
+            threshold: 50,
+            deadZone:  8,
+            canSwipeLeft:  () => !isEditing() && sessionListCol.classList.contains('session-log-list-collapsed'),
+            canSwipeRight: () => !isEditing() && !sessionListCol.classList.contains('session-log-list-collapsed'),
+            onSwipeLeft:   () => appManager.setSessionListCollapsed(false),
+            onSwipeRight:  () => appManager.setSessionListCollapsed(true),
+        });
+
+        registerSwipe(sessionListCol, {
+            threshold: 50,
+            deadZone:  8,
+            canSwipeLeft:  () => false,
+            canSwipeRight: () => !isEditing() && !sessionListCol.classList.contains('session-log-list-collapsed'),
+            onSwipeRight:  () => appManager.setSessionListCollapsed(true),
         });
 
         console.log('✅ Swipe gesture registered on tab 9 results section.');

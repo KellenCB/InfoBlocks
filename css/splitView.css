@@ -35,7 +35,6 @@ body.landscape-mode #landscape-divider {
     display: none;
     width: 2px;
     background-color: var(--gray-400);
-    margin: 0 15px;
     flex-shrink: 0;
     border-radius: 2px;
     align-self: stretch;

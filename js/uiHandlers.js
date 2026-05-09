@@ -1203,6 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let armTimer = null;
+    let dismissTimer = null;
 
     const doRefill = () => {
         const suitTotal = getSuitTotal();
@@ -1234,7 +1235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         longRestBtn.classList.add('filling');
         armTimer = setTimeout(() => {
             longRestBtn.classList.add('armed');
-        }, 500);
+        }, 750);
     };
 
     const cancelArmTimer = () => {
@@ -1244,16 +1245,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const dismissLongRest = () => {
         cancelArmTimer();
-        longRestBtn.classList.remove('arming');
+        longRestBtn.classList.add('dismissing');
         clearTimeout(iconSwapTimer);
-        longRestBtn.classList.remove('swapping');
-        const wrap = longRestBtn.querySelector('.lr-icon-wrap');
-        if (wrap) wrap.innerHTML = MOON_SVG;
+        swapIcon(MOON_SVG);
+
         const popup = document.getElementById('long-rest-popup');
-        if (popup) {
-            popup.classList.remove('visible');
-            setTimeout(() => popup.remove(), 200);
-        }
+        if (popup) popup.classList.remove('visible');
+
+        clearTimeout(dismissTimer);
+        dismissTimer = setTimeout(() => {
+            dismissTimer = null;
+            longRestBtn.classList.remove('arming', 'dismissing', 'filling');
+            const p = document.getElementById('long-rest-popup');
+            if (p) p.remove();
+        }, 400);
+
         document.removeEventListener('mousedown', onLongRestOutside);
     };
 
@@ -1288,17 +1294,31 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     longRestBtn?.addEventListener('click', () => {
-        if (!longRestBtn.classList.contains('arming')) {
-            enterLongRestArming();
-        } else if (longRestBtn.classList.contains('armed')) {
+        if (longRestBtn.classList.contains('armed')) {
             doRefill();
             dismissLongRest();
         }
     });
 
     longRestBtn?.addEventListener('mouseenter', () => {
-        if (!longRestBtn.classList.contains('arming')) return;
-        startArmTimer();
+        if (dismissTimer) {
+            clearTimeout(dismissTimer);
+            dismissTimer = null;
+            longRestBtn.classList.remove('dismissing', 'filling');
+            const popup = document.getElementById('long-rest-popup');
+            if (popup) {
+                requestAnimationFrame(() => popup.classList.add('visible'));
+            }
+            swapIcon(SUN_SVG);
+            startArmTimer();
+            setTimeout(() => document.addEventListener('mousedown', onLongRestOutside), 0);
+            return;
+        }
+        if (!longRestBtn.classList.contains('arming')) {
+            enterLongRestArming();
+        } else {
+            startArmTimer();
+        }
     });
 
     longRestBtn?.addEventListener('mouseleave', () => {

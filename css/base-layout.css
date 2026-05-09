@@ -530,6 +530,7 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     min-height: 0;
     min-width: 0;
     box-sizing: border-box;
+    gap: 15px;
 }
 
 .hidden {
@@ -622,7 +623,6 @@ body.app-ready #app-row {
     width: 100%;
     flex: 1;
     min-height: 0;
-    padding: 0px 0px 0px 15px;
     gap: 15px;
     transition: gap 0.3s ease;
 }
@@ -1125,6 +1125,7 @@ body.app-ready #app-row {
     padding: 10px 0;
     margin-bottom: 0;
     border-radius: 0;
+    border: none;
     border-top: 1px solid var(--gray-400);
 }
 
@@ -1319,7 +1320,6 @@ a:hover {
     flex: 1;
     min-height: 0;
     gap: 15px;
-    overflow: hidden;
     container-type: inline-size;
 }
 
@@ -1333,14 +1333,17 @@ a:hover {
     gap: 10px;
     min-height: 0;
     overflow: hidden;
-    transition: width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease;
+    border-radius: 15px;
+    padding: 15px;
+    transition: margin-right 0.3s ease, opacity 0.3s ease, visibility 0s;
 }
 
 .session-log-list-column.session-log-list-collapsed {
-    width: 0;
-    min-width: 0;
+    margin-right: calc(max(35%, 180px) * -1);
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
+    transition: margin-right 0.3s ease, opacity 0.3s ease, visibility 0s 0.3s;
 }
 
 .session-log-layout:has(.session-log-list-collapsed) {
@@ -1370,37 +1373,21 @@ a:hover {
 .session-log-list-column .results-section {
     flex: 1;
     min-height: 0;
+    height: 0;
     padding: 0 0 0 5px;
 }
 
 .session-log-viewer {
+    display: flex;
+    flex-direction: column;
     flex: 1;
     min-width: 0;
     min-height: 0;
-    overflow-y: auto;
-    overflow-x: clip;
-    background-color: var(--gray-300);
+    overflow: hidden;
     border-radius: 15px;
-    padding: 0 15px 0 15px;
+    padding: 0 15px;
     position: relative;
     scrollbar-width: none;
-}
-
-.session-log-viewer::after {
-    content: '';
-    position: sticky;
-    bottom: 0;
-    display: block;
-    height: 80px;
-    margin-top: -40px;
-    background: linear-gradient(
-        color-mix(in srgb, var(--gray-300) 0%, transparent) 0%,
-        color-mix(in srgb, var(--gray-300) 50%, transparent) 50%,
-        var(--gray-300) 80%
-    );
-    pointer-events: none;
-    z-index: 1;
-    opacity: var(--viewer-fade-bottom-opacity, 1);
 }
 
 .session-viewer-header {
@@ -1408,36 +1395,18 @@ a:hover {
     align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
-    position: sticky;
-    top: 0;
     padding-top: 15px;
-    background-color: var(--gray-300);
+    flex-shrink: 0;
     z-index: 2;
-}
-
-.session-viewer-header::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    height: 30px;
-    background: linear-gradient(
-        var(--gray-300) 0%,
-        transparent 100%
-    );
-    pointer-events: none;
-    z-index: 1;
-    opacity: var(--viewer-fade-top-opacity, 0);
 }
 
 .session-viewer-title {
     flex: 1;
+    min-width: 0;
     font-size: 18px;
-    font-weight: 500;
     color: var(--gray-900);
-    word-break: break-word;
     letter-spacing: 0.045em;
+    margin: 0 0 10px 0;
 }
 
 .session-viewer-title {
@@ -1519,16 +1488,15 @@ a:hover {
 }
 
 .session-viewer-body {
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--gray-800);
-    padding: 12px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    min-height: 100px;
-    box-sizing: border-box;
-    transition: border-color 0.2s, background-color 0.2s;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 15px;
 }
+
+.session-viewer-body::-webkit-scrollbar { display: none; }
 
 .session-viewer-body ul,
 .session-viewer-body ol {
@@ -1956,7 +1924,6 @@ a:hover {
     flex: 1;
     min-height: 0;
     gap: 15px;
-    overflow: hidden;
     container-type: inline-size;
 }
 
@@ -1968,11 +1935,14 @@ a:hover {
     flex-shrink: 0;
     min-height: 0;
     overflow: hidden;
+    border-radius: 15px;
+    padding: 15px;
 }
 
 .inventory-list-column .results-section {
     flex: 1;
     min-height: 0;
+    height: 0;
     padding: 0 5px 0 0;
 }
 
@@ -1987,7 +1957,6 @@ a:hover {
     -ms-overflow-style: none;
     padding: 15px 18px;
     position: relative;
-    background-color: var(--gray-300);
     border-radius: 10px;
 }
 
@@ -3529,12 +3498,32 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     bottom: 0;
     width: 0;
     background: var(--color-green);
-    transition: width 0.5s linear;
+    transition: width 0.75s linear;
     z-index: 0;
 }
 
 #long_rest_button.arming.filling::before {
     width: 100%;
+}
+
+.uch-tab-group:has(#long_rest_button.arming) {
+    will-change: auto;
+}
+
+#long_rest_button.arming.dismissing {
+    opacity: 0.25;
+    background-color: transparent;
+    transition: opacity 0.4s ease, background-color 0.4s ease;
+}
+
+#long_rest_button.arming.dismissing::before {
+    width: 0 !important;
+    transition: width 0.3s ease;
+}
+
+#long_rest_button.arming.dismissing svg {
+    stroke: var(--gray-700);
+    transition: stroke 0.4s ease;
 }
 
 /* ============================================================== */
@@ -3546,7 +3535,6 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     flex-direction: row;
     flex: 1;
     min-height: 0;
-    overflow: hidden;
 }
 
 .notes-list-column {
@@ -3557,11 +3545,14 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     flex-shrink: 0;
     min-height: 0;
     overflow: hidden;
+    border-radius: 15px;
+    padding: 15px;
 }
 
 .notes-list-column .results-section {
     flex: 1;
     min-height: 0;
+    height: 0;
     padding: 0 5px 0 0;
 }
 
@@ -3577,7 +3568,6 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     padding: 0;
     opacity: 0;
     position: relative;
-    background-color: var(--gray-300);
     border-radius: 10px;
     scrollbar-width: none;
     -ms-overflow-style: none;

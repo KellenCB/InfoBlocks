@@ -1245,11 +1245,15 @@ const applyPendingBlockAnim = () => {
   });
 
   // ── Session Log: toggle list panel ──────────────────────────────
-  const toggleSessionList = () => {
-      sessionListCollapsed = !sessionListCollapsed;
-      localStorage.setItem('sessionListCollapsed', sessionListCollapsed);
+  const setSessionListCollapsed = (collapsed) => {
+      sessionListCollapsed = collapsed;
+      localStorage.setItem('sessionListCollapsed', collapsed);
       document.querySelector('.session-log-list-column')
-          ?.classList.toggle('session-log-list-collapsed', sessionListCollapsed);
+          ?.classList.toggle('session-log-list-collapsed', collapsed);
+  };
+
+  const toggleSessionList = () => {
+      setSessionListCollapsed(!sessionListCollapsed);
   };
 
   // ── Session Log: generate next auto-title from most recent block ─
@@ -1311,11 +1315,6 @@ const applyPendingBlockAnim = () => {
 
       viewer.innerHTML = `
           <div class="session-viewer-header">
-              <button class="session-list-open-btn session-viewer-edit-btn" title="Show list">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M9 18l6-6-6-6"/>
-                  </svg>
-              </button>
               <h4 class="session-viewer-title">${block.title}</h4>
               <div class="session-viewer-header-actions">
                   <button class="session-viewer-delete-btn" data-id="${block.id}" title="Delete">×</button>
@@ -1325,48 +1324,28 @@ const applyPendingBlockAnim = () => {
                   </button>
               </div>
           </div>
-          <div class="session-viewer-body" id="session_viewer_body">${bodyHTML}</div>
+          <div class="session-viewer-body scroll-fade" id="session_viewer_body">${bodyHTML}</div>
       `;
 
       applyInlineDiceRolls(viewer, 'tab7');
 
-      initScrollFades('#session_log_viewer', '--viewer-fade-top-opacity', '--viewer-fade-bottom-opacity', '_viewerFadeHandler');
+      initScrollMask('#session_viewer_body', '_viewerMaskHandler');
       document.dispatchEvent(new CustomEvent('sessionViewerRendered', { detail: { tab: 'tab7' } }));
       const editBtn   = viewer.querySelector('#session_edit_toggle');
       const deleteBtn = viewer.querySelector('.session-viewer-delete-btn');
-      const openBtn   = viewer.querySelector('.session-list-open-btn');
-      if (openBtn) openBtn.addEventListener('click', toggleSessionList);
 
       if (deleteBtn) {
           deleteBtn.addEventListener('click', (e) => {
               e.stopPropagation();
-              const overlay = document.querySelector('.remove-block-overlay');
-              if (!overlay) return;
-              const confirmBtn = document.getElementById('confirm_remove_button');
-              const cancelBtn  = document.getElementById('cancel_remove_button');
-              overlay.classList.add('show');
-
-              const onConfirm = () => {
-                  sessionViewerEditMode  = false;
-                  const removedBlock     = removeBlock(blockId, 'tab7');
-                  activeSessionLogBlockId = null;
-                  overlay.classList.remove('show');
-                  confirmBtn.removeEventListener('click', onConfirm);
-                  cancelBtn.removeEventListener('click', onCancel);
-                  import('./blockActionsHandler.js').then(({ blockActionsHandler }) => {
+              import('./blockActionsHandler.js').then(({ blockActionsHandler }) => {
+                  blockActionsHandler.showDeletePopup(blockId, e, () => {
+                      sessionViewerEditMode   = false;
+                      const removedBlock      = removeBlock(blockId, 'tab7');
+                      activeSessionLogBlockId = null;
                       blockActionsHandler.recordLastDeleted('tab7', removedBlock);
+                      renderSessionLog();
                   });
-                  renderSessionLog();
-              };
-              
-              const onCancel = () => {
-                  overlay.classList.remove('show');
-                  confirmBtn.removeEventListener('click', onConfirm);
-                  cancelBtn.removeEventListener('click', onCancel);
-              };
-
-              confirmBtn.addEventListener('click', onConfirm);
-              cancelBtn.addEventListener('click', onCancel);
+              });
           });
       }
 
@@ -1540,11 +1519,6 @@ const applyPendingBlockAnim = () => {
 
       document.querySelector('.session-log-list-column')
           ?.classList.toggle('session-log-list-collapsed', sessionListCollapsed);
-      const closeBtn = document.getElementById('session_list_toggle');
-      if (closeBtn) {
-          closeBtn.classList.toggle('hidden', sessionListCollapsed);
-          closeBtn.onclick = toggleSessionList;
-      }
 
   const addBtn = document.getElementById('add_block_button_7');
       if (addBtn) {
@@ -1637,6 +1611,8 @@ const applyPendingBlockAnim = () => {
       } else if (viewer) {
           viewer.innerHTML = '<p class="session-viewer-placeholder">No entries found</p>';
       }
+
+      initScrollMask('#results_section_7', '_results7MaskHandler', 100);
 
       updateTags();
       attachDynamicTooltips();
@@ -4215,6 +4191,9 @@ const applyPendingBlockAnim = () => {
     initScrollMask('.filter-section', '_filterMaskHandler', 100);
     initScrollMask('.saving-throws-and-skills-column-wrapper', '_skillsMaskHandler', 100);
     initScrollFades('.roll-results', '--dice-fade-top-opacity', '--dice-fade-bottom-opacity', '_diceFadeHandler', 100);
+    initScrollMask('#results_section_3', '_results3MaskHandler', 100);
+    initScrollMask('#results_section_6', '_results6MaskHandler', 100);
+    initScrollMask('#results_section_7', '_results7MaskHandler', 100);
     initScrollMask('#results_section_9', '_results9MaskHandler', 100);
 
     applyPendingBlockAnim();
@@ -4482,21 +4461,24 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
           const data = collectTab9FormData(blockEl, usesKey);
           if (!data) return;
           inlineEditState = null;
+          blockEl.classList.remove('inline-editing', 'expanded');
           saveBlock(tab, data.title, data.text, data.tags, data.uses, data.properties, data.blockType, blockId, block.timestamp);
           setPendingBlockAnim(blockId, blockEl.offsetHeight);
-          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
+          filterManager.applyFilters('9');
       };
 
       const doCancel = () => {
           inlineEditState = null;
+          blockEl.classList.remove('inline-editing', 'expanded');
           setPendingBlockAnim(blockId, blockEl.offsetHeight);
-          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
+          filterManager.applyFilters('9');
       };
 
-      wireEditControls(blockEl, {
-          saveSel: '.inline-edit-save', cancelSel: '.inline-edit-cancel',
-          onSave: doSave, onCancel: doCancel,
-      });
+      const saveBtn = blockEl.querySelector('.inline-edit-save');
+      const cancelBtn = blockEl.querySelector('.inline-edit-cancel');
+      console.log('SAVE BTN:', saveBtn);
+      console.log('CANCEL BTN:', cancelBtn);
+if (saveBtn) saveBtn.addEventListener('click', (e) => { e.stopPropagation(); console.log('SAVE CLICKED'); console.log('FORM DATA:', collectTab9FormData(blockEl, usesKey)); doSave(); });      if (cancelBtn) cancelBtn.addEventListener('click', (e) => { e.stopPropagation(); console.log('CANCEL CLICKED'); doCancel(); });
 
       focusAndCursorToEnd(blockEl.querySelector('.inline-edit-title'));
 
@@ -4558,6 +4540,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       };
 
       const doCancel = () => {
+          console.log('CANCEL FIRED');
           localStorage.removeItem(usesKey);
           blockEl.remove();
       };
@@ -4590,5 +4573,6 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
     startInventoryAdd,
     enterNotesEdit,
     startNotesAdd,
+    setSessionListCollapsed,
   };
 })();
