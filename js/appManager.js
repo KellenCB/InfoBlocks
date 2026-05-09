@@ -4505,6 +4505,9 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
 
     const startInlineAdd = () => {
       const tab = 'tab9';
+      const tabSuffix = tab.replace('tab', '');
+      const resultsSection = document.getElementById(`results_section_${tabSuffix}`);
+      if (!resultsSection || resultsSection.querySelector('.inline-editing')) return;
 
       const tabBTConfig = blockTypeConfig[tab];
       const blockTypeHTML = tabBTConfig
@@ -4539,13 +4542,11 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
               <div class="block-body"><span contenteditable="true" class="inline-edit-body"></span></div>
       `;
 
-      const tabSuffix = tab.replace('tab', '');
-      const resultsSection = document.getElementById(`results_section_${tabSuffix}`);
-      if (!resultsSection) return;
+      
       const pinnedZone = resultsSection.querySelector('.pinned-blocks-zone-wrapper');
       if (pinnedZone) { pinnedZone.after(blockEl); } else { resultsSection.prepend(blockEl); }
 
-      blockEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    resultsSection.scrollTo({ top: 0, behavior: 'smooth' });
 
       wireTab9FormHandlers(blockEl, usesKey);
 

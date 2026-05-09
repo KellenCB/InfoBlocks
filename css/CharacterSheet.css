@@ -77,10 +77,6 @@
 
 /* Section cards */
 .cs-card {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
     border-radius: 15px;
     padding: 15px;
     box-sizing: border-box;
@@ -1148,10 +1144,6 @@
 /* ── Currency tracker card ──────────────────────────────────────── */
 
 .cs-currency-card {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
     border-radius: 15px;
     padding: 15px;
     box-sizing: border-box;

@@ -19,18 +19,20 @@ body {
     overflow: hidden;
 }
 
-body:not(.landscape-mode) #char-sheet-panel .tab-content {
-    overflow-y: auto;
-}
-
 /* ── Frosted glass utility ────────────────────────────────────────── */
 
 .frosted-glass {
     background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
     box-shadow: var(--glass-shadow);
     border: var(--glass-border);
+    will-change: transform;
+}
+
+.glass-surface {
+    background: var(--glass-bg);
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
+    will-change: transform;
 }
 
 /* ── Scroll-fade mask utility ────────────────────────────────────── */
@@ -93,10 +95,6 @@ body:not(.landscape-mode) #char-sheet-panel .tab-content {
     flex-shrink: 0;
     position: relative;
     padding: 5px;
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
     border-radius: 25px;
     align-items: center;
 }
@@ -221,10 +219,6 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     align-items: center;
     gap: 0;
     padding: 5px;
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
     border-radius: 25px;
     max-width: 500px;
     flex: 1 1 500px;
@@ -251,15 +245,9 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
 
 /* ── Solo pill containers (single icon in pill bg) ───────────────── */
 .uch-pill-solo {
-    display: flex;
-    align-items: center;
-    padding: 5px;
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
-    border-radius: 25px;
     flex-shrink: 0;
+    padding: 5px;
+    border-radius: 50%;
 }
 
 .uch-pill-solo .uch-btn {
@@ -501,7 +489,6 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    overflow: hidden;
 }
 
 #main-column {
@@ -510,7 +497,6 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     flex: 1;
     min-width: 0;
     min-height: 0;
-    overflow: hidden;
 }
 
 #right-panel {
@@ -527,7 +513,6 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     flex: 1;
     min-height: 0;
     min-width: 0;
-    overflow: hidden;
 }
 
 #char-sheet-panel.active {
@@ -545,7 +530,6 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     min-height: 0;
     min-width: 0;
     box-sizing: border-box;
-    overflow: hidden;
 }
 
 .hidden {
@@ -638,9 +622,8 @@ body.app-ready #app-row {
     width: 100%;
     flex: 1;
     min-height: 0;
-    padding: 0px 10px;
+    padding: 0px 0px 0px 15px;
     gap: 15px;
-    overflow: hidden;
     transition: gap 0.3s ease;
 }
 
@@ -680,10 +663,6 @@ body.app-ready #app-row {
     flex-direction: column;
     width: 33%;
     min-width: 290px;
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
     border-radius: 15px;
     padding: 15px;
     box-sizing: border-box;
@@ -826,11 +805,7 @@ body.app-ready #app-row {
 
 /* ── Glass card wrapper (reusable for any tab) ─────────────────── */
 
-.results-glass-wrapper {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
+.results-wrapper {
     border-radius: 15px;
     padding: 15px;
     flex: 1;
@@ -841,7 +816,7 @@ body.app-ready #app-row {
     overflow: hidden;
 }
 
-.results-glass-wrapper > .results-section {
+.results-wrapper > .results-section {
     flex: 1;
     min-height: 0;
     height: 0;
@@ -875,8 +850,9 @@ body.app-ready #app-row {
 /* ==================================================================*/
 
 .block {
-    --block-bg: var(--gray-300);
+    --block-bg: var(--glass-bg);
     background-color: var(--block-bg);
+    border: var(--glass-border);
     border-radius: 10px;
     padding: 10px 15px;
     margin-bottom: 8px;
@@ -2404,10 +2380,6 @@ a:hover {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
     border-radius: 25px;
     padding: 16px 84px 16px 18px;
     box-sizing: border-box;
