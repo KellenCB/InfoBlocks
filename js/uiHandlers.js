@@ -211,6 +211,572 @@ document.addEventListener("input", (e) => {
 });
 
 /* ==================================================================*/
+/* ========================= HP BAR SECTION ========================*/
+/* ==================================================================*/
+
+function initHpSection(tabPrefix) {
+    const tabEl = document.getElementById(tabPrefix);
+    if (!tabEl) return;
+
+    const hpSection = tabEl.querySelector('.hp-section');
+    if (!hpSection) return;
+
+    const barArea    = hpSection.querySelector('.hp-bar-area');
+    const barTint    = barArea.querySelector('.hp-bar-tint');
+    const barFill    = barArea.querySelector('.hp-bar-fill');
+    const barHl      = barArea.querySelector('.hp-bar-hl');
+    const barTemp    = barArea.querySelector('.hp-bar-temp');
+    const barTempHl  = barArea.querySelector('.hp-bar-temp-hl');
+    const barGlow    = barArea.querySelector('.hp-bar-glow');
+    const barText    = barArea.querySelector('.hp-bar-text');
+    const maxEl      = hpSection.querySelector(`[data-storage-key="${tabPrefix}_maxhp"]`);
+    const inputEl    = hpSection.querySelector('.hp-input-field');
+    const actionBtns = hpSection.querySelectorAll('.hp-action-btn');
+
+    const hdTypeEl     = hpSection.querySelector(`[data-storage-key="${tabPrefix}_hit_die"]`);
+    const hdCurrentEl  = hpSection.querySelector(`[data-storage-key="${tabPrefix}_hit_die_current"]`);
+    const hdMaxEl      = hpSection.querySelector(`[data-storage-key="${tabPrefix}_hit_die_max"]`);
+    const hdQtyDisplay = hpSection.querySelector('.hd-qty-display');
+    const hdMinusBtn   = hpSection.querySelector('.hd-minus');
+    const hdPlusBtn    = hpSection.querySelector('.hd-plus');
+    const hdRollBtn    = hpSection.querySelector('.hd-roll-btn');
+    const hdRollDetail = hpSection.querySelector('.hd-roll-detail');
+
+
+    // ── State ────────────────────────────────────────────────────────
+    let currentHp = parseInt(localStorage.getItem(`${tabPrefix}_hp`)) || 0;
+    let maxHp     = parseInt(localStorage.getItem(`${tabPrefix}_maxhp`)) || 0;
+    let tempHp    = parseInt(localStorage.getItem(`${tabPrefix}_temp_hp`)) || 0;
+    let hdQty      = 1;
+
+    // ── Helpers ──────────────────────────────────────────────────────
+    const getConMod  = () => parseInt(localStorage.getItem(`${tabPrefix}_con_bonus`)) || 0;
+
+    const getHdSides = () => {
+        const raw = hdTypeEl?.textContent || localStorage.getItem(`${tabPrefix}_hit_die`) || 'd8';
+        const m = raw.match(/d(\d+)/i);
+        return m ? parseInt(m[1]) : 8;
+    };
+
+    const getHdCurrent = () => parseInt(hdCurrentEl?.textContent) || 0;
+
+const getBarColors = (pct) => {
+        if (pct > 50) return {
+            base: '#3b8a1e', bright: '#5ec430',
+            highlight: 'rgba(180,255,130,0.3)',
+            shadow: 'rgba(76,175,80,0.5)',
+            tint: 'rgba(76,175,80,0.08)',
+            edge: 'rgba(180,255,130,0.55)',
+            edgeDim: 'rgba(180,255,130,0.3)'
+        };
+        if (pct > 25) return {
+            base: '#b8760e', bright: '#e8a020',
+            highlight: 'rgba(255,220,140,0.3)',
+            shadow: 'rgba(244,162,97,0.5)',
+            tint: 'rgba(244,162,97,0.08)',
+            edge: 'rgba(255,220,140,0.55)',
+            edgeDim: 'rgba(255,220,140,0.3)'
+        };
+        return {
+            base: '#8b1a1a', bright: '#d43030',
+            highlight: 'rgba(255,160,140,0.3)',
+            shadow: 'rgba(255,80,80,0.5)',
+            tint: 'rgba(255,80,80,0.08)',
+            edge: 'rgba(255,160,140,0.55)',
+            edgeDim: 'rgba(255,160,140,0.3)'
+        };
+    };
+
+    // ── Bar rendering ────────────────────────────────────────────────
+const renderBar = () => {
+        const pct    = maxHp > 0 ? Math.round((currentHp / maxHp) * 100) : 0;
+        const c      = getBarColors(pct);
+        const pool   = Math.max(maxHp, currentHp + tempHp);
+        const greenW = pool > 0 ? (currentHp / pool) * 100 : 0;
+        const tempW  = tempHp > 0 && pool > 0 ? (tempHp / pool) * 100 : 0;
+        const atEnd  = Math.round(greenW + tempW) >= 100;
+        const isFull = tempHp === 0 && currentHp >= maxHp;
+
+        barArea.classList.toggle('hp-full', isFull);
+        barArea.classList.toggle('hp-temp-end', atEnd && tempHp > 0);
+
+        // Tint
+        barTint.style.background = c.tint;
+
+        // Main fill
+        barFill.style.width      = greenW + '%';
+        barFill.style.background = `linear-gradient(90deg, ${c.bright} 0%, ${c.base} 60%)`;
+
+        // Top highlight
+        barHl.style.width      = greenW + '%';
+        barHl.style.background = `linear-gradient(180deg, ${c.highlight} 0%, transparent 50%, rgba(0,0,0,0.15) 100%)`;
+
+        // Outer glow
+        barGlow.style.width     = greenW + '%';
+        barGlow.style.boxShadow = greenW > 0
+            ? `0 0 12px 2px ${c.shadow}, inset 0 1px 0 ${c.highlight}`
+            : 'none';
+
+        // Temp HP
+        if (tempHp > 0) {
+            barTemp.style.opacity    = '0.35';
+            barTemp.style.left       = greenW + '%';
+            barTemp.style.width      = tempW + '%';
+            barTemp.style.background = `linear-gradient(90deg, ${c.bright} 0%, ${c.base} 70%)`;
+            barTemp.style.boxShadow  = `inset 2px 0 4px ${c.edge}, inset -2px 0 4px ${c.edgeDim}`;
+
+            barTempHl.style.opacity    = '0.35';
+            barTempHl.style.left       = greenW + '%';
+            barTempHl.style.width      = tempW + '%';
+            barTempHl.style.background = `linear-gradient(180deg, ${c.highlight} 0%, transparent 50%, rgba(0,0,0,0.15) 100%)`;
+
+            barText.innerHTML = `${currentHp}&nbsp;<span class="hp-bar-temp-text">+ ${tempHp}</span>`;
+        } else {
+            barTemp.style.opacity   = '0';
+            barTemp.style.width     = '0%';
+            barTemp.style.left      = greenW + '%';
+            barTemp.style.boxShadow = 'none';
+            barTempHl.style.opacity = '0';
+            barTempHl.style.width   = '0%';
+            barTempHl.style.left    = greenW + '%';
+
+            barText.textContent = `${currentHp}`;
+        }
+    };
+    
+    
+
+    const saveHp = () => {
+        localStorage.setItem(`${tabPrefix}_hp`, currentHp);
+        localStorage.setItem(`${tabPrefix}_temp_hp`, tempHp);
+    };
+
+    // ── Count animation helper ────────────────────────────────────
+    function hpCountTo(from, to) {
+        if (from === to) { barText.textContent = to; return; }
+        const diff = Math.abs(to - from);
+        const duration = Math.min(600, Math.max(200, diff * 15));
+        const start = performance.now();
+        const delta = to - from;
+        function tick(now) {
+            const t = Math.min((now - start) / duration, 1);
+            const eased = t < 0.5 ? 2 * t * t : (1 - Math.pow(-2 * t + 2, 2) / 2);
+            barText.textContent = Math.round(from + delta * eased);
+            if (t < 1) requestAnimationFrame(tick);
+            else barText.textContent = to;
+        }
+        requestAnimationFrame(tick);
+    }
+
+    // ── Death saves ──────────────────────────────────────────────────
+    const dsPanel          = hpSection.querySelector('.ds-panel');
+    const dsSuccessCircles = hpSection.querySelectorAll('.ds-success');
+    const dsFailCircles    = hpSection.querySelectorAll('.ds-fail');
+    const dsRollBtn        = hpSection.querySelector('.ds-roll-btn');
+
+    let dsSuccesses = parseInt(localStorage.getItem(`${tabPrefix}_ds_successes`)) || 0;
+    let dsFailures  = parseInt(localStorage.getItem(`${tabPrefix}_ds_failures`))  || 0;
+
+    const saveDs = () => {
+        localStorage.setItem(`${tabPrefix}_ds_successes`, dsSuccesses);
+        localStorage.setItem(`${tabPrefix}_ds_failures`, dsFailures);
+    };
+
+    const renderDs = () => {
+        const active = currentHp === 0;
+        dsPanel.classList.toggle('ds-active', active);
+
+        dsSuccessCircles.forEach((c, i) => c.classList.toggle('filled', i < dsSuccesses));
+        dsFailCircles.forEach((c, i) => c.classList.toggle('filled', i < dsFailures));
+
+        if (dsFailures >= 3) {
+            barText.innerHTML  = '<span class="hp-bar-dead">Dead</span>';
+            dsRollBtn.disabled = true;
+        } else if (dsSuccesses >= 3) {
+            barText.innerHTML  = '<span class="hp-bar-stabilized">Stabilized</span>';
+            dsRollBtn.disabled = true;
+        } else {
+            if (active) renderBar();
+            dsRollBtn.disabled = !active;
+        }
+    };
+
+    const resetDs = () => {
+        dsSuccesses = 0;
+        dsFailures  = 0;
+        saveDs();
+    };
+
+    const addDsSuccess = (count = 1) => {
+        dsSuccesses = Math.min(3, dsSuccesses + count);
+        saveDs();
+        renderDs();
+    };
+
+    const addDsFailure = (count = 1) => {
+        dsFailures = Math.min(3, dsFailures + count);
+        saveDs();
+        renderDs();
+    };
+
+    // Manual circle toggling
+    dsSuccessCircles.forEach((circle, i) => {
+        circle.addEventListener('click', () => {
+            if (dsFailures >= 3) return;
+            dsSuccesses = circle.classList.contains('filled') ? i : i + 1;
+            saveDs();
+            renderDs();
+        });
+    });
+
+    dsFailCircles.forEach((circle, i) => {
+        circle.addEventListener('click', () => {
+            if (dsSuccesses >= 3) return;
+            dsFailures = circle.classList.contains('filled') ? i : i + 1;
+            saveDs();
+            renderDs();
+        });
+    });
+
+    // Roll button — uses the app's dice roller
+    dsRollBtn?.addEventListener('click', async () => {
+        if (dsFailures >= 3 || dsSuccesses >= 3) return;
+
+        try {
+            const { rollDice } = await import('./diceRoller.js');
+            const result = await rollDice([{ qty: 1, sides: 20 }], 0, 'Death Save');
+            if (!result) return;
+
+            const roll = result.rolls[0];
+
+            if (roll === 20) {
+                // Nat 20: regain 1 HP and exit death saves
+                resetDs();
+                currentHp = 1;
+                saveHp();
+                renderBar();
+                flashBar();
+                renderDs();
+            } else if (roll === 1) {
+                // Nat 1: two failures
+                addDsFailure(2);
+            } else if (roll >= 10) {
+                addDsSuccess();
+            } else {
+                addDsFailure();
+            }
+        } catch (err) {
+            console.error('Death save roll failed:', err);
+        }
+    });
+
+    // ── Damage / Heal / Temp ─────────────────────────────────────────
+    const applyAction = (mode) => {
+        const v = parseInt(inputEl.value) || 0;
+        
+        const oldHp = currentHp;
+        const oldTemp = tempHp;
+
+        if (mode === 'dmg') {
+            let dmg = v;
+
+            // Temp HP absorbs first
+            if (tempHp > 0) {
+                const absorbed = Math.min(tempHp, dmg);
+                tempHp -= absorbed;
+                dmg    -= absorbed;
+            }
+
+            const wasAboveZero = currentHp > 0;
+            const overflow     = Math.max(0, dmg - currentHp);
+            currentHp          = Math.max(0, currentHp - dmg);
+
+            if (currentHp === 0) {
+                if (wasAboveZero) {
+                    if (overflow >= maxHp) {
+                        // Massive damage → instant death
+                        resetDs();
+                        dsFailures = 3;
+                        saveDs();
+                    } else {
+                        // Entered death saves — reset trackers
+                        resetDs();
+                    }
+                } else {
+                    // Already at 0 and took damage → auto-fail
+                    addDsFailure();
+                }
+            }
+
+        } else if (mode === 'heal') {
+            const wasAtZero = currentHp === 0;
+            currentHp = Math.min(maxHp, currentHp + v);
+            if (wasAtZero && currentHp > 0) {
+                resetDs();
+            }
+
+        } else if (mode === 'temp') {
+            if (v > tempHp) tempHp = v;
+        }
+
+        inputEl.value = '';
+        saveHp();
+        renderBar();
+        renderDs();
+        flashBar();
+
+        const netChange = (currentHp + tempHp) - (oldHp + oldTemp);
+        if (netChange !== 0) {
+            showHpDelta(netChange);
+            requestAnimationFrame(() => floatHpDelta());
+        }
+    };
+
+    // ── Hit dice rendering ───────────────────────────────────────────
+    const renderHd = () => {
+        const hdCur    = getHdCurrent();
+        const conMod   = getConMod();
+        const sides    = getHdSides();
+        const totalCon = conMod * hdQty;
+        const sign     = totalCon >= 0 ? '+ ' + totalCon : '− ' + Math.abs(totalCon);
+
+        if (hdRollDetail) hdRollDetail.textContent = `${hdQty}d${sides} ${sign}`;
+        hdRollBtn?.classList.toggle('hd-disabled', hdCur <= 0);
+
+        if (hdQty > hdCur && hdCur > 0) {
+            hdQty = hdCur;
+            hdQtyDisplay.textContent = hdQty;
+        }
+    };
+
+    // ── Event wiring ─────────────────────────────────────────────────
+
+    // Action buttons — mousedown prevents blur so single-click works
+    actionBtns.forEach(btn => {
+        btn.addEventListener('pointerdown', e => e.preventDefault());
+        btn.addEventListener('click', () => applyAction(btn.dataset.action));
+    });
+
+    // Max HP edit → re-render bar (save handled by generic input handler)
+    maxEl?.addEventListener('input', () => {
+        const newMax = Math.max(0, parseInt(maxEl.textContent) || 0);
+        maxHp = newMax;
+        if (currentHp > maxHp) currentHp = maxHp;
+        saveHp();
+        renderBar();
+    });
+
+    // Hit die quantity buttons
+    hdMinusBtn?.addEventListener('click', () => {
+        if (hdQty > 1) { hdQty--; hdQtyDisplay.textContent = hdQty; renderHd(); }
+    });
+
+    hdPlusBtn?.addEventListener('click', () => {
+        if (hdQty < getHdCurrent()) { hdQty++; hdQtyDisplay.textContent = hdQty; renderHd(); }
+    });
+
+    // Hit die roll
+    hdRollBtn?.addEventListener('click', async () => {
+        let hdCur = getHdCurrent();
+        if (hdCur <= 0) return;
+
+        const count    = Math.min(hdQty, hdCur);
+        const sides    = getHdSides();
+        const conMod   = getConMod();
+        const totalCon = conMod * count;
+
+        try {
+            const { rollDice } = await import('./diceRoller.js');
+            const result = await rollDice([{ qty: count, sides }], totalCon, 'Hit Dice');
+            if (!result) return;
+
+            const total = Math.max(count, result.total + totalCon);
+
+            hdCur -= count;
+            if (hdCurrentEl) {
+                hdCurrentEl.textContent = hdCur;
+                localStorage.setItem(`${tabPrefix}_hit_die_current`, String(hdCur));
+            }
+
+            const wasAtZero = currentHp === 0;
+            currentHp = Math.min(maxHp, currentHp + total);
+            if (wasAtZero && currentHp > 0) resetDs();
+            saveHp();
+            renderDs();
+
+            hdQty = 1;
+            hdQtyDisplay.textContent = hdQty;
+            renderBar();
+            flashBar();
+            renderHd();
+
+            const originalText = hdRollBtn.innerHTML;
+            hdRollBtn.innerHTML = `<span class="hd-roll-fadeout">${originalText}</span>`;
+            setTimeout(() => {
+                hdRollBtn.innerHTML = `<span class="hd-roll-result">+${total} HP</span>`;
+                setTimeout(() => {
+                    hdRollBtn.innerHTML = `<span class="hd-roll-fadein">${originalText}</span>`;
+                    setTimeout(() => { hdRollBtn.innerHTML = originalText; }, 300);
+                }, 3000);
+            }, 300);
+        } catch (err) {
+            console.error('Hit die roll failed:', err);
+        }
+    });
+
+    // Manual edits to hit die fields → re-render
+    hdCurrentEl?.addEventListener('input', () => renderHd());
+    hdTypeEl?.addEventListener('input', () => renderHd());
+
+// ── HP bar drag to heal/damage ────────────────────────────────
+    const HP_DRAG_THRESHOLD = 5;
+    let hpDragState = null;
+
+    const hpDragDelta = document.createElement('div');
+    hpDragDelta.className = 'hp-drag-delta';
+    barArea.appendChild(hpDragDelta);
+
+    function showHpDelta(d) {
+        hpDragDelta.style.animation = 'none';
+        hpDragDelta.offsetHeight;
+        hpDragDelta.style.animation = '';
+        if (d === 0) { hpDragDelta.className = 'hp-drag-delta'; return; }
+        hpDragDelta.textContent = (d > 0 ? '+' : '') + d;
+        hpDragDelta.className = 'hp-drag-delta hp-drag-live ' + (d > 0 ? 'hp-drag-pos' : 'hp-drag-neg');
+    }
+
+    function floatHpDelta() {
+        if (!hpDragDelta.classList.contains('hp-drag-live')) return;
+        const color = hpDragDelta.classList.contains('hp-drag-pos') ? 'hp-drag-pos' : 'hp-drag-neg';
+        hpDragDelta.style.animation = 'none';
+        hpDragDelta.offsetHeight;
+        hpDragDelta.style.animation = '';
+        hpDragDelta.className = 'hp-drag-delta hp-drag-floating ' + color;
+    }
+
+    barArea.addEventListener('pointerdown', (e) => {
+        hpDragState = {
+            startX: e.clientX,
+            startHp: currentHp,
+            startTemp: tempHp,
+            targetHp: currentHp,
+            targetTemp: tempHp,
+            moved: false
+        };
+        barArea.setPointerCapture(e.pointerId);
+    });
+
+    barArea.addEventListener('pointermove', (e) => {
+        if (!hpDragState) return;
+        if (!hpDragState.moved && Math.abs(e.clientX - hpDragState.startX) < HP_DRAG_THRESHOLD) return;
+        hpDragState.moved = true;
+
+        const barWidth = barArea.offsetWidth;
+        const hpPerPixel = maxHp > 0 ? maxHp / barWidth : 0.5;
+        const diff = Math.round((e.clientX - hpDragState.startX) * hpPerPixel);
+
+        if (diff > 0) {
+            hpDragState.targetTemp = hpDragState.startTemp;
+            hpDragState.targetHp = Math.min(maxHp, hpDragState.startHp + diff);
+        } else if (diff < 0) {
+            let dmg = Math.abs(diff);
+            hpDragState.targetTemp = hpDragState.startTemp;
+            hpDragState.targetHp = hpDragState.startHp;
+            if (hpDragState.targetTemp > 0) {
+                const absorbed = Math.min(hpDragState.targetTemp, dmg);
+                hpDragState.targetTemp -= absorbed;
+                dmg -= absorbed;
+            }
+            hpDragState.targetHp = Math.max(0, hpDragState.targetHp - dmg);
+        } else {
+            hpDragState.targetHp = hpDragState.startHp;
+            hpDragState.targetTemp = hpDragState.startTemp;
+        }
+
+        const netChange = (hpDragState.targetHp + hpDragState.targetTemp) - (hpDragState.startHp + hpDragState.startTemp);
+        showHpDelta(netChange);
+    });
+
+    barArea.addEventListener('pointerup', () => {
+        if (!hpDragState) return;
+        const wasMoved = hpDragState.moved;
+        const startHp = hpDragState.startHp;
+        const startTemp = hpDragState.startTemp;
+        const oldDisplayHp = currentHp;
+        currentHp = hpDragState.targetHp;
+        tempHp = hpDragState.targetTemp;
+        hpDragState = null;
+
+        if (!wasMoved) return;
+
+        if (currentHp === 0 && startHp > 0) {
+            resetDs();
+        } else if (currentHp > 0 && startHp === 0) {
+            resetDs();
+        }
+
+        saveHp();
+        renderBar();
+        hpCountTo(oldDisplayHp, currentHp);
+        renderDs();
+
+        const netChange = (currentHp + tempHp) - (startHp + startTemp);
+        if (netChange !== 0) {
+            requestAnimationFrame(() => floatHpDelta());
+        }
+    });
+
+    barArea.addEventListener('pointercancel', () => {
+        if (!hpDragState) return;
+        hpDragState = null;
+        hpDragDelta.style.animation = 'none';
+        hpDragDelta.className = 'hp-drag-delta';
+    });
+
+    // ── Long rest listener ───────────────────────────────────────────
+    document.addEventListener('longRest', () => {
+        // Refill HP to max
+        currentHp = maxHp;
+
+        // Remove temp HP
+        tempHp = 0;
+
+        // Recover half total hit dice (minimum 1) — 5e rules
+        const hdMax     = parseInt(hdMaxEl?.textContent) || 0;
+        const hdCur     = getHdCurrent();
+        const recovered = Math.max(1, Math.floor(hdMax / 2));
+        const newHdCur  = Math.min(hdMax, hdCur + recovered);
+        if (hdCurrentEl) {
+            hdCurrentEl.textContent = newHdCur;
+            localStorage.setItem(`${tabPrefix}_hit_die_current`, String(newHdCur));
+        }
+
+        // Reset death saves
+        resetDs();
+
+        saveHp();
+        renderBar();
+        renderHd();
+        renderDs();
+        flashBar();
+    });
+
+    // ── Initial render ───────────────────────────────────────────────
+    renderBar();
+    renderHd();
+    renderDs();
+}
+
+// Initialise after all editable fields have loaded from localStorage
+window.addEventListener("load", () => {
+    setTimeout(() => {
+        initHpSection('tab4');
+        initHpSection('tab8');
+        console.log('✅ HP bar sections initialised.');
+    }, 0);
+});
+
+/* ==================================================================*/
 /* ========================= CIRCLE TOGGLE ==========================*/
 /* ==================================================================*/
 
@@ -637,6 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let armTimer = null;
+    let dismissTimer = null;
 
     const doRefill = () => {
         const suitTotal = getSuitTotal();
@@ -656,6 +1223,8 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let n = 1; n <= 9; n++) renderLevel(n, inEdit);
         if (inEdit) renderGhostChips();
 
+        document.dispatchEvent(new CustomEvent('longRest'));
+
         console.log('✅ Long rest — all slots refilled.');
     };
 
@@ -666,7 +1235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         longRestBtn.classList.add('filling');
         armTimer = setTimeout(() => {
             longRestBtn.classList.add('armed');
-        }, 500);
+        }, 750);
     };
 
     const cancelArmTimer = () => {
@@ -676,16 +1245,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const dismissLongRest = () => {
         cancelArmTimer();
-        longRestBtn.classList.remove('arming');
+        longRestBtn.classList.add('dismissing');
         clearTimeout(iconSwapTimer);
-        longRestBtn.classList.remove('swapping');
-        const wrap = longRestBtn.querySelector('.lr-icon-wrap');
-        if (wrap) wrap.innerHTML = MOON_SVG;
+        swapIcon(MOON_SVG);
+
         const popup = document.getElementById('long-rest-popup');
-        if (popup) {
-            popup.classList.remove('visible');
-            setTimeout(() => popup.remove(), 200);
-        }
+        if (popup) popup.classList.remove('visible');
+
+        clearTimeout(dismissTimer);
+        dismissTimer = setTimeout(() => {
+            dismissTimer = null;
+            longRestBtn.classList.remove('arming', 'dismissing', 'filling');
+            const p = document.getElementById('long-rest-popup');
+            if (p) p.remove();
+        }, 400);
+
         document.removeEventListener('mousedown', onLongRestOutside);
     };
 
@@ -707,12 +1281,12 @@ document.addEventListener('DOMContentLoaded', () => {
         popup.id = 'long-rest-popup';
         popup.className = 'long-rest-popup';
         popup.innerHTML = `<span class="long-rest-popup-message">Long rest — refill all<br>suit uses and spell slots?</span>`;
-        document.body.appendChild(popup);
+        document.getElementById('header-row').appendChild(popup);
 
         const moonRect = longRestBtn.getBoundingClientRect();
         popup.style.top    = `${moonRect.top - 5}px`;
         popup.style.height = `${moonRect.height + 10}px`;
-        popup.style.right  = `${window.innerWidth - moonRect.right - 6}px`;
+        popup.style.left  = `${moonRect.left - 6}px`;
 
         requestAnimationFrame(() => popup.classList.add('visible'));
         setTimeout(() => document.addEventListener('mousedown', onLongRestOutside), 0);
@@ -720,17 +1294,31 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     longRestBtn?.addEventListener('click', () => {
-        if (!longRestBtn.classList.contains('arming')) {
-            enterLongRestArming();
-        } else if (longRestBtn.classList.contains('armed')) {
+        if (longRestBtn.classList.contains('armed')) {
             doRefill();
             dismissLongRest();
         }
     });
 
     longRestBtn?.addEventListener('mouseenter', () => {
-        if (!longRestBtn.classList.contains('arming')) return;
-        startArmTimer();
+        if (dismissTimer) {
+            clearTimeout(dismissTimer);
+            dismissTimer = null;
+            longRestBtn.classList.remove('dismissing', 'filling');
+            const popup = document.getElementById('long-rest-popup');
+            if (popup) {
+                requestAnimationFrame(() => popup.classList.add('visible'));
+            }
+            swapIcon(SUN_SVG);
+            startArmTimer();
+            setTimeout(() => document.addEventListener('mousedown', onLongRestOutside), 0);
+            return;
+        }
+        if (!longRestBtn.classList.contains('arming')) {
+            enterLongRestArming();
+        } else {
+            startArmTimer();
+        }
     });
 
     longRestBtn?.addEventListener('mouseleave', () => {
@@ -766,7 +1354,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             );
 
-            data.pageTitle     = document.querySelector('.title-section h1')?.textContent.trim() || 'InformationBlocks';
             data.resultsTitles = Object.fromEntries(
                 [...document.querySelectorAll("[id^='results_title_']")]
                     .map(el => [el.id, el.textContent.trim()])
@@ -781,8 +1368,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }
 
-            const pageTitle = data.pageTitle;
-            let filename = prompt('Enter a name for your file:', `InfoBlocks_${pageTitle}`);
+            const charName = localStorage.getItem('tab4_character_name') || 'InfoBlocks';
+            let filename = prompt('Enter a name for your file:', charName);
             if (!filename) return;
             if (!filename.endsWith('.json')) filename += '.json';
 
@@ -821,9 +1408,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const el = document.getElementById(id);
                                 if (el) el.textContent = text;
                             });
-                        } else if (key === 'pageTitle') {
-                            const el = document.querySelector('.title-section h1');
-                            if (el) el.textContent = value;
                         }
                         localStorage.setItem(key, typeof value === 'object' ? JSON.stringify(value) : value);
                     });
@@ -841,23 +1425,7 @@ document.addEventListener('DOMContentLoaded', () => {
         input.click();
     });
 
-    /* ── Page Title ────────────────────────────────────────────────── */
-
-    const pageTitle = document.getElementById('page_title');
-    if (!pageTitle) { console.error('❌ Page title element not found.'); return; }
-
-    pageTitle.textContent = localStorage.getItem('pageTitle') || '';
-
-    pageTitle.addEventListener('blur', () => {
-        const val = pageTitle.textContent.trim();
-        val ? localStorage.setItem('pageTitle', val) : localStorage.removeItem('pageTitle');
-    });
-
-    pageTitle.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); pageTitle.blur(); }
-    });
-
-    console.log('✅ Page title initialized.');
+    console.log('✅ Upload/Download handlers initialized.');
 });
 
 // ── Forgiving click targets for small circles ──
@@ -884,4 +1452,455 @@ document.addEventListener('click', (e) => {
     if (closest && closestDist < 20) {
         closest.click();
     }
+});
+
+/* ==================================================================*/
+/* =================== HEADER CARD TOGGLE ==========================*/
+/* ==================================================================*/
+
+function initHeaderCardToggle(tabPrefix) {
+    const tabEl = document.getElementById(tabPrefix);
+    if (!tabEl) return;
+
+    const card = tabEl.querySelector('.cs-header-card');
+    if (!card) return;
+
+    const details = card.querySelector('.cs-header-details');
+    const nameRow = card.querySelector('.cs-header-name-row');
+    if (!details || !nameRow) return;
+
+    const storageKey = `${tabPrefix}_header_condensed`;
+
+    // Restore saved state (default: expanded)
+    if (localStorage.getItem(storageKey) === 'true') {
+        card.classList.add('cs-header-condensed');
+    }
+
+    card.addEventListener('click', (e) => {
+        // Don't toggle if clicking on...
+        if (e.target.closest('.character-name')) return;
+        if (e.target.closest('.descriptor-box') && nameRow.contains(e.target)) return;
+        if (e.target.closest('.editable')) return;
+
+        const isCondensed = card.classList.contains('cs-header-condensed');
+        const oldHeight = card.offsetHeight;
+        const fadeEls = [...card.children].filter(el => !el.classList.contains('cs-header-name-row'));
+
+        if (!isCondensed) {
+            // ── Collapsing ──────────────────────────────────────────
+            // Measure target height without actually hiding content
+            card.classList.add('cs-header-condensed');
+            const newHeight = card.offsetHeight;
+            card.classList.remove('cs-header-condensed');
+
+            // Lock to old height
+            card.style.height = oldHeight + 'px';
+            card.style.overflow = 'hidden';
+            card.style.transition = 'none';
+
+            fadeEls.forEach(el => {
+                el.style.opacity = '1';
+                el.style.transition = 'none';
+            });
+
+            void card.offsetHeight;
+
+            // Animate height down + fade out simultaneously
+            card.style.transition = 'height 0.5s ease';
+            card.style.height = newHeight + 'px';
+
+            fadeEls.forEach(el => {
+                el.style.transition = 'opacity 0.4s ease';
+                el.style.opacity = '0';
+            });
+
+            const cleanup = () => {
+                card.classList.add('cs-header-condensed');
+                card.style.height = '';
+                card.style.overflow = '';
+                card.style.transition = '';
+                fadeEls.forEach(el => {
+                    el.style.opacity = '';
+                    el.style.transition = '';
+                });
+            };
+            card.addEventListener('transitionend', (ev) => {
+                if (ev.target === card && ev.propertyName === 'height') cleanup();
+            }, { once: true });
+            setTimeout(cleanup, 600);
+
+            localStorage.setItem(storageKey, 'true');
+
+        } else {
+            // ── Expanding ───────────────────────────────────────────
+            card.classList.remove('cs-header-condensed');
+
+            fadeEls.forEach(el => {
+                el.style.opacity = '0';
+                el.style.transition = 'none';
+            });
+
+            const newHeight = card.offsetHeight;
+
+            card.style.height = oldHeight + 'px';
+            card.style.overflow = 'hidden';
+            card.style.transition = 'none';
+
+            void card.offsetHeight;
+
+            // Animate height up + fade in simultaneously
+            card.style.transition = 'height 0.5s ease';
+            card.style.height = newHeight + 'px';
+
+            fadeEls.forEach(el => {
+                el.style.transition = 'opacity 0.4s ease 0.1s';
+                el.style.opacity = '1';
+            });
+
+            const cleanup = () => {
+                card.style.height = '';
+                card.style.overflow = '';
+                card.style.transition = '';
+                fadeEls.forEach(el => {
+                    el.style.opacity = '';
+                    el.style.transition = '';
+                });
+            };
+            card.addEventListener('transitionend', (ev) => {
+                if (ev.target === card && ev.propertyName === 'height') cleanup();
+            }, { once: true });
+            setTimeout(cleanup, 600);
+
+            localStorage.setItem(storageKey, 'false');
+        }
+    });
+}
+
+// Initialise header card toggle for both characters
+document.addEventListener('DOMContentLoaded', () => {
+    initHeaderCardToggle('tab4');
+    initHeaderCardToggle('tab8');
+});
+
+/* ==================================================================*/
+/* ==================== HP CARD TOGGLE =============================*/
+/* ==================================================================*/
+
+function initHpCardToggle(tabPrefix) {
+    const tabEl = document.getElementById(tabPrefix);
+    if (!tabEl) return;
+
+    const card = tabEl.querySelector('.cs-hp-card');
+    if (!card) return;
+
+    const hpSection = card.querySelector('.hp-section');
+    if (!hpSection) return;
+
+    const TOGGLE_ZONE_HEIGHT = 35;
+    const storageKey = `${tabPrefix}_hp_condensed`;
+
+    // Restore saved state (default: expanded)
+    if (localStorage.getItem(storageKey) === 'true') {
+        card.classList.add('cs-hp-condensed');
+    }
+
+    card.addEventListener('click', (e) => {
+        // Only toggle if clicking in the top 35px of the card
+        const cardRect = card.getBoundingClientRect();
+        if (e.clientY - cardRect.top > TOGGLE_ZONE_HEIGHT) return;
+
+        // Don't toggle if clicking on editable fields
+        if (e.target.closest('.editable')) return;
+
+        const isCondensed = card.classList.contains('cs-hp-condensed');
+        const oldHeight = card.offsetHeight;
+        const fadeEls = [...hpSection.children].filter(el =>
+            !el.classList.contains('hp-section-header') && !el.classList.contains('hp-bar-area')
+        );
+
+        if (!isCondensed) {
+            // ── Collapsing ──────────────────────────────────────────
+            // Measure target height without actually hiding content
+            card.classList.add('cs-hp-condensed');
+            const newHeight = card.offsetHeight;
+            card.classList.remove('cs-hp-condensed');
+
+            // Lock to old height
+            card.style.height = oldHeight + 'px';
+            card.style.overflow = 'hidden';
+            card.style.transition = 'none';
+
+            fadeEls.forEach(el => {
+                el.style.opacity = '1';
+                el.style.transition = 'none';
+            });
+
+            void card.offsetHeight;
+
+            // Animate height down + fade out simultaneously
+            card.style.transition = 'height 0.5s ease';
+            card.style.height = newHeight + 'px';
+
+            fadeEls.forEach(el => {
+                el.style.transition = 'opacity 0.4s ease';
+                el.style.opacity = '0';
+            });
+
+            const cleanup = () => {
+                card.classList.add('cs-hp-condensed');
+                card.style.height = '';
+                card.style.overflow = '';
+                card.style.transition = '';
+                fadeEls.forEach(el => {
+                    el.style.opacity = '';
+                    el.style.transition = '';
+                });
+            };
+            card.addEventListener('transitionend', (ev) => {
+                if (ev.target === card && ev.propertyName === 'height') cleanup();
+            }, { once: true });
+            setTimeout(cleanup, 600);
+
+            localStorage.setItem(storageKey, 'true');
+
+        } else {
+            // ── Expanding ───────────────────────────────────────────
+            card.classList.remove('cs-hp-condensed');
+
+            fadeEls.forEach(el => {
+                el.style.opacity = '0';
+                el.style.transition = 'none';
+            });
+
+            const newHeight = card.offsetHeight;
+
+            card.style.height = oldHeight + 'px';
+            card.style.overflow = 'hidden';
+            card.style.transition = 'none';
+
+            void card.offsetHeight;
+
+            // Animate height up + fade in simultaneously
+            card.style.transition = 'height 0.5s ease';
+            card.style.height = newHeight + 'px';
+
+            fadeEls.forEach(el => {
+                el.style.transition = 'opacity 0.4s ease 0.1s';
+                el.style.opacity = '1';
+            });
+
+            const cleanup = () => {
+                card.style.height = '';
+                card.style.overflow = '';
+                card.style.transition = '';
+                fadeEls.forEach(el => {
+                    el.style.opacity = '';
+                    el.style.transition = '';
+                });
+            };
+            card.addEventListener('transitionend', (ev) => {
+                if (ev.target === card && ev.propertyName === 'height') cleanup();
+            }, { once: true });
+            setTimeout(cleanup, 600);
+
+            localStorage.setItem(storageKey, 'false');
+        }
+    });
+}
+
+// Initialise HP card toggle for both characters
+document.addEventListener('DOMContentLoaded', () => {
+    initHpCardToggle('tab4');
+    initHpCardToggle('tab8');
+});
+
+/* ==================================================================*/
+/* ====================== CURRENCY TRACKER =========================*/
+/* ==================================================================*/
+
+function initCurrencyTracker(tabPrefix) {
+    const tabEl = document.getElementById(tabPrefix);
+    if (!tabEl) return;
+
+    const card = tabEl.querySelector('.cs-currency-card');
+    if (!card) return;
+
+    const DRAG_THRESHOLD = 5;
+    const STORAGE_KEYS = {
+        gold:   `${tabPrefix}_currency_gold`,
+        silver: `${tabPrefix}_currency_silver`,
+        copper: `${tabPrefix}_currency_copper`,
+    };
+
+    // ── Migrate old inventory pouch values (one-time) ──────────────
+    if (!localStorage.getItem(`${tabPrefix}_currency_migrated`)) {
+        const oldMap = { gold: 'permanentItem_perm1', silver: 'permanentItem_perm2', copper: 'permanentItem_perm3' };
+        for (const [currency, oldKey] of Object.entries(oldMap)) {
+            const oldVal = localStorage.getItem(oldKey);
+            if (oldVal !== null && localStorage.getItem(STORAGE_KEYS[currency]) === null) {
+                const parsed = parseInt(oldVal, 10);
+                localStorage.setItem(STORAGE_KEYS[currency], String(isNaN(parsed) ? 0 : parsed));
+            }
+        }
+        localStorage.setItem(`${tabPrefix}_currency_migrated`, 'true');
+    }
+
+    const pills = card.querySelectorAll('.coin-pill');
+
+    function getVal(currency) {
+        return parseInt(localStorage.getItem(STORAGE_KEYS[currency]), 10) || 0;
+    }
+
+    function setVal(currency, v) {
+        v = Math.max(0, v);
+        localStorage.setItem(STORAGE_KEYS[currency], String(v));
+        const pill = card.querySelector(`.coin-pill[data-currency="${currency}"]`);
+        pill.querySelector('.coin-pill-num').textContent = v;
+    }
+
+    function coinCountTo(el, from, to) {
+        if (from === to) { el.textContent = to; return; }
+        const diff = Math.abs(to - from);
+        const duration = Math.min(600, Math.max(200, diff * 15));
+        const start = performance.now();
+        const delta = to - from;
+        function tick(now) {
+            const t = Math.min((now - start) / duration, 1);
+            const eased = t < 0.5 ? 2 * t * t : (1 - Math.pow(-2 * t + 2, 2) / 2);
+            el.textContent = Math.round(from + delta * eased);
+            if (t < 1) requestAnimationFrame(tick);
+            else el.textContent = to;
+        }
+        requestAnimationFrame(tick);
+    }
+
+    function showDeltaLive(pill, d) {
+        const el = pill.querySelector('.coin-delta-popup');
+        el.style.animation = 'none';
+        el.offsetHeight;
+        el.style.animation = '';
+        if (d === 0) { el.className = 'coin-delta-popup'; return; }
+        el.textContent = (d > 0 ? '+' : '') + d;
+        el.className = 'coin-delta-popup coin-delta-live ' + (d > 0 ? 'coin-delta-pos' : 'coin-delta-neg');
+    }
+
+    function floatAway(pill) {
+        const el = pill.querySelector('.coin-delta-popup');
+        if (!el.classList.contains('coin-delta-live')) return;
+        const color = el.classList.contains('coin-delta-pos') ? 'coin-delta-pos' : 'coin-delta-neg';
+        el.style.animation = 'none';
+        el.offsetHeight;
+        el.style.animation = '';
+        el.className = 'coin-delta-popup coin-delta-floating ' + color;
+    }
+
+    function hideDelta(pill) {
+        const el = pill.querySelector('.coin-delta-popup');
+        el.style.animation = 'none';
+        el.className = 'coin-delta-popup';
+    }
+
+    function enterEditMode(pill) {
+        if (pill.classList.contains('coin-pill-editing')) return;
+        pill.classList.add('coin-pill-editing');
+        const inp = pill.querySelector('.coin-pill-input');
+        inp.value = '';
+        inp.placeholder = '';
+        setTimeout(() => inp.focus(), 10);
+    }
+
+    function commitEdit(pill) {
+        if (!pill.classList.contains('coin-pill-editing')) return;
+        const currency = pill.dataset.currency;
+        const inp = pill.querySelector('.coin-pill-input');
+        const raw = inp.value.trim();
+        if (raw !== '') {
+            const delta = parseInt(raw, 10);
+            if (!isNaN(delta)) {
+                const oldVal = getVal(currency);
+                setVal(currency, oldVal + delta);
+                showDeltaLive(pill, delta);
+                requestAnimationFrame(() => floatAway(pill));
+            }
+        }
+        pill.classList.remove('coin-pill-editing');
+    }
+
+    // ── Load initial values ────────────────────────────────────────
+    pills.forEach(pill => {
+        const currency = pill.dataset.currency;
+        pill.querySelector('.coin-pill-num').textContent = getVal(currency);
+    });
+
+    // ── Wire interactions per pill ─────────────────────────────────
+    pills.forEach(pill => {
+        const currency = pill.dataset.currency;
+        let startX = 0, startVal = 0, targetVal = 0, dragging = false, moved = false;
+
+        pill.addEventListener('pointerdown', (e) => {
+            if (pill.classList.contains('coin-pill-editing') || e.target.classList.contains('coin-pill-input')) return;
+            startX = e.clientX;
+            startVal = getVal(currency);
+            targetVal = startVal;
+            dragging = true;
+            moved = false;
+            pill.setPointerCapture(e.pointerId);
+        });
+
+        pill.addEventListener('pointermove', (e) => {
+            if (!dragging || pill.classList.contains('coin-pill-editing')) return;
+            if (!moved && Math.abs(e.clientX - startX) < DRAG_THRESHOLD) return;
+            moved = true;
+            const diff = Math.round((e.clientX - startX) / 4);
+            targetVal = Math.max(0, startVal + diff);
+            showDeltaLive(pill, targetVal - startVal);
+        });
+
+        pill.addEventListener('pointerup', () => {
+            if (!dragging) return;
+            dragging = false;
+            if (!moved) {
+                enterEditMode(pill);
+            } else {
+                const oldVal = startVal;
+                setVal(currency, targetVal);
+                const num = pill.querySelector('.coin-pill-num');
+                coinCountTo(num, oldVal, targetVal);
+                if (targetVal !== startVal) {
+                    requestAnimationFrame(() => floatAway(pill));
+                }
+            }
+        });
+
+        pill.addEventListener('pointercancel', () => {
+            if (!dragging) return;
+            dragging = false;
+            hideDelta(pill);
+        });
+
+        // Input field handlers
+        const inp = pill.querySelector('.coin-pill-input');
+        inp.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); commitEdit(pill); }
+            if (e.key === 'Escape') { pill.classList.remove('coin-pill-editing'); }
+        });
+        inp.addEventListener('blur', () => commitEdit(pill));
+        inp.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+        // Scroll wheel
+        let scrollTimer;
+        pill.addEventListener('wheel', (e) => {
+            if (pill.classList.contains('coin-pill-editing')) return;
+            e.preventDefault();
+            const d = e.deltaY < 0 ? 1 : -1;
+            setVal(currency, getVal(currency) + d);
+            showDeltaLive(pill, d);
+            clearTimeout(scrollTimer);
+            scrollTimer = setTimeout(() => floatAway(pill), 300);
+        }, { passive: false });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initCurrencyTracker('tab4');
 });

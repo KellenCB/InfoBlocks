@@ -308,8 +308,8 @@ export const filterManager = (() => {
             );
         }
 
-        // 4. Search query
-        const query = document.getElementById(`search_input_${tabNumber}`)
+        // 4. Search query (from universal search bar)
+        const query = document.getElementById('uch-search')
             ?.value.trim().toLowerCase() || '';
         if (query) {
             blocks = blocks.filter(b =>

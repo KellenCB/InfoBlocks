@@ -1,10 +1,10 @@
 // appManager.js
 import { categoryTags, blockTypeConfig, BOOK_ACCENT_COLORS, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
 import { blockTemplate, sanitizeBlockHTML } from './blockTemplate.js';
-
 import { applyInlineDiceRolls } from './diceRoller.js';
 import { filterManager } from './filterManager.js';
 import { blockActionsHandler } from './blockActionsHandler.js';
+import { isSwipeGestureActive } from './swipeGesture.js';
 
 const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
 
@@ -471,7 +471,7 @@ export function initToolbarForEditor(editor) {
 export function initDragToScroll() {
     let isDown   = false;
     let moved    = false;
-    let startX, startY, scrollEl, initScrollLeft, initScrollTop;
+    let startX, startY, scrollEl, initScrollTop;
 
     document.addEventListener('mousedown', e => {
         // Don't hijack drag on text-selectable content
@@ -485,19 +485,37 @@ export function initDragToScroll() {
         scrollEl               = el;
         startX                 = e.clientX;
         startY                 = e.clientY;
-        initScrollLeft         = el.scrollLeft;
         initScrollTop          = el.scrollTop;
         document.body.style.userSelect = 'none';
     });
 
     document.addEventListener('mousemove', e => {
         if (!isDown) return;
+
+        // A swipe gesture has claimed this interaction — yield entirely
+        if (isSwipeGestureActive()) {
+            isDown = false;
+            document.body.style.userSelect = '';
+            return;
+        }
+
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
-        if (!moved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
-        moved = true;
-        scrollEl.scrollLeft = initScrollLeft - dx;
-        scrollEl.scrollTop  = initScrollTop  - dy;
+        if (!moved && Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+
+        if (!moved) {
+            // Direction lock: if predominantly horizontal on a swipe-enabled
+            // element, yield so the swipe gesture module can take over
+            if (Math.abs(dx) >= Math.abs(dy) && scrollEl.closest('[data-swipe-enabled]')) {
+                isDown = false;
+                document.body.style.userSelect = '';
+                return;
+            }
+            moved = true;
+        }
+
+        // Vertical scroll only
+        scrollEl.scrollTop = initScrollTop - dy;
     });
 
     const onUp = () => {
@@ -554,6 +572,46 @@ export function initScrollFades(selector, topVar, bottomVar, handlerKey, delay =
     delay ? setTimeout(run, delay) : run();
 }
 
+export function initScrollMask(selector, handlerKey, delay = 0) {
+    const run = () => {
+        document.querySelectorAll(selector).forEach(el => {
+            const fadeSize = parseInt(getComputedStyle(el).getPropertyValue('--mask-fade-size')) || 30;
+            const check = () => {
+                const scrollable = el.scrollHeight - el.clientHeight;
+                if (scrollable <= 5) {
+                    el.style.setProperty('--mask-top', '0px');
+                    el.style.setProperty('--mask-bottom', '0px');
+                    return;
+                }
+                const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+                el.style.setProperty('--mask-top', Math.min(el.scrollTop, fadeSize) + 'px');
+                el.style.setProperty('--mask-bottom', Math.min(distFromBottom, fadeSize) + 'px');
+            };
+            el.removeEventListener('scroll', el[handlerKey]);
+            el[handlerKey] = check;
+            el.addEventListener('scroll', check);
+            check();
+            if (!el[handlerKey + '_ro']) {
+                el[handlerKey + '_ro'] = new ResizeObserver(check);
+                el[handlerKey + '_ro'].observe(el);
+            }
+            if (!el[handlerKey + '_mo']) {
+                let debounce = null;
+                el[handlerKey + '_mo'] = new MutationObserver(() => {
+                    clearTimeout(debounce);
+                    debounce = setTimeout(check, 50);
+                    setTimeout(check, 350);
+                    setTimeout(check, 600);
+                });
+                el[handlerKey + '_mo'].observe(el, {
+                    childList: true, subtree: true,
+                    attributes: true, attributeFilter: ['class', 'style']
+                });
+            }
+        });
+    };
+    delay ? setTimeout(run, delay) : run();
+}
 
 export function setupSearchInput(inputEl, clearBtnEl, onInput, onClear) {
     if (!inputEl) return;
@@ -587,28 +645,74 @@ export const actionButtonHandlers = (() => {
     const activeTab = getActiveTab();
     const tabSuffix = activeTab.replace("tab", "");
 
-    const elements = {
-      binButtons: document.querySelectorAll(".bin-button"),
-      clearDataOverlay: document.querySelector(".cleardata-overlay"),
-      confirmClearButton: document.getElementById("confirm_clear_button"),
-    };
+const binButtons = document.querySelectorAll(".bin-button");
 
-    if (elements.binButtons.length > 0 && elements.clearDataOverlay) {
-      elements.binButtons.forEach(binButton => {
-        binButton.addEventListener("click", () => {
-          elements.clearDataOverlay.classList.add("show");
+binButtons.forEach(binButton => {
+      if (binButton.dataset.clearListenerAttached) return;
+      binButton.dataset.clearListenerAttached = 'true';
+      binButton.addEventListener("click", () => {
+        const existing = document.getElementById('clear-data-confirm');
+        if (existing) {
+          existing.style.height = existing.scrollHeight + 'px';
+          existing.offsetHeight;                       // force reflow
+          existing.classList.remove('visible');
+          existing.style.height = '0';
+          existing.addEventListener('transitionend', () => existing.remove(), { once: true });
+          setTimeout(() => existing.remove(), 300);    // fallback
+          return;
+        }
+
+        const confirmSection = document.createElement('div');
+        confirmSection.id = 'clear-data-confirm';
+        confirmSection.className = 'clear-data-confirm';
+        confirmSection.innerHTML = `
+          <span class="clear-data-confirm-message">Are you sure you want to clear all data?<br>This cannot be undone.</span>
+          <div class="clear-data-confirm-buttons">
+            <button class="clear-data-confirm-yes"><span>Yes</span></button>
+          </div>
+        `;
+
+        const menuButtons = binButton.closest('.menu-popover-buttons');
+        menuButtons.after(confirmSection);
+
+        // Measure natural height, then animate to it
+        confirmSection.classList.add('visible');
+        const targetHeight = confirmSection.scrollHeight;
+        confirmSection.style.height = '0';
+        confirmSection.offsetHeight;                   // force reflow
+        confirmSection.style.height = targetHeight + 'px';
+
+        confirmSection.addEventListener('transitionend', () => {
+          confirmSection.style.height = 'auto';
+        }, { once: true });
+
+        const yesBtn = confirmSection.querySelector('.clear-data-confirm-yes');
+        let yesArmed = false;
+        let armTimer = null;
+
+        yesBtn.addEventListener('mouseenter', () => {
+          yesArmed = false;
+          yesBtn.classList.remove('armed');
+          armTimer = setTimeout(() => {
+            yesArmed = true;
+            yesBtn.classList.add('armed');
+          }, 500);
+        });
+
+        yesBtn.addEventListener('mouseleave', () => {
+          clearTimeout(armTimer);
+          yesArmed = false;
+          yesBtn.classList.remove('armed');
+        });
+
+        yesBtn.addEventListener('click', () => {
+          if (!yesArmed) return;
+          localStorage.clear();
+          location.reload();
         });
       });
-    }
-
-    if (elements.confirmClearButton && elements.clearDataOverlay) {
-      elements.confirmClearButton.onclick = () => {
-        localStorage.clear();
-        alert("All data has been cleared.");
-        location.reload();
-      };
-    }
-
+    });
+    
     console.log("✅ Action button event listeners attached");
   };
 
@@ -1141,11 +1245,15 @@ const applyPendingBlockAnim = () => {
   });
 
   // ── Session Log: toggle list panel ──────────────────────────────
-  const toggleSessionList = () => {
-      sessionListCollapsed = !sessionListCollapsed;
-      localStorage.setItem('sessionListCollapsed', sessionListCollapsed);
+  const setSessionListCollapsed = (collapsed) => {
+      sessionListCollapsed = collapsed;
+      localStorage.setItem('sessionListCollapsed', collapsed);
       document.querySelector('.session-log-list-column')
-          ?.classList.toggle('session-log-list-collapsed', sessionListCollapsed);
+          ?.classList.toggle('session-log-list-collapsed', collapsed);
+  };
+
+  const toggleSessionList = () => {
+      setSessionListCollapsed(!sessionListCollapsed);
   };
 
   // ── Session Log: generate next auto-title from most recent block ─
@@ -1207,11 +1315,6 @@ const applyPendingBlockAnim = () => {
 
       viewer.innerHTML = `
           <div class="session-viewer-header">
-              <button class="session-list-open-btn session-viewer-edit-btn" title="Show list">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M9 18l6-6-6-6"/>
-                  </svg>
-              </button>
               <h4 class="session-viewer-title">${block.title}</h4>
               <div class="session-viewer-header-actions">
                   <button class="session-viewer-delete-btn" data-id="${block.id}" title="Delete">×</button>
@@ -1221,48 +1324,28 @@ const applyPendingBlockAnim = () => {
                   </button>
               </div>
           </div>
-          <div class="session-viewer-body" id="session_viewer_body">${bodyHTML}</div>
+          <div class="session-viewer-body scroll-fade" id="session_viewer_body">${bodyHTML}</div>
       `;
 
       applyInlineDiceRolls(viewer, 'tab7');
 
-      initScrollFades('#session_log_viewer', '--viewer-fade-top-opacity', '--viewer-fade-bottom-opacity', '_viewerFadeHandler');
+      initScrollMask('#session_viewer_body', '_viewerMaskHandler');
       document.dispatchEvent(new CustomEvent('sessionViewerRendered', { detail: { tab: 'tab7' } }));
       const editBtn   = viewer.querySelector('#session_edit_toggle');
       const deleteBtn = viewer.querySelector('.session-viewer-delete-btn');
-      const openBtn   = viewer.querySelector('.session-list-open-btn');
-      if (openBtn) openBtn.addEventListener('click', toggleSessionList);
 
       if (deleteBtn) {
           deleteBtn.addEventListener('click', (e) => {
               e.stopPropagation();
-              const overlay = document.querySelector('.remove-block-overlay');
-              if (!overlay) return;
-              const confirmBtn = document.getElementById('confirm_remove_button');
-              const cancelBtn  = document.getElementById('cancel_remove_button');
-              overlay.classList.add('show');
-
-              const onConfirm = () => {
-                  sessionViewerEditMode  = false;
-                  const removedBlock     = removeBlock(blockId, 'tab7');
-                  activeSessionLogBlockId = null;
-                  overlay.classList.remove('show');
-                  confirmBtn.removeEventListener('click', onConfirm);
-                  cancelBtn.removeEventListener('click', onCancel);
-                  import('./blockActionsHandler.js').then(({ blockActionsHandler }) => {
+              import('./blockActionsHandler.js').then(({ blockActionsHandler }) => {
+                  blockActionsHandler.showDeletePopup(blockId, e, () => {
+                      sessionViewerEditMode   = false;
+                      const removedBlock      = removeBlock(blockId, 'tab7');
+                      activeSessionLogBlockId = null;
                       blockActionsHandler.recordLastDeleted('tab7', removedBlock);
+                      renderSessionLog();
                   });
-                  renderSessionLog();
-              };
-              
-              const onCancel = () => {
-                  overlay.classList.remove('show');
-                  confirmBtn.removeEventListener('click', onConfirm);
-                  cancelBtn.removeEventListener('click', onCancel);
-              };
-
-              confirmBtn.addEventListener('click', onConfirm);
-              cancelBtn.addEventListener('click', onCancel);
+              });
           });
       }
 
@@ -1436,11 +1519,6 @@ const applyPendingBlockAnim = () => {
 
       document.querySelector('.session-log-list-column')
           ?.classList.toggle('session-log-list-collapsed', sessionListCollapsed);
-      const closeBtn = document.getElementById('session_list_toggle');
-      if (closeBtn) {
-          closeBtn.classList.toggle('hidden', sessionListCollapsed);
-          closeBtn.onclick = toggleSessionList;
-      }
 
   const addBtn = document.getElementById('add_block_button_7');
       if (addBtn) {
@@ -1533,6 +1611,8 @@ const applyPendingBlockAnim = () => {
       } else if (viewer) {
           viewer.innerHTML = '<p class="session-viewer-placeholder">No entries found</p>';
       }
+
+      initScrollMask('#results_section_7', '_results7MaskHandler', 100);
 
       updateTags();
       attachDynamicTooltips();
@@ -2089,17 +2169,6 @@ const applyPendingBlockAnim = () => {
       const attunedMax   = getInventoryAttunementMax();
       const overAttuned  = attunedCount > attunedMax;
 
-      // Coin pouches
-      const pouches = [
-          { id: 'perm1', cls: 'gold-bg',   defaultValue: '00' },
-          { id: 'perm2', cls: 'silver-bg', defaultValue: '00' },
-          { id: 'perm3', cls: 'copper-bg', defaultValue: '00' },
-      ];
-      const pouchesHTML = pouches.map(({ id, cls, defaultValue }) => {
-          const v = localStorage.getItem(`permanentItem_${id}`) || defaultValue;
-          return `<div class="block minimized permanent-block ${cls}" data-id="${id}"><h4 class="permanent-title" contenteditable="true">${v}</h4></div>`;
-      }).join('');
-
       const chainSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5"/></svg>`;
       const attunePillHTML = `
           <div class="inventory-attune-wrap">
@@ -2113,31 +2182,9 @@ const applyPendingBlockAnim = () => {
           </div>
       `;
 
-      // Results section layout: search row + sort/add controls + top bar + sections
+      // Results section layout: top bar + sections
       resultsSection.innerHTML = `
-          <div class="inventory-search-row">
-              <div class="search-container">
-                  <input id="search_input_6" class="search_input" type="text" placeholder="Search..." />
-                  <button id="clear_search_button_6" class="clear-search">
-                      <svg class="clear-icon" viewBox="0 0 24 24" fill="none">
-                          <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
-                          <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
-                      </svg>
-                  </button>
-              </div>
-              <button id="results-sort-btn_6" class="results-settings">
-                  <img src="./images/Sort_Icon.svg" alt="Sort icon">
-              </button>
-              <div id="sort-dropdown_6" class="sort-dropdown hidden">
-                  <button class="sort-item" data-sort="newest">Newest</button>
-                  <button class="sort-item" data-sort="oldest">Oldest</button>
-                  <button class="sort-item" data-sort="alpha">A‑Z</button>
-                  <button class="sort-item" data-sort="unalpha">Z-A</button>
-              </div>
-              <button id="add_block_button" class="add-block-button green-button">+</button>
-          </div>
           <div class="inventory-top-bar">
-              <div class="inventory-pouches">${pouchesHTML}</div>
               ${attunePillHTML}
           </div>
           <div id="inventory-sections-host"></div>
@@ -2207,42 +2254,6 @@ const applyPendingBlockAnim = () => {
       }
 
       wireInventoryHeaderControls();
-
-      // Wire search input — preserve value/focus/caret across re-renders
-      const searchInput = document.getElementById('search_input_6');
-      const clearSearchBtn = document.getElementById('clear_search_button_6');
-      if (searchInput) {
-          // Restore previous value if this is a re-render during typing
-          const preservedValue = window._inventorySearchState?.value || '';
-          const hadFocus = window._inventorySearchState?.hadFocus || false;
-          const caretPos = window._inventorySearchState?.caretPos ?? preservedValue.length;
-          if (preservedValue) searchInput.value = preservedValue;
-          if (hadFocus) {
-              searchInput.focus();
-              try { searchInput.setSelectionRange(caretPos, caretPos); } catch (_) {}
-          }
-
-          const capture = () => {
-              window._inventorySearchState = {
-                  value: searchInput.value,
-                  hadFocus: document.activeElement === searchInput,
-                  caretPos: searchInput.selectionStart
-              };
-          };
-
-          setupSearchInput(
-              searchInput,
-              clearSearchBtn,
-              () => {
-                  capture();
-                  import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('6'));
-              },
-              () => {
-                  window._inventorySearchState = { value: '', hadFocus: true, caretPos: 0 };
-                  import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('6'));
-              }
-          );
-      }
 
       // Coin pouches blur save
       resultsSection.querySelectorAll('.permanent-title').forEach(titleEl => {
@@ -2374,52 +2385,7 @@ const applyPendingBlockAnim = () => {
       document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: 'tab6' } }));
   };
 
-  const wireInventoryHeaderControls = () => {
-      const sortBtn      = document.getElementById('results-sort-btn_6');
-      const sortDropdown = document.getElementById('sort-dropdown_6');
-      const addBtn       = document.getElementById('add_block_button');
-
-      if (!sortBtn || !sortDropdown) return;
-
-      const closeAll = () => {
-          sortDropdown.classList.add('hidden');
-      };
-
-      sortBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          const wasOpen = !sortDropdown.classList.contains('hidden');
-          closeAll();
-          if (!wasOpen) {
-              const rect = sortBtn.getBoundingClientRect();
-              sortDropdown.style.top  = `${rect.bottom + 5}px`;
-              sortDropdown.style.left = `${rect.left}px`;
-              sortDropdown.classList.remove('hidden');
-          }
-      });
-
-      document.addEventListener('click', closeAll, { once: true });
-
-      const savedSort = localStorage.getItem('activeSortOrder_tab6') || 'newest';
-      sortDropdown.querySelectorAll('.sort-item').forEach(item => {
-          const mode = item.dataset.sort;
-          item.classList.toggle('selected', mode === savedSort);
-          item.addEventListener('click', e => {
-              e.stopPropagation();
-              localStorage.setItem('activeSortOrder_tab6', mode);
-              closeAll();
-              import('./filterManager.js').then(({ filterManager }) => {
-                  filterManager.applyFilters('6');
-              });
-          });
-      });
-
-      if (addBtn) {
-          addBtn.onclick = () => {
-              if (inventoryEditMode) return;
-              startInventoryAdd();
-          };
-      }
-  };
+  const wireInventoryHeaderControls = () => {};
 
 /* ==================================================================*/
   /* ======================= NOTES / TAB3 RENDER ======================*/
@@ -2757,13 +2723,8 @@ const applyPendingBlockAnim = () => {
           ? prelocationFiltered.filter(b => normalizeLocation(b.location) === activeLocation)
           : prelocationFiltered;
 
-      // Header — just the add button (sort/view dropdowns removed in 9a)
+      // Header
       resultsSection.innerHTML = `
-          <div id="results_header_3" class="results-header">
-            <div id="header-controls_3" class="header-controls">
-              <button id="add_block_button" class="add-block-button green-button">+</button>
-            </div>
-          </div>
           ${buildTab3LocationPillsHTML(locationCounts, activeLocation)}
           <div id="tab3-sections-host"></div>
       `;
@@ -3053,13 +3014,8 @@ const applyPendingBlockAnim = () => {
       applyPendingBlockAnim();
   };
 
-  // ── Wire the add button in the results header ───────────────────
-  const wireNotesHeaderControls = () => {
-      const addBtn = document.getElementById('add_block_button');
-      if (addBtn) {
-          addBtn.onclick = () => startNotesAdd();
-      }
-  };
+  // ── Notes header controls (add button moved to UCH) ────────────
+  const wireNotesHeaderControls = () => {};
 
   // ── Notes viewer/inline: shared edit & add helpers ─────────────
 
@@ -3922,7 +3878,7 @@ const applyPendingBlockAnim = () => {
 
     // ── Character sheet tabs have no block results ────────────────────
     if (tab === 'tab4' || tab === 'tab8') {
-        initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
+        initScrollMask('.saving-throws-and-skills-column-wrapper', '_skillsMaskHandler', 100);
         return;
     }
 
@@ -3931,121 +3887,9 @@ const applyPendingBlockAnim = () => {
     const resultsSection = document.getElementById(sectionId);
     if (!resultsSection) return;
 
-    // ── HEADER: create once, skip on subsequent renders ──────────────
-    if (!resultsSection.querySelector('.results-header')) {
-
-      const _filterTabs  = new Set(['tab3', 'tab6', 'tab7', 'tab9']);
-      const _openBtnHTML = _filterTabs.has(tab)
-          ? `<button class="filter-open-btn" data-tab="${tab}" title="Show filters">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M15 18l-6-6 6-6"/>
-                </svg>
-            </button>`
-          : '';
-
-      const headerEl = document.createElement('div');
-      headerEl.id = `results_header_${tabSuffix}`;
-      headerEl.className = 'results-header';
-      headerEl.innerHTML = `
-        <div id="header-controls_${tabSuffix}" class="header-controls">
-          <button id="results-sort-btn_${tabSuffix}" class="results-settings">
-            <img src="./images/Sort_Icon.svg" alt="Sort icon">
-          </button>
-          <div id="sort-dropdown_${tabSuffix}" class="sort-dropdown hidden">
-            <button class="sort-item" data-sort="newest">Newest</button>
-            <button class="sort-item" data-sort="oldest">Oldest</button>
-            <button class="sort-item" data-sort="alpha">A‑Z</button>
-            <button class="sort-item" data-sort="unalpha">Z-A</button>
-          </div>
-          <button id="results-settings_${tabSuffix}" class="results-settings">
-            <img src="./images/View_Icon.svg" alt="View‑state icon">
-          </button>
-          <div id="view-toggle-dropdown_${tabSuffix}" class="view-toggle-dropdown hidden">
-            <button class="view-toggle-item" data-state="expanded">Expand</button>
-            <button class="view-toggle-item" data-state="condensed">Condense</button>
-            <button class="view-toggle-item" data-state="minimized">Minimize</button>
-          </div>
-          <button id="add_block_button" class="add-block-button green-button">+</button>
-          ${_openBtnHTML}
-        </div>
-      `;
-      resultsSection.prepend(headerEl);
-
-      // ── Wire add button ──
-      const addBtn = headerEl.querySelector('#add_block_button');
-      if (addBtn) {
-        addBtn.onclick = () => {
-          if (tab === 'tab9') startInlineAdd();
-        };
-      }
-
-      // ── Wire view dropdown ──
-      const settingsBtn  = document.getElementById(`results-settings_${tabSuffix}`);
-      const viewDropdown = document.getElementById(`view-toggle-dropdown_${tabSuffix}`);
-      const sortBtn      = document.getElementById(`results-sort-btn_${tabSuffix}`);
-      const sortDropdown = document.getElementById(`sort-dropdown_${tabSuffix}`);
-
-      const closeDropdowns = () => {
-        viewDropdown.classList.add("hidden");
-        sortDropdown.classList.add("hidden");
-      };
-
-      settingsBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        const wasOpen = !viewDropdown.classList.contains("hidden");
-        closeDropdowns();
-        if (!wasOpen) {
-          const rect = settingsBtn.getBoundingClientRect();
-          viewDropdown.style.top  = `${rect.bottom + 5}px`;
-          viewDropdown.style.left = `${rect.left}px`;
-          viewDropdown.classList.remove("hidden");
-        }
-      });
-
-      document.addEventListener("click", closeDropdowns);
-
-      const savedView = localStorage.getItem(`activeViewState_${tab}`) || "condensed";
-      viewDropdown.querySelectorAll(".view-toggle-item").forEach(item => {
-        const state = item.dataset.state;
-        item.classList.toggle("selected", state === savedView);
-        item.addEventListener("click", e => {
-          e.stopPropagation();
-          closeDropdowns();
-          updateBlocksViewState(state);
-          viewDropdown.querySelectorAll(".view-toggle-item")
-            .forEach(i => i.classList.toggle("selected", i === item));
-        });
-      });
-
-      // ── Wire sort dropdown ──
-      const savedSortMode = localStorage.getItem(`activeSortOrder_${tab}`) || "newest";
-
-      sortBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        const wasOpen = !sortDropdown.classList.contains("hidden");
-        closeDropdowns();
-        if (!wasOpen) {
-          const rect = sortBtn.getBoundingClientRect();
-          sortDropdown.style.top  = `${rect.bottom + 5}px`;
-          sortDropdown.style.left = `${rect.left}px`;
-          sortDropdown.classList.remove("hidden");
-        }
-      });
-
-      sortDropdown.querySelectorAll(".sort-item").forEach(item => {
-        const mode = item.dataset.sort;
-        item.classList.toggle("selected", mode === savedSortMode);
-        item.addEventListener("click", e => {
-          e.stopPropagation();
-          localStorage.setItem(`activeSortOrder_${tab}`, mode);
-          sortDropdown.querySelectorAll(".sort-item")
-            .forEach(i => i.classList.toggle("selected", i === item));
-          sortDropdown.classList.add("hidden");
-          renderBlocks(tab, getBlocks(tab));
-          updateTags();
-          updateViewToggleDropdown(tabSuffix);
-        });
-      });
+    // ── ONE-TIME EVENT SETUP (first render only) ──────────────────────
+    if (!resultsSection.dataset.eventsAttached) {
+      resultsSection.dataset.eventsAttached = 'true';
 
       // ── Event delegation: block expand/collapse toggle ──
       resultsSection.addEventListener("click", function(e) {
@@ -4093,7 +3937,7 @@ const applyPendingBlockAnim = () => {
             doRerender();
         }
       });
-    } // end header creation
+    } // end one-time event setup
 
     // ── BLOCK DATA ──────────────────────────────────────────────────
     const allBlocks     = getBlocks(tab);
@@ -4287,53 +4131,56 @@ const applyPendingBlockAnim = () => {
     }
 
     // ── FADE OVERLAY (always last child for sticky bottom) ────────
-    let fadeEl = resultsSection.querySelector('.results-fade');
-    if (!fadeEl) {
-        fadeEl = document.createElement('div');
-        fadeEl.className = 'results-fade';
-    }
-    resultsSection.appendChild(fadeEl);
-
-    // Control fade visibility based on actual overflow
-    const updateFade = () => {
-        const scrollableAmount = resultsSection.scrollHeight - resultsSection.clientHeight;
-        if (scrollableAmount <= 5) {
-            fadeEl.style.opacity = '0';
-            return;
+    // Skip for elements using the newer .scroll-fade mask approach
+    if (!resultsSection.classList.contains('scroll-fade')) {
+        let fadeEl = resultsSection.querySelector('.results-fade');
+        if (!fadeEl) {
+            fadeEl = document.createElement('div');
+            fadeEl.className = 'results-fade';
         }
-        const distanceFromBottom = resultsSection.scrollHeight - resultsSection.scrollTop - resultsSection.clientHeight;
-        fadeEl.style.opacity = Math.min(distanceFromBottom / 42, 1);
-    };
-    resultsSection.removeEventListener('scroll', resultsSection._resultsFadeHandler);
-    resultsSection._resultsFadeHandler = updateFade;
-    resultsSection.addEventListener('scroll', updateFade);
-    updateFade();
-    // Track scrollHeight changes during block animations (~700ms)
-    if (resultsSection._fadeRAF) cancelAnimationFrame(resultsSection._fadeRAF);
-    const startTime = performance.now();
-    const trackFade = (now) => {
+        resultsSection.appendChild(fadeEl);
+
+        // Control fade visibility based on actual overflow
+        const updateFade = () => {
+            const scrollableAmount = resultsSection.scrollHeight - resultsSection.clientHeight;
+            if (scrollableAmount <= 5) {
+                fadeEl.style.opacity = '0';
+                return;
+            }
+            const distanceFromBottom = resultsSection.scrollHeight - resultsSection.scrollTop - resultsSection.clientHeight;
+            fadeEl.style.opacity = Math.min(distanceFromBottom / 42, 1);
+        };
+        resultsSection.removeEventListener('scroll', resultsSection._resultsFadeHandler);
+        resultsSection._resultsFadeHandler = updateFade;
+        resultsSection.addEventListener('scroll', updateFade);
         updateFade();
-        if (now - startTime < 700) resultsSection._fadeRAF = requestAnimationFrame(trackFade);
-    };
-    resultsSection._fadeRAF = requestAnimationFrame(trackFade);
-    // Re-check on element size changes (window resize)
-    if (!resultsSection._fadeResizeObserver) {
-        resultsSection._fadeResizeObserver = new ResizeObserver(updateFade);
-        resultsSection._fadeResizeObserver.observe(resultsSection);
-    }
-    // Re-check on content changes (blocks added/removed, style changes)
-    if (!resultsSection._fadeMutationObserver) {
-        let debounce = null;
-        resultsSection._fadeMutationObserver = new MutationObserver(() => {
-            clearTimeout(debounce);
-            debounce = setTimeout(updateFade, 50);
-            setTimeout(updateFade, 350);
-            setTimeout(updateFade, 600);
-        });
-        resultsSection._fadeMutationObserver.observe(resultsSection, {
-            childList: true, subtree: true,
-            attributes: true, attributeFilter: ['class', 'style']
-        });
+        // Track scrollHeight changes during block animations (~700ms)
+        if (resultsSection._fadeRAF) cancelAnimationFrame(resultsSection._fadeRAF);
+        const startTime = performance.now();
+        const trackFade = (now) => {
+            updateFade();
+            if (now - startTime < 700) resultsSection._fadeRAF = requestAnimationFrame(trackFade);
+        };
+        resultsSection._fadeRAF = requestAnimationFrame(trackFade);
+        // Re-check on element size changes (window resize)
+        if (!resultsSection._fadeResizeObserver) {
+            resultsSection._fadeResizeObserver = new ResizeObserver(updateFade);
+            resultsSection._fadeResizeObserver.observe(resultsSection);
+        }
+        // Re-check on content changes (blocks added/removed, style changes)
+        if (!resultsSection._fadeMutationObserver) {
+            let debounce = null;
+            resultsSection._fadeMutationObserver = new MutationObserver(() => {
+                clearTimeout(debounce);
+                debounce = setTimeout(updateFade, 50);
+                setTimeout(updateFade, 350);
+                setTimeout(updateFade, 600);
+            });
+            resultsSection._fadeMutationObserver.observe(resultsSection, {
+                childList: true, subtree: true,
+                attributes: true, attributeFilter: ['class', 'style']
+            });
+        }
     }
 
     applyInlineDiceRolls(resultsSection, tab);
@@ -4341,9 +4188,13 @@ const applyPendingBlockAnim = () => {
 
     if (!skipTagUpdate) updateTags();
     attachDynamicTooltips();
-    initScrollFades('.filter-section',               '--filter-fade-top-opacity', '--filter-fade-bottom-opacity','_filterFadeHandler', 100);
-    initScrollFades('.saving-throws-and-skills-column-wrapper', '--skills-fade-top-opacity', '--skills-fade-bottom-opacity', '_skillsFadeHandler', 100);
+    initScrollMask('.filter-section', '_filterMaskHandler', 100);
+    initScrollMask('.saving-throws-and-skills-column-wrapper', '_skillsMaskHandler', 100);
     initScrollFades('.roll-results', '--dice-fade-top-opacity', '--dice-fade-bottom-opacity', '_diceFadeHandler', 100);
+    initScrollMask('#results_section_3', '_results3MaskHandler', 100);
+    initScrollMask('#results_section_6', '_results6MaskHandler', 100);
+    initScrollMask('#results_section_7', '_results7MaskHandler', 100);
+    initScrollMask('#results_section_9', '_results9MaskHandler', 100);
 
     applyPendingBlockAnim();
   };
@@ -4610,21 +4461,24 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
           const data = collectTab9FormData(blockEl, usesKey);
           if (!data) return;
           inlineEditState = null;
+          blockEl.classList.remove('inline-editing', 'expanded');
           saveBlock(tab, data.title, data.text, data.tags, data.uses, data.properties, data.blockType, blockId, block.timestamp);
           setPendingBlockAnim(blockId, blockEl.offsetHeight);
-          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
+          filterManager.applyFilters('9');
       };
 
       const doCancel = () => {
           inlineEditState = null;
+          blockEl.classList.remove('inline-editing', 'expanded');
           setPendingBlockAnim(blockId, blockEl.offsetHeight);
-          import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters('9'));
+          filterManager.applyFilters('9');
       };
 
-      wireEditControls(blockEl, {
-          saveSel: '.inline-edit-save', cancelSel: '.inline-edit-cancel',
-          onSave: doSave, onCancel: doCancel,
-      });
+      const saveBtn = blockEl.querySelector('.inline-edit-save');
+      const cancelBtn = blockEl.querySelector('.inline-edit-cancel');
+      console.log('SAVE BTN:', saveBtn);
+      console.log('CANCEL BTN:', cancelBtn);
+if (saveBtn) saveBtn.addEventListener('click', (e) => { e.stopPropagation(); console.log('SAVE CLICKED'); console.log('FORM DATA:', collectTab9FormData(blockEl, usesKey)); doSave(); });      if (cancelBtn) cancelBtn.addEventListener('click', (e) => { e.stopPropagation(); console.log('CANCEL CLICKED'); doCancel(); });
 
       focusAndCursorToEnd(blockEl.querySelector('.inline-edit-title'));
 
@@ -4633,6 +4487,9 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
 
     const startInlineAdd = () => {
       const tab = 'tab9';
+      const tabSuffix = tab.replace('tab', '');
+      const resultsSection = document.getElementById(`results_section_${tabSuffix}`);
+      if (!resultsSection || resultsSection.querySelector('.inline-editing')) return;
 
       const tabBTConfig = blockTypeConfig[tab];
       const blockTypeHTML = tabBTConfig
@@ -4667,13 +4524,11 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
               <div class="block-body"><span contenteditable="true" class="inline-edit-body"></span></div>
       `;
 
-      const tabSuffix = tab.replace('tab', '');
-      const resultsSection = document.getElementById(`results_section_${tabSuffix}`);
-      if (!resultsSection) return;
+      
       const pinnedZone = resultsSection.querySelector('.pinned-blocks-zone-wrapper');
       if (pinnedZone) { pinnedZone.after(blockEl); } else { resultsSection.prepend(blockEl); }
 
-      blockEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    resultsSection.scrollTo({ top: 0, behavior: 'smooth' });
 
       wireTab9FormHandlers(blockEl, usesKey);
 
@@ -4685,6 +4540,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       };
 
       const doCancel = () => {
+          console.log('CANCEL FIRED');
           localStorage.removeItem(usesKey);
           blockEl.remove();
       };
@@ -4717,5 +4573,6 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
     startInventoryAdd,
     enterNotesEdit,
     startNotesAdd,
+    setSessionListCollapsed,
   };
 })();

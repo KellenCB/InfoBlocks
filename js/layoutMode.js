@@ -11,31 +11,10 @@ const LIST_TABS = ['tab9', 'tab3', 'tab6', 'tab7']; // priority order for defaul
 // ── Initialise ─────────────────────────────────────────────────────────────
 
 export function initLayoutMode() {
+    // Force split view always active
+    localStorage.setItem('splitViewActive', 'true');
     updateBodyClass();
     ensureNavsVisible();
-
-    // ── Wire the split-view button ──────────────────────────────────────────
-    const splitBtn = document.getElementById('split-view-button');
-    if (splitBtn) {
-        // Apply saved state to button appearance on load
-        const savedEnabled = localStorage.getItem('splitViewActive') === 'true';
-        splitBtn.classList.toggle('active', savedEnabled);
-
-        splitBtn.addEventListener('click', () => {
-            const nowEnabled = localStorage.getItem('splitViewActive') === 'true';
-            const next = !nowEnabled;
-            localStorage.setItem('splitViewActive', String(next));
-            splitBtn.classList.toggle('active', next);
-
-            // Re-evaluate landscape state after the toggle
-            const wasLandscape = prevLandscape;
-            updateBodyClass();
-            const nowLandscape = isLandscape();
-            if (!wasLandscape && nowLandscape) onEnterLandscape();
-            if (wasLandscape && !nowLandscape) onExitLandscape();
-            prevLandscape = nowLandscape;
-        });
-    }
 
     let prevLandscape = isLandscape();
 
@@ -45,13 +24,6 @@ export function initLayoutMode() {
         if (!prevLandscape && nowLandscape)  onEnterLandscape();
         if (prevLandscape  && !nowLandscape) onExitLandscape();
         prevLandscape = nowLandscape;
-    });
-
-    // Wire the left-panel Hazard / Crank toggle.
-    document.getElementById('char-sheet-nav')?.addEventListener('click', e => {
-        const btn = e.target.closest('[data-tab]');
-        if (!btn || !CHAR_TABS.has(btn.dataset.tab)) return;
-        activateCharTab(btn.dataset.tab);
     });
 
     if (isLandscape()) {
@@ -94,7 +66,7 @@ export function isLandscape() {
     return window.innerWidth >= 1220 && localStorage.getItem('splitViewActive') === 'true';
 }
 
-/** Show one char-sheet tab, hide the other; update nav active states. */
+/** Show one char-sheet tab, hide the other; update UCH active states. */
 export function activateCharTab(tabId) {
     CHAR_TABS.forEach(id => {
         const el = document.getElementById(id);
@@ -104,8 +76,8 @@ export function activateCharTab(tabId) {
         el.style.display = show ? 'flex' : 'none';
     });
 
-    document.querySelectorAll('#char-sheet-nav [data-tab]').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabId);
+    document.querySelectorAll('#uch-char-tabs [data-tab]').forEach(btn => {
+        btn.classList.toggle('uch-selected', btn.dataset.tab === tabId);
     });
 
     localStorage.setItem('activeCharTab', tabId);
@@ -121,65 +93,61 @@ function updateBodyClass() {
 
 /** Called when rotating / resizing into landscape. */
 function onEnterLandscape() {
-    ensureNavsVisible();
     clearPanelInlineStyles();
+
+    // Ensure both panels are visible for fade-in
+    const charPanel = document.getElementById('char-sheet-panel');
+    const rightPanel = document.getElementById('right-panel');
+    if (charPanel) charPanel.classList.add('visible');
+    if (rightPanel) rightPanel.classList.add('visible');
+
     activateCharTab(localStorage.getItem('activeCharTab') || 'tab4');
     ensureListTabActive();
 
-    // Re-apply active class to the correct #list-tab-nav button.
-    const currentTab = localStorage.getItem('activeTab') || LIST_TABS[0];
-    document.querySelectorAll('#list-tab-nav .tab-button').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === currentTab);
+    const currentListTab = localStorage.getItem('activeTab') || LIST_TABS[0];
+    document.querySelectorAll('#uch-char-tabs .tab-button').forEach(btn => {
+        btn.classList.remove('active');
+        btn.classList.toggle('uch-selected', btn.dataset.tab === (localStorage.getItem('activeCharTab') || 'tab4'));
+    });
+    document.querySelectorAll('#uch-list-tabs .tab-button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === currentListTab);
     });
 
     repositionAllSliders();
 }
 
-/** Called when rotating / resizing out of landscape.
- *  Prioritises the left (char-sheet) panel — whichever of tab4/tab8
- *  was last active is shown, and the right panel is hidden. */
+/** Called when rotating / resizing out of landscape. */
 function onExitLandscape() {
-    ensureNavsVisible();
-
     const activeCharTab = localStorage.getItem('activeCharTab') || 'tab4';
     const charPanel     = document.getElementById('char-sheet-panel');
     const tabsContent   = document.getElementById('right-panel');
 
-    if (charPanel)   charPanel.style.display   = 'flex';
-    if (tabsContent) tabsContent.style.display = 'none';
+    if (charPanel)   { charPanel.style.display = 'flex'; charPanel.classList.add('visible'); }
+    if (tabsContent) { tabsContent.style.display = 'none'; }
 
-    // Ensure the correct char-sheet tab is active and rendered.
     activateCharTab(activeCharTab);
 
-    // Re-apply active class to the correct main nav button.
-    document.querySelectorAll('.tab-nav .tab-button').forEach(btn => {
-        const isActive = btn.dataset.tab === activeCharTab
-            && !btn.closest('#char-sheet-nav')
-            && !btn.closest('#list-tab-nav');
-        btn.classList.toggle('active', isActive);
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active', 'uch-selected');
+        btn.classList.toggle('active', btn.dataset.tab === activeCharTab);
     });
 
     repositionAllSliders();
 }
 
 /**
- * Ensure every .tab-nav AND its .fade-in ancestor containers have the
- * .visible class so opacity: 0 doesn't persist.
+ * Ensure the UCH header and layout panels have the .visible class
+ * so opacity: 0 from .fade-in doesn't persist.
  */
 function ensureNavsVisible() {
-    document.querySelectorAll('.tab-nav').forEach(nav => {
-        nav.classList.add('visible');
-        let el = nav.parentElement;
-        while (el && el !== document.body) {
-            if (el.classList.contains('fade-in')) el.classList.add('visible');
-            el = el.parentElement;
-        }
+    ['header-row', 'char-sheet-panel', 'right-panel'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('visible');
     });
 }
 
 /**
- * Remove inline display styles set by main.js portrait-routing code so the
- * body.landscape-mode CSS rules can take effect unobstructed.
+ * Remove inline display styles so CSS landscape rules take effect.
  */
 function clearPanelInlineStyles() {
     const charPanel   = document.getElementById('char-sheet-panel');
@@ -189,15 +157,14 @@ function clearPanelInlineStyles() {
 }
 
 /**
- * If no list tab is currently active, click the first available list tab
- * so the right panel is never left blank.
+ * If no list tab is currently active, click the first available list tab.
  */
 function ensureListTabActive() {
     const current = localStorage.getItem('activeTab');
     if (!current || CHAR_TABS.has(current)) {
         const defaultTabId = LIST_TABS[0];
-        const btn = document.querySelector(`#list-tab-nav [data-tab="${defaultTabId}"]`)
-                 || document.querySelector(`.tab-nav .tab-button[data-tab="${defaultTabId}"]`);
+        const btn = document.querySelector(`#uch-list-tabs [data-tab="${defaultTabId}"]`)
+                 || document.querySelector(`.tab-button[data-tab="${defaultTabId}"]`);
         if (btn) btn.click();
     }
 }

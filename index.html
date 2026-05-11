@@ -18,50 +18,152 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
 
-<body>
-    <div id="header-row" class="container fade-in">
-        <header class="title-section">
-            <h1 id="page_title" contenteditable="true"></h1>
-        </header>
-    
-        <div class="hero-button-section">
-    
-            <button id="split-view-button" class="hero-button clear-button" title="Split View">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="3" width="20" height="18" rx="2"/>
-                    <line x1="12" y1="3" x2="12" y2="21"/>
-                </svg>
-            </button>
+<body class="app-loading">
+    <div id="header-row">
+        <div id="uch">
 
-            <button id="dice-menu-button" class="hero-button dice-menu-button clear-button">
-                <img src="images/Dice_Button_v2.svg" alt="D20" />
-            </button>
-    
-            <button id="Menu_button" class="hero-button Menu-button">
-                <span class="menu-icon-wrapper">
-                <svg id="menu-icon-default" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-                <svg id="menu-icon-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M6 6l12 12M6 18L18 6" />
-                </svg>
-                </span>
-            </button>
+            <!-- LEFT GROUP: Character tabs + Long Rest -->
+            <div class="uch-edge-group">
+                <div class="uch-tab-group frosted-glass" id="uch-char-tabs">
+                    <button class="tab-button uch-tab active" data-tab="tab4">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+                        <span class="uch-tooltip">Hazard</span>
+                    </button>
+                    <button class="tab-button uch-tab" data-tab="tab8">
+                        <svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="14" rx="3"/><circle cx="9" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.2" fill="currentColor" stroke="none"/><path d="M8 15h8"/></svg>
+                        <span class="uch-tooltip">Crank</span>
+                    </button>
+                    <div class="uch-pill-divider"></div>
+                    <button id="long_rest_button" class="uch-btn uch-pill-btn">
+                        <span class="lr-icon-wrap"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+                        <span class="uch-tooltip">Long Rest</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CENTER GROUP: Add + Search pill (search, clear, sort, view) + Menu -->
+            <div class="uch-center-group">
+                <div class="uch-pill-solo uch-pill-green frosted-glass">
+                    <button id="uch-add-button" class="uch-btn uch-pill-btn">
+                        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        <span class="uch-tooltip">Add Block</span>
+                    </button>
+                </div>
+
+                <div class="uch-search-pill frosted-glass">
+                    <input id="uch-search" class="uch-search" type="text" placeholder="Search..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+                    <button id="uch-search-clear" class="uch-inline-btn">
+                        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                    <div class="uch-pill-divider"></div>
+                    <button id="uch-sort-button" class="uch-inline-btn uch-has-tooltip">
+                        <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M3 6h18M3 12h12M3 18h6"/></svg>
+                        <span class="uch-tooltip">Sort</span>
+                    </button>
+                    <button id="uch-view-button" class="uch-inline-btn uch-has-tooltip">
+                        <svg viewBox="0 0 24 24" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                        <span class="uch-tooltip">View Mode</span>
+                    </button>
+                </div>
+
+                <div class="uch-pill-solo frosted-glass">
+                    <button id="Menu_button" class="uch-btn uch-pill-btn">
+                        <span class="menu-icon-wrapper">
+                            <svg id="menu-icon-default" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+                            <svg id="menu-icon-close" viewBox="0 0 24 24"><path d="M6 6l12 12M6 18L18 6" /></svg>
+                        </span>
+                        <span class="uch-tooltip">Menu</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIGHT GROUP: List tabs -->
+            <div class="uch-edge-group">
+                <div class="uch-tab-group frosted-glass" id="uch-list-tabs">
+                    <button class="tab-button uch-tab" data-tab="tab9">
+                        <svg viewBox="0 0 24 24"><path d="M12 3c-1.5 4-4.5 7-8 8 3.5 1 6.5 4 8 8 1.5-4 4.5-7 8-8-3.5-1-6.5-4-8-8z"/></svg>
+                        <span class="uch-tooltip">Feats &amp; Magic</span>
+                    </button>
+                    <button class="tab-button uch-tab" data-tab="tab3">
+                        <svg viewBox="0 0 24 24"><path d="M6 20l4-4 10-10c1-1 3-1 3 1L13 17l-4 4z"/><path d="M20 6L10 16" stroke-width="1"/><path d="M4 22l2-2" stroke-width="1"/></svg>
+                        <span class="uch-tooltip">Quests &amp; Notes</span>
+                    </button>
+                    <button class="tab-button uch-tab" data-tab="tab6">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="16" rx="3"/><path d="M3 13h18" stroke-width="1"/><path d="M8 7V4a4 4 0 0 1 8 0v3"/><rect x="9" y="16" width="6" height="5" rx="1" stroke-width="1"/></svg>
+                        <span class="uch-tooltip">Inventory</span>
+                    </button>
+                    <button class="tab-button uch-tab" data-tab="tab7">
+                        <svg viewBox="0 0 24 24"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H18a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6.5A2.5 2.5 0 0 1 4 19.5z"/><path d="M8 7h8M8 11h6M8 15h4"/></svg>
+                        <span class="uch-tooltip">Session Logs</span>
+                    </button>
+                </div>
+            </div>
+
         </div>
+
+        <!-- Hidden buttons — functionality preserved, no UCH display -->
+        <button id="split-view-button" style="display:none"></button>
+
+        <!-- Dice Roller Popover -->
+        <div id="dice-panel" class="dice-popover">
+            <div class="dice-roller-container">
+                <div class="dice-selection">
+                    <button class="dice-button" data-dice="4">
+                        <div class="dice-wrapper">
+                            <img src="images/d_4.svg" alt="D4" />
+                            <span class="dice-label">D4</span>
+                        </div>
+                    </button>
+                    <button class="dice-button" data-dice="6">
+                        <div class="dice-wrapper">
+                            <img src="images/d_6.svg" alt="D6" />
+                            <span class="dice-label">D6</span>
+                        </div>
+                    </button>
+                    <button class="dice-button" data-dice="8">
+                        <div class="dice-wrapper">
+                            <img src="images/d_8.svg" alt="D8" />
+                            <span class="dice-label">D8</span>
+                        </div>
+                    </button>
+                    <button class="dice-button" data-dice="10">
+                        <div class="dice-wrapper">
+                            <img src="images/d_10.svg" alt="D10" />
+                            <span class="dice-label">D10</span>
+                        </div>
+                    </button>
+                    <button class="dice-button" data-dice="12">
+                        <div class="dice-wrapper">
+                            <img src="images/d_12.svg" alt="D12" />
+                            <span class="dice-label">D12</span>
+                        </div>
+                    </button>
+                    <button class="dice-button" data-dice="20">
+                        <div class="dice-wrapper">
+                            <img src="images/d_20.svg" alt="D20" />
+                            <span class="dice-label">D20</span>
+                        </div>
+                    </button>
+                </div>
+                <div class="dice-panel-actions">
+                    <button id="roll-button">Roll!</button>
+                    <button id="clear-selected-button">Clear All</button>
+                </div>
+                <div class="selected-dice-wrapper">
+                    <div class="selected-dice-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dice History Popover -->
+        <div id="dice-history-popover" class="dice-popover">
+            <div class="roll-results"></div>
+        </div>
+
     </div>
 
     <div id="main-row">
     <div id="main-column">
-    <div class="container fade-in">
-        <div class="tab-nav fade-in">
-            <button class="tab-button active" data-tab="tab4" draggable="true">Hazard</button>
-            <button class="tab-button" data-tab="tab8" draggable="true">Crank</button>
-            <button class="tab-button" data-tab="tab9" draggable="true">Feats & Magic</button>
-            <button class="tab-button" data-tab="tab6" draggable="true">Inventory</button>
-            <button class="tab-button" data-tab="tab3" draggable="true">Quests & Notes</button>
-            <button class="tab-button" data-tab="tab7" draggable="true">Session Logs</button>
-        </div>
-    </div>
 
 <div id="app-row">
 
@@ -71,161 +173,209 @@
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <div id="char-sheet-panel">
 
-            <!-- Landscape-only tab toggle — hidden in portrait via CSS -->
-            <nav id="char-sheet-nav" class="tab-nav">
-                <button class="tab-button active" data-tab="tab4">Hazard</button>
-                <button class="tab-button" data-tab="tab8">Crank</button>
-            </nav>
-
             <!-- Tab 4: Hazard Character Sheet -->
             <div class="tab-content active" id="tab4">
-                <div class="character-sheet-stats">
-                    <!-- Row 1 -->
-                    <div class="cs-panel stats-container-row TopLine">
+                <!-- CARD 1: Header -->
+                <div class="cs-card cs-header-card glass-surface">
+                    <div class="cs-header-name-row">
+                        <span class="character-name editable" contenteditable="true" data-storage-key="tab4_character_name">Hazard</span>
                         <div class="descriptor-box">
                             <span class="descriptor-label">Level</span>
                             <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_level">10</span>
+                        </div>
+                    </div>
+                    <div class="cs-header-details">
+                        <div class="descriptor-box">
+                            <span class="descriptor-label">Alignment</span>
+                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_alignment">Neutral</span>
                         </div>
                         <div class="descriptor-box">
                             <span class="descriptor-label">Class</span>
                             <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_class">Fighter</span>
                         </div>
                         <div class="descriptor-box">
-                            <span class="descriptor-label">Alignment</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_alignment">Neutral</span>
+                            <span class="descriptor-label">Species</span>
+                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_species">Human</span>
                         </div>
                         <div class="descriptor-box">
                             <span class="descriptor-label">Background</span>
                             <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_background">Soldier</span>
                         </div>
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Species</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab4_species">Human</span>
-                        </div>
                     </div>
+                </div>
 
-                    <!-- Row 2 -->
-                    <div class="stats-container-row">
-                        <div class="cs-panel stat-panel-row">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">HP</span>
-                                <div class="current-stat-display" style="display: flex; gap: 10px;">
-                                    <span class="large-value editable" contenteditable="true" data-storage-key="tab4_hp">86</span>
-                                    <span class="large-value" style="font-weight:100; opacity: 0.5;">/</span>
-                                    <span class="large-value editable" contenteditable="true" data-storage-key="tab4_maxhp">00</span>
+                <!-- CARD 2: HP -->
+                <div class="cs-card cs-hp-card glass-surface">
+                    <div class="hp-section">
+                            <div class="hp-section-header">
+                                <span class="hp-section-label">HP</span>
+                                <div class="hp-max-edit">
+                                    <span class="hp-max-prefix">Max:</span>
+                                    <span class="hp-max-val editable" contenteditable="true" data-storage-key="tab4_maxhp">00</span>
                                 </div>
                             </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Temp HP</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_temp_hp">+5</span>
+                            <div class="hp-bar-area">
+                                <div class="hp-bar-tint"></div>
+                                <div class="hp-bar-track">
+                                    <div class="hp-bar-fill"></div>
+                                    <div class="hp-bar-hl"></div>
+                                    <div class="hp-bar-temp"></div>
+                                    <div class="hp-bar-temp-hl"></div>
+                                </div>
+                                <div class="hp-bar-glow"></div>
+                                <div class="hp-bar-text"></div>
                             </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Hit Die</span>
-                                <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_hit_die">1d10</span>
-                                <div class="current-stat-display" style="display: flex; gap: 10px;">
-                                    <span class="stat-value editable" contenteditable="true" data-storage-key="tab4_hit_die_current">00</span>
-                                    <span class="stat-value" style="font-weight:100; opacity: 0.5;">/</span>
-                                    <span class="stat-value" data-storage-key="tab4_hit_die_max"></span>
-                                </div>                            </div>
+                            <div class="ds-panel">
+                                <div class="ds-trackers">
+                                    <div class="ds-group">
+                                        <span class="ds-group-label">Saves</span>
+                                        <div class="ds-circles">
+                                            <span class="ds-circle ds-success"></span>
+                                            <span class="ds-circle ds-success"></span>
+                                            <span class="ds-circle ds-success"></span>
+                                        </div>
+                                    </div>
+                                    <button class="ds-roll-btn">Death Save</button>
+                                    <div class="ds-group">
+                                        <span class="ds-group-label">Fails</span>
+                                        <div class="ds-circles">
+                                            <span class="ds-circle ds-fail"></span>
+                                            <span class="ds-circle ds-fail"></span>
+                                            <span class="ds-circle ds-fail"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="hp-input-row">
+                                <input class="hp-input-field" type="number" placeholder="0" min="0">
+                                <div class="hp-action-toggle">
+                                    <button class="hp-action-btn" data-action="dmg">Dmg</button>
+                                    <button class="hp-action-btn" data-action="heal">Heal</button>
+                                    <button class="hp-action-btn" data-action="temp">Temp</button>
+                                </div>
+                            </div>
+                            <div class="hp-section-sep"></div>
+                            <div class="hd-section">
+                                <div class="hd-top-row">
+                                    <span class="hd-label">Hit dice</span>
+                                    <div class="hd-info">
+                                        <span class="hd-type editable" contenteditable="true" data-storage-key="tab4_hit_die">1d10</span>
+                                        <span class="hd-remaining">
+                                            <span class="hd-current editable" contenteditable="true" data-storage-key="tab4_hit_die_current">00</span>
+                                            <span class="hd-divider">/</span>
+                                            <span class="hd-max" data-storage-key="tab4_hit_die_max"></span>
+                                            remaining
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="hd-roll-row">
+                                    <button class="hd-qty-btn hd-minus">−</button>
+                                    <div class="hd-qty-display">1</div>
+                                    <button class="hd-qty-btn hd-plus">+</button>
+                                    <button class="hd-roll-btn">Roll <span class="hd-roll-detail"></span></button>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3: Combat Stats -->
+                <div class="cs-card glass-surface">
+                    <div class="cs-combat-top">
+                        <div class="cs-ac-hero">
+                            <span class="stat-label">AC</span>
+                            <span class="cs-ac-val editable" contenteditable="true" data-storage-key="tab4_ac">18</span>
                         </div>
-                        <div class="cs-panel stat-panel-row">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">AC</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_ac">18</span>
+                        <div class="cs-ref-stats">
+                            <div class="cs-ref-row">
+                                <div class="cs-ref-item">
+                                    <span class="cs-ref-label">Initiative</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_initiative">+2</span>
+                                </div>
+                                <div class="cs-ref-item">
+                                    <span class="cs-ref-label">Proficiency</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_prof">+4</span>
+                                </div>
+                                <div class="cs-ref-item">
+                                    <span class="cs-ref-label">Speed</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_speed">30</span>
+                                </div>
                             </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Initiative</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_initiative">+2</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Prof</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_prof">+4</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Speed</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_speed">30</span>
+                            <div class="cs-ref-row">
+                                <div class="cs-ref-item cs-ref-spell">
+                                    <span class="cs-ref-label">Spell Save DC</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_spell_save">3</span>
+                                </div>
+                                <div class="cs-ref-item cs-ref-spell">
+                                    <span class="cs-ref-label">Spell Attack</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_spell_attack">3</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Row 3 -->
-                    <div class="stats-container-row">
-                        <div class="cs-panel stat-panel-row ModifiersRow">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">STR</span>
-                                <span class="stat-value cacluated" data-storage-key="tab4_str_bonus"></span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_str_score"></span>
-                            </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">DEX</span>
-                                <span class="stat-value cacluated" data-storage-key="tab4_dex_bonus"></span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_dex_score"></span>
-                            </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">CON</span>
-                                <span class="stat-value cacluated" data-storage-key="tab4_con_bonus"></span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_con_score"></span>
-                            </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">INT</span>
-                                <span class="stat-value cacluated" data-storage-key="tab4_int_bonus"></span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_int_score"></span>
-                            </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">WIS</span>
-                                <span class="stat-value cacluated" data-storage-key="tab4_wis_bonus"></span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_wis_score"></span>
-                            </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">CHA</span>
-                                <span class="stat-value cacluated" data-storage-key="tab4_cha_bonus"></span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_cha_score"></span>
-                            </div>
+                    <div class="cs-combat-sep"></div>
+                    <div class="cs-mods-row">
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">STR</span>
+                            <span class="stat-value cacluated" data-storage-key="tab4_str_bonus"></span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_str_score"></span>
                         </div>
-                        <div class="cs-panel stat-panel-row SpellSaveandAttackRow">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Spell Save</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_spell_save">3</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Spell Attack</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_spell_attack">3</span>
-                            </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">DEX</span>
+                            <span class="stat-value cacluated" data-storage-key="tab4_dex_bonus"></span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_dex_score"></span>
                         </div>
-                        <div class="cs-panel death-saves-box">
-                            <span class="stat-label">Death Saves</span>
-                            <div class="death-saves-row">
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab4_deathSave_1"></span>
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab4_deathSave_2"></span>
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab4_deathSave_3"></span>
-                            </div>
-                            <div class="death-saves-row">
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab4_deathSave_4"></span>
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab4_deathSave_5"></span>
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab4_deathSave_6"></span>
-                            </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">CON</span>
+                            <span class="stat-value cacluated" data-storage-key="tab4_con_bonus"></span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_con_score"></span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">INT</span>
+                            <span class="stat-value cacluated" data-storage-key="tab4_int_bonus"></span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_int_score"></span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">WIS</span>
+                            <span class="stat-value cacluated" data-storage-key="tab4_wis_bonus"></span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_wis_score"></span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">CHA</span>
+                            <span class="stat-value cacluated" data-storage-key="tab4_cha_bonus"></span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab4_cha_score"></span>
                         </div>
                     </div>
                 </div>
 
-                <div class="character-sheet-row">
-                    <div class="saving-throws-and-skills-column-wrapper">
-                        <div class="saving-throws-and-skills-column">
-                            <h3>Saving Throws</h3>
-                            <div class="saving-throws">
-                                <div class="save-row">
-                                    <span class="circle toggle-circle" data-storage-key="tab4_save_str_toggle"></span>
+                <div class="resources-strip glass-surface">
+                    <div class="spell-slot-section">
+                        <div class="spell-slot-group">
+                            <svg class="resources-strip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Suit Uses"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3z"/></svg>
+                            <div id="suit_uses_circles"></div>
+                        </div>
+                        <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">L1</span></div>
+                        <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">L2</span></div>
+                        <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">L3</span></div>
+                        <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">L4</span></div>
+                        <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">L5</span></div>
+                        <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">L6</span></div>
+                        <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">L7</span></div>
+                        <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">L8</span></div>
+                        <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">L9</span></div>
+                    </div>
+                    <div class="resources-strip-actions">
+                        <button id="edit_spell_slots_button" class="spell-slot-edit-btn" title="Edit spell slots">✎</button>
+                    </div>
+                </div>
+
+                <div class="cs-card cs-card-scrollable glass-surface">
+                    <div class="character-sheet-row">
+                        <div class="saving-throws-and-skills-column-wrapper scroll-fade">
+                            <div class="saving-throws-and-skills-column">
+                                <h3>Saving Throws</h3>
+                                <div class="saving-throws">
+                                    <div class="save-row">
+                                        <span class="circle toggle-circle" data-storage-key="tab4_save_str_toggle"></span>
                                     <span class="save-label">Strength</span>
                                     <span class="skill-plus calculated" data-storage-key="tab4_save_str"></span>
                                 </div>
@@ -352,153 +502,212 @@
                         </div>
                     </div>
                 </div>
+                </div>
+
+                <!-- CARD 5: Currency -->
+                <div class="cs-currency-card glass-surface">
+                    <div class="currency-vals-row">
+                        <div class="coin-pill" data-currency="gold">
+                            <div class="coin-icon coin-icon-gold"><span class="coin-icon-letter">G</span></div>
+                            <span class="coin-pill-num"></span>
+                            <input class="coin-pill-input" type="text" inputmode="numeric">
+                            <div class="coin-delta-popup"></div>
+                        </div>
+                        <div class="coin-pill" data-currency="silver">
+                            <div class="coin-icon coin-icon-silver"><span class="coin-icon-letter">S</span></div>
+                            <span class="coin-pill-num"></span>
+                            <input class="coin-pill-input" type="text" inputmode="numeric">
+                            <div class="coin-delta-popup"></div>
+                        </div>
+                        <div class="coin-pill" data-currency="copper">
+                            <div class="coin-icon coin-icon-copper"><span class="coin-icon-letter">C</span></div>
+                            <span class="coin-pill-num"></span>
+                            <input class="coin-pill-input" type="text" inputmode="numeric">
+                            <div class="coin-delta-popup"></div>
+                        </div>
+                    </div>
+                    <span class="currency-tooltip">Click to adjust · Drag up/down · Scroll</span>
+                </div>
             </div>
 
             <!-- Tab 8: Crank Character Sheet -->
             <div class="tab-content" id="tab8">
-                <div class="character-sheet-stats">
-                    <!-- Row 1 -->
-                    <div class="cs-panel stats-container-row TopLine">
+                <!-- CARD 1: Header -->
+                <div class="cs-card cs-header-card glass-surface">
+                    <div class="cs-header-name-row">
+                        <span class="character-name editable" contenteditable="true" data-storage-key="tab8_character_name">Crank</span>
                         <div class="descriptor-box">
                             <span class="descriptor-label">Level</span>
                             <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_level"></span>
+                        </div>
+                    </div>
+                    <div class="cs-header-details">
+                        <div class="descriptor-box">
+                            <span class="descriptor-label">Alignment</span>
+                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_alignment"></span>
                         </div>
                         <div class="descriptor-box">
                             <span class="descriptor-label">Class</span>
                             <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_class"></span>
                         </div>
                         <div class="descriptor-box">
-                            <span class="descriptor-label">Alignment</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_alignment"></span>
+                            <span class="descriptor-label">Species</span>
+                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_species"></span>
                         </div>
                         <div class="descriptor-box">
                             <span class="descriptor-label">Background</span>
                             <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_background"></span>
                         </div>
-                        <div class="descriptor-box">
-                            <span class="descriptor-label">Species</span>
-                            <span class="descriptor-value editable" contenteditable="true" data-storage-key="tab8_species"></span>
-                        </div>
                     </div>
+                </div>
 
-                    <!-- Row 2 -->
-                    <div class="stats-container-row">
-                        <div class="cs-panel stat-panel-row">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">HP</span>
-                                <div class="current-stat-display" style="display: flex; gap: 10px;">
-                                    <span class="large-value editable" contenteditable="true" data-storage-key="tab8_hp">00</span>
-                                    <span class="large-value" style="font-weight:100; opacity: 0.5;">/</span>
-                                    <span class="large-value editable" contenteditable="true" data-storage-key="tab8_maxhp">00</span>
+                <!-- CARD 2: HP -->
+                <div class="cs-card cs-hp-card glass-surface">
+                    <div class="hp-section">
+                            <div class="hp-section-header">
+                                <span class="hp-section-label">HP</span>
+                                <div class="hp-max-edit">
+                                    <span class="hp-max-prefix">Max:</span>
+                                    <span class="hp-max-val editable" contenteditable="true" data-storage-key="tab8_maxhp">00</span>
                                 </div>
                             </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Temp HP</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab8_temp_hp">0</span>
+                            <div class="hp-bar-area">
+                                <div class="hp-bar-tint"></div>
+                                <div class="hp-bar-track">
+                                    <div class="hp-bar-fill"></div>
+                                    <div class="hp-bar-hl"></div>
+                                    <div class="hp-bar-temp"></div>
+                                    <div class="hp-bar-temp-hl"></div>
+                                </div>
+                                <div class="hp-bar-glow"></div>
+                                <div class="hp-bar-text"></div>
                             </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Hit Die</span>
-                                <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die">00</span>
-                                <div class="current-stat-display" style="display: flex; gap: 10px;">
-                                    <span class="stat-value editable" contenteditable="true" data-storage-key="tab8_hit_die_current">00</span>
-                                    <span class="stat-value" style="font-weight:100; opacity: 0.5;">/</span>
-                                    <span class="stat-value" data-storage-key="tab8_hit_die_max"></span>
+                            <div class="ds-panel">
+                                <div class="ds-trackers">
+                                    <div class="ds-group">
+                                        <span class="ds-group-label">Saves</span>
+                                        <div class="ds-circles">
+                                            <span class="ds-circle ds-success"></span>
+                                            <span class="ds-circle ds-success"></span>
+                                            <span class="ds-circle ds-success"></span>
+                                        </div>
+                                    </div>
+                                    <button class="ds-roll-btn">Death Save</button>
+                                    <div class="ds-group">
+                                        <span class="ds-group-label">Fails</span>
+                                        <div class="ds-circles">
+                                            <span class="ds-circle ds-fail"></span>
+                                            <span class="ds-circle ds-fail"></span>
+                                            <span class="ds-circle ds-fail"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="hp-input-row">
+                                <input class="hp-input-field" type="number" placeholder="0" min="0">
+                                <div class="hp-action-toggle">
+                                    <button class="hp-action-btn" data-action="dmg">Dmg</button>
+                                    <button class="hp-action-btn" data-action="heal">Heal</button>
+                                    <button class="hp-action-btn" data-action="temp">Temp</button>
+                                </div>
+                            </div>
+                            <div class="hp-section-sep"></div>
+                            <div class="hd-section">
+                                <div class="hd-top-row">
+                                    <span class="hd-label">Hit dice</span>
+                                    <div class="hd-info">
+                                        <span class="hd-type editable" contenteditable="true" data-storage-key="tab8_hit_die">1d10</span>
+                                        <span class="hd-remaining">
+                                            <span class="hd-current editable" contenteditable="true" data-storage-key="tab8_hit_die_current">00</span>
+                                            <span class="hd-divider">/</span>
+                                            <span class="hd-max" data-storage-key="tab8_hit_die_max"></span>
+                                            remaining
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="hd-roll-row">
+                                    <button class="hd-qty-btn hd-minus">−</button>
+                                    <div class="hd-qty-display">1</div>
+                                    <button class="hd-qty-btn hd-plus">+</button>
+                                    <button class="hd-roll-btn">Roll <span class="hd-roll-detail"></span></button>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3: Combat Stats -->
+                <div class="cs-card glass-surface">
+                    <div class="cs-combat-top">
+                        <div class="cs-ac-hero">
+                            <span class="stat-label">AC</span>
+                            <span class="cs-ac-val editable" contenteditable="true" data-storage-key="tab4_ac">18</span>
+                        </div>
+                        <div class="cs-ref-stats">
+                            <div class="cs-ref-row">
+                                <div class="cs-ref-item">
+                                    <span class="cs-ref-label">Initiative</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_initiative">+2</span>
+                                </div>
+                                <div class="cs-ref-item">
+                                    <span class="cs-ref-label">Proficiency</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_prof">+4</span>
+                                </div>
+                                <div class="cs-ref-item">
+                                    <span class="cs-ref-label">Speed</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_speed">30</span>
+                                </div>
+                            </div>
+                            <div class="cs-ref-row">
+                                <div class="cs-ref-item cs-ref-spell">
+                                    <span class="cs-ref-label">Spell Save DC</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_spell_save">3</span>
+                                </div>
+                                <div class="cs-ref-item cs-ref-spell">
+                                    <span class="cs-ref-label">Spell Attack</span>
+                                    <span class="cs-ref-val editable" contenteditable="true" data-storage-key="tab4_spell_attack">3</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="cs-panel stat-panel-row">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">AC</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_ac">18</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Initiative</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_initiative">+2</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Prof</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_prof">+4</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Speed</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_speed">30</span>
-                            </div>
-                        </div>
                     </div>
-
-                    <!-- Row 3 -->
-                    <div class="stats-container-row">
-                        <div class="cs-panel stat-panel-row ModifiersRow">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">STR</span>
-                                <span class="stat-value calculated" data-storage-key="tab8_str_bonus">00</span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_str_score">0</span>
-                            </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">DEX</span>
-                                <span class="stat-value calculated" data-storage-key="tab8_dex_bonus">00</span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_dex_score">0</span>
-                            </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">CON</span>
-                                <span class="stat-value calculated" data-storage-key="tab8_con_bonus">00</span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_con_score">0</span>
-                            </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">INT</span>
-                                <span class="stat-value calculated" data-storage-key="tab8_int_bonus">00</span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_int_score">0</span>
-                            </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">WIS</span>
-                                <span class="stat-value calculated" data-storage-key="tab8_wis_bonus">00</span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_wis_score">0</span>
-                            </div>
-                            <div class="vertical-break" style="opacity: 0.15;"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">CHA</span>
-                                <span class="stat-value calculated" data-storage-key="tab8_cha_bonus">00</span>
-                                <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_cha_score">0</span>
-                            </div>
+                    <div class="cs-combat-sep"></div>
+                    <div class="cs-mods-row">
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">STR</span>
+                            <span class="stat-value calculated" data-storage-key="tab8_str_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_str_score">0</span>
                         </div>
-                        <div class="cs-panel stat-panel-row SpellSaveandAttackRow">
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Spell Save</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_spell_save">3</span>
-                            </div>
-                            <div class="vertical-break"></div>
-                            <div class="stat-panel-box">
-                                <span class="stat-label">Spell Attack</span>
-                                <span class="large-value editable" contenteditable="true" data-storage-key="tab4_spell_attack">3</span>
-                            </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">DEX</span>
+                            <span class="stat-value calculated" data-storage-key="tab8_dex_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_dex_score">0</span>
                         </div>
-                        <div class="cs-panel death-saves-box">
-                            <span class="stat-label">Death Saves</span>
-                            <div class="death-saves-row">
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab8_deathSave_1"></span>
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab8_deathSave_2"></span>
-                                <span class="circle deathSaveGreen toggle-circle" data-storage-key="tab8_deathSave_3"></span>
-                            </div>
-                            <div class="death-saves-row">
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab8_deathSave_4"></span>
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab8_deathSave_5"></span>
-                                <span class="circle deathSaveRed toggle-circle" data-storage-key="tab8_deathSave_6"></span>
-                            </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">CON</span>
+                            <span class="stat-value calculated" data-storage-key="tab8_con_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_con_score">0</span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">INT</span>
+                            <span class="stat-value calculated" data-storage-key="tab8_int_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_int_score">0</span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">WIS</span>
+                            <span class="stat-value calculated" data-storage-key="tab8_wis_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_wis_score">0</span>
+                        </div>
+                        <div class="cs-mod-col">
+                            <span class="cs-mod-label">CHA</span>
+                            <span class="stat-value calculated" data-storage-key="tab8_cha_bonus">00</span>
+                            <span class="stat-subvalue editable" contenteditable="true" data-storage-key="tab8_cha_score">0</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="character-sheet-row">
-                    <div class="saving-throws-and-skills-column-wrapper">
+                <!-- CARD 4: Saves & Skills -->
+                <div class="cs-card cs-card-scrollable glass-surface">
+                    <div class="character-sheet-row">
+                    <div class="saving-throws-and-skills-column-wrapper scroll-fade">
                         <div class="saving-throws-and-skills-column">
                             <h3>Saving Throws</h3>
                             <div class="saving-throws">
@@ -630,6 +839,7 @@
                         </div>
                     </div>
                 </div>
+                </div>
             </div>
 
         </div><!-- /#char-sheet-panel -->
@@ -640,101 +850,59 @@
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <!-- RIGHT PANEL — list tabs only                                   -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <div id="right-panel" class="fade-in">
-
-            <nav id="list-tab-nav" class="tab-nav">
-                <button class="tab-button" data-tab="tab9" draggable="false">Feats &amp; Magic</button>
-                <button class="tab-button" data-tab="tab6" draggable="false">Inventory</button>
-                <button class="tab-button" data-tab="tab3" draggable="false">Quests &amp; Notes</button>
-                <button class="tab-button" data-tab="tab7" draggable="false">Session Logs</button>
-            </nav>
+        <div id="right-panel">
 
             <!-- Tab 3: Quests & Notes -->
             <div class="tab-content" id="tab3">
                 <div class="notes-layout">
-                    <div class="notes-list-column">
-                        <div id="results_section_3" class="results-section"></div>
+                    <div class="notes-list-column frosted-glass">
+                        <div id="results_section_3" class="results-section scroll-fade"></div>
                     </div>
-                    <div class="notes-viewer results-section" id="notes_viewer"></div>
+                    <div class="notes-viewer results-section frosted-glass" id="notes_viewer"></div>
                 </div>
             </div>
 
             <!-- Tab 6: Inventory -->
             <div class="tab-content" id="tab6">
                 <div class="inventory-layout">
-                    <div class="inventory-list-column">
-                        <div id="results_section_6" class="results-section"></div>
+                    <div class="inventory-list-column frosted-glass">
+                        <div id="results_section_6" class="results-section scroll-fade"></div>
                     </div>
-                    <div class="inventory-viewer results-section" id="inventory_viewer"></div>
+                    <div class="inventory-viewer results-section frosted-glass" id="inventory_viewer"></div>
                 </div>
             </div>
 
             <!-- Tab 7: Session Logs -->
             <div class="tab-content" id="tab7">
                 <div class="session-log-layout">
-                    <div class="session-log-list-column">
+                    <div class="session-log-viewer frosted-glass" id="session_log_viewer"></div>
+                    <div class="session-log-list-column frosted-glass">
                         <div class="session-log-search-row">
-                            <button id="session_list_toggle" class="session-viewer-edit-btn" title="Hide list">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M15 18l-6-6 6-6"/>
-                                </svg>
-                            </button>
-                            <div class="search-container">
-                                <input id="search_input_7" class="search_input" type="text" placeholder="Search..." />
-                                <button id="clear_search_button_7" class="clear-search"><svg class="clear-icon" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg></button>
-                            </div>
-                            <button id="add_block_button_7" class="add-block-button green-button">+</button>
+                            <button id="add_block_button_7" class="add-block-button green-button" style="display:none">+</button>
                         </div>
-                    <div id="results_section_7" class="results-section"></div>
+                    <div id="results_section_7" class="results-section scroll-fade"></div>
                     </div>
-                    <div class="session-log-viewer" id="session_log_viewer"></div>
                 </div>
             </div>
             
             <!-- Tab 9: Feats & Magic -->
             <div class="tab-content" id="tab9">
-                <div class="resources-strip">
-                    <div class="spell-slot-section">
-                        <div class="spell-slot-group">
-                            <svg class="resources-strip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Suit Uses"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3z"/></svg>
-                            <div id="suit_uses_circles"></div>
-                        </div>
-                        <div class="spell-slot-group" data-group="1"><span class="spell-slot-title">L1</span></div>
-                        <div class="spell-slot-group" data-group="2"><span class="spell-slot-title">L2</span></div>
-                        <div class="spell-slot-group" data-group="3"><span class="spell-slot-title">L3</span></div>
-                        <div class="spell-slot-group" data-group="4"><span class="spell-slot-title">L4</span></div>
-                        <div class="spell-slot-group" data-group="5"><span class="spell-slot-title">L5</span></div>
-                        <div class="spell-slot-group" data-group="6"><span class="spell-slot-title">L6</span></div>
-                        <div class="spell-slot-group" data-group="7"><span class="spell-slot-title">L7</span></div>
-                        <div class="spell-slot-group" data-group="8"><span class="spell-slot-title">L8</span></div>
-                        <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">L9</span></div>
-                    </div>
-                    <div class="resources-strip-actions">
-                        <button id="long_rest_button" title="Long rest — refill all slots">
-                            <span class="lr-icon-wrap">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                            </span>
-                        </button>
-                        <button id="edit_spell_slots_button" class="add-block-button orange-button" title="Edit spell slots">✎</button>
-                    </div>
-                </div>
                 <div class="filter-and-results">
-                    <div id="results_section_9" class="results-section"></div>
+                    <div class="results-wrapper frosted-glass">
+                        <div id="results_section_9" class="results-section scroll-fade"></div>
+                    </div>
+
+                    <button class="filter-open-btn" data-tab="tab9" title="Show filters">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </button>
                     <div class="filter-divider"></div>
-                    <div class="filter-section-wrapper">
+                    <div class="filter-section-wrapper frosted-glass">
                         <div class="filter-panel-header">
                             <button id="clear_filters_button_9" class="clear_filters_button" title="Clear filters">✕</button>
-                        <div class="search-container">
-                            <input id="search_input_9" class="search_input" type="text" placeholder="Search by text" />
-                            <button id="clear_search_button_9" class="clear-search"><svg class="clear-icon" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/></svg></button>
                         </div>
-                            <button class="toggle-filter-button" data-tab="tab9" title="Hide filters">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 18l6-6-6-6"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <div id="filter_section_9" class="filter-section">
+                        <div id="filter_section_9" class="filter-section scroll-fade">
                             <div class="block-type-tags" id="character_type_tags_9"></div>
                             <div id="all_tags_container">
                                 <div id="dynamic_tags_section_9" class="tag-section"></div>
@@ -750,121 +918,51 @@
 
     </div><!-- /#main-column -->
 
-    <!-- Dice Panel — sibling of #main-column, both children of #main-row -->
-    <div id="dice-panel">
-        <div id="dice-panel-inner">
-            <div class="dice-roller-container">
-                <div class="dice-selection">
-                    <button class="dice-button" data-dice="4">
-                        <div class="dice-wrapper">
-                            <img src="images/d_4.svg" alt="D4" />
-                            <span class="dice-label">D4</span>
-                        </div>
-                    </button>
-                    <button class="dice-button" data-dice="6">
-                        <div class="dice-wrapper">
-                            <img src="images/d_6.svg" alt="D6" />
-                            <span class="dice-label">D6</span>
-                        </div>
-                    </button>
-                    <button class="dice-button" data-dice="8">
-                        <div class="dice-wrapper">
-                            <img src="images/d_8.svg" alt="D8" />
-                            <span class="dice-label">D8</span>
-                        </div>
-                    </button>
-                    <button class="dice-button" data-dice="10">
-                        <div class="dice-wrapper">
-                            <img src="images/d_10.svg" alt="D10" />
-                            <span class="dice-label">D10</span>
-                        </div>
-                    </button>
-                    <button class="dice-button" data-dice="12">
-                        <div class="dice-wrapper">
-                            <img src="images/d_12.svg" alt="D12" />
-                            <span class="dice-label">D12</span>
-                        </div>
-                    </button>
-                    <button class="dice-button" data-dice="20">
-                        <div class="dice-wrapper">
-                            <img src="images/d_20.svg" alt="D20" />
-                            <span class="dice-label">D20</span>
-                        </div>
-                    </button>
-                </div>
-                <div class="dice-panel-actions">
-                    <button id="roll-button">Roll!</button>
-                    <button id="clear-selected-button">Clear All</button>
-                </div>
-                <div class="selected-dice-wrapper">
-                    <div class="selected-dice-container"></div>
-                </div>
-                <div class="roll-results"></div>
-            </div>
-        </div>
-    </div>
     </div><!-- /#main-row -->
-    <!-- Menu Overlay Container -->
-    <div id="menu_overlay" class="menu-overlay">
-        <div class="menu-content">
-            <button id="menu_close_button" class="hero-button clear-button menu-panel-close">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M6 6l12 12M6 18L18 6" />
-                </svg>
-            </button>
-          <div class="overlay-buttons">
+    <!-- Menu Popover -->
+    <div id="menu_overlay" class="menu-popover">
+        <div class="menu-popover-buttons">
             <button id="upload_button" class="menu-item-button">
-              Upload 
-              <span class="button-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M12 4v16M8 8l4-4 4 4"/>
-                </svg>
-              </span>
+                Upload
+                <span class="button-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M12 4v16M8 8l4-4 4 4"/>
+                    </svg>
+                </span>
             </button>
-      
             <button id="download_button" class="menu-item-button">
-              Download 
-              <span class="button-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M12 4v16M8 16l4 4 4-4"/>
-                </svg>
-              </span>
+                Download
+                <span class="button-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M12 4v16M8 16l4 4 4-4"/>
+                    </svg>
+                </span>
             </button>
-      
             <button id="undo_delete_button" class="menu-item-button">
-                Undo Last Delete 
+                Undo Last Delete
             </button>
-
             <button id="bin_button" class="menu-item-button bin-button">
-              Clear All Data 
-              <span class="button-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" stroke-width="3">
-                  <path d="M4 4L20 20"/>
-                  <path d="M4 20L20 4"/>
-                </svg>
-              </span>
+                Clear All Data
+                <span class="button-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" stroke-width="3">
+                        <path d="M4 4L20 20"/>
+                        <path d="M4 20L20 4"/>
+                    </svg>
+                </span>
             </button>
-          </div>
-              
-        <div class="menu_footer">
-            <nav>
-            <ul>
-                <li><a href="#About">About</a></li>
-                <li><a href="#Contact">Contact</a></li>
-            </ul>
-            </nav>
-        </div>
         </div>
     </div>
 
-    <!-- Overlay for Clearing Data -->
-    <div class="cleardata-overlay">
+
+
+    <!-- Overlay for Long Rest -->
+    <div class="cleardata-overlay long-rest-overlay">
         <div class="cleardata-form">
-            <h2>Clear All Data</h2>
-            <p><br>Are you sure you want to clear all data?<br> </p> <p style="text-transform: uppercase; font-weight: bold; letter-spacing: 1px;"><br> This action cannot be undone.</p><p> <br> If you want to retain any information in the character sheet first use the download function to save the data so that it can reuploaded later.</p>
+            <h2>Long Rest</h2>
+            <p>Refill all spell slots and suit uses?</p>
             <div class="overlay-controls">
-                <button id="confirm_clear_button" class="button green-button">Yes</button>
-                <button id="cancel_clear_button" class="button red-button">No</button>
+                <button id="confirm_long_rest_button" class="button green-button">Yes</button>
+                <button id="cancel_long_rest_button" class="button red-button">No</button>
             </div>
         </div>
     </div>
@@ -901,6 +999,21 @@
                 <button id="cancel_remove_button" class="button red-button">No</button>
             </div>
         </div>
+    </div>
+
+    <!-- Latest roll result — appears briefly after any roll -->
+    <div id="dice-latest-roll" class="dice-popover"></div>
+
+    <!-- Floating dice pill — bottom right corner -->
+    <div id="dice-floating-pill">
+        <button id="dice-history-button" class="uch-btn uch-pill-btn">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+            <span class="uch-tooltip uch-tooltip-above">Roll History</span>
+        </button>
+        <button id="dice-menu-button" class="uch-btn uch-pill-btn">
+            <img src="images/Dice_Button_v2.svg" alt="D20" style="width:42px;height:42px;" />
+            <span class="uch-tooltip uch-tooltip-above">Dice Roller</span>
+        </button>
     </div>
 
     <script type="module" src="js/tagConfig.js"></script>

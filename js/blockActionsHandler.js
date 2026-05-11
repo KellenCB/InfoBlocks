@@ -31,7 +31,7 @@ export const blockActionsHandler = (() => {
     document.addEventListener("DOMContentLoaded", initUndoLastDelete);
 
     // ── Delete confirmation popup (replaces the full-screen overlay) ──
-    const showDeletePopup = (blockId, clickEvent) => {
+    const showDeletePopup = (blockId, clickEvent, onConfirmOverride) => {
         document.getElementById('delete-confirm-popup')?.remove();
 
         const popup = document.createElement('div');
@@ -93,13 +93,17 @@ export const blockActionsHandler = (() => {
 
         yesBtn.addEventListener('click', () => {
             if (!yesArmed) return;
-            const deletedTab   = appManager.getActiveTab();
-            const deletedBlock = appManager.removeBlock(blockId);
-            lastDeletedBlock   = { tab: deletedTab, block: deletedBlock };
-            reapplySearchAndFilters();
+            if (onConfirmOverride) {
+                onConfirmOverride(blockId);
+            } else {
+                const deletedTab   = appManager.getActiveTab();
+                const deletedBlock = appManager.removeBlock(blockId);
+                lastDeletedBlock   = { tab: deletedTab, block: deletedBlock };
+                reapplySearchAndFilters();
+            }
             dismiss();
         });
-
+        
         popup.querySelector('.delete-confirm-no').addEventListener('click', dismiss);
     };
 
@@ -245,7 +249,7 @@ export const blockActionsHandler = (() => {
         console.log("✅ Block action handlers attached to all tabs!");
     };
     
-    return { attachBlockActions, recordLastDeleted };
+    return { attachBlockActions, recordLastDeleted, showDeletePopup };
 
 })();
 

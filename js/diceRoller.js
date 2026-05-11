@@ -258,7 +258,7 @@ export function initDiceRoller() {
   const selectedDiceContainer = container.querySelector(".selected-dice-container");
   const rollButton            = container.querySelector("#roll-button");
   const clearButton           = container.querySelector("#clear-selected-button");
-  const rollResult            = container.querySelector(".roll-results");
+  const rollResult            = document.querySelector("#dice-history-popover .roll-results");
 
   // Refresh onclick closures after any mutation so indices stay correct.
   // Only sets a property — no DOM mutations, no repaints.
@@ -330,7 +330,7 @@ export function initDiceRoller() {
         const results = await Promise.race([
             box.roll(notation),
             new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Roll timed out')), 10000)
+                setTimeout(() => reject(new Error('Roll timed out')), 6000)
             )
         ]);
 
@@ -372,7 +372,7 @@ export function initDiceRoller() {
           const results = await Promise.race([
               box.roll(notation),
               new Promise((_, reject) =>
-                  setTimeout(() => reject(new Error('Roll timed out')), 10000)
+                  setTimeout(() => reject(new Error('Roll timed out')), 6000)
               )
           ]);
           const rolls   = results.map(r => r.value);
@@ -380,6 +380,7 @@ export function initDiceRoller() {
           const total   = rolls.reduce((a, b) => a + b, 0);
           appendHistoryEntry(rolls, sides, total, modifier, label);
           fadeOutDice();
+          return { rolls, total };
       } catch (err) {
           console.error('Dice-box error:', err);
           appendResult('Error rolling dice — check console.');
@@ -413,7 +414,7 @@ export function initDiceRoller() {
 
   function appendHistoryEntry(rolls, sides, total, modifier = 0, label = null) {
     const entry = document.createElement("div");
-    entry.classList.add("roll-history-entry", "new-entry");
+    entry.classList.add("roll-history-entry");
 
     const rollsContainer = document.createElement("div");
     rollsContainer.classList.add("rolls-container");
@@ -443,39 +444,34 @@ export function initDiceRoller() {
     entry.appendChild(rollsContainer);
     entry.appendChild(totalDiv);
     insertHistoryEntry(entry);
-
-    entry.addEventListener("animationend", () => entry.classList.remove("new-entry"));
   }
   
   function insertHistoryEntry(entry) {
-    entry.style.position   = 'absolute';
-    entry.style.visibility = 'hidden';
-    rollResult.insertBefore(entry, rollResult.children[1]);
-    const newHeight = entry.offsetHeight;
-    entry.style.removeProperty('position');
-    entry.style.removeProperty('visibility');
+    // Mark as latest roll (remove from previous)
+    rollResult.querySelector('.latest-roll')?.classList.remove('latest-roll');
+    entry.classList.add('latest-roll');
 
-    const others = Array.from(rollResult.querySelectorAll(".roll-history-entry")).slice(1);
-    others.forEach(el => { el.style.transform = `translateY(${newHeight}px)`; });
-    requestAnimationFrame(() => others.forEach(el => { el.style.transform = ''; }));
+    // Prepend — newest always first
+    rollResult.prepend(entry);
 
-    entry.style.transform = `translateY(-${newHeight}px)`;
-    entry.style.opacity   = '0';
-    requestAnimationFrame(() => {
-      entry.style.transform = '';
-      entry.style.opacity   = '1';
-    });
-
-    while (rollResult.children.length > 1 + 5) {
-      rollResult.removeChild(rollResult.lastChild);
+    // Trim old entries
+    const entries = rollResult.querySelectorAll('.roll-history-entry');
+    if (entries.length > 20) {
+      for (let i = 20; i < entries.length; i++) entries[i].remove();
     }
+
+    // Notify the app that a roll completed
+    document.dispatchEvent(new CustomEvent('diceRolled'));
   }
 }
 
 /* ── Keyboard shortcuts ─────────────────────────────────────────────────────── */
 document.addEventListener('keydown', (e) => {
   const panel = document.getElementById('dice-panel');
-  if (!panel?.classList.contains('open')) return;
+  const historyPanel = document.getElementById('dice-history-popover');
+  const rollerOpen = panel?.classList.contains('open');
+  const historyOpen = historyPanel?.classList.contains('open');
+  if (!rollerOpen && !historyOpen) return;
   if (e.key === 'Escape') {
     const overlayOpen = document.querySelector(
       '.cleardata-overlay.show, .remove-block-overlay.show, ' +
@@ -483,10 +479,16 @@ document.addEventListener('keydown', (e) => {
     );
     if (overlayOpen) return;
     e.preventDefault();
-    panel.classList.remove('open');
-    document.getElementById('dice-menu-button')?.classList.remove('active');
+    if (rollerOpen) {
+        panel.classList.remove('open');
+        document.getElementById('dice-menu-button')?.classList.remove('active');
+    }
+    if (historyOpen) {
+        historyPanel.classList.remove('open');
+        document.getElementById('dice-history-button')?.classList.remove('active');
+    }
     document.activeElement.blur();
-  } else if (e.key === 'Enter') {
+  } else if (e.key === 'Enter' && rollerOpen) {
     // Don't roll if any overlay is open
     const overlayOpen = document.querySelector(
       '.cleardata-overlay.show, .remove-block-overlay.show, ' +
@@ -754,9 +756,6 @@ document.addEventListener('click', async (e) => {
     const sides    = isHit ? 20  : parseInt(btn.dataset.sides, 10);
 
     const dicePanel = document.getElementById('dice-panel');
-    if (dicePanel && !dicePanel.classList.contains('open')) {
-        document.getElementById('dice-menu-button')?.click();
-    }
 
     try {
         await rollDice([{ qty, sides }], modifier, label);

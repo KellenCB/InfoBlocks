@@ -412,7 +412,7 @@ export const blockTemplate = (block, tab = "tab4") => {
 
         const bookStyle = isTab3Book ? ` style="--book-accent:${bookAccentHex};"` : '';
         return `
-        <div class="block ${viewState}${(block.pinned && !isTab3) ? ' pinned' : ''}${questClass}${mapClass}${bookClass}" data-id="${block.id}"${bookStyle}>
+            <div class="block ${viewState}${(block.pinned && !isTab3) ? ' pinned' : ''}${questClass}${mapClass}${bookClass}" data-id="${block.id}"${bookStyle}>
             ${content}
         </div>
     `;

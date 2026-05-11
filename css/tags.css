@@ -208,7 +208,7 @@
 
 .filter-section .tag-accordion-group {
     display: block;
-    background-color: var(--gray-300);
+    background-color: var(--gray-350);
     border-radius: 13px;
     padding: 2px;
 }
