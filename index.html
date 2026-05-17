@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="./css/splitView.css">
     <link rel="stylesheet" href="./css/diceRoller.css">
     <link rel="stylesheet" href="./css/CharacterSheet.css">
+    <link rel="stylesheet" href="./css/inventoryBag.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
@@ -941,6 +942,15 @@
             <button id="undo_delete_button" class="menu-item-button">
                 Undo Last Delete
             </button>
+            <button id="settings_button" class="menu-item-button">
+                Settings
+                <span class="button-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </span>
+            </button>
             <button id="bin_button" class="menu-item-button bin-button">
                 Clear All Data
                 <span class="button-icon">
@@ -1023,6 +1033,7 @@
     <script type="module" src="js/filterManager.js"></script>
     <script type="module" src="js/uiHandlers.js"></script>
     <script type="module" src="js/diceRoller.js"></script>
+    <script type="module" src="js/inventoryBag.js"></script>
 
 </body>
 </html>

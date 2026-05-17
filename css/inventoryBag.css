@@ -1,0 +1,591 @@
+/* ==================================================================*/
+/* ==================== INVENTORY BAG MODE =========================*/
+/* ==================================================================*/
+
+/* ── Layout overrides ─────────────────────────────────────────────── */
+
+.inv-bag-mode .inventory-viewer {
+  display: none !important;
+}
+
+.inv-bag-mode .inventory-list-column {
+  width: 100% !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.inv-bag-mode .results-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Filter bar ───────────────────────────────────────────────────── */
+
+.bfb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 0 8px;
+  flex-wrap: wrap;
+}
+
+.bf {
+    min-height: 28px;
+    padding: 4px 6px;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .05);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+    transition: all .15s;
+    font-size: 12px;
+    color: #555;
+    font-family: inherit;
+    gap: 6px;
+}
+
+.bf:hover {
+  background: rgba(255, 255, 255, .08);
+}
+
+.bf svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: #555;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bf.on {
+  background: rgba(76, 175, 80, .12);
+  border-color: rgba(76, 175, 80, .25);
+  color: #4CAF50;
+}
+
+.bf.on svg {
+  stroke: #4CAF50;
+}
+
+.bf .bfc {
+  min-width: 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .06);
+  font-size: 10px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+}
+
+.bf.on .bfc {
+  background: rgba(76, 175, 80, .18);
+  color: #4CAF50;
+}
+
+.bfd {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, .04);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* ── Type dropdown ────────────────────────────────────────────────── */
+
+.bf-dd {
+  position: relative;
+}
+
+.bf-dd-chev {
+  width: 8px;
+  height: 8px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  margin-left: 2px;
+  transition: transform .15s;
+}
+
+
+
+.bf-dd-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: rgba(20, 20, 20, .97);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+  padding: 4px;
+  min-width: 140px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.bf-dd-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #888;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  transition: background .1s;
+  text-align: left;
+  gap: 6px;
+}
+
+.bf-dd-item:hover {
+  background: rgba(255, 255, 255, .06);
+}
+
+.bf-dd-item.on {
+  color: #4CAF50;
+}
+
+.bf-dd-cnt {
+  min-width: 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .05);
+  font-size: 10px;
+  color: #555;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+}
+
+.bf-dd-item.on .bf-dd-cnt {
+  background: rgba(76, 175, 80, .15);
+  color: #4CAF50;
+}
+
+/* ── Attunement tracker ───────────────────────────────────────────── */
+
+.bat {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  background: rgba(6, 173, 228, .08);
+  border: 1px solid rgba(6, 173, 228, .15);
+  border-radius: 8px;
+  font-size: 10px;
+  color: #06ade4;
+}
+
+.bat svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* ── Bag container & physics canvas ───────────────────────────────── */
+
+.bcn {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.bcn > canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.bil {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Bag items ────────────────────────────────────────────────────── */
+
+.bi {
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.bc {
+  position: absolute;
+  border-radius: 2px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bc svg {
+  width: 100%;
+  height: 100%;
+  padding: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Popover layer & popup ────────────────────────────────────────── */
+
+.bpl {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+}
+
+.bpp {
+  position: absolute;
+  background: rgba(20, 20, 20, .96);
+  border: .5px solid rgba(255, 255, 255, .12);
+  border-radius: 10px;
+  padding: 13px;
+  width: 240px;
+  pointer-events: auto;
+  z-index: 61;
+}
+
+.bpp-x {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  color: #555;
+  cursor: pointer;
+  font-size: 14px;
+  background: none;
+  border: none;
+}
+
+.bpp-n {
+  font-size: 14px;
+  color: #fff;
+  font-weight: 500;
+  margin-bottom: 3px;
+}
+
+.bpp-t {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 9px;
+  margin-bottom: 6px;
+}
+
+.bpp-b {
+  font-size: 11px;
+  color: #888;
+  line-height: 1.5;
+  max-height: 120px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.bpp-tg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.bpp-tg span {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 8px;
+  background: rgba(255, 255, 255, .05);
+  color: #777;
+}
+
+.bpp-s {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 10px;
+}
+
+.bpp-s span {
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+/* ── Empty state ──────────────────────────────────────────────────── */
+
+.bem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--gray-600);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* ── Add button ───────────────────────────────────────────────────── */
+
+.bag-add-btn {
+  margin-left: 4px;
+  background: rgba(76, 175, 80, .15) !important;
+  border-color: rgba(76, 175, 80, .25) !important;
+}
+
+.bag-add-btn svg {
+  stroke: #4CAF50 !important;
+}
+
+/* ── Overlay (add / edit) ─────────────────────────────────────────── */
+
+.bag-ov {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .6);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 9999;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.bag-ov-card {
+  background: var(--gray-150);
+  border-radius: 12px;
+  border: .5px solid rgba(255, 255, 255, .08);
+  padding: 16px;
+  width: 320px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bag-ov-title {
+  font-size: 15px;
+  color: var(--gray-900);
+  font-weight: 500;
+}
+
+.bag-ov-label {
+  font-size: 9px;
+  color: var(--gray-600);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.bag-ov-input {
+  width: 100%;
+  height: 32px;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .06);
+  border-radius: 6px;
+  padding: 0 10px;
+  color: var(--gray-850);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+
+.bag-ov-input:focus {
+  border-color: rgba(255, 255, 255, .15);
+}
+
+.bag-ov-textarea {
+  width: 100%;
+  min-height: 50px;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .06);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--gray-850);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+}
+
+/* ── Overlay — category buttons ───────────────────────────────────── */
+
+.bag-ov-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.bag-ov-cat {
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, .06);
+  background: rgba(255, 255, 255, .03);
+  color: var(--gray-600);
+  font-family: inherit;
+}
+
+/* ── Overlay — toggles ────────────────────────────────────────────── */
+
+.bag-ov-toggles {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.bag-ov-tgl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--gray-700);
+}
+
+.bag-ov-tgl input {
+  accent-color: var(--color-green);
+}
+
+/* ── Overlay — drawing canvas ─────────────────────────────────────── */
+
+.bag-ov-cw {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.bag-ov-da {
+  position: relative;
+  display: inline-block;
+}
+
+.bag-ov-da canvas {
+  border-radius: 5px;
+  cursor: crosshair;
+  touch-action: none;
+  z-index: 2;
+  position: relative;
+}
+
+.bag-ov-da .canvas-container {
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.bag-ov-go {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.bag-ov-gc-wrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.bag-ov-gc {
+  position: absolute;
+  transition: background .12s;
+  border: 1px solid rgba(255, 255, 255, .03) !important;
+}
+
+/* ── Overlay — drawing tools ──────────────────────────────────────── */
+
+.bag-ov-tw {
+  display: flex;
+  gap: 3px;
+}
+
+.bag-ov-tb {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, .06);
+  background: rgba(255, 255, 255, .03);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-600);
+  font-size: 12px;
+}
+
+.bag-ov-tb.on {
+  border-color: rgba(76, 175, 80, .5) !important;
+  background: rgba(76, 175, 80, .2) !important;
+  color: #4CAF50 !important;
+}
+
+.bag-ov-dd {
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ── Overlay — cell detection info ────────────────────────────────── */
+
+.bag-ov-det {
+  font-size: 10px;
+  color: var(--gray-700);
+  text-align: center;
+}
+
+.bag-ov-det b {
+  color: #4CAF50;
+}
+
+.bag-ov-det.em {
+  color: var(--gray-500);
+}
+
+/* ── Overlay — action buttons ─────────────────────────────────────── */
+
+.bag-ov-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.bag-ov-btn {
+  flex: 1;
+  padding: 9px;
+  border-radius: 7px;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  border: none;
+}
+
+.bag-ov-sv {
+  background: rgba(76, 175, 80, .25);
+  color: #4CAF50;
+}
+
+.bag-ov-cn {
+  background: rgba(255, 255, 255, .04);
+  color: var(--gray-700);
+  border: 1px solid rgba(255, 255, 255, .06);
+}

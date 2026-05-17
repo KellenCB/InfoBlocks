@@ -5,6 +5,7 @@ import { applyInlineDiceRolls } from './diceRoller.js';
 import { filterManager } from './filterManager.js';
 import { blockActionsHandler } from './blockActionsHandler.js';
 import { isSwipeGestureActive } from './swipeGesture.js';
+import { inventoryBag } from './inventoryBag.js';
 
 const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
 
@@ -712,7 +713,68 @@ binButtons.forEach(binButton => {
         });
       });
     });
-    
+
+    // ── Settings button handler ───────────────────────────────────
+    const settingsBtn = document.getElementById('settings_button');
+    if (settingsBtn && !settingsBtn.dataset.settingsListenerAttached) {
+      settingsBtn.dataset.settingsListenerAttached = 'true';
+      settingsBtn.addEventListener('click', () => {
+        const existing = document.getElementById('settings-panel');
+        if (existing) {
+          existing.style.height = existing.scrollHeight + 'px';
+          existing.offsetHeight;
+          existing.classList.remove('visible');
+          existing.style.height = '0';
+          existing.addEventListener('transitionend', () => existing.remove(), { once: true });
+          setTimeout(() => existing.remove(), 300);
+          return;
+        }
+
+        // Close the clear-data-confirm panel if it's open
+        const clearPanel = document.getElementById('clear-data-confirm');
+        if (clearPanel) clearPanel.remove();
+
+        const bagModeOn = localStorage.getItem('inventoryBagMode') === 'true';
+
+        const panel = document.createElement('div');
+        panel.id = 'settings-panel';
+        panel.className = 'settings-panel';
+        panel.innerHTML = `
+          <span class="settings-panel-title">Settings</span>
+          <div class="settings-row">
+            <span class="settings-row-label">New Inventory</span>
+            <label class="settings-toggle">
+              <input type="checkbox" id="inventory_bag_toggle" ${bagModeOn ? 'checked' : ''}>
+              <span class="settings-toggle-slider"></span>
+            </label>
+          </div>
+        `;
+
+        const menuButtons = settingsBtn.closest('.menu-popover-buttons');
+        menuButtons.after(panel);
+
+        // Animate open
+        panel.classList.add('visible');
+        const targetHeight = panel.scrollHeight;
+        panel.style.height = '0';
+        panel.offsetHeight;
+        panel.style.height = targetHeight + 'px';
+
+        panel.addEventListener('transitionend', () => {
+          panel.style.height = 'auto';
+        }, { once: true });
+
+        // Toggle change handler
+        const toggle = panel.querySelector('#inventory_bag_toggle');
+        toggle.addEventListener('change', () => {
+          localStorage.setItem('inventoryBagMode', toggle.checked ? 'true' : 'false');
+          if (appManager.getActiveTab() === 'tab6') {
+            appManager.renderBlocks('tab6');
+          }
+        });
+      });
+    }
+
     console.log("✅ Action button event listeners attached");
   };
 
@@ -2071,6 +2133,10 @@ const applyPendingBlockAnim = () => {
   };
 
   const startInventoryAdd = () => {
+      if (inventoryBag.isEnabled()) {
+          inventoryBag.showAddOverlay();
+          return;
+      }
       if (inventoryEditMode) return;
       const viewer = document.getElementById('inventory_viewer');
       if (!viewer) return;
@@ -3866,7 +3932,13 @@ const applyPendingBlockAnim = () => {
 
         // ── Inventory has its own sectioned render path ───────────────────
     if (tab === 'tab6') {
-        renderInventory(filteredBlocks);
+        if (inventoryBag.isEnabled()) {
+            inventoryBag.render(filteredBlocks);
+        } else {
+            const bagLayout = document.querySelector('#tab6 .inventory-layout');
+            if (bagLayout) bagLayout.classList.remove('inv-bag-mode');
+            renderInventory(filteredBlocks);
+        }
         return;
     }
 
