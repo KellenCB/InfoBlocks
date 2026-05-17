@@ -371,7 +371,7 @@
   border-radius: 12px;
   border: .5px solid rgba(255, 255, 255, .08);
   padding: 16px;
-  width: 320px;
+  width: min(320px, calc(100vw - 20px));
   margin: auto;
   display: flex;
   flex-direction: column;
@@ -460,6 +460,50 @@
 
 .bag-ov-tgl input {
   accent-color: var(--color-green);
+}
+
+/* ── Overlay — inventory-style toggles (attune / equip) ───────────── */
+
+.bag-ov-card .inventory-edit-toggles {
+  gap: 4px 12px;
+}
+
+.bag-ov-card .inv-toggle {
+  font-size: 11px;
+  gap: 7px;
+}
+
+.bag-ov-card .inv-track {
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+}
+
+.bag-ov-card .inv-thumb {
+  width: 12px;
+  height: 12px;
+  top: 2px;
+  left: 2px;
+}
+
+.bag-ov-card .inv-toggle input[type="checkbox"]:checked ~ .inv-track .inv-thumb {
+  transform: translateX(14px);
+}
+
+.bag-ov-card .inv-state-btn {
+  font-size: 11px;
+  gap: 4px;
+  padding: 3px 6px;
+}
+
+.bag-ov-card .inv-state-btn.inv-state-chain svg {
+  width: 13px;
+  height: 13px;
+}
+
+.bag-ov-card .inv-state-btn.inv-state-hand svg {
+  width: 15px;
+  height: 15px;
 }
 
 /* ── Overlay — drawing canvas ─────────────────────────────────────── */
@@ -588,4 +632,77 @@
   background: rgba(255, 255, 255, .04);
   color: var(--gray-700);
   border: 1px solid rgba(255, 255, 255, .06);
+}
+
+/* ── Overlay — responsive two-column layout ───────────────────────── */
+
+.bag-ov-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bag-ov-left,
+.bag-ov-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bag-ov-right {
+  overflow: hidden;
+}
+
+@media (min-width: 840px) {
+  .bag-ov-card.bag-ov-wide {
+    max-width: 760px;
+    width: 92vw;
+  }
+
+  .bag-ov-layout {
+    flex-direction: row;
+    gap: 24px;
+  }
+
+  .bag-ov-left {
+    flex: 0 0 260px;
+  }
+
+  .bag-ov-right {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Tools overlay on left edge of canvas in wide mode */
+  .bag-ov-right .bag-ov-cw {
+    position: relative;
+  }
+
+  .bag-ov-right .bag-ov-tw {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    flex-direction: column;
+    gap: 2px;
+    z-index: 10;
+    background: rgba(20, 20, 20, .55);
+    border-radius: 6px;
+    padding: 3px;
+  }
+
+  /* Hide cell-count line in wide mode */
+  .bag-ov-right .bag-ov-det {
+    display: none;
+  }
+
+  /* Description box fills remaining left-column height */
+  .bag-ov-left > div:has(.bag-ov-textarea) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bag-ov-left .bag-ov-textarea {
+    flex: 1;
+  }
 }

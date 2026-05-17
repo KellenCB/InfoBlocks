@@ -134,7 +134,12 @@ export const inventoryBag = (() => {
     ctx.strokeStyle='rgba(110,85,45,.12)';ctx.lineWidth=1.5;ctx.lineJoin='round';ctx.stroke();
   }
 
+  const _cleanedImageCache = new Map();
   function cleanCellImage(src, callback) {
+      if (_cleanedImageCache.has(src)) {
+        callback(_cleanedImageCache.get(src));
+        return;
+      }
       const img = new Image();
       img.onload = () => {
         const c = document.createElement('canvas');
@@ -143,13 +148,14 @@ export const inventoryBag = (() => {
         ctx.drawImage(img, 0, 0);
         const d = ctx.getImageData(0, 0, c.width, c.height);
         for (let i = 0; i < d.data.length; i += 4) {
-          // If pixel is close to the old dark background (20,20,20), make transparent
           if (d.data[i] < 35 && d.data[i+1] < 35 && d.data[i+2] < 35) {
             d.data[i+3] = 0;
           }
         }
         ctx.putImageData(d, 0, 0);
-        callback(c.toDataURL('image/png'));
+        const cleanSrc = c.toDataURL('image/png');
+        _cleanedImageCache.set(src, cleanSrc);
+        callback(cleanSrc);
       };
       img.src = src;
     }
@@ -157,16 +163,15 @@ export const inventoryBag = (() => {
   function mkEl(item, u) {
     const pw = item.bb.gw*u, ph = item.bb.gh*u;
     const w = document.createElement('div'); w.className = 'bi'; w.style.width=pw+'px'; w.style.height=ph+'px';
+    w._baseUnit = u;
     const bdrClr = stClr(item.block, 0.25);
     const bg = stClr(item.block,.06), dc = stClr(item.block,.55);
     const vw = item.gw<=2?item.gw*32:item.gw*28, vh = item.gh<=2?item.gh*32:item.gh*28;
-    // Build a set of occupied cells for neighbor checks
     const cellSet = new Set(item.cells.map(c => c.r+','+c.c));
     item.cells.forEach(c => {
       const d = document.createElement('div'); d.className='bc';
       d.style.left=((c.c-item.bb.c1)*u)+'px'; d.style.top=((c.r-item.bb.r1)*u)+'px';
       d.style.width=u+'px'; d.style.height=u+'px'; d.style.background=bg;
-      // Border only on outer edges
       const bT = !cellSet.has((c.r-1)+','+c.c) ? '1px solid '+bdrClr : 'none';
       const bR = !cellSet.has(c.r+','+(c.c+1)) ? '1px solid '+bdrClr : 'none';
       const bB = !cellSet.has((c.r+1)+','+c.c) ? '1px solid '+bdrClr : 'none';
@@ -176,7 +181,8 @@ export const inventoryBag = (() => {
         const img = document.createElement('img');
         img.style.cssText='width:100%;height:100%;display:block;pointer-events:none;position:relative;z-index:1';
         cleanCellImage(item.block.bagCellImgs[c.r+','+c.c], (cleanSrc) => { img.src = cleanSrc; });
-        d.appendChild(img);      } else {
+        d.appendChild(img);
+      } else {
         d.innerHTML='<svg viewBox="'+((c.c-item.bb.c1)*32)+' '+((c.r-item.bb.r1)*32)+' 32 32"><path d="'+item.cfg.ic+'" fill="none" stroke="'+dc+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       }
       w.appendChild(d);
@@ -200,7 +206,7 @@ export const inventoryBag = (() => {
     const r = el.getBoundingClientRect();
     tipEl.style.left = (r.left + r.width / 2 - tipEl.offsetWidth / 2) + 'px';
     tipEl.style.top = (r.top - tipEl.offsetHeight - 6) + 'px';
-    tipEl.offsetHeight; // force reflow
+    tipEl.offsetHeight;
     tipEl.style.opacity = '1';
   }
   function hideTip() {
@@ -209,7 +215,7 @@ export const inventoryBag = (() => {
       tipEl = null;
       el.style.opacity = '0';
       el.addEventListener('transitionend', () => el.remove(), { once: true });
-      setTimeout(() => el.remove(), 200); // fallback
+      setTimeout(() => el.remove(), 200);
     }
   }
 
@@ -223,9 +229,8 @@ export const inventoryBag = (() => {
     if (b.attuned) st+='<span style="color:#06ade4;background:rgba(6,173,228,.1);border:1px solid rgba(6,173,228,.2)">Attuned</span>';
     let tg = b.tags&&b.tags.length ? '<div class="bpp-tg">'+b.tags.map(t=>'<span>'+t+'</span>').join('')+'</div>' : '';
     const p = document.createElement('div'); p.className='bpp';
-    // Position near the clicked item, clamped to stay in view
     const cn = document.getElementById('bag-cn');
-p._srcEl = srcEl;
+    p._srcEl = srcEl;
     p._cn = cn;
     p.innerHTML=`
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -246,7 +251,6 @@ p._srcEl = srcEl;
       <div class="bpp-b">${b.text||'<em style="color:var(--gray-500)">No description</em>'}</div>
       ${tg}`;
 
-    // Wire the ··· trigger (same toggle as existing blocks)
     const menu = p.querySelector('.block-actions-menu');
     const trigger = p.querySelector('.actions-trigger');
     trigger.addEventListener('click', (e) => {
@@ -254,7 +258,6 @@ p._srcEl = srcEl;
       menu.classList.toggle('menu-open');
     });
 
-    // Wire delete
     p.querySelector('.remove-button').addEventListener('click', async (e) => {
       e.stopPropagation();
       const { appManager } = await import('./appManager.js');
@@ -262,7 +265,6 @@ p._srcEl = srcEl;
       blockActionsHandler.showDeletePopup(b.id, e, (deletedId) => {
         const deletedBlock = appManager.removeBlock(deletedId);
         blockActionsHandler.recordLastDeleted(appManager.getActiveTab(), deletedBlock);
-        // Remove from physics
         const idx = currentItems.findIndex(ci => ci.block.id === deletedId);
         if (idx !== -1) {
           Matter.Composite.remove(engine.world, itemBodies[idx]);
@@ -270,18 +272,15 @@ p._srcEl = srcEl;
           currentItems.splice(idx, 1);
           itemBodies.splice(idx, 1);
           itemElements.splice(idx, 1);
-          // Wake remaining bodies so they settle into the gap
           itemBodies.forEach(bd => Matter.Sleeping.set(bd, false));
         }
         L.innerHTML = '';
-        // Update filter bar
         const allBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
         const fb = document.querySelector('.bfb');
         if (fb) { fb.outerHTML = buildFilterHTML(allBlocks); wireFilterBar(); }
       });
     });
 
-    // Wire duplicate
     p.querySelector('.duplicate-button').addEventListener('click', async (e) => {
       e.stopPropagation();
       const { appManager } = await import('./appManager.js');
@@ -294,7 +293,6 @@ p._srcEl = srcEl;
       };
       const newId = appManager.saveBlock('tab6', b.title, b.text, [...(b.tags||[])], [...(b.uses||[])], [], b.blockType, null, null, extras);
       L.innerHTML = ''; popOpenId = null;
-      // Drop the new block into the existing bag
       const newBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
       const newBlock = newBlocks.find(nb => nb.id === newId);
       if (newBlock && engine) {
@@ -319,21 +317,18 @@ p._srcEl = srcEl;
         const el = mkEl(itm, currentUnit);
         document.getElementById('bag-il').appendChild(el);
         itemElements.push(el);
-        // Update filter bar
         const allBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
         const fb = document.querySelector('.bfb');
         if (fb) { fb.outerHTML = buildFilterHTML(allBlocks); wireFilterBar(); }
       }
     });
 
-    // Wire edit — open edit overlay
     p.querySelector('.edit-button').addEventListener('click', (e) => {
       e.stopPropagation();
       L.innerHTML = ''; popOpenId = null;
       showEditOverlay(item);
     });
 
-    // Append hidden, measure, then position
     p.style.visibility = 'hidden';
     L.appendChild(p);
 
@@ -356,7 +351,6 @@ p._srcEl = srcEl;
     p._srcEl = null; p._cn = null;
   }
 
-  // Helper to re-wire filter bar after updating it
   function wireFilterBar() {
     document.querySelectorAll('.bf[data-f]').forEach(btn => btn.addEventListener('click', () => { activeFilter = btn.dataset.f; render(null); }));
     const ddTrigger = document.querySelector('.bf-dd-trigger');
@@ -433,7 +427,6 @@ p._srcEl = srcEl;
       Matter.Body.setVelocity(b,{x:0,y:0}); Matter.Body.setAngularVelocity(b,0);
       b._item=item; itemBodies.push(b); Matter.Composite.add(engine.world,b);
       const el=mkEl(item,nU);
-      // Position element immediately to prevent flash at (0,0)
       const ox=b._ox||0, oy=b._oy||0;
       const cos=Math.cos(angle), sin=Math.sin(angle);
       el.style.left=(px-(ox*cos-oy*sin)-pw/2)+'px';
@@ -451,7 +444,9 @@ p._srcEl = srcEl;
   }
 
   // ── Main render ──────────────────────────────────────────────────
+  let _suppressRender = false;
   const render = async (filteredBlocks = null) => {
+    if (_suppressRender) return;
     injectCSS();
     const all = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
     const display = filteredBlocks || all;
@@ -539,32 +534,84 @@ p._srcEl = srcEl;
 
     const ctx=cv.getContext('2d');
     if (animFrameId) cancelAnimationFrame(animFrameId);
+    let _pendingResize = null;
+    let resizeTimer = null;
     function upd() {
+      if (_pendingResize) {
+        const { nW, nH } = _pendingResize;
+        containerW = nW; containerH = nH;
+
+        // Update bag canvas to new size
+        cv.width = containerW; cv.height = containerH;
+        cv.style.width = containerW + 'px';
+        cv.style.height = containerH + 'px';
+
+        // Recalculate unit and rebuild walls
+        currentUnit = calcU(currentItems);
+        buildWalls();
+
+        // Rebuild physics bodies at new unit size, preserving physics state
+        const oldBodies = itemBodies.slice();
+        itemBodies.forEach(b=>Matter.Composite.remove(engine.world,b)); itemBodies=[];
+        currentItems.forEach((item,i)=>{
+          const ob = oldBodies[i];
+          const pw=item.bb.gw*currentUnit, ph=item.bb.gh*currentUnit;
+          // Clamp to new bounds (don't proportionally reposition — preserves physics resolution)
+          const px = ob ? Math.max(PAD+pw/2, Math.min(containerW-PAD-pw/2, ob.position.x)) : containerW/2;
+          const py = ob ? Math.min(containerH-PAD-ph/2, ob.position.y) : containerH/2;
+          const angle = ob ? ob.angle : 0;
+          const b=makeBody(item,px,py,currentUnit);
+          Matter.Body.setAngle(b,angle);
+          // Preserve velocity so physics momentum carries through
+          if (ob) Matter.Body.setVelocity(b, { x: ob.velocity.x, y: ob.velocity.y });
+          b._item=item; itemBodies.push(b); Matter.Composite.add(engine.world,b);
+        });
+
+        // Update CSS scale on existing DOM elements
+        itemElements.forEach(el => {
+          if (el._baseUnit && el._baseUnit !== currentUnit) {
+            el._sizeRatio = currentUnit / el._baseUnit;
+          } else {
+            el._sizeRatio = 1;
+          }
+        });
+
+        // Debounce expensive DOM element rebuild
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          // Rebuild elements at correct size (images are cached, so instant)
+          itemElements.forEach(el=>el.remove()); itemElements=[];
+          const il = document.getElementById('bag-il');
+          currentItems.forEach((item,i)=>{
+            const el=mkEl(item,currentUnit);
+            il.appendChild(el); itemElements[i]=el;
+          });
+        }, 150);
+
+        _pendingResize = null;
+      }
+
       Matter.Engine.update(engine,1000/60); drawBag(ctx);
       itemBodies.forEach((b,i)=>{
         const it=b._item,el=itemElements[i]; if(!it||!el) return;
-        const u=currentUnit,pw=it.bb.gw*u,ph=it.bb.gh*u;
+        // Position using the element's base unit (CSS width), not currentUnit
+        const baseU = el._baseUnit || currentUnit;
+        const pw=it.bb.gw*baseU, ph=it.bb.gh*baseU;
         const ox=b._ox||0,oy=b._oy||0,cos=Math.cos(b.angle),sin=Math.sin(b.angle);
         el.style.left=(b.position.x-(ox*cos-oy*sin)-pw/2)+'px';
         el.style.top=(b.position.y-(ox*sin+oy*cos)-ph/2)+'px';
-        el.style.transform='rotate('+b.angle+'rad)';
+        const sr = el._sizeRatio || 1;
+        el.style.transform='rotate('+b.angle+'rad)'+(sr!==1?' scale('+sr+')':'');
       });
       animFrameId=requestAnimationFrame(upd);
     }
     upd();
 
     if (resizeObs) resizeObs.disconnect();
-    let resizeTimer = null;
     resizeObs = new ResizeObserver(()=>{
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(()=>{
-        const nW=cn.offsetWidth, nH=cn.offsetHeight;
-        if(nW===containerW&&nH===containerH) return; if(nW<10||nH<10) return;
-        const oW=containerW,oH=containerH,oU=currentUnit;
-        containerW=nW;containerH=nH;
-        cv.width=containerW;cv.height=containerH;cv.style.width=containerW+'px';cv.style.height=containerH+'px';
-        currentUnit=calcU(currentItems); buildWalls(); rescaleIP(oW,oH,oU,containerW,containerH,currentUnit);
-      }, 100);
+      const nW=cn.offsetWidth, nH=cn.offsetHeight;
+      if(nW===containerW&&nH===containerH) return; if(nW<10||nH<10) return;
+      _pendingResize = { nW, nH };
     });
     resizeObs.observe(cn);
   };
@@ -572,25 +619,64 @@ p._srcEl = srcEl;
   const isEnabled = () => localStorage.getItem('inventoryBagMode') === 'true';
 
   // ── Add-item overlay ─────────────────────────────────────────────
-// ── Drawing overlay (shared Fabric.js logic) ─────────────────────
+  // ── Drawing overlay (shared Fabric.js logic) ─────────────────────
   const GRID = 5, GCELL = 42;
   let ovCat = 'Consumables';
-  let activeFc = null; // active fabric canvas reference
+  let activeFc = null;
   let clipboardPaths = null;
 
   function setupFabricCanvas(canvasId, goId, catColor) {
     const S = GCELL * GRID;
+    const rightCol = document.getElementById(canvasId).closest('.bag-ov-right');
+    const cardEl = document.getElementById(canvasId).closest('.bag-ov-card');
+    const cardInner = cardEl ? cardEl.clientWidth - 40 : S;
+    const colInner = rightCol ? rightCol.clientWidth - 10 : cardInner;
+    let available = Math.min(cardInner, colInner);
+    let displayS = Math.max(S, Math.min(available, 600));
+
     const fc = new fabric.Canvas(canvasId, {
       isDrawingMode: true,
       width: S, height: S,
       selection: true,
     });
     fc.skipOffscreen = false;
+    fc._displayScale = displayS / S;
+
+    // CSS stretch to display size
+    fc.lowerCanvasEl.style.width = displayS + 'px';
+    fc.lowerCanvasEl.style.height = displayS + 'px';
+    fc.upperCanvasEl.style.width = displayS + 'px';
+    fc.upperCanvasEl.style.height = displayS + 'px';
+    fc.wrapperEl.style.width = displayS + 'px';
+    fc.wrapperEl.style.height = displayS + 'px';
+
+    // Increase the backing pixel buffer so lines render crisply at display size.
+    // Default retina gives S*dpr pixels which is too few for displayS*dpr screen pixels.
+    // We manually resize the canvas elements and context to match the display.
+    const dpr = window.devicePixelRatio || 1;
+    const bufferPx = Math.round(displayS * dpr);
+    const totalScale = bufferPx / S;
+    fc.lowerCanvasEl.setAttribute('width', bufferPx);
+    fc.lowerCanvasEl.setAttribute('height', bufferPx);
+    fc.upperCanvasEl.setAttribute('width', bufferPx);
+    fc.upperCanvasEl.setAttribute('height', bufferPx);
+    fc.contextContainer.setTransform(totalScale, 0, 0, totalScale, 0, 0);
+    fc.contextTop.setTransform(totalScale, 0, 0, totalScale, 0, 0);
+    // Tell Fabric the new retina factor so getPointer maps CSS→logical correctly
+    fc.getRetinaScaling = () => totalScale;
+
+    // Resize the parent .bag-ov-da wrapper to match
+    const daEl = fc.wrapperEl.parentElement;
+    if (daEl && daEl.classList.contains('bag-ov-da')) {
+      daEl.style.width = displayS + 'px';
+      daEl.style.height = displayS + 'px';
+    }
 
     fc._updateDrawCursor = function() {
       if (!this.freeDrawingBrush) return;
       const size = this.freeDrawingBrush.width;
-      const r = Math.max(size * 0.85, 2);
+      const scale = this._displayScale || 1;
+      const r = Math.max(size * 0.85 * scale, 2);
       const d = Math.ceil(r * 2 + 4);
       const c = d / 2;
       const dpr = window.devicePixelRatio || 1;
@@ -614,14 +700,14 @@ p._srcEl = srcEl;
       this.upperCanvasEl.style.cursor = this.freeDrawingCursor;
     };
 
-    // Style the wrapper — background is CSS so destination-out erasers only cut drawn content
+    // Style the wrapper
     const wrapper = fc.wrapperEl;
     wrapper.style.background = 'rgba(20,20,20,0.8)';
     wrapper.style.border = '2px solid rgba(' + catColor + ',.25)';
     wrapper.style.borderRadius = '5px';
     wrapper.style.overflow = 'hidden';
 
-// ── Capped-speed brush smoothing ─────────────────────────────────
+    // ── Capped-speed brush smoothing ─────────────────────────────────
     let _brushPos = null;
     let _cursorPos = null;
     let _brushRAF = null;
@@ -733,8 +819,6 @@ p._srcEl = srcEl;
     fc.freeDrawingBrush.color = 'rgba(' + catColor + ',.65)';
     fc.freeDrawingBrush.width = 1.8;
 
-    // Grid lines are handled by the CSS overlay, not drawn on canvas
-
     // Customise selection handles and stroke behaviour
     fabric.Object.prototype.set({
       cornerColor: 'rgba(' + catColor + ',0.8)',
@@ -805,12 +889,11 @@ p._srcEl = srcEl;
         e.preventDefault();
         if (fc._bagUndo) fc._bagUndo();
       }
-
     };
     document.addEventListener('keydown', keyHandler);
     fc._bagKeyHandler = keyHandler;
 
-    // Alt+drag to duplicate selected objects (uses object:moving to avoid interfering with drawing)
+    // Alt+drag to duplicate selected objects
     let _altCloneActive = false;
     fc.on('object:moving', (opt) => {
       if (!opt.e.altKey || _altCloneActive) return;
@@ -833,19 +916,74 @@ p._srcEl = srcEl;
       fc.renderAll();
     });
 
-    // Build cell highlight overlay
+    // Build cell highlight overlay at display size
+    const displayCell = displayS / GRID;
     const goEl = document.getElementById(goId);
     if (goEl) {
       goEl.innerHTML = '';
+      goEl.style.width = displayS + 'px';
+      goEl.style.height = displayS + 'px';
       for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) {
         const d = document.createElement('div');
         d.className = 'bag-ov-gc'; d.dataset.r = r; d.dataset.c = c;
-        d.style.cssText = 'left:' + (c * GCELL) + 'px;top:' + (r * GCELL) + 'px;width:' + GCELL + 'px;height:' + GCELL + 'px';
+        d.style.cssText = 'left:' + (c * displayCell) + 'px;top:' + (r * displayCell) + 'px;width:' + displayCell + 'px;height:' + displayCell + 'px';
         goEl.appendChild(d);
       }
     }
     fc._updateDrawCursor();
     activeFc = fc;
+
+    // Dynamically resize the canvas when the overlay card resizes
+    const _ovResizeObs = new ResizeObserver(() => {
+      const newCardInner = cardEl ? cardEl.clientWidth - 40 : S;
+      const newColInner = rightCol ? rightCol.clientWidth - 10 : newCardInner;
+      const newAvailable = Math.min(newCardInner, newColInner);
+      const newDisplayS = Math.max(S, Math.min(newAvailable, 600));
+      if (newDisplayS === displayS) return;
+      displayS = newDisplayS;
+      fc._displayScale = displayS / S;
+
+      // Update CSS sizes
+      fc.lowerCanvasEl.style.width = displayS + 'px';
+      fc.lowerCanvasEl.style.height = displayS + 'px';
+      fc.upperCanvasEl.style.width = displayS + 'px';
+      fc.upperCanvasEl.style.height = displayS + 'px';
+      fc.wrapperEl.style.width = displayS + 'px';
+      fc.wrapperEl.style.height = displayS + 'px';
+      if (daEl) { daEl.style.width = displayS + 'px'; daEl.style.height = displayS + 'px'; }
+
+      // Update backing buffer for crisp rendering
+      const newBuffer = Math.round(displayS * dpr);
+      const newScale = newBuffer / S;
+      fc.lowerCanvasEl.setAttribute('width', newBuffer);
+      fc.lowerCanvasEl.setAttribute('height', newBuffer);
+      fc.upperCanvasEl.setAttribute('width', newBuffer);
+      fc.upperCanvasEl.setAttribute('height', newBuffer);
+      fc.contextContainer.setTransform(newScale, 0, 0, newScale, 0, 0);
+      fc.contextTop.setTransform(newScale, 0, 0, newScale, 0, 0);
+      fc.getRetinaScaling = () => newScale;
+
+      // Update grid overlay cell positions
+      const newCell = displayS / GRID;
+      const goEl = document.getElementById(goId);
+      if (goEl) {
+        goEl.style.width = displayS + 'px';
+        goEl.style.height = displayS + 'px';
+        goEl.querySelectorAll('.bag-ov-gc').forEach(d => {
+          const r = +d.dataset.r, c = +d.dataset.c;
+          d.style.left = (c * newCell) + 'px';
+          d.style.top = (r * newCell) + 'px';
+          d.style.width = newCell + 'px';
+          d.style.height = newCell + 'px';
+        });
+      }
+
+      fc.renderAll();
+      fc._updateDrawCursor();
+    });
+    if (cardEl) _ovResizeObs.observe(cardEl);
+    fc._ovResizeObs = _ovResizeObs;
+
     return fc;
   }
 
@@ -873,11 +1011,9 @@ p._srcEl = srcEl;
       }
     }
 
-    // Fill holes — any empty cell that can't reach the grid edge is interior
     const occSet = new Set(oc.map(o => o.r + ',' + o.c));
     const exterior = new Set();
     const queue = [];
-    // Seed with all unoccupied edge cells
     for (let r = 0; r < GRID; r++) {
       for (let c = 0; c < GRID; c++) {
         if ((r === 0 || r === GRID-1 || c === 0 || c === GRID-1) && !occSet.has(r+','+c)) {
@@ -886,7 +1022,6 @@ p._srcEl = srcEl;
         }
       }
     }
-    // Flood fill exterior
     while (queue.length) {
       const {r, c} = queue.shift();
       [[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([nr, nc]) => {
@@ -897,7 +1032,6 @@ p._srcEl = srcEl;
         }
       });
     }
-    // Any cell that's neither occupied nor exterior is a hole — fill it
     for (let r = 0; r < GRID; r++) {
       for (let c = 0; c < GRID; c++) {
         const key = r+','+c;
@@ -907,7 +1041,6 @@ p._srcEl = srcEl;
       }
     }
 
-    // Check connectivity (4-directional only)
     let connected = true;
     if (oc.length > 1) {
       const ocSet = new Set(oc.map(o => o.r + ',' + o.c));
@@ -927,7 +1060,6 @@ p._srcEl = srcEl;
       connected = visited.size === oc.length;
     }
 
-    // Update highlights
     const cc = catColor;
     document.querySelectorAll('#' + goId + ' .bag-ov-gc').forEach(el => {
       const r = +el.dataset.r, c = +el.dataset.c;
@@ -936,7 +1068,6 @@ p._srcEl = srcEl;
       el.style.borderColor = h ? 'rgba(' + cc + ',.15)' : 'rgba(255,255,255,.03)';
     });
 
-    // Update info text with connectivity warning
     const detId = goId.replace('-go', '-det');
     const di = document.getElementById(detId);
     if (di) {
@@ -1021,7 +1152,6 @@ p._srcEl = srcEl;
     }
     let undoStack = [];
 
-    // Track paths for undo — eraser flattens canvas so erasure is permanent
     fc.on('path:created', (e) => {
       if (fc._isEraserActive) {
         e.path.set({
@@ -1031,9 +1161,9 @@ p._srcEl = srcEl;
           _isEraser: true
         });
         const preState = JSON.stringify(fc.toJSON(['_isEraser']));
-        const S = fc.width;
+        const logicalS = GCELL * GRID;
         const tmp = document.createElement('canvas');
-        tmp.width = S; tmp.height = S;
+        tmp.width = logicalS; tmp.height = logicalS;
         const ctx = tmp.getContext('2d', { willReadFrequently: true });
         fc.getObjects().forEach(obj => {
           ctx.save();
@@ -1070,14 +1200,12 @@ p._srcEl = srcEl;
       fc.renderAll();
     });
 
-    // t1: Select
     document.getElementById(prefix + '-t1').onclick = () => {
       fc.isDrawingMode = false;
       fc._isEraserActive = false;
       clearToolHighlight();
       document.getElementById(prefix + '-t1').classList.add('on');
     };
-    // t2: Fine pen
     document.getElementById(prefix + '-t2').onclick = () => {
       fc.isDrawingMode = true;
       fc._isEraserActive = false;
@@ -1088,7 +1216,6 @@ p._srcEl = srcEl;
       document.getElementById(prefix + '-t2').classList.add('on');
       fc._updateDrawCursor();
     };
-    // t3: Pen
     document.getElementById(prefix + '-t3').onclick = () => {
       fc.isDrawingMode = true;
       fc._isEraserActive = false;
@@ -1099,7 +1226,6 @@ p._srcEl = srcEl;
       document.getElementById(prefix + '-t3').classList.add('on');
       fc._updateDrawCursor();
     };
-    // t4: Eraser — draws a preview stroke, then path:created marks it destination-out
     document.getElementById(prefix + '-t4').onclick = () => {
       fc.isDrawingMode = true;
       fc._isEraserActive = true;
@@ -1110,7 +1236,6 @@ p._srcEl = srcEl;
       document.getElementById(prefix + '-t4').classList.add('on');
       fc._updateDrawCursor();
     };
-    // t5: Undo (action — no tool highlight change)
     fc._bagUndo = () => {
       const last = undoStack.pop();
       if (!last) return;
@@ -1134,7 +1259,6 @@ p._srcEl = srcEl;
       }
     };
     document.getElementById(prefix + '-t5').onclick = fc._bagUndo;
-    // t6: Clear (action — no tool highlight change)
     document.getElementById(prefix + '-t6').onclick = () => {
       fc.clear();
       fc.renderAll();
@@ -1146,6 +1270,9 @@ p._srcEl = srcEl;
   function destroyFabricCanvas(fc) {
     if (fc._bagKeyHandler) {
       document.removeEventListener('keydown', fc._bagKeyHandler);
+    }
+    if (fc._ovResizeObs) {
+      fc._ovResizeObs.disconnect();
     }
     fc.dispose();
     activeFc = null;
@@ -1159,6 +1286,85 @@ p._srcEl = srcEl;
       <button class="bag-ov-tb" id="${prefix}-t5" title="Undo"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h10a5 5 0 0 1 0 10H9"/><path d="M3 10l4-4M3 10l4 4"/></svg></button>
       <button class="bag-ov-tb" id="${prefix}-t6" title="Clear all"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M5 6v14a1 1 0 001 1h12a1 1 0 001-1V6"/></svg></button>
     </div>`;
+  }
+
+  // ── Inventory-style toggle SVGs ──────────────────────────────────
+  const chainSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 1 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 1 0 7.07 7.07l1.5-1.5"/></svg>';
+  const handSVG  = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5c-.83 0-1.5.67-1.5 1.5v6H10V4c0-.83-.67-1.5-1.5-1.5S7 3.17 7 4v8.5l-1.8-1.9c-.6-.6-1.55-.6-2.15 0-.6.6-.6 1.55 0 2.15l4.2 4.3c1.3 1.35 3.1 2.2 5.1 2.2h1.4c3.87 0 7-3.13 7-7V7c0-.83-.67-1.5-1.5-1.5S18 6.17 18 7v3.5h-.5V5c0-.83-.67-1.5-1.5-1.5S14.5 4.17 14.5 5v4.5h-.5V3c0-.83-.67-1.5-1.5-1.5z"/></svg>';
+
+  function bagTogglesHTML(prefix, reqAtt, equipable, attuned, equipped) {
+    return `<div class="inventory-edit-toggles">
+      <div class="inventory-toggle-pair">
+        <label class="inv-toggle inv-toggle-attune">
+          <input type="checkbox" id="${prefix}-attune"${reqAtt ? ' checked' : ''} />
+          <span class="inv-track"><span class="inv-thumb"></span></span>
+          <span>Requires attunement</span>
+        </label>
+        <button type="button" class="inv-state-btn inv-state-chain" id="${prefix}-attuned-btn" data-on="${attuned}" title="Attune">
+          ${chainSVG}<span>Attuned to</span>
+        </button>
+      </div>
+      <div class="inventory-toggle-pair">
+        <label class="inv-toggle inv-toggle-equip">
+          <input type="checkbox" id="${prefix}-equip"${equipable ? ' checked' : ''} />
+          <span class="inv-track"><span class="inv-thumb"></span></span>
+          <span>Equipable</span>
+        </label>
+        <button type="button" class="inv-state-btn inv-state-hand" id="${prefix}-equipped-btn" data-on="${equipped}" title="Equip">
+          ${handSVG}<span>Equipped</span>
+        </button>
+      </div>
+    </div>`;
+  }
+
+  function wireBagToggles(prefix) {
+    const requiresEl  = document.getElementById(prefix + '-attune');
+    const equipableEl = document.getElementById(prefix + '-equip');
+    const attunedBtn  = document.getElementById(prefix + '-attuned-btn');
+    const equippedBtn = document.getElementById(prefix + '-equipped-btn');
+
+    const sync = () => {
+      if (attunedBtn)  attunedBtn.classList.toggle('inv-state-on',  attunedBtn.dataset.on === 'true');
+      if (equippedBtn) equippedBtn.classList.toggle('inv-state-on', equippedBtn.dataset.on === 'true');
+    };
+    sync();
+
+    if (requiresEl) {
+      requiresEl.addEventListener('change', () => {
+        if (!requiresEl.checked && attunedBtn) attunedBtn.dataset.on = 'false';
+        sync();
+      });
+    }
+    if (equipableEl) {
+      equipableEl.addEventListener('change', () => {
+        if (!equipableEl.checked && equippedBtn) equippedBtn.dataset.on = 'false';
+        sync();
+      });
+    }
+    if (attunedBtn) {
+      attunedBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const turningOn = attunedBtn.dataset.on !== 'true';
+        attunedBtn.dataset.on = turningOn ? 'true' : 'false';
+        if (turningOn && requiresEl && !requiresEl.checked) {
+          requiresEl.checked = true;
+          requiresEl.dispatchEvent(new Event('change'));
+        }
+        sync();
+      });
+    }
+    if (equippedBtn) {
+      equippedBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const turningOn = equippedBtn.dataset.on !== 'true';
+        equippedBtn.dataset.on = turningOn ? 'true' : 'false';
+        if (turningOn && equipableEl && !equipableEl.checked) {
+          equipableEl.checked = true;
+          equipableEl.dispatchEvent(new Event('change'));
+        }
+        sync();
+      });
+    }
   }
 
   function showAddOverlay() {
@@ -1177,51 +1383,50 @@ p._srcEl = srcEl;
 
     const ov = document.createElement('div');
     ov.className = 'bag-ov'; ov.id = 'bag-add-ov';
-    ov.innerHTML = `<div class="bag-ov-card">
+    ov.innerHTML = `<div class="bag-ov-card bag-ov-wide">
       <div class="bag-ov-title">Add Item</div>
-      <div><div class="bag-ov-label">Name</div><input class="bag-ov-input" id="bov-name" placeholder="Item name..."></div>
-      <div><div class="bag-ov-label">Type</div><div class="bag-ov-cats" id="bov-cats">${catBtns}</div></div>
-      <div class="bag-ov-toggles">
-        <label class="bag-ov-tgl"><input type="checkbox" id="bov-attune"> Requires attunement</label>
-        <label class="bag-ov-tgl"><input type="checkbox" id="bov-equip"> Equipable</label>
-      </div>
-      <div><div class="bag-ov-label">Draw your item</div>
-        <div class="bag-ov-cw">
-          <div class="bag-ov-da" style="width:${S}px;height:${S}px">
-            <canvas id="bov-cv" width="${S}" height="${S}"></canvas>
-            <div class="bag-ov-gc-wrap" id="bov-go"></div>
+      <div class="bag-ov-layout">
+        <div class="bag-ov-left">
+          <div><div class="bag-ov-label">Name</div><input class="bag-ov-input" id="bov-name" placeholder="Item name..."></div>
+          <div><div class="bag-ov-label">Type</div><div class="bag-ov-cats" id="bov-cats">${catBtns}</div></div>
+          ${bagTogglesHTML('bov', false, false, false, false)}
+          <div><div class="bag-ov-label">Description (optional)</div><textarea class="bag-ov-textarea" id="bov-desc" placeholder="Item description..."></textarea></div>
+          <div class="bag-ov-btns">
+            <button class="bag-ov-btn bag-ov-cn" id="bov-cancel">Cancel</button>
+            <button class="bag-ov-btn bag-ov-sv" id="bov-save">Add to bag</button>
           </div>
-          ${toolButtonsHTML('bov')}
-          <div class="bag-ov-det em" id="bov-det">Draw to set shape</div>
         </div>
-      </div>
-      <div><div class="bag-ov-label">Description (optional)</div><textarea class="bag-ov-textarea" id="bov-desc" placeholder="Item description..."></textarea></div>
-      <div class="bag-ov-btns">
-        <button class="bag-ov-btn bag-ov-cn" id="bov-cancel">Cancel</button>
-        <button class="bag-ov-btn bag-ov-sv" id="bov-save">Add to bag</button>
+        <div class="bag-ov-right">
+          <div class="bag-ov-label">Draw your item</div>
+          <div class="bag-ov-cw">
+            <div class="bag-ov-da" style="width:${S}px;height:${S}px">
+              <canvas id="bov-cv" width="${S}" height="${S}"></canvas>
+              <div class="bag-ov-gc-wrap" id="bov-go"></div>
+            </div>
+            ${toolButtonsHTML('bov')}
+            <div class="bag-ov-det em" id="bov-det">Draw to set shape</div>
+          </div>
+        </div>
       </div>
     </div>`;
     document.body.appendChild(ov);
 
-    // Load Fabric and initialize
     loadFabric().then(() => {
       const cc = CAT[ovCat]?.c || DEF.c;
       const fc = setupFabricCanvas('bov-cv', 'bov-go', cc);
 
-      // Detect cells after each path drawn
       fc.on('path:created', () => { if (!fc._isEraserActive) detectFabricCells(fc, 'bov-go', CAT[ovCat]?.c || DEF.c); });
       fc.on('object:modified', () => detectFabricCells(fc, 'bov-go', CAT[ovCat]?.c || DEF.c));
 
       wireToolButtons(fc, 'bov', 'bov-go', () => CAT[ovCat]?.c || DEF.c);
+      wireBagToggles('bov');
 
-      // Category buttons
       ov.querySelectorAll('.bag-ov-cat').forEach(b => b.addEventListener('click', () => {
         ovCat = b.dataset.cat;
         ov.querySelectorAll('.bag-ov-cat').forEach(x => { x.classList.remove('on'); x.style.background = ''; x.style.borderColor = ''; x.style.color = ''; });
         b.classList.add('on');
         const nc = CAT[ovCat]?.c || DEF.c;
         b.style.background = 'rgba(' + nc + ',.12)'; b.style.borderColor = 'rgba(' + nc + ',.3)'; b.style.color = 'rgba(' + nc + ',.8)';
-        // Update brush color
         if (fc.isDrawingMode && fc.freeDrawingBrush) {
           fc.freeDrawingBrush.color = 'rgba(' + nc + ',.65)';
         }
@@ -1244,10 +1449,8 @@ p._srcEl = srcEl;
         fc.renderAll();
       }));
 
-      // Cancel
       document.getElementById('bov-cancel').onclick = () => { destroyFabricCanvas(fc); ov.remove(); };
 
-      // Save
       document.getElementById('bov-save').onclick = async () => {
         const name = document.getElementById('bov-name').value.trim();
         if (!name) { document.getElementById('bov-name').style.borderColor = 'rgba(255,107,107,.5)'; return; }
@@ -1264,25 +1467,24 @@ p._srcEl = srcEl;
         const desc = document.getElementById('bov-desc').value.trim();
         const reqAttune = document.getElementById('bov-attune').checked;
         const equipable = document.getElementById('bov-equip').checked;
+        const attuned = reqAttune && document.getElementById('bov-attuned-btn')?.dataset.on === 'true';
+        const equipped = equipable && document.getElementById('bov-equipped-btn')?.dataset.on === 'true';
 
         const { appManager } = await import('./appManager.js');
-        appManager.saveBlock('tab6', name, desc, [], [], [], ovCat, null, null, {
-          requiresAttunement: reqAttune, equipable, attuned: false, equipped: false,
+        _suppressRender = true;
+        const newId = appManager.saveBlock('tab6', name, desc, [], [], [], ovCat, null, null, {
+          requiresAttunement: reqAttune, equipable, attuned, equipped,
           bagGW: gw, bagGH: gh, bagCells: cells, bagCellImgs: cellImgs, bagFabricData: fabricData,
         });
 
         destroyFabricCanvas(fc); ov.remove();
 
-        // Drop new item into existing bag
         const newBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
-        const newBlock = newBlocks.find(nb => nb.title === name && nb.blockType === ovCat);
+        const newBlock = newBlocks.find(nb => nb.id === newId);
         if (newBlock && engine) {
           const items = processBlocks([newBlock]);
           const itm = items[0];
           currentItems.push(itm);
-          const oldU = currentUnit;
-          currentUnit = calcU(currentItems);
-          if (oldU !== currentUnit) { buildWalls(); rescaleIP(containerW, containerH, oldU, containerW, containerH, currentUnit); }
           const pw = itm.bb.gw * currentUnit;
           const tl = PAD + 10, tr = containerW - PAD - 10;
           const x = tl + pw / 2 + Math.random() * (tr - tl - pw);
@@ -1295,10 +1497,10 @@ p._srcEl = srcEl;
           const allBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
           const fb = document.querySelector('.bfb');
           if (fb) { fb.outerHTML = buildFilterHTML(allBlocks); wireFilterBar(); }
-        } else {
-          const { filterManager } = await import('./filterManager.js');
-          filterManager.applyFilters('6');
         }
+        // Keep render suppressed through the current event loop + microtasks,
+        // catching any async re-render triggers caused by saveBlock.
+        requestAnimationFrame(() => { _suppressRender = false; });
       };
     });
   }
@@ -1321,28 +1523,30 @@ p._srcEl = srcEl;
 
     const ov = document.createElement('div');
     ov.className = 'bag-ov'; ov.id = 'bag-edit-ov';
-    ov.innerHTML = `<div class="bag-ov-card">
+    ov.innerHTML = `<div class="bag-ov-card bag-ov-wide">
       <div class="bag-ov-title">Edit Item</div>
-      <div><div class="bag-ov-label">Name</div><input class="bag-ov-input" id="bev-name" value="${b.title.replace(/"/g, '&quot;')}"></div>
-      <div><div class="bag-ov-label">Type</div><div class="bag-ov-cats" id="bev-cats">${catBtns}</div></div>
-      <div class="bag-ov-toggles">
-        <label class="bag-ov-tgl"><input type="checkbox" id="bev-attune"${b.requiresAttunement ? ' checked' : ''}> Requires attunement</label>
-        <label class="bag-ov-tgl"><input type="checkbox" id="bev-equip"${b.equipable ? ' checked' : ''}> Equipable</label>
-      </div>
-      <div><div class="bag-ov-label">Redraw item (leave blank to keep current)</div>
-        <div class="bag-ov-cw">
-          <div class="bag-ov-da" style="width:${S}px;height:${S}px">
-            <canvas id="bev-cv" width="${S}" height="${S}"></canvas>
-            <div class="bag-ov-gc-wrap" id="bev-go"></div>
+      <div class="bag-ov-layout">
+        <div class="bag-ov-left">
+          <div><div class="bag-ov-label">Name</div><input class="bag-ov-input" id="bev-name" value="${b.title.replace(/"/g, '&quot;')}"></div>
+          <div><div class="bag-ov-label">Type</div><div class="bag-ov-cats" id="bev-cats">${catBtns}</div></div>
+          ${bagTogglesHTML('bev', b.requiresAttunement, b.equipable, b.attuned, b.equipped)}
+          <div><div class="bag-ov-label">Description</div><textarea class="bag-ov-textarea" id="bev-desc">${b.text || ''}</textarea></div>
+          <div class="bag-ov-btns">
+            <button class="bag-ov-btn bag-ov-cn" id="bev-cancel">Cancel</button>
+            <button class="bag-ov-btn bag-ov-sv" id="bev-save">Save changes</button>
           </div>
-          ${toolButtonsHTML('bev')}
-          <div class="bag-ov-det em" id="bev-det">Draw to change shape</div>
         </div>
-      </div>
-      <div><div class="bag-ov-label">Description</div><textarea class="bag-ov-textarea" id="bev-desc">${b.text || ''}</textarea></div>
-      <div class="bag-ov-btns">
-        <button class="bag-ov-btn bag-ov-cn" id="bev-cancel">Cancel</button>
-        <button class="bag-ov-btn bag-ov-sv" id="bev-save">Save changes</button>
+        <div class="bag-ov-right">
+          <div class="bag-ov-label">Redraw item (leave blank to keep current)</div>
+          <div class="bag-ov-cw">
+            <div class="bag-ov-da" style="width:${S}px;height:${S}px">
+              <canvas id="bev-cv" width="${S}" height="${S}"></canvas>
+              <div class="bag-ov-gc-wrap" id="bev-go"></div>
+            </div>
+            ${toolButtonsHTML('bev')}
+            <div class="bag-ov-det em" id="bev-det">Draw to change shape</div>
+          </div>
+        </div>
       </div>
     </div>`;
     document.body.appendChild(ov);
@@ -1351,7 +1555,6 @@ p._srcEl = srcEl;
       const cc = CAT[ovCat]?.c || DEF.c;
       const fc = setupFabricCanvas('bev-cv', 'bev-go', cc);
 
-      // Load existing drawing — prefer Fabric data for editable strokes, fall back to cell images
       if (b.bagFabricData) {
         fc.loadFromJSON(b.bagFabricData, () => {
           fc.backgroundColor = '';
@@ -1382,8 +1585,8 @@ p._srcEl = srcEl;
       fc.on('object:modified', () => detectFabricCells(fc, 'bev-go', CAT[ovCat]?.c || DEF.c));
 
       wireToolButtons(fc, 'bev', 'bev-go', () => CAT[ovCat]?.c || DEF.c);
+      wireBagToggles('bev');
 
-      // Category buttons
       ov.querySelectorAll('.bag-ov-cat').forEach(btn => btn.addEventListener('click', () => {
         ovCat = btn.dataset.cat;
         ov.querySelectorAll('.bag-ov-cat').forEach(x => { x.classList.remove('on'); x.style.background = ''; x.style.borderColor = ''; x.style.color = ''; });
@@ -1418,10 +1621,12 @@ p._srcEl = srcEl;
         const desc = document.getElementById('bev-desc').value.trim();
         const reqAttune = document.getElementById('bev-attune').checked;
         const equipable = document.getElementById('bev-equip').checked;
+        const attuned = reqAttune && document.getElementById('bev-attuned-btn')?.dataset.on === 'true';
+        const equipped = equipable && document.getElementById('bev-equipped-btn')?.dataset.on === 'true';
 
         const oc = detectFabricCells(fc, 'bev-go', CAT[ovCat]?.c || DEF.c);
         if (oc.length > 0 && !oc._connected) { return; }
-        let extras = { requiresAttunement: reqAttune, equipable, attuned: reqAttune ? (b.attuned || false) : false, equipped: equipable ? (b.equipped || false) : false };
+        let extras = { requiresAttunement: reqAttune, equipable, attuned, equipped };
 
         if (oc.length > 0) {
           let r1 = GRID, r2 = -1, c1 = GRID, c2 = -1;
@@ -1441,7 +1646,6 @@ p._srcEl = srcEl;
         appManager.saveBlock('tab6', name, desc, b.tags || [], b.uses || [], [], ovCat, b.id, b.timestamp, extras);
         destroyFabricCanvas(fc); ov.remove();
 
-        // Update just this block
         const idx = currentItems.findIndex(ci => ci.block.id === b.id);
         const updatedBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
         const updatedBlock = updatedBlocks.find(nb => nb.id === b.id);
@@ -1460,7 +1664,6 @@ p._srcEl = srcEl;
             const newBody = makeBody(currentItems[idx], pos.x, pos.y, currentUnit);
             Matter.Body.setAngle(newBody, angle); newBody._item = currentItems[idx];
             itemBodies[idx] = newBody; Matter.Composite.add(engine.world, newBody);
-            // Wake all bodies so they settle around the changed shape
             itemBodies.forEach(bd => Matter.Sleeping.set(bd, false));
           } else { itemBodies[idx]._item = currentItems[idx]; }
           const fb = document.querySelector('.bfb');
