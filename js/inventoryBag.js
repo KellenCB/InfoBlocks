@@ -502,10 +502,40 @@ p._srcEl = srcEl;
     });
 
     const mouse=Matter.Mouse.create(cn);
-    const mc=Matter.MouseConstraint.create(engine,{mouse,constraint:{stiffness:.1,damping:.02}});
+    const mc=Matter.MouseConstraint.create(engine,{mouse,constraint:{stiffness:.08,damping:.02}});
     mouse.element.removeEventListener('mousewheel',mouse.mousewheel);
     mouse.element.removeEventListener('DOMMouseScroll',mouse.mousewheel);
     Matter.Composite.add(engine.world,mc);
+
+    let _dragBody = null, _prevMx = null;
+    Matter.Events.on(mc, 'startdrag', (e) => {
+      _dragBody = e.body;
+      _prevMx = mouse.position.x;
+      _dragBody._savedFrictionAir = _dragBody.frictionAir;
+      _dragBody.frictionAir = 0.03;
+    });
+    Matter.Events.on(mc, 'enddrag', () => {
+      if (_dragBody) {
+        _dragBody.frictionAir = _dragBody._savedFrictionAir || 0.05;
+        _dragBody = null;
+      }
+      _prevMx = null;
+    });
+    Matter.Events.on(engine, 'beforeUpdate', () => {
+      if (!_dragBody) return;
+      const mx = mouse.position.x;
+
+      const accel = (_prevMx !== null) ? mx - _prevMx : 0;
+      _prevMx = mx;
+      const swayTorque = accel * 0.0008;
+
+      const dx = _dragBody.position.x - mx;
+      const hangTorque = (Math.abs(dx) > 2) ? dx * 0.00008 : 0;
+
+      let newAngVel = _dragBody.angularVelocity * 0.85 + swayTorque + hangTorque;
+      newAngVel = Math.max(-0.08, Math.min(0.08, newAngVel));
+      Matter.Body.setAngularVelocity(_dragBody, newAngVel);
+    });
 
     const ctx=cv.getContext('2d');
     if (animFrameId) cancelAnimationFrame(animFrameId);
