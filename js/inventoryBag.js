@@ -228,6 +228,11 @@ export const inventoryBag = (() => {
     if (b.equipped) st+='<span style="color:#ff8c00;background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.2)">Equipped</span>';
     if (b.attuned) st+='<span style="color:#06ade4;background:rgba(6,173,228,.1);border:1px solid rgba(6,173,228,.2)">Attuned</span>';
     let tg = b.tags&&b.tags.length ? '<div class="bpp-tg">'+b.tags.map(t=>'<span>'+t+'</span>').join('')+'</div>' : '';
+    let usesHTML = (b.uses && b.uses.length > 0)
+        ? '<div class="block-uses" style="margin:8px 0">' + b.uses.map((state, idx) =>
+            `<span class="circle ${state ? 'unfilled' : ''}" onclick="toggleBlockUse('${b.id}', ${idx}, event, this)"></span>`
+          ).join('') + '</div>'
+        : '';
     const p = document.createElement('div'); p.className='bpp';
     const cn = document.getElementById('bag-cn');
     p._srcEl = srcEl;
@@ -248,6 +253,7 @@ export const inventoryBag = (() => {
       </div>
       <span class="bpp-t" style="background:rgba(${cc},.12);color:rgba(${cc},.7)">${bt}</span>
       ${st?'<div class="bpp-s">'+st+'</div>':''}
+      ${usesHTML}
       <div class="bpp-b scroll-fade" style="--mask-fade-size:20px">${b.text||'<em style="color:var(--gray-500)">No description</em>'}</div>
       ${tg}`;
 
@@ -1409,6 +1415,7 @@ export const inventoryBag = (() => {
           <div><div class="bag-ov-label">Name</div><input class="bag-ov-input" id="bov-name" placeholder="Item name..."></div>
           <div><div class="bag-ov-label">Type</div><div class="bag-ov-cats" id="bov-cats">${catBtns}</div></div>
           ${bagTogglesHTML('bov', false, false, false, false)}
+          <div><div class="bag-ov-label">Uses</div><div class="uses-field" id="bov-uses"></div></div>
           <div><div class="bag-ov-label">Description (optional)</div><textarea class="bag-ov-textarea" id="bov-desc" placeholder="Item description..."></textarea></div>
           <div class="bag-ov-btns">
             <button class="bag-ov-btn bag-ov-cn" id="bov-cancel">Cancel</button>
@@ -1429,6 +1436,12 @@ export const inventoryBag = (() => {
       </div>
     </div>`;
     document.body.appendChild(ov);
+
+    const bovUsesKey = 'bag_add_uses_temp';
+    localStorage.setItem(bovUsesKey, '[]');
+    import('./appManager.js').then(({ initUsesField }) => {
+        initUsesField(document.getElementById('bov-uses'), bovUsesKey);
+    });
 
     loadFabric().then(() => {
       const cc = CAT[ovCat]?.c || DEF.c;
@@ -1468,7 +1481,7 @@ export const inventoryBag = (() => {
         fc.renderAll();
       }));
 
-      document.getElementById('bov-cancel').onclick = () => { destroyFabricCanvas(fc); ov.remove(); };
+      document.getElementById('bov-cancel').onclick = () => { destroyFabricCanvas(fc); localStorage.removeItem(bovUsesKey); ov.remove(); };
 
       document.getElementById('bov-save').onclick = async () => {
         const name = document.getElementById('bov-name').value.trim();
@@ -1490,8 +1503,10 @@ export const inventoryBag = (() => {
         const equipped = equipable && document.getElementById('bov-equipped-btn')?.dataset.on === 'true';
 
         const { appManager } = await import('./appManager.js');
+        const uses = JSON.parse(localStorage.getItem(bovUsesKey) || '[]');
+        localStorage.removeItem(bovUsesKey);
         _suppressRender = true;
-        const newId = appManager.saveBlock('tab6', name, desc, [], [], [], ovCat, null, null, {
+        const newId = appManager.saveBlock('tab6', name, desc, [], uses, [], ovCat, null, null, {
           requiresAttunement: reqAttune, equipable, attuned, equipped,
           bagGW: gw, bagGH: gh, bagCells: cells, bagCellImgs: cellImgs, bagFabricData: fabricData,
         });
@@ -1549,6 +1564,7 @@ export const inventoryBag = (() => {
           <div><div class="bag-ov-label">Name</div><input class="bag-ov-input" id="bev-name" value="${b.title.replace(/"/g, '&quot;')}"></div>
           <div><div class="bag-ov-label">Type</div><div class="bag-ov-cats" id="bev-cats">${catBtns}</div></div>
           ${bagTogglesHTML('bev', b.requiresAttunement, b.equipable, b.attuned, b.equipped)}
+          <div><div class="bag-ov-label">Uses</div><div class="uses-field" id="bev-uses"></div></div>
           <div><div class="bag-ov-label">Description</div><textarea class="bag-ov-textarea" id="bev-desc">${b.text || ''}</textarea></div>
           <div class="bag-ov-btns">
             <button class="bag-ov-btn bag-ov-cn" id="bev-cancel">Cancel</button>
@@ -1569,6 +1585,12 @@ export const inventoryBag = (() => {
       </div>
     </div>`;
     document.body.appendChild(ov);
+
+    const bevUsesKey = 'bag_edit_uses_temp';
+    localStorage.setItem(bevUsesKey, JSON.stringify(b.uses || []));
+    import('./appManager.js').then(({ initUsesField }) => {
+        initUsesField(document.getElementById('bev-uses'), bevUsesKey);
+    });
 
     loadFabric().then(() => {
       const cc = CAT[ovCat]?.c || DEF.c;
@@ -1632,7 +1654,7 @@ export const inventoryBag = (() => {
         fc.renderAll();
       }));
 
-      document.getElementById('bev-cancel').onclick = () => { destroyFabricCanvas(fc); ov.remove(); };
+      document.getElementById('bev-cancel').onclick = () => { destroyFabricCanvas(fc); localStorage.removeItem(bevUsesKey); ov.remove(); };
 
       document.getElementById('bev-save').onclick = async () => {
         const name = document.getElementById('bev-name').value.trim();
@@ -1662,7 +1684,9 @@ export const inventoryBag = (() => {
         }
 
         const { appManager } = await import('./appManager.js');
-        appManager.saveBlock('tab6', name, desc, b.tags || [], b.uses || [], [], ovCat, b.id, b.timestamp, extras);
+        const uses = JSON.parse(localStorage.getItem(bevUsesKey) || '[]');
+        localStorage.removeItem(bevUsesKey);
+        appManager.saveBlock('tab6', name, desc, b.tags || [], uses, [], ovCat, b.id, b.timestamp, extras);
         destroyFabricCanvas(fc); ov.remove();
 
         const idx = currentItems.findIndex(ci => ci.block.id === b.id);

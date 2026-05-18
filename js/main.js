@@ -162,6 +162,63 @@ document.addEventListener("click", (e) => {
 });
 
 /* ===================================================================*/
+/* ================ CHAR SHEET OVERLAY (PORTRAIT) ====================*/
+/* ===================================================================*/
+
+function openCharOverlay(tabId) {
+    const panel = document.getElementById('char-sheet-panel');
+    if (!panel) return;
+    panel.style.display = '';
+    panel.classList.remove('cs-overlay-closing');
+    panel.classList.add('cs-overlay-open', 'frosted-glass');
+
+    // Position top edge just below the header
+    const header = document.getElementById('header-row');
+    if (header) {
+        panel.style.top = header.getBoundingClientRect().bottom + 'px';
+    }
+
+    activateCharTab(tabId);
+}
+
+function closeCharOverlay(animate = true) {
+    const panel = document.getElementById('char-sheet-panel');
+    if (!panel || !panel.classList.contains('cs-overlay-open')) return;
+
+    document.querySelectorAll('#uch-char-tabs .tab-button').forEach(btn => {
+        btn.classList.remove('uch-selected');
+    });
+
+    if (animate) {
+        if (panel.classList.contains('cs-overlay-closing')) return;
+        panel.classList.add('cs-overlay-closing');
+        const onEnd = () => {
+            panel.classList.remove('cs-overlay-open', 'cs-overlay-closing', 'frosted-glass');
+            panel.style.display = '';
+            panel.style.top = '';
+        };
+        panel.addEventListener('animationend', onEnd, { once: true });
+        setTimeout(onEnd, 250);
+    } else {
+        panel.classList.remove('cs-overlay-open', 'cs-overlay-closing', 'frosted-glass');
+        panel.style.display = '';
+        panel.style.top = '';
+    }
+
+    repositionAllSliders();
+}
+
+// Click outside to close char overlay
+document.addEventListener("click", (e) => {
+    const panel = document.getElementById('char-sheet-panel');
+    if (panel?.classList.contains('cs-overlay-open') &&
+        !e.target.closest('#char-sheet-panel') &&
+        !e.target.closest('#uch-char-tabs')) {
+        closeCharOverlay();
+    }
+});
+
+/* ===================================================================*/
 /* ================= CENTRAL OVERLAY CANCEL BUTTONS =================*/
 /* ===================================================================*/
 
@@ -617,7 +674,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const storedActiveTab = localStorage.getItem("activeTab");
     const validTabs = ["tab3", "tab4", "tab6", "tab7", "tab8", "tab9"];
     const defaultActiveTab = tabContents.length > 0 ? tabContents[0].id : null;
-    const activeTabId = (storedActiveTab && validTabs.includes(storedActiveTab))
+    let activeTabId = (storedActiveTab && validTabs.includes(storedActiveTab))
         ? storedActiveTab
         : defaultActiveTab;
 
@@ -628,19 +685,34 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (activeTabId) {
-        const activeContent = document.getElementById(activeTabId);
-        if (activeContent) {
-            activeContent.classList.add("active");
-            activeContent.style.display = "flex";
-        }
+        const inLandscapeOnLoad = document.body.classList.contains('landscape-mode');
 
-        // Panel routing — set correct display values before reveal
-        if (CHAR_TABS.has(activeTabId)) {
-            if (charPanel)   { charPanel.style.display = 'flex'; }
-            if (tabsContent) { tabsContent.style.display = 'none'; }
-        } else {
+        if (!inLandscapeOnLoad && CHAR_TABS.has(activeTabId)) {
+            // Portrait with a char tab stored: show a list tab instead (don't auto-open overlay)
+            activeTabId = 'tab9';
+            const fallbackContent = document.getElementById(activeTabId);
+            if (fallbackContent) {
+                fallbackContent.classList.add("active");
+                fallbackContent.style.display = "flex";
+            }
             if (charPanel)   { charPanel.style.display = 'none'; }
             if (tabsContent) { tabsContent.style.display = 'flex'; }
+            localStorage.setItem("activeTab", activeTabId);
+        } else {
+            const activeContent = document.getElementById(activeTabId);
+            if (activeContent) {
+                activeContent.classList.add("active");
+                activeContent.style.display = "flex";
+            }
+
+            // Panel routing — set correct display values before reveal
+            if (CHAR_TABS.has(activeTabId)) {
+                if (charPanel)   { charPanel.style.display = 'flex'; }
+                if (tabsContent) { tabsContent.style.display = 'none'; }
+            } else {
+                if (charPanel)   { charPanel.style.display = 'none'; }
+                if (tabsContent) { tabsContent.style.display = 'flex'; }
+            }
         }
     }
 
@@ -697,11 +769,44 @@ document.addEventListener("DOMContentLoaded", () => {
                     localStorage.setItem("activeTab", targetTab);
                 }
             } else {
-                // Portrait: one active tab at a time
-                tabButtons.forEach(btn => btn.classList.remove("active", "uch-selected"));
+                // Portrait: list tabs are full screen, char tabs open as overlay
+                if (isCharTab) {
+                    if (charPanel.classList.contains('cs-overlay-open')) {
+                        // Overlay already open
+                        const currentCharTab = localStorage.getItem('activeCharTab') || 'tab4';
+                        if (currentCharTab === targetTab) {
+                            // Same char tab — close overlay
+                            closeCharOverlay();
+                        } else {
+                            // Different char tab — switch within overlay
+                            document.querySelectorAll('#uch-char-tabs .tab-button').forEach(btn => {
+                                btn.classList.remove('uch-selected');
+                            });
+                            event.currentTarget.classList.add('uch-selected');
+                            activateCharTab(targetTab);
+                        }
+                    } else {
+                        // Open overlay
+                        document.querySelectorAll('#uch-char-tabs .tab-button').forEach(btn => {
+                            btn.classList.remove('uch-selected');
+                        });
+                        event.currentTarget.classList.add('uch-selected');
+                        openCharOverlay(targetTab);
+                    }
+                    repositionAllSliders();
+                    return;
+                }
+
+                // List tab clicked — close overlay if open, switch list content
+                closeCharOverlay(false);
+
+                tabButtons.forEach(btn => {
+                    if (!CHAR_TABS.has(btn.dataset.tab)) btn.classList.remove("active");
+                });
                 event.currentTarget.classList.add("active");
 
                 tabContents.forEach(content => {
+                    if (CHAR_TABS.has(content.id)) return;
                     content.classList.remove("active");
                     content.style.display = "none";
                 });
@@ -710,14 +815,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     targetContent.style.display = "flex";
                 }
 
-// Panel routing
-                if (isCharTab) {
-                    if (charPanel)   { charPanel.style.display = 'flex'; }
-                    if (tabsContent) { tabsContent.style.display = 'none'; }                    activateCharTab(targetTab);
-                } else {
-                    if (charPanel)   { charPanel.style.display = 'none'; }
-                    if (tabsContent) { tabsContent.style.display = 'flex'; }
-                }
+                if (tabsContent) { tabsContent.style.display = 'flex'; }
+
                 localStorage.setItem("activeTab", targetTab);
             }
 
@@ -1053,6 +1152,10 @@ const keyboardShortcutsHandler = (() => {
             if (event.key === "Escape" && menuOverlay?.classList.contains("active")) {
                 menuOverlay.classList.remove("active");
                 menuButton?.classList.remove("menu-button-open");
+            }
+
+            if (event.key === "Escape" && document.getElementById('char-sheet-panel')?.classList.contains('cs-overlay-open')) {
+                closeCharOverlay();
             }            
         });
 
@@ -1164,6 +1267,14 @@ window.onload = async () => {
     document.body.classList.remove('app-loading');
     void document.body.offsetHeight; // force reflow between class changes
     document.body.classList.add('app-ready');    repositionAllSliders();
+
+    // Clear the reveal animation after it finishes so the residual transform
+    // on #app-row doesn't create a containing block for position:fixed descendants
+    const appRowEl = document.getElementById('app-row');
+    appRowEl?.addEventListener('animationend', () => {
+        appRowEl.style.opacity = '1';
+        appRowEl.style.animation = 'none';
+    }, { once: true });
 
     // ── Swipe to toggle filter panel on tab 9 ────────────────────────
     const swipeTarget9   = document.getElementById('results_section_9');

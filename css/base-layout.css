@@ -519,6 +519,38 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     display: flex;
 }
 
+/* ── Portrait char-sheet overlay ──────────────────────────────── */
+
+#char-sheet-panel.cs-overlay-open {
+    display: flex !important;
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    width: 360px;
+    max-width: calc(100vw - 40px);
+    z-index: 9998;
+    padding: 10px;
+    gap: 8px;
+    border-radius: 16px;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    animation: cs-overlay-in 0.3s ease-out forwards;
+}
+
+#char-sheet-panel.cs-overlay-open.cs-overlay-closing {
+    animation: cs-overlay-out 0.2s ease-in forwards;
+}
+
+@keyframes cs-overlay-in {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cs-overlay-out {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(-20px); }
+}
+
 #landscape-divider {
     display: none;
 }
@@ -1339,7 +1371,7 @@ a:hover {
 }
 
 .session-log-list-column.session-log-list-collapsed {
-    margin-right: calc(max(35%, 180px) * -1);
+    margin-right: calc(clamp(180px, 35%, 350px) * -1);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -2207,18 +2239,21 @@ a:hover {
 
 /* ── Uses field inside viewer edit ────────────────────────────── */
 
-.inventory-viewer .uses-field {
+.inventory-viewer .uses-field,
+.bag-ov .uses-field {
     background: none;
     padding: 2px 0 0;
     border-radius: 0;
 }
 
-.inventory-viewer .uses-field .circle {
+.inventory-viewer .uses-field .circle,
+.bag-ov .uses-field .circle {
     width: 15px;
     height: 15px;
 }
 
-.inventory-viewer .uses-field .circle-button {
+.inventory-viewer .uses-field .circle-button,
+.bag-ov .uses-field .circle-button {
     width: 15px;
     height: 15px;
     font-size: 10px;
@@ -2226,22 +2261,27 @@ a:hover {
     background-color: transparent;
 }
 
-.inventory-viewer .uses-field .circle-add {
+.inventory-viewer .uses-field .circle-add,
+.bag-ov .uses-field .circle-add {
     border: 1px dashed #f4a261;
     color: #f4a261;
 }
 
-.inventory-viewer .uses-field .circle-remove {
+.inventory-viewer .uses-field .circle-remove,
+.bag-ov .uses-field .circle-remove {
     border: 1px dashed var(--gray-550);
     color: var(--gray-550);
 }
 
-.inventory-viewer .uses-row {
+.inventory-viewer .uses-row,
+.bag-ov .uses-row {
     gap: 5px;
 }
 
 .inventory-viewer .uses-circles-container,
-.inventory-viewer .uses-controls-container {
+.inventory-viewer .uses-controls-container,
+.bag-ov .uses-circles-container,
+.bag-ov .uses-controls-container {
     gap: 5px;
 }
 

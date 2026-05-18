@@ -95,9 +95,13 @@ function updateBodyClass() {
 function onEnterLandscape() {
     clearPanelInlineStyles();
 
-    // Ensure both panels are visible for fade-in
+    // Close char overlay if it was open in portrait
     const charPanel = document.getElementById('char-sheet-panel');
     const rightPanel = document.getElementById('right-panel');
+    charPanel?.classList.remove('cs-overlay-open', 'cs-overlay-closing', 'frosted-glass');
+    charPanel?.style.removeProperty('top');
+
+    // Ensure both panels are visible for fade-in
     if (charPanel) charPanel.classList.add('visible');
     if (rightPanel) rightPanel.classList.add('visible');
 
@@ -118,18 +122,22 @@ function onEnterLandscape() {
 
 /** Called when rotating / resizing out of landscape. */
 function onExitLandscape() {
-    const activeCharTab = localStorage.getItem('activeCharTab') || 'tab4';
-    const charPanel     = document.getElementById('char-sheet-panel');
-    const tabsContent   = document.getElementById('right-panel');
+    const charPanel   = document.getElementById('char-sheet-panel');
+    const tabsContent = document.getElementById('right-panel');
 
-    if (charPanel)   { charPanel.style.display = 'flex'; charPanel.classList.add('visible'); }
-    if (tabsContent) { tabsContent.style.display = 'none'; }
+    // Close char overlay if open
+    charPanel?.classList.remove('cs-overlay-open', 'cs-overlay-closing', 'frosted-glass');
+    charPanel?.style.removeProperty('top');
 
-    activateCharTab(activeCharTab);
+    // Show right panel with active list tab
+    const activeListTab = localStorage.getItem('activeTab') || 'tab9';
+    if (charPanel)   { charPanel.style.display = 'none'; }
+    if (tabsContent) { tabsContent.style.display = 'flex'; tabsContent.classList.add('visible'); }
 
+    // Set button states: only the active list tab is active
     document.querySelectorAll('.tab-button').forEach(btn => {
         btn.classList.remove('active', 'uch-selected');
-        btn.classList.toggle('active', btn.dataset.tab === activeCharTab);
+        btn.classList.toggle('active', btn.dataset.tab === activeListTab);
     });
 
     repositionAllSliders();
