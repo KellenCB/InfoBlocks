@@ -894,7 +894,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             };
     
-            const groups = spellSlotSection.querySelectorAll('.spell-slot-group');
+            const groups = spellSlotSection.querySelectorAll('.spell-slot-group[data-group]');
             groups.forEach((groupContainer, idx) => {
             const groupId = groupContainer.dataset.group || (idx + 1);
             let circles = [];

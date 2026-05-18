@@ -639,7 +639,7 @@ body.app-ready #app-row {
 
 #suit_uses_circles {
     display: flex;
-    gap: 7.5px;
+    gap: 6px;
 }
 
 /* ==================================================================*/
