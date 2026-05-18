@@ -233,8 +233,8 @@ export const inventoryBag = (() => {
     p._srcEl = srcEl;
     p._cn = cn;
     p.innerHTML=`
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <div class="bpp-n" style="margin:0">${b.title}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div class="bpp-n">${b.title}</div>
         <div class="block-actions" style="position:static;flex-shrink:0">
           <div class="block-actions-menu">
             <div class="block-actions-reveal">
@@ -248,7 +248,7 @@ export const inventoryBag = (() => {
       </div>
       <span class="bpp-t" style="background:rgba(${cc},.12);color:rgba(${cc},.7)">${bt}</span>
       ${st?'<div class="bpp-s">'+st+'</div>':''}
-      <div class="bpp-b">${b.text||'<em style="color:var(--gray-500)">No description</em>'}</div>
+      <div class="bpp-b scroll-fade" style="--mask-fade-size:20px">${b.text||'<em style="color:var(--gray-500)">No description</em>'}</div>
       ${tg}`;
 
     const menu = p.querySelector('.block-actions-menu');
@@ -331,6 +331,25 @@ export const inventoryBag = (() => {
 
     p.style.visibility = 'hidden';
     L.appendChild(p);
+
+    // Wire scroll-fade mask on body copy
+    const bodyEl = p.querySelector('.bpp-b');
+    if (bodyEl) {
+      const fadeSize = 20;
+      const checkMask = () => {
+        const scrollable = bodyEl.scrollHeight - bodyEl.clientHeight;
+        if (scrollable <= 5) {
+          bodyEl.style.setProperty('--mask-top', '0px');
+          bodyEl.style.setProperty('--mask-bottom', '0px');
+          return;
+        }
+        const distFromBottom = bodyEl.scrollHeight - bodyEl.scrollTop - bodyEl.clientHeight;
+        bodyEl.style.setProperty('--mask-top', Math.min(bodyEl.scrollTop, fadeSize) + 'px');
+        bodyEl.style.setProperty('--mask-bottom', Math.min(distFromBottom, fadeSize) + 'px');
+      };
+      bodyEl.addEventListener('scroll', checkMask);
+      checkMask();
+    }
 
     const srcE = p._srcEl, cnE = p._cn || document.getElementById('bag-cn');
     if (srcE && cnE) {
