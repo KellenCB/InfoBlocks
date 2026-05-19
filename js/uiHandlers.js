@@ -214,6 +214,26 @@ document.addEventListener("input", (e) => {
 /* ========================= HP BAR SECTION ========================*/
 /* ==================================================================*/
 
+function animateHeight(el, fromH, toH, onDone) {
+    if (fromH === toH) { onDone?.(); return; }
+    el.style.height = fromH + 'px';
+    el.style.overflow = 'hidden';
+    el.style.transition = 'none';
+    void el.offsetHeight;
+    el.style.transition = 'height 0.5s ease';
+    el.style.height = toH + 'px';
+    const cleanup = () => {
+        el.style.height = '';
+        el.style.overflow = '';
+        el.style.transition = '';
+        onDone?.();
+    };
+    el.addEventListener('transitionend', (ev) => {
+        if (ev.target === el && ev.propertyName === 'height') cleanup();
+    }, { once: true });
+    setTimeout(cleanup, 600);
+}
+
 function initHpSection(tabPrefix) {
     const tabEl = document.getElementById(tabPrefix);
     if (!tabEl) return;
@@ -400,6 +420,14 @@ const renderBar = () => {
             dsRollBtn.disabled = !active;
         }
     };
+    const dsCard = hpSection.closest('.cs-hp-card');
+
+    // Remove the no-transition class after first paint so future changes animate
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            dsPanel.classList.remove('ds-no-transition');
+        });
+    });
 
     const resetDs = () => {
         dsSuccesses = 0;
@@ -1488,88 +1516,32 @@ function initHeaderCardToggle(tabPrefix) {
 
         if (!isCondensed) {
             // ── Collapsing ──────────────────────────────────────────
-            // Measure target height without actually hiding content
-            card.classList.add('cs-header-condensed');
+            card.classList.add('cs-hp-condensed');
             const newHeight = card.offsetHeight;
-            card.classList.remove('cs-header-condensed');
+            card.classList.remove('cs-hp-condensed');
 
-            // Lock to old height
-            card.style.height = oldHeight + 'px';
-            card.style.overflow = 'hidden';
-            card.style.transition = 'none';
+            fadeEls.forEach(el => { el.style.opacity = '1'; el.style.transition = 'none'; });
 
-            fadeEls.forEach(el => {
-                el.style.opacity = '1';
-                el.style.transition = 'none';
+            animateHeight(card, oldHeight, newHeight, () => {
+                card.classList.add('cs-hp-condensed');
+                fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
             });
 
-            void card.offsetHeight;
-
-            // Animate height down + fade out simultaneously
-            card.style.transition = 'height 0.5s ease';
-            card.style.height = newHeight + 'px';
-
-            fadeEls.forEach(el => {
-                el.style.transition = 'opacity 0.4s ease';
-                el.style.opacity = '0';
-            });
-
-            const cleanup = () => {
-                card.classList.add('cs-header-condensed');
-                card.style.height = '';
-                card.style.overflow = '';
-                card.style.transition = '';
-                fadeEls.forEach(el => {
-                    el.style.opacity = '';
-                    el.style.transition = '';
-                });
-            };
-            card.addEventListener('transitionend', (ev) => {
-                if (ev.target === card && ev.propertyName === 'height') cleanup();
-            }, { once: true });
-            setTimeout(cleanup, 600);
+            fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease'; el.style.opacity = '0'; });
 
             localStorage.setItem(storageKey, 'true');
 
         } else {
             // ── Expanding ───────────────────────────────────────────
-            card.classList.remove('cs-header-condensed');
-
-            fadeEls.forEach(el => {
-                el.style.opacity = '0';
-                el.style.transition = 'none';
-            });
-
+            card.classList.remove('cs-hp-condensed');
+            fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
             const newHeight = card.offsetHeight;
 
-            card.style.height = oldHeight + 'px';
-            card.style.overflow = 'hidden';
-            card.style.transition = 'none';
-
-            void card.offsetHeight;
-
-            // Animate height up + fade in simultaneously
-            card.style.transition = 'height 0.5s ease';
-            card.style.height = newHeight + 'px';
-
-            fadeEls.forEach(el => {
-                el.style.transition = 'opacity 0.4s ease 0.1s';
-                el.style.opacity = '1';
+            animateHeight(card, oldHeight, newHeight, () => {
+                fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
             });
 
-            const cleanup = () => {
-                card.style.height = '';
-                card.style.overflow = '';
-                card.style.transition = '';
-                fadeEls.forEach(el => {
-                    el.style.opacity = '';
-                    el.style.transition = '';
-                });
-            };
-            card.addEventListener('transitionend', (ev) => {
-                if (ev.target === card && ev.propertyName === 'height') cleanup();
-            }, { once: true });
-            setTimeout(cleanup, 600);
+            fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
 
             localStorage.setItem(storageKey, 'false');
         }
@@ -1614,12 +1586,17 @@ function initHpCardToggle(tabPrefix) {
 
         const isCondensed = card.classList.contains('cs-hp-condensed');
         const oldHeight = card.offsetHeight;
+        const dsPanel = hpSection.querySelector('.ds-panel');
         const fadeEls = [...hpSection.children].filter(el =>
-            !el.classList.contains('hp-section-header') && !el.classList.contains('hp-bar-area')
+            !el.classList.contains('hp-section-header')
+            && !el.classList.contains('hp-bar-area')
+            && !el.classList.contains('ds-panel')
         );
 
         if (!isCondensed) {
             // ── Collapsing ──────────────────────────────────────────
+            if (dsPanel) dsPanel.style.transition = 'none';
+
             // Measure target height without actually hiding content
             card.classList.add('cs-hp-condensed');
             const newHeight = card.offsetHeight;
@@ -1655,6 +1632,7 @@ function initHpCardToggle(tabPrefix) {
                     el.style.opacity = '';
                     el.style.transition = '';
                 });
+                if (dsPanel) dsPanel.style.transition = '';
             };
             card.addEventListener('transitionend', (ev) => {
                 if (ev.target === card && ev.propertyName === 'height') cleanup();
@@ -1665,6 +1643,8 @@ function initHpCardToggle(tabPrefix) {
 
         } else {
             // ── Expanding ───────────────────────────────────────────
+            if (dsPanel) dsPanel.style.transition = 'none';
+
             card.classList.remove('cs-hp-condensed');
 
             fadeEls.forEach(el => {
@@ -1697,6 +1677,7 @@ function initHpCardToggle(tabPrefix) {
                     el.style.opacity = '';
                     el.style.transition = '';
                 });
+                if (dsPanel) dsPanel.style.transition = '';
             };
             card.addEventListener('transitionend', (ev) => {
                 if (ev.target === card && ev.propertyName === 'height') cleanup();
