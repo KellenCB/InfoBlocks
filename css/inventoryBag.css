@@ -2,16 +2,18 @@
 /* ==================== INVENTORY BAG MODE =========================*/
 /* ==================================================================*/
 
-/* ── Layout overrides ─────────────────────────────────────────────── */
 
-.inv-bag-mode .inventory-viewer {
-  display: none !important;
-}
-
-.inv-bag-mode .inventory-list-column {
-  width: 100% !important;
+.inventory-layout {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.inventory-layout .results-wrapper {
+  padding: 0;
+  overflow: hidden;
 }
 
 .inv-bag-mode .results-section {
@@ -19,6 +21,8 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
+  padding: 15px;
 }
 
 /* ── Filter bar ───────────────────────────────────────────────────── */
@@ -208,6 +212,14 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+/* In bag mode the results-section has padding: 15px. width: 100% on a flex
+   child can resolve against the container's border-box (ignoring padding),
+   so we switch to width: auto and let align-self: stretch fill only the
+   content area, which correctly honours the 15px inset on all sides. */
+.inv-bag-mode .results-section .bcn {
+  width: auto;
 }
 
 .bcn > canvas {

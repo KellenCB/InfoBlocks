@@ -10,7 +10,7 @@ export const inventoryBag = (() => {
   let activeFilter = 'all', resizeObs = null;
   let currentItems = [], tipEl = null, popOpenId = null;
 
-  const PAD = 8, PACK = 0.42, MIN_U = 14, MAX_U = 50;
+  const PAD = 0, PACK = 0.42, MIN_U = 14, MAX_U = 50;
 
   const CAT = {
     'Consumables':         { c:'7,243,113',   ic:'M12 10L12 5L20 5L20 10M10 10L10 30C10 34 22 34 22 30L22 10ZM10 18L22 18', gw:1, gh:1 },
@@ -131,7 +131,7 @@ export const inventoryBag = (() => {
     ctx.lineTo(bl,bt+r);ctx.arcTo(bl,bt,bl+r,bt,r);
     ctx.closePath();
     ctx.fillStyle='rgba(30,22,12,.08)';ctx.fill();
-    ctx.strokeStyle='rgba(110,85,45,.12)';ctx.lineWidth=1.5;ctx.lineJoin='round';ctx.stroke();
+    ctx.strokeStyle='rgba(110,85,45,.25)';ctx.lineWidth=1.5;ctx.lineJoin='round';ctx.stroke();
   }
 
   const _cleanedImageCache = new Map();
@@ -1716,5 +1716,12 @@ export const inventoryBag = (() => {
     });
   }
 
-  return { render, isEnabled, showAddOverlay };
+  function editItemById(blockId) {
+    const all = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
+    const block = all.find(b => b.id === blockId);
+    if (!block) return;
+    showEditOverlay({ block });
+  }
+
+  return { render, isEnabled, showAddOverlay, editItemById };
 })();
