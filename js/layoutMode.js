@@ -72,6 +72,19 @@ export function activateCharTab(tabId) {
         const el = document.getElementById(id);
         if (!el) return;
         const show = id === tabId;
+
+        // Cancel any in-flight delta popups before the tab is hidden, so they don't restart when the tab is shown again.
+        if (!show) {
+            el.querySelectorAll('.hp-drag-delta').forEach(d => {
+                d.style.animation = 'none';
+                d.className = 'hp-drag-delta';
+            });
+            el.querySelectorAll('.coin-delta-popup').forEach(d => {
+                d.style.animation = 'none';
+                d.className = 'coin-delta-popup';
+            });
+        }
+
         el.classList.toggle('active', show);
         el.style.display = show ? 'flex' : 'none';
     });

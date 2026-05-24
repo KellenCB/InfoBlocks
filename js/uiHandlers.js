@@ -77,6 +77,18 @@ function updateTab8AbilityBonuses() {
     );
 }
 
+// Recalculate all derived stats (modifiers, saves, skills) — called by breakdown popover
+export function triggerStatRecalculation(key) {
+    if (key && key.endsWith("_score")) {
+        if (key.startsWith("tab4_")) updateTab4AbilityBonuses();
+        else if (key.startsWith("tab8_")) updateTab8AbilityBonuses();
+    }
+    updateTab4Saves();
+    updateTab8Saves();
+    updateTab4Skills();
+    updateTab8Skills();
+}
+
 // Update all saving throws for Tab 4
 function updateTab4Saves() {
     ["str","dex","con","int","wis","cha"].forEach(ab =>
@@ -680,6 +692,9 @@ const renderBar = () => {
         hpDragDelta.offsetHeight;
         hpDragDelta.style.animation = '';
         hpDragDelta.className = 'hp-drag-delta hp-drag-floating ' + color;
+        hpDragDelta.addEventListener('animationend', () => {
+            hpDragDelta.className = 'hp-drag-delta';
+        }, { once: true });
     }
 
     barArea.addEventListener('pointerdown', (e) => {
@@ -1417,6 +1432,70 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+/* ── Download Lite (no inventory drawings) ────────────────────── */
+
+    document.getElementById('download_lite_button')?.addEventListener('click', () => {
+        try {
+            const data = Object.fromEntries(
+                Array.from({ length: localStorage.length }, (_, i) => {
+                    const key = localStorage.key(i);
+                    try { return [key, JSON.parse(localStorage.getItem(key))]; }
+                    catch { return [key, localStorage.getItem(key)]; }
+                })
+            );
+
+            data.resultsTitles = Object.fromEntries(
+                [...document.querySelectorAll("[id^='results_title_']")]
+                    .map(el => [el.id, el.textContent.trim()])
+            );
+
+            const circleSection = document.querySelector('.spell-slot-group');
+            if (circleSection) {
+                const circles = [...circleSection.querySelectorAll('.circle:not(.circle-button)')];
+                data.circleData = {
+                    totalCircles: circles.length,
+                    states: circles.map(c => c.classList.contains('unfilled') ? 0 : 1)
+                };
+            }
+
+            // Strip inventory drawing data from ALL block arrays
+            for (const key of Object.keys(data)) {
+                if (Array.isArray(data[key])) {
+                    const hasDrawingData = data[key].some(item =>
+                        item && typeof item === 'object' && ('bagFabricData' in item || 'bagCellImgs' in item)
+                    );
+                    if (hasDrawingData) {
+                        console.log(`🧹 Stripping drawing data from key: ${key}`);
+                        data[key] = data[key].map(block => {
+                            const { bagFabricData, bagCellImgs, ...rest } = block;
+                            return rest;
+                        });
+                    }
+                }
+            }
+            console.log('📦 Lite export — all drawing data stripped');
+
+            const charName = localStorage.getItem('tab4_character_name') || 'InfoBlocks';
+            let filename = prompt('Enter a name for your file:', charName + '_lite');
+            if (!filename) return;
+            if (!filename.endsWith('.json')) filename += '.json';
+
+            const a = Object.assign(document.createElement('a'), {
+                href:     URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })),
+                download: filename
+            });
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+
+            console.log(`✅ Data (lite) downloaded as: ${filename}`);
+        } catch (err) {
+            console.error('❌ Error exporting lite data:', err);
+            alert('An error occurred while exporting data.');
+        }
+    });
+
     /* ── Upload ────────────────────────────────────────────────────── */
 
     document.getElementById('upload_button')?.addEventListener('click', () => {
@@ -1497,10 +1576,20 @@ function initHeaderCardToggle(tabPrefix) {
     const nameRow = card.querySelector('.cs-header-name-row');
     if (!details || !nameRow) return;
 
-    const storageKey = `${tabPrefix}_header_condensed`;
+    const SHARED_KEY = 'shared_header_condensed';
+    const siblingPrefix = tabPrefix === 'tab4' ? 'tab8' : 'tab4';
+
+    // Silently apply state to the sibling card (no animation — it's hidden)
+    function syncSibling(condensed) {
+        const siblingTab = document.getElementById(siblingPrefix);
+        if (!siblingTab) return;
+        const siblingCard = siblingTab.querySelector('.cs-header-card');
+        if (!siblingCard) return;
+        siblingCard.classList.toggle('cs-header-condensed', condensed);
+    }
 
     // Restore saved state (default: expanded)
-    if (localStorage.getItem(storageKey) === 'true') {
+    if (localStorage.getItem(SHARED_KEY) === 'true') {
         card.classList.add('cs-header-condensed');
     }
 
@@ -1516,24 +1605,25 @@ function initHeaderCardToggle(tabPrefix) {
 
         if (!isCondensed) {
             // ── Collapsing ──────────────────────────────────────────
-            card.classList.add('cs-hp-condensed');
+            card.classList.add('cs-header-condensed');
             const newHeight = card.offsetHeight;
-            card.classList.remove('cs-hp-condensed');
+            card.classList.remove('cs-header-condensed');
 
             fadeEls.forEach(el => { el.style.opacity = '1'; el.style.transition = 'none'; });
 
             animateHeight(card, oldHeight, newHeight, () => {
-                card.classList.add('cs-hp-condensed');
+                card.classList.add('cs-header-condensed');
                 fadeEls.forEach(el => { el.style.opacity = ''; el.style.transition = ''; });
             });
 
             fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease'; el.style.opacity = '0'; });
 
-            localStorage.setItem(storageKey, 'true');
+            localStorage.setItem(SHARED_KEY, 'true');
+            syncSibling(true);
 
         } else {
             // ── Expanding ───────────────────────────────────────────
-            card.classList.remove('cs-hp-condensed');
+            card.classList.remove('cs-header-condensed');
             fadeEls.forEach(el => { el.style.opacity = '0'; el.style.transition = 'none'; });
             const newHeight = card.offsetHeight;
 
@@ -1543,7 +1633,8 @@ function initHeaderCardToggle(tabPrefix) {
 
             fadeEls.forEach(el => { el.style.transition = 'opacity 0.4s ease 0.1s'; el.style.opacity = '1'; });
 
-            localStorage.setItem(storageKey, 'false');
+            localStorage.setItem(SHARED_KEY, 'false');
+            syncSibling(false);
         }
     });
 }
@@ -1569,10 +1660,20 @@ function initHpCardToggle(tabPrefix) {
     if (!hpSection) return;
 
     const TOGGLE_ZONE_HEIGHT = 35;
-    const storageKey = `${tabPrefix}_hp_condensed`;
+    const SHARED_KEY = 'shared_hp_condensed';
+    const siblingPrefix = tabPrefix === 'tab4' ? 'tab8' : 'tab4';
+
+    // Silently apply state to the sibling card (no animation — it's hidden)
+    function syncSibling(condensed) {
+        const siblingTab = document.getElementById(siblingPrefix);
+        if (!siblingTab) return;
+        const siblingCard = siblingTab.querySelector('.cs-hp-card');
+        if (!siblingCard) return;
+        siblingCard.classList.toggle('cs-hp-condensed', condensed);
+    }
 
     // Restore saved state (default: expanded)
-    if (localStorage.getItem(storageKey) === 'true') {
+    if (localStorage.getItem(SHARED_KEY) === 'true') {
         card.classList.add('cs-hp-condensed');
     }
 
@@ -1639,7 +1740,8 @@ function initHpCardToggle(tabPrefix) {
             }, { once: true });
             setTimeout(cleanup, 600);
 
-            localStorage.setItem(storageKey, 'true');
+            localStorage.setItem(SHARED_KEY, 'true');
+            syncSibling(true);
 
         } else {
             // ── Expanding ───────────────────────────────────────────
@@ -1684,7 +1786,8 @@ function initHpCardToggle(tabPrefix) {
             }, { once: true });
             setTimeout(cleanup, 600);
 
-            localStorage.setItem(storageKey, 'false');
+            localStorage.setItem(SHARED_KEY, 'false');
+            syncSibling(false);
         }
     });
 }
@@ -1773,6 +1876,9 @@ function initCurrencyTracker(tabPrefix) {
         el.offsetHeight;
         el.style.animation = '';
         el.className = 'coin-delta-popup coin-delta-floating ' + color;
+        el.addEventListener('animationend', () => {
+            el.className = 'coin-delta-popup';
+        }, { once: true });
     }
 
     function hideDelta(pill) {

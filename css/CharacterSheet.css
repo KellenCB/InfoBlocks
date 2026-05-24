@@ -1405,3 +1405,100 @@
     opacity: 1;
     transition-delay: 0.5s;
 }
+
+/* ── Stat Breakdown Popover ──────────────────────────────────────── */
+
+.stat-breakdown-popover {
+    position: fixed;
+    display: none;
+    flex-direction: column;
+    z-index: 9998;
+    border-radius: 10px;
+    padding: 8px;
+    width: 160px;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.stat-breakdown-popover.open {
+    display: flex;
+    animation: dice-popover-in 0.3s ease-out forwards;
+}
+
+.stat-breakdown-popover.closing {
+    display: flex;
+    animation: popover-out 0.2s ease-in forwards;
+}
+
+.stat-breakdown-popover .sb-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.stat-breakdown-popover .sb-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat-breakdown-popover .sb-row-val {
+    width: 30px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-750);
+    background: none;
+    border: none;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+    outline: none;
+    padding: 3px 0;
+    text-align: right;
+    font-family: inherit;
+}
+
+.stat-breakdown-popover .sb-row-desc {
+    flex: 1;
+    font-size: 11px;
+    color: var(--gray-750);
+    background: none;
+    border: none;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+    outline: none;
+    padding: 3px 0;
+    font-family: inherit;
+    min-width: 0;
+}
+
+.stat-breakdown-popover .sb-row-desc::placeholder,
+.stat-breakdown-popover .sb-row-val::placeholder
+{ color: var(--gray-500); }
+
+.stat-breakdown-popover .sb-row-val.positive { color: #4CAF50; }
+.stat-breakdown-popover .sb-row-val.negative { color: #ff6b6b; }
+
+.stat-breakdown-popover .sb-row-del {
+    cursor: pointer;
+    opacity: 0.25;
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+}
+
+.stat-breakdown-popover .sb-row-del:hover {
+    opacity: 0.6;
+}
+
+.stat-breakdown-popover .sb-add {
+    font-size: 11px;
+    color: var(--gray-500);
+    cursor: pointer;
+    padding: 5px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    opacity: 0.5;
+}
+
+.stat-breakdown-popover .sb-add:hover {
+    opacity: 1;
+}
