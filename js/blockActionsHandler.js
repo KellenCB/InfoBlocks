@@ -176,10 +176,6 @@ export const blockActionsHandler = (() => {
                 }
             }
             const result = appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.properties || [], block.blockType || null, null, null, inventoryExtras, tab3Extras);
-            // On tab6, auto-select the newly created copy in the viewer
-            if (activeTab === 'tab6' && typeof result === 'string') {
-                appManager.setActiveInventoryBlock(result);
-            }
             // On tab3, auto-select the duplicate in the viewer (wide mode)
             if (activeTab === 'tab3' && typeof result === 'string') {
                 appManager.setActiveNotesBlock(result);
@@ -194,9 +190,9 @@ export const blockActionsHandler = (() => {
                 return;
             }
 
-            // Tab6: edit in the inventory viewer panel
+            // Tab6: edit via bag overlay
             if (activeTab === 'tab6') {
-                appManager.enterInventoryEdit(blockId);
+                appManager.editInventoryBagItem(blockId);
                 return;
             }
 

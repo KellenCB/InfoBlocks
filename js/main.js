@@ -5,7 +5,7 @@ import { filterManager } from './filterManager.js';
 import { blockTypeConfig } from './tagConfig.js';
 import { initScrollFades, initDragToScroll } from './appManager.js';
 import { initDiceRoller } from './diceRoller.js';
-import { evaluateStatExpression } from './uiHandlers.js';
+import { evaluateStatExpression, triggerStatRecalculation } from './uiHandlers.js';
 import { initLayoutMode, activateCharTab } from './layoutMode.js';
 import { registerSwipe } from './swipeGesture.js';
 
@@ -162,6 +162,63 @@ document.addEventListener("click", (e) => {
 });
 
 /* ===================================================================*/
+/* ================ CHAR SHEET OVERLAY (PORTRAIT) ====================*/
+/* ===================================================================*/
+
+function openCharOverlay(tabId) {
+    const panel = document.getElementById('char-sheet-panel');
+    if (!panel) return;
+    panel.style.display = '';
+    panel.classList.remove('cs-overlay-closing');
+    panel.classList.add('cs-overlay-open', 'frosted-glass');
+
+    // Position top edge just below the header
+    const header = document.getElementById('header-row');
+    if (header) {
+        panel.style.top = header.getBoundingClientRect().bottom + 'px';
+    }
+
+    activateCharTab(tabId);
+}
+
+function closeCharOverlay(animate = true) {
+    const panel = document.getElementById('char-sheet-panel');
+    if (!panel || !panel.classList.contains('cs-overlay-open')) return;
+
+    document.querySelectorAll('#uch-char-tabs .tab-button').forEach(btn => {
+        btn.classList.remove('uch-selected');
+    });
+
+    if (animate) {
+        if (panel.classList.contains('cs-overlay-closing')) return;
+        panel.classList.add('cs-overlay-closing');
+        const onEnd = () => {
+            panel.classList.remove('cs-overlay-open', 'cs-overlay-closing', 'frosted-glass');
+            panel.style.display = '';
+            panel.style.top = '';
+        };
+        panel.addEventListener('animationend', onEnd, { once: true });
+        setTimeout(onEnd, 250);
+    } else {
+        panel.classList.remove('cs-overlay-open', 'cs-overlay-closing', 'frosted-glass');
+        panel.style.display = '';
+        panel.style.top = '';
+    }
+
+    repositionAllSliders();
+}
+
+// Click outside to close char overlay
+document.addEventListener("click", (e) => {
+    const panel = document.getElementById('char-sheet-panel');
+    if (panel?.classList.contains('cs-overlay-open') &&
+        !e.target.closest('#char-sheet-panel') &&
+        !e.target.closest('#uch-char-tabs')) {
+        closeCharOverlay();
+    }
+});
+
+/* ===================================================================*/
 /* ================= CENTRAL OVERLAY CANCEL BUTTONS =================*/
 /* ===================================================================*/
 
@@ -251,6 +308,9 @@ function closeAllUchPopovers(except) {
         diceHistoryButton?.classList.remove('active');
     }
     if (except !== 'latest') closeLatestRoll();
+    const breakdownPop = document.getElementById('stat-breakdown-popover');
+    if (except !== 'breakdown' && breakdownPop?.classList.contains('open'))
+        closePopoverAnimated(breakdownPop);
 }
 
 /** Hover delay: close popover after mouse leaves both button and popover */
@@ -617,7 +677,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const storedActiveTab = localStorage.getItem("activeTab");
     const validTabs = ["tab3", "tab4", "tab6", "tab7", "tab8", "tab9"];
     const defaultActiveTab = tabContents.length > 0 ? tabContents[0].id : null;
-    const activeTabId = (storedActiveTab && validTabs.includes(storedActiveTab))
+    let activeTabId = (storedActiveTab && validTabs.includes(storedActiveTab))
         ? storedActiveTab
         : defaultActiveTab;
 
@@ -628,19 +688,34 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (activeTabId) {
-        const activeContent = document.getElementById(activeTabId);
-        if (activeContent) {
-            activeContent.classList.add("active");
-            activeContent.style.display = "flex";
-        }
+        const inLandscapeOnLoad = document.body.classList.contains('landscape-mode');
 
-        // Panel routing — set correct display values before reveal
-        if (CHAR_TABS.has(activeTabId)) {
-            if (charPanel)   { charPanel.style.display = 'flex'; }
-            if (tabsContent) { tabsContent.style.display = 'none'; }
-        } else {
+        if (!inLandscapeOnLoad && CHAR_TABS.has(activeTabId)) {
+            // Portrait with a char tab stored: show a list tab instead (don't auto-open overlay)
+            activeTabId = 'tab9';
+            const fallbackContent = document.getElementById(activeTabId);
+            if (fallbackContent) {
+                fallbackContent.classList.add("active");
+                fallbackContent.style.display = "flex";
+            }
             if (charPanel)   { charPanel.style.display = 'none'; }
             if (tabsContent) { tabsContent.style.display = 'flex'; }
+            localStorage.setItem("activeTab", activeTabId);
+        } else {
+            const activeContent = document.getElementById(activeTabId);
+            if (activeContent) {
+                activeContent.classList.add("active");
+                activeContent.style.display = "flex";
+            }
+
+            // Panel routing — set correct display values before reveal
+            if (CHAR_TABS.has(activeTabId)) {
+                if (charPanel)   { charPanel.style.display = 'flex'; }
+                if (tabsContent) { tabsContent.style.display = 'none'; }
+            } else {
+                if (charPanel)   { charPanel.style.display = 'none'; }
+                if (tabsContent) { tabsContent.style.display = 'flex'; }
+            }
         }
     }
 
@@ -697,11 +772,44 @@ document.addEventListener("DOMContentLoaded", () => {
                     localStorage.setItem("activeTab", targetTab);
                 }
             } else {
-                // Portrait: one active tab at a time
-                tabButtons.forEach(btn => btn.classList.remove("active", "uch-selected"));
+                // Portrait: list tabs are full screen, char tabs open as overlay
+                if (isCharTab) {
+                    if (charPanel.classList.contains('cs-overlay-open')) {
+                        // Overlay already open
+                        const currentCharTab = localStorage.getItem('activeCharTab') || 'tab4';
+                        if (currentCharTab === targetTab) {
+                            // Same char tab — close overlay
+                            closeCharOverlay();
+                        } else {
+                            // Different char tab — switch within overlay
+                            document.querySelectorAll('#uch-char-tabs .tab-button').forEach(btn => {
+                                btn.classList.remove('uch-selected');
+                            });
+                            event.currentTarget.classList.add('uch-selected');
+                            activateCharTab(targetTab);
+                        }
+                    } else {
+                        // Open overlay
+                        document.querySelectorAll('#uch-char-tabs .tab-button').forEach(btn => {
+                            btn.classList.remove('uch-selected');
+                        });
+                        event.currentTarget.classList.add('uch-selected');
+                        openCharOverlay(targetTab);
+                    }
+                    repositionAllSliders();
+                    return;
+                }
+
+                // List tab clicked — close overlay if open, switch list content
+                closeCharOverlay(false);
+
+                tabButtons.forEach(btn => {
+                    if (!CHAR_TABS.has(btn.dataset.tab)) btn.classList.remove("active");
+                });
                 event.currentTarget.classList.add("active");
 
                 tabContents.forEach(content => {
+                    if (CHAR_TABS.has(content.id)) return;
                     content.classList.remove("active");
                     content.style.display = "none";
                 });
@@ -710,14 +818,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     targetContent.style.display = "flex";
                 }
 
-// Panel routing
-                if (isCharTab) {
-                    if (charPanel)   { charPanel.style.display = 'flex'; }
-                    if (tabsContent) { tabsContent.style.display = 'none'; }                    activateCharTab(targetTab);
-                } else {
-                    if (charPanel)   { charPanel.style.display = 'none'; }
-                    if (tabsContent) { tabsContent.style.display = 'flex'; }
-                }
+                if (tabsContent) { tabsContent.style.display = 'flex'; }
+
                 localStorage.setItem("activeTab", targetTab);
             }
 
@@ -879,7 +981,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // 📌 Make character sheet editable fields more user friendly
 document.querySelectorAll("#tab4 .editable, #tab8 .editable").forEach(field => {
     field.addEventListener("focus", function () {
-        if (this.classList.contains('stat-subvalue') && this.dataset.rawExpression !== undefined) {
+        if (this.dataset.rawExpression !== undefined) {
             this.textContent = this.dataset.rawExpression;
             this.dataset.initialValue = this.dataset.rawExpression;
         } else {
@@ -1053,6 +1155,10 @@ const keyboardShortcutsHandler = (() => {
             if (event.key === "Escape" && menuOverlay?.classList.contains("active")) {
                 menuOverlay.classList.remove("active");
                 menuButton?.classList.remove("menu-button-open");
+            }
+
+            if (event.key === "Escape" && document.getElementById('char-sheet-panel')?.classList.contains('cs-overlay-open')) {
+                closeCharOverlay();
             }            
         });
 
@@ -1094,27 +1200,270 @@ window.onload = async () => {
     filterManager.applyFilters(appManager.getActiveTab().replace('tab', ''));
     actionButtonHandlers.attachActionButtonListeners();
 
+// ── Stat Breakdown Popover System ─────────────────────────────────────
+    function initStatBreakdownPopovers() {
+        const breakdownKeys = new Set([
+            'tab4_ac', 'tab4_initiative', 'tab4_prof', 'tab4_speed',
+            'tab4_spell_save', 'tab4_spell_attack',
+            'tab4_str_score', 'tab4_dex_score', 'tab4_con_score',
+            'tab4_int_score', 'tab4_wis_score', 'tab4_cha_score',
+            'tab8_ac', 'tab8_initiative', 'tab8_prof', 'tab8_speed',
+            'tab8_spell_save', 'tab8_spell_attack',
+            'tab8_str_score', 'tab8_dex_score', 'tab8_con_score',
+            'tab8_int_score', 'tab8_wis_score', 'tab8_cha_score'
+        ]);
+
+        const signPrefixKeys = new Set([
+            'tab4_initiative', 'tab4_prof', 'tab4_spell_attack',
+            'tab8_initiative', 'tab8_prof', 'tab8_spell_attack'
+        ]);
+
+        const xSvg = '<svg viewBox="0 0 24 24" style="width:100%;height:100%" stroke="currentColor" fill="none" stroke-width="2"><path d="M6 6l12 12M6 18L18 6"/></svg>';
+        const plusSvg = '<svg viewBox="0 0 24 24" style="width:10px;height:10px" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+
+        // Create the single shared popover element
+        const popover = document.createElement('div');
+        popover.className = 'stat-breakdown-popover frosted-glass';
+        popover.id = 'stat-breakdown-popover';
+        popover.innerHTML = `
+            <div class="sb-rows"></div>
+            <div class="sb-add">${plusSvg} Add</div>
+        `;
+        document.body.appendChild(popover);
+
+        const sbRows = popover.querySelector('.sb-rows');
+        const sbAdd = popover.querySelector('.sb-add');
+
+        let activeKey = null;
+        let activeEl = null;
+
+        function getBreakdownData(key) {
+            try {
+                return JSON.parse(localStorage.getItem(key + '_breakdown')) || [];
+            } catch { return []; }
+        }
+
+        function saveBreakdownData(key, rows) {
+            localStorage.setItem(key + '_breakdown', JSON.stringify(rows));
+        }
+
+        function computeSum(rows) {
+            return rows.reduce((sum, r) => {
+                const n = parseFloat(r.val);
+                return sum + (isNaN(n) ? 0 : n);
+            }, 0);
+        }
+
+        function collectCurrentRows() {
+            const rows = [];
+            sbRows.querySelectorAll('.sb-row').forEach(row => {
+                rows.push({
+                    val: row.querySelector('.sb-row-val').value,
+                    desc: row.querySelector('.sb-row-desc').value
+                });
+            });
+            return rows;
+        }
+
+        function updateStatDisplay() {
+            if (!activeEl || !activeKey) return;
+            const rows = collectCurrentRows();
+            const hasValues = rows.some(r => r.val.trim() !== '');
+            if (!hasValues) return;
+
+            const sum = computeSum(rows);
+            const rawValue = String(sum);
+
+            localStorage.setItem(activeKey, rawValue);
+
+            if (signPrefixKeys.has(activeKey) && sum >= 0) {
+                activeEl.textContent = '+' + rawValue;
+            } else {
+                activeEl.textContent = rawValue;
+            }
+
+            activeEl.style.opacity = '1';
+            triggerStatRecalculation(activeKey);
+        }
+
+        function applyRowColor(valInput) {
+            const n = parseFloat(valInput.value);
+            valInput.classList.remove('positive', 'negative');
+            if (!isNaN(n)) {
+                valInput.classList.add(n < 0 ? 'negative' : 'positive');
+            }
+        }
+
+        function createRow(val = '', desc = '') {
+            const row = document.createElement('div');
+            row.className = 'sb-row';
+
+            const valInput = document.createElement('input');
+            valInput.className = 'sb-row-val';
+            valInput.value = val;
+            valInput.placeholder = '±0';
+            valInput.inputMode = 'numeric';
+
+            const descInput = document.createElement('input');
+            descInput.className = 'sb-row-desc';
+            descInput.value = desc;
+            descInput.placeholder = 'Source...';
+
+            const del = document.createElement('span');
+            del.className = 'sb-row-del';
+            del.innerHTML = xSvg;
+
+            row.appendChild(valInput);
+            row.appendChild(descInput);
+            row.appendChild(del);
+
+            applyRowColor(valInput);
+
+            del.addEventListener('click', (e) => {
+                e.stopPropagation();
+                row.remove();
+                saveAndUpdate();
+            });
+
+            valInput.addEventListener('input', () => {
+                applyRowColor(valInput);
+                saveAndUpdate();
+            });
+            descInput.addEventListener('input', saveAndUpdate);
+
+            return row;
+        }
+
+        function saveAndUpdate() {
+            if (!activeKey) return;
+            const rows = collectCurrentRows();
+            const nonEmpty = rows.filter(r => r.val.trim() !== '' || r.desc.trim() !== '');
+            if (nonEmpty.length > 0) {
+                saveBreakdownData(activeKey, rows);
+            } else {
+                localStorage.removeItem(activeKey + '_breakdown');
+            }
+            updateStatDisplay();
+        }
+
+        function openPopover(el, key) {
+            closeAllUchPopovers('breakdown');
+
+            activeKey = key;
+            activeEl = el;
+
+            const data = getBreakdownData(key);
+            sbRows.innerHTML = '';
+            if (data.length === 0) {
+                sbRows.appendChild(createRow());
+            } else {
+                data.forEach(r => sbRows.appendChild(createRow(r.val, r.desc)));
+            }
+
+            popover.classList.add('open');
+            positionPopoverBelow(popover, el);
+        }
+
+        function closeBreakdownPopover() {
+            if (!popover.classList.contains('open')) return;
+            if (activeKey) {
+                const rows = collectCurrentRows();
+                const nonEmpty = rows.filter(r => r.val.trim() !== '' || r.desc.trim() !== '');
+                if (nonEmpty.length > 0) {
+                    saveBreakdownData(activeKey, nonEmpty);
+                    updateStatDisplay();
+                } else {
+                    localStorage.removeItem(activeKey + '_breakdown');
+                }
+            }
+            closePopoverAnimated(popover);
+            activeKey = null;
+            activeEl = null;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && popover.classList.contains('open')) closeBreakdownPopover();
+        });
+
+        sbAdd.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const newRow = createRow();
+            sbRows.appendChild(newRow);
+            newRow.querySelector('.sb-row-val').focus();
+        });
+
+        popover.addEventListener('click', (e) => e.stopPropagation());
+
+        document.addEventListener('click', () => {
+            if (popover.classList.contains('open')) closeBreakdownPopover();
+        });
+
+        // Setup each breakdown-enabled stat element
+        document.querySelectorAll('#tab4 .editable, #tab8 .editable').forEach(el => {
+            const key = el.getAttribute('data-storage-key');
+            if (!key || !breakdownKeys.has(key)) return;
+
+            el.removeAttribute('contenteditable');
+            el.style.cursor = 'pointer';
+
+            el.addEventListener('mousedown', (e) => e.preventDefault());
+
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (popover.classList.contains('open') && activeKey === key) {
+                    closeBreakdownPopover();
+                } else {
+                    openPopover(el, key);
+                }
+            });
+
+            // If breakdown data exists, override display with computed sum
+            const data = getBreakdownData(key);
+            if (data.length > 0) {
+                const sum = computeSum(data);
+                localStorage.setItem(key, String(sum));
+                if (signPrefixKeys.has(key) && sum >= 0) {
+                    el.textContent = '+' + String(sum);
+                } else {
+                    el.textContent = String(sum);
+                }
+                el.style.opacity = '1';
+            }
+        });
+    }
+
     function initializeEditableFields(tabId) {
         const container = document.getElementById(tabId);
         if (!container) return;
+
+        const signPrefixKeys = new Set([
+            'tab4_initiative', 'tab4_prof', 'tab4_spell_attack'
+        ]);
+
+        function applySignPrefix(el, key, defaultValue) {
+            if (!signPrefixKeys.has(key)) return;
+            const text = el.textContent.trim();
+            if (text === defaultValue) return;
+            const num = parseFloat(text);
+            if (!isNaN(num) && num >= 0 && !text.startsWith('+')) {
+                el.textContent = '+' + text;
+            }
+        }
+
         container.querySelectorAll('.editable').forEach(el => {
             const key = el.getAttribute('data-storage-key');
             if (key) {
                 const defaultValue = el.closest('.descriptor-grid') ? "XX" : "00";
-                const isSubvalue = el.classList.contains('stat-subvalue');
                 let savedValue = localStorage.getItem(key);
                 if (savedValue !== null && savedValue !== "") {
-                    if (isSubvalue) {
-                        el.dataset.rawExpression = savedValue;
-                        const evaluated = evaluateStatExpression(savedValue);
-                        el.textContent = evaluated !== null ? String(evaluated) : savedValue;
-                    } else {
-                        el.textContent = savedValue;
-                    }
+                    el.dataset.rawExpression = savedValue;
+                    const evaluated = evaluateStatExpression(savedValue);
+                    el.textContent = evaluated !== null ? String(evaluated) : savedValue;
+                    applySignPrefix(el, key, defaultValue);
                     el.style.opacity = (savedValue === defaultValue) ? "0.5" : "1";
                 } else {
                     el.textContent = defaultValue;
-                    if (isSubvalue) el.dataset.rawExpression = defaultValue;
+                    el.dataset.rawExpression = defaultValue;
                     el.style.opacity = "0.5";
                     localStorage.setItem(key, defaultValue);
                 }
@@ -1124,13 +1473,12 @@ window.onload = async () => {
                         newValue = defaultValue;
                         el.textContent = newValue;
                         el.style.opacity = "0.5";
-                        if (isSubvalue) el.dataset.rawExpression = newValue;
+                        el.dataset.rawExpression = newValue;
                     } else {
-                        if (isSubvalue) {
-                            el.dataset.rawExpression = newValue;
-                            const evaluated = evaluateStatExpression(newValue);
-                            if (evaluated !== null) el.textContent = String(evaluated);
-                        }
+                        el.dataset.rawExpression = newValue;
+                        const evaluated = evaluateStatExpression(newValue);
+                        if (evaluated !== null) el.textContent = String(evaluated);
+                        applySignPrefix(el, key, defaultValue);
                         el.style.opacity = (newValue === defaultValue) ? "0.5" : "1";
                     }
                     localStorage.setItem(key, newValue);
@@ -1138,7 +1486,7 @@ window.onload = async () => {
             }
         });
     }
-                
+
     function initializeToggleCircles(tabId) {
         const container = document.getElementById(tabId);
         if (!container) return;
@@ -1159,11 +1507,21 @@ window.onload = async () => {
         initializeToggleCircles(`tab${tabId}`);
     });
 
+    initStatBreakdownPopovers();
+
     initSplitView();
 // Lift the loading gate and trigger the reveal sequence
     document.body.classList.remove('app-loading');
     void document.body.offsetHeight; // force reflow between class changes
     document.body.classList.add('app-ready');    repositionAllSliders();
+
+    // Clear the reveal animation after it finishes so the residual transform
+    // on #app-row doesn't create a containing block for position:fixed descendants
+    const appRowEl = document.getElementById('app-row');
+    appRowEl?.addEventListener('animationend', () => {
+        appRowEl.style.opacity = '1';
+        appRowEl.style.animation = 'none';
+    }, { once: true });
 
     // ── Swipe to toggle filter panel on tab 9 ────────────────────────
     const swipeTarget9   = document.getElementById('results_section_9');

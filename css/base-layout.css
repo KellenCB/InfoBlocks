@@ -519,6 +519,38 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     display: flex;
 }
 
+/* ── Portrait char-sheet overlay ──────────────────────────────── */
+
+#char-sheet-panel.cs-overlay-open {
+    display: flex !important;
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    width: 360px;
+    max-width: calc(100vw - 40px);
+    z-index: 9998;
+    padding: 10px;
+    gap: 8px;
+    border-radius: 16px;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    animation: cs-overlay-in 0.3s ease-out forwards;
+}
+
+#char-sheet-panel.cs-overlay-open.cs-overlay-closing {
+    animation: cs-overlay-out 0.2s ease-in forwards;
+}
+
+@keyframes cs-overlay-in {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cs-overlay-out {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(-20px); }
+}
+
 #landscape-divider {
     display: none;
 }
@@ -607,7 +639,7 @@ body.app-ready #app-row {
 
 #suit_uses_circles {
     display: flex;
-    gap: 7.5px;
+    gap: 6px;
 }
 
 /* ==================================================================*/
@@ -1339,7 +1371,7 @@ a:hover {
 }
 
 .session-log-list-column.session-log-list-collapsed {
-    margin-right: calc(max(35%, 180px) * -1);
+    margin-right: calc(clamp(180px, 35%, 350px) * -1);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -1743,602 +1775,6 @@ a:hover {
 }
 
 /* ── Attunement pill ──────────────────────────────────────────── */
-
-.inventory-attune-wrap {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.inventory-attune-label {
-    font-size: 14px;
-    color: var(--gray-900);
-    letter-spacing: 0.03em;
-    font-weight: 500;
-}
-
-.inventory-attune-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    background: var(--gray-300);
-    border-radius: 14px;
-    border: 1px solid var(--gray-350);
-}
-
-.inventory-attune-pill.over {
-    border-color: var(--color-red);
-}
-
-.inventory-attune-pill svg {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-    color: var(--chain-attuned-color);
-}
-
-.inventory-attune-current,
-.inventory-attune-sep,
-.inventory-attune-max {
-    font-size: 14px;
-    letter-spacing: 0.02em;
-    font-weight: 500;
-}
-
-.inventory-attune-current { color: var(--gray-900); }
-.inventory-attune-pill.over .inventory-attune-current { color: var(--color-red); }
-.inventory-attune-sep     { color: var(--gray-500); font-weight: 400; }
-.inventory-attune-max     {
-    color: var(--gray-700);
-    cursor: text;
-    border-bottom: 1px dashed var(--gray-400);
-    padding-bottom: 1px;
-    min-width: 0.6em;
-    outline: none;
-}
-.inventory-attune-max:focus {
-    color: var(--gray-900);
-    border-bottom-color: var(--gray-700);
-}
-
-/* ── Inventory sub-label (Equipped / Quick reach strips) ──────── */
-
-.inventory-sub-label {
-    font-size: 11px;
-    color: var(--gray-700);
-    letter-spacing: 0.15em;
-    font-weight: 500;
-    margin: 4px 2px 10px 2px;
-    text-transform: uppercase;
-}
-
-/* ── Inventory section header (Weapons, Armor & clothing, etc.) ─ */
-
-.inventory-section-header,
-.tab3-section-header {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin: 18px 2px 10px 2px;
-    cursor: pointer;
-    user-select: none;
-}
-
-.inventory-sub-label {
-    cursor: pointer;
-    user-select: none;
-}
-
-.inventory-section-header::after,
-.inventory-sub-label::after,
-.tab3-section-header::after {
-    content: '▾';
-    font-size: 14px;
-    margin-left: 4px;
-    color: var(--gray-700);
-    transition: transform 0.2s ease;
-    display: inline-block;
-}
-
-.inventory-section-header.inventory-collapsed::after,
-.inventory-sub-label.inventory-collapsed::after,
-.tab3-section-header.tab3-collapsed::after {
-    transform: rotate(-90deg);
-}
-
-.inventory-row {
-    display: grid;
-    grid-template-rows: 1fr;
-    opacity: 1;
-    transition: grid-template-rows 0.6s ease-in-out, opacity 0.6s ease-in, margin 0.6s ease-in-out;
-}
-
-.inventory-row-inner {
-    overflow: hidden;
-    min-height: 0;
-    padding-bottom: 15px;
-    line-height: 0;
-    font-size: 0;
-    mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 15px), transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 15px), transparent 100%);
-}
-
-.inventory-row-inner > .block {
-    font-size: 1rem;
-}
-
-.inventory-row.inventory-collapsed {
-    grid-template-rows: 0fr;
-    opacity: 0;
-    margin-top: 0;
-    margin-bottom: 0;
-    pointer-events: none;
-    transition: grid-template-rows 0.6s ease-in-out, opacity 0.4s ease-out, margin 0.6s ease-in-out;
-}
-
-.inventory-section-left,
-.tab3-section-left {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-}
-
-.inventory-section-title,
-.tab3-section-title {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--gray-700);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin: 0;
-}
-
-.inventory-section-count,
-.tab3-section-count {
-    font-size: 11px;
-    color: var(--gray-700);
-    font-weight: 500;
-    letter-spacing: 0.15em;
-}
-
-/* ── Inventory block row (wrapper for flowing inline-blocks) ──── */
-
-.inventory-row {
-    margin-bottom: 6px;
-}
-
-.inventory-row-inner {
-    line-height: 0;
-}
-
-.inventory-row-inner > * {
-    line-height: 1.4;
-}
-
-/* ── Inventory two-column layout (list + viewer) ──────────────── */
-
-.inventory-layout {
-    display: flex;
-    flex-direction: row;
-    flex: 1;
-    min-height: 0;
-    gap: 15px;
-    container-type: inline-size;
-}
-
-.inventory-list-column {
-    display: flex;
-    flex-direction: column;
-    width: 50%;
-    min-width: 0;
-    flex-shrink: 0;
-    min-height: 0;
-    overflow: hidden;
-    border-radius: 15px;
-    padding: 15px;
-}
-
-.inventory-list-column .results-section {
-    flex: 1;
-    min-height: 0;
-    height: 0;
-    padding: 0 5px 0 0;
-}
-
-.inventory-viewer {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 0;
-    min-height: 0;
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    padding: 15px 18px;
-    position: relative;
-    border-radius: 10px;
-}
-
-.inventory-viewer-content {
-    opacity: 1;
-    transition: opacity 0.4s ease-in-out;
-}
-
-.inventory-viewer-content.fading {
-    opacity: 0;
-}
-
-.inventory-viewer::-webkit-scrollbar { display: none; }
-
-.inventory-viewer-placeholder,
-.notes-viewer-placeholder {
-    margin: auto;
-    color: var(--gray-700);
-    opacity: 0.4;
-    font-size: 14px;
-    text-align: center;
-    padding: 20px;
-}
-
-.inventory-viewer-header {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-    flex-shrink: 0;
-}
-
-.inventory-viewer-title {
-    flex: 1;
-    min-width: 0;
-    font-size: 18px;
-    color: var(--gray-900);
-    letter-spacing: 0.045em;
-    margin: 0;
-}
-
-.inventory-viewer-body {
-    color: var(--gray-800);
-    font-size: 14px;
-    line-height: 1.5;
-}
-
-.inventory-viewer-properties {
-    display: flex;
-    flex-wrap: wrap;
-    column-gap: 5px;
-    row-gap: 6px;
-    margin-bottom: 12px;
-}
-
-.inventory-viewer-type {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 10px;
-    border-radius: 10px;
-    font-size: 12px;
-    letter-spacing: 0.03em;
-    background-color: color-mix(in srgb, var(--itemCategory-color) var(--tag-bg-opacity), transparent);
-    color: var(--itemCategory-color);
-    margin-bottom: 12px;
-}
-
-/* Equipped-state glow — orange, applied to every copy of an equipped block */
-.block.inventory-block-equipped {
-    background-color: var(--block-bg-equipped-base);
-    background-image: radial-gradient(90% 110% at 50% 0%, var(--block-bg-equipped-highlight) 0%, transparent 100%);
-    border: 1px solid var(--block-border-equipped);
-    padding: 9px 14px;
-}
-.block.inventory-block-equipped::after {
-    display: none;
-}
-
-/* Attuned-state glow — cyan, applied to every attuned block */
-.block.inventory-block-attuned {
-    background-color: var(--block-bg-attuned-base);
-    background-image: radial-gradient(90% 110% at 50% 0%, var(--block-bg-attuned-highlight) 0%, transparent 100%);
-    border: 1px solid var(--block-border-attuned);
-    padding: 9px 14px;
-}
-.block.inventory-block-attuned::after {
-    display: none;
-}
-
-/* Attuned + equipped — purple (its own distinct state) */
-.block.inventory-block-attuned.inventory-block-equipped {
-    background-color: var(--block-bg-both-base);
-    background-image: radial-gradient(90% 110% at 50% 0%, var(--block-bg-both-highlight) 0%, transparent 100%);
-    border: 1px solid var(--block-border-both);
-}
-
-/* Selected-state glow — white/light grey, currently open in the viewer */
-.block.inventory-block-active {
-    background-color: var(--block-bg-selected-base);
-    background-image: radial-gradient(90% 110% at 50% 0%, var(--block-bg-selected-highlight) 0%, transparent 100%);
-    border: 1px solid var(--block-border-selected);
-    padding: 9px 14px;
-}
-.block.inventory-block-active::after {
-    display: none;
-}
-
-/* Selected always wins visually, even over attuned or equipped */
-.block.inventory-block-active.inventory-block-equipped,
-.block.inventory-block-active.inventory-block-attuned,
-.block.inventory-block-active.inventory-block-equipped.inventory-block-attuned {
-    background-color: var(--block-bg-selected-base);
-    background-image: radial-gradient(90% 110% at 50% 0%, var(--block-bg-selected-highlight) 0%, transparent 100%);
-    border: 1px solid var(--block-border-selected);
-}
-
-/* Smooth transition on all tab6 blocks */
-#results_section_6 .block:not(.permanent-block) {
-    transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-/* Hover — all tab6 blocks lighten; pairs across any duplicated instances */
-#results_section_6 .block:not(.permanent-block):hover,
-#results_section_6 .block.inventory-hover-pair {
-    background-color: color-mix(in srgb, var(--gray-900) 22%, var(--gray-300));
-    cursor: pointer;
-}
-#results_section_6 .block.inventory-block-active:hover,
-#results_section_6 .block.inventory-block-active.inventory-hover-pair {
-    background-color: color-mix(in srgb, var(--gray-900) 26%, var(--gray-300));
-}
-#results_section_6 .block.inventory-block-equipped:hover,
-#results_section_6 .block.inventory-block-equipped.inventory-hover-pair {
-    background-color: color-mix(in srgb, #ff8c00 35%, var(--gray-300));
-}
-#results_section_6 .block.inventory-block-attuned:hover,
-#results_section_6 .block.inventory-block-attuned.inventory-hover-pair {
-    background-color: color-mix(in srgb, var(--color-cyan) 32%, var(--gray-300));
-}
-
-/* Equipped + attuned hover — matches the purple base state */
-#results_section_6 .block.inventory-block-equipped.inventory-block-attuned:hover,
-#results_section_6 .block.inventory-block-equipped.inventory-block-attuned.inventory-hover-pair {
-    background-color: color-mix(in srgb, #a855f7 35%, var(--gray-300));
-}
-
-/* ── Inventory viewer: in-place edit / add ────────────────────── */
-
-.inventory-viewer.editing .inventory-viewer-title {
-    outline: none;
-    min-height: 1.4em;
-}
-
-.inventory-viewer.editing .inventory-viewer-title:empty::before {
-    content: 'Item name\2026';
-    color: var(--gray-600);
-    font-weight: 400;
-}
-
-.inventory-viewer.editing .inventory-viewer-body {
-    outline: none;
-    min-height: 2em;
-}
-
-.inventory-viewer.editing .inventory-viewer-body:empty::before {
-    content: 'Item description\2026';
-    color: var(--gray-600);
-    font-weight: 400;
-}
-
-.inventory-viewer .inline-edit-controls {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-.inventory-viewer .inline-edit-controls .button {
-    margin: 0;
-    padding: 5px 12px;
-    font-size: 12px;
-}
-
-/* ── Fade-in for elements inserted during edit ────────────────── */
-
-.inventory-edit-fade-in {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.inventory-edit-fade-in.visible {
-    opacity: 1;
-}
-
-/* ── Inserts wrapper (dropdown + toggles) ─────────────────────── */
-
-.inventory-edit-inserts {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 6px;
-}
-
-/* ── Item type tag buttons ─────────────────────────────────────── */
-
-.inventory-edit-inserts .inline-edit-block-types {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-}
-
-.inventory-edit-inserts .inline-edit-block-types .tag-button {
-    padding: 4px 10px;
-    height: auto;
-    font-size: 13px;
-    border-radius: 12px;
-    letter-spacing: 0.03em;
-}
-
-/* ── Toggle layout — left-aligned, wrapping pairs ─────────────── */
-
-.inventory-edit-toggles {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 14px;
-    align-items: center;
-}
-
-.inventory-toggle-pair {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* ── Remove glow from toggles inside inventory viewer ─────────── */
-
-.inventory-viewer .inv-toggle-attune input[type="checkbox"]:checked ~ .inv-track {
-    background: color-mix(in srgb, var(--color-cyan) 45%, var(--gray-300));
-    border-color: color-mix(in srgb, var(--color-cyan) 50%, transparent);
-    box-shadow: none;
-}
-
-.inventory-viewer .inv-toggle-equip input[type="checkbox"]:checked ~ .inv-track {
-    background: color-mix(in srgb, #ff8c00 45%, var(--gray-300));
-    border-color: color-mix(in srgb, #ff8c00 50%, transparent);
-    box-shadow: none;
-}
-
-/* ── Uses field inside viewer edit ────────────────────────────── */
-
-.inventory-viewer .uses-field {
-    background: none;
-    padding: 2px 0 0;
-    border-radius: 0;
-}
-
-.inventory-viewer .uses-field .circle {
-    width: 15px;
-    height: 15px;
-}
-
-.inventory-viewer .uses-field .circle-button {
-    width: 15px;
-    height: 15px;
-    font-size: 10px;
-    line-height: 1;
-    background-color: transparent;
-}
-
-.inventory-viewer .uses-field .circle-add {
-    border: 1px dashed #f4a261;
-    color: #f4a261;
-}
-
-.inventory-viewer .uses-field .circle-remove {
-    border: 1px dashed var(--gray-550);
-    color: var(--gray-550);
-}
-
-.inventory-viewer .uses-row {
-    gap: 5px;
-}
-
-.inventory-viewer .uses-circles-container,
-.inventory-viewer .uses-controls-container {
-    gap: 5px;
-}
-
-/* ── State buttons (Attuned to / Equipped) as visible buttons ── */
-
-.inventory-viewer .inv-state-btn {
-    border: 1px solid var(--gray-400);
-    border-radius: 8px;
-    padding: 4px 10px;
-    background: color-mix(in srgb, var(--gray-900) 4%, transparent);
-    transition: color 0.2s, background-color 0.2s, border-color 0.2s;
-}
-
-.inventory-viewer .inv-state-btn.inv-state-on.inv-state-chain {
-    color: var(--color-cyan);
-    filter: none;
-    border-color: color-mix(in srgb, var(--color-cyan) 50%, transparent);
-    background: color-mix(in srgb, var(--color-cyan) 10%, transparent);
-}
-
-.inventory-viewer .inv-state-btn.inv-state-on.inv-state-hand {
-    color: #ff8c00;
-    filter: none;
-    border-color: color-mix(in srgb, #ff8c00 50%, transparent);
-    background: color-mix(in srgb, #ff8c00 10%, transparent);
-}
-
-/* ── Search row at top of list column ─────────────────────────── */
-
-.inventory-search-row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-    flex-shrink: 0;
-    margin-bottom: 18px;
-    padding-top: 0;
-}
-
-.inventory-search-row .search-container {
-    flex: 1;
-    min-width: 0;
-}
-
-/* ── Attunement chain on inventory blocks ─────────────────────── */
-
-.block-attune-chain {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    cursor: pointer;
-    padding: 2px;
-    margin: 0 -2px;
-    border-radius: 4px;
-    transition: transform 0.15s ease;
-}
-
-.block-attune-chain:hover {
-    transform: scale(1.15);
-}
-
-.block-attune-chain svg {
-    width: 13px;
-    height: 13px;
-    display: block;
-}
-
-.block-attune-chain.attuned   svg { color: var(--chain-attuned-color); }
-.block-attune-chain.unattuned svg { color: var(--chain-unattuned-color); }
-
-/* ── Equipped hand on inventory blocks ────────────────────────── */
-
-.block-equip-hand {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    cursor: pointer;
-    padding: 2px;
-    margin: 0 -2px;
-    border-radius: 4px;
-    transition: transform 0.15s ease;
-}
-
-.block-equip-hand:hover {
-    transform: scale(1.15);
-}
-
-.block-equip-hand svg {
-    width: 18px;
-    height: 18px;
-    display: block;
-}
-
-.block-equip-hand.equipped   svg { color: var(--hand-equipped-color); }
-.block-equip-hand.unequipped svg { color: var(--hand-unequipped-color); }
 
 /* ==================================================================*/
 /* ======================= RESOURCES STRIP ==========================*/
@@ -3441,6 +2877,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .clear-data-confirm-yes.armed {
     cursor: pointer;
 }
+
 
 .long-rest-popup {
     position: fixed;
