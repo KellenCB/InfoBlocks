@@ -40,7 +40,7 @@ export const blockActionsHandler = (() => {
         popup.innerHTML = `
             <span class="delete-confirm-message">Are you sure you want<br>to delete this block?</span>
             <div class="delete-confirm-buttons">
-                <button class="delete-confirm-yes"><span>Yes</span></button>
+                <button class="delete-confirm-yes hold-to-confirm"><span>Yes</span></button>
                 <button class="delete-confirm-no">No</button>
             </div>
         `;

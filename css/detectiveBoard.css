@@ -1,0 +1,1428 @@
+/* ==================================================================*/
+/* =================== DETECTIVE BOARD (TAB3) =======================*/
+/* ==================================================================*/
+
+/* ── Board container ──────────────────────────────────────────────── */
+
+#tab3 {
+    position: relative;
+    overflow: hidden;
+    padding: 0 !important;
+    border-radius: 15px;
+    background: var(--glass-bg);
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
+}
+
+.detective-board {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--gray-100);
+    background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+    background-size: 28px 28px;
+    cursor: grab;
+    user-select: none;
+}
+
+/* ── Inner canvas — pan/zoom transform target ─────────────────────── */
+
+.board-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    /* No will-change: transform — that would promote to a GPU compositor layer
+       and cause the browser to scale a fixed-resolution texture on zoom, making
+       text and cards look pixelated. Without it the browser re-rasterizes at
+       each zoom level so everything stays sharp. */
+    z-index: 2; /* sits above string SVG (z:1), below dot SVG (z:3) */
+}
+
+/* ── SVG layers — siblings of .board-canvas inside .detective-board ──
+ *
+ * The SVGs live OUTSIDE .board-canvas so they are not inside its GPU
+ * compositing layer (will-change:transform with a 0×0 layout box clips
+ * SVG overflow regardless of the overflow:visible declaration).
+ *
+ * applyTransform() applies the identical CSS transform to the SVGs and
+ * to .board-canvas, so canvas-space coordinates stay in sync.
+ *
+ * overflow:visible lets bezier curves extend beyond the SVG's own
+ * 100%×100% viewport; the only clip is .detective-board overflow:hidden.
+ *
+ * pointer-events:none on the containers; child paths/dots set their own.
+ */
+.board-svg,
+.board-svg-dots {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transform-origin: 0 0;
+    pointer-events: none;
+}
+
+.board-svg      { z-index: 1; }  /* strings — below cards  */
+.board-svg-dots { z-index: 3; }  /* dots    — above cards  */
+
+/* ── Zoom controls ────────────────────────────────────────────────── */
+
+.board-zoom-controls {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-radius: 8px;
+    padding: 3px 4px;
+    user-select: none;
+}
+
+.board-zoom-btn {
+    background: transparent;
+    border: none;
+    color: var(--gray-800);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.board-zoom-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--gray-900);
+}
+
+.board-zoom-label {
+    font-size: 11px;
+    color: var(--gray-750);
+    min-width: 36px;
+    text-align: center;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 3px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.board-zoom-label:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--gray-900);
+}
+
+
+/* Wide invisible hit zone — sits behind the visual string, makes it easy to click */
+.board-string-hit {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 14;
+    pointer-events: stroke;
+    cursor: pointer;
+}
+
+.board-string {
+    fill: none;
+    stroke: #c0392b; /* overridden inline per-connection via stroke attribute */
+    stroke-width: 2;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 3px var(--str-glow, rgba(192,57,43,0.4)));
+    transition: stroke-width 0.2s ease, filter 0.2s ease;
+    pointer-events: none; /* hit zone handles clicks */
+}
+
+/* Highlight the visual string when its hit zone is hovered */
+.board-string-hit:hover + .board-string {
+    stroke-width: 3;
+    filter: drop-shadow(0 0 6px var(--str-glow-hover, rgba(192,57,43,0.7)));
+}
+
+
+.board-string-dot {
+    fill: #c0392b; /* overridden inline per-connection via fill attribute */
+    filter: drop-shadow(0 0 3px rgba(192,57,43,0.5)); /* overridden inline */
+    pointer-events: all;  /* filled circle — all picks up the fill area */
+    cursor: grab;
+}
+
+/* ── String colour picker popup ───────────────────────────────── */
+
+.board-string-picker {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 9px;
+    background: rgba(22, 22, 28, 0.97);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.55);
+    z-index: 9999;
+    transform-origin: center bottom;
+    animation: stringPickerIn 0.15s ease forwards;
+}
+
+@keyframes stringPickerIn {
+    from { opacity: 0; transform: scale(0.82) translateY(4px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.board-string-picker-swatch {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    transition: transform 0.1s ease, border-color 0.12s ease;
+}
+
+.board-string-picker-swatch:hover {
+    transform: scale(1.35);
+}
+
+.board-string-picker-swatch.active {
+    border-color: rgba(255,255,255,0.75);
+}
+
+.board-string-picker-sep {
+    width: 1px;
+    height: 13px;
+    background: rgba(255,255,255,0.13);
+    flex-shrink: 0;
+    margin: 0 2px;
+}
+
+.board-string-picker-delete {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.35);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+    transition: color 0.12s ease;
+}
+
+.board-string-picker-delete:hover {
+    color: rgba(255, 75, 75, 0.9);
+}
+.board-string-dot:active {
+    cursor: grabbing;
+}
+/* Dots on collapsed cards are fixed — no grab cursor */
+.board-string-dot.is-collapsed {
+    cursor: default;
+}
+
+.board-string-preview {
+    fill: none;
+    stroke: rgba(192, 57, 43, 0.5);
+    stroke-width: 2;
+    stroke-dasharray: 6 4;
+    stroke-linecap: round;
+    pointer-events: none;
+}
+
+.board-cut-line {
+    fill: none;
+    stroke: rgba(255, 200, 0, 0.7);
+    stroke-width: 2;
+    stroke-dasharray: 5 3;
+    stroke-linecap: round;
+    pointer-events: none;
+}
+
+/* ── Cards ────────────────────────────────────────────────────────── */
+
+.board-card {
+    position: absolute;
+    width: 240px;
+    min-width: 240px;
+    min-height: 80px;
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: 10px;
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    transition: box-shadow 0.2s ease, opacity 0.3s ease;
+    overflow: visible;
+}
+
+.board-card:hover {
+    border-color: rgba(255,255,255,0.18);
+    box-shadow: 0 6px 28px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.board-card.board-card-dragging {
+    box-shadow: 0 16px 48px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.5);
+    z-index: 100;
+    opacity: 0.95;
+}
+
+.board-card.board-card-collapsed {
+    min-height: 0;
+}
+
+.board-card.board-card-collapsed .board-card-body {
+    display: none;
+}
+
+.board-card.board-card-collapsed .board-card-collapse-btn svg {
+    transform: rotate(180deg);
+}
+
+/* ── Tack pin ─────────────────────────────────────────────────────── */
+
+.board-tack {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, var(--color-red), color-mix(in srgb, var(--color-red) 55%, black));
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.2);
+    z-index: 5;
+    pointer-events: none;
+}
+
+.board-tack::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 5px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 0 0 2px 2px;
+}
+
+/* ── Card header ──────────────────────────────────────────────────── */
+
+.board-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px 8px;
+    cursor: grab;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px 10px 0 0;
+    flex-shrink: 0;
+}
+
+.board-card-header:active {
+    cursor: grabbing;
+}
+
+.board-card.board-card-collapsed .board-card-header {
+    border-bottom: none;
+    border-radius: 10px;
+}
+
+/* ── Card action buttons ──────────────────────────────────────────── */
+
+.board-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.board-card:hover .board-card-actions,
+.board-card-editing .board-card-actions {
+    opacity: 1;
+}
+
+.board-card-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: rgba(255,255,255,0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.board-card-btn svg {
+    width: 13px;
+    height: 13px;
+}
+
+.board-card-btn:hover {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.85);
+}
+
+.board-card-delete-btn:hover {
+    background: color-mix(in srgb, var(--color-red) 20%, transparent);
+    color: var(--color-red);
+}
+
+/* ── Board toolbar (bottom-right corner) ──────────────────────── */
+
+.board-toolbar {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-radius: 8px;
+    padding: 3px 4px;
+    user-select: none;
+}
+
+.board-toolbar-btn {
+    background: transparent;
+    border: none;
+    color: var(--gray-800);
+    cursor: pointer;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.board-toolbar-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--gray-900);
+}
+
+/* Active state: connect tool is on */
+.board-toolbar-btn.active {
+    background: color-mix(in srgb, var(--color-red) 22%, transparent);
+    color: var(--color-red);
+}
+
+/* When connect tool is on: crosshair on the board, pointer on cards */
+.board-connect-tool-on {
+    cursor: crosshair !important;
+}
+
+.board-connect-tool-on .board-card {
+    cursor: crosshair;
+}
+
+/* Dots are always grab-handles (connect tool no longer needed to move them) */
+
+/* Block all text interaction while connect tool is on */
+.board-connect-tool-on [contenteditable],
+.board-connect-tool-on input,
+.board-connect-tool-on textarea {
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
+/* Highlight hovered target card while connect tool is on */
+.board-connect-tool-on .board-card:hover {
+    border-color: rgba(192, 57, 43, 0.5);
+    box-shadow: 0 0 0 1px rgba(192, 57, 43, 0.25), 0 6px 28px rgba(0,0,0,0.6);
+}
+
+.board-card-collapse-btn svg {
+    transition: transform 0.25s ease;
+}
+
+/* ── Card title inline editing ────────────────────────────────────── */
+
+.board-card-title-wrap {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    cursor: default;
+}
+
+.board-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.88);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+    cursor: inherit; /* inherits grab/move from header; text cursor set only in edit mode */
+    flex: 1;
+    min-width: 0;
+}
+
+.board-card-title:hover {
+    color: var(--gray-900);
+}
+
+/* Only show text cursor on the title when the card is in edit mode */
+.board-card-editing .board-card-title {
+    cursor: text;
+}
+
+.board-card-title-input {
+    display: none;
+    flex: 1;
+    min-width: 0;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 5px;
+    padding: 2px 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    outline: none;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+/* ── Card body ────────────────────────────────────────────────────── */
+
+.board-card-body {
+    /* No horizontal padding — sections own it, preventing double-spacing */
+    padding: 4px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+}
+
+.board-card-body::-webkit-scrollbar {
+    display: none; /* Chrome / Safari */
+}
+
+/* ── Section ──────────────────────────────────────────────────────── */
+
+.board-section {
+    position: relative;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    /* 18px left gutter keeps the drag grip clear of text at all times */
+    padding: 7px 12px 5px 18px;
+}
+
+.board-section:first-child {
+    border-top: none;
+    padding-top: 4px;
+}
+
+/* ── Drag grip — sits in the section's own 12px left padding gutter ── */
+
+.board-section-drag-btn {
+    position: absolute;
+    left: 1px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 22px;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: rgba(255,255,255,0.0);  /* invisible until hover */
+    cursor: grab;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+    transition: color 0.12s, background 0.12s;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.board-section:hover .board-section-drag-btn {
+    color: rgba(255,255,255,0.3);
+    pointer-events: all;
+}
+
+.board-section-drag-btn:hover {
+    color: rgba(255,255,255,0.7);
+}
+
+.board-section-drag-btn:active {
+    cursor: grabbing;
+}
+
+
+.board-section-dragging {
+    display: none;
+}
+
+.board-section-ghost {
+    position: fixed;
+    z-index: 100000;
+    opacity: 0.5;
+    pointer-events: none;
+    border-radius: 6px;
+    background: var(--gray-700, #2a2a2a);
+}
+
+.board-section-drag-placeholder {
+    background: var(--gray-400);
+    border-radius: 6px;
+    opacity: 0.25;
+    margin: 2px 0;
+    pointer-events: none;
+}
+
+/* ── Notes section ────────────────────────────────────────────────── */
+
+.board-section-notes {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.55;
+    outline: none;
+    min-height: 28px;
+    cursor: default;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border-radius: 5px;
+    padding: 4px 5px;
+    margin: -4px -5px;
+    transition: background 0.15s ease;
+}
+
+.board-section-notes[contenteditable="true"] {
+    cursor: text;
+}
+.board-section-notes:focus {
+    background: rgba(255,255,255,0.04);
+}
+
+.board-section-notes:empty::before {
+    content: 'Write something…';
+    color: rgba(255,255,255,0.2);
+    pointer-events: none;
+    font-style: italic;
+}
+
+/* ── Objective section (each objective is its own draggable section) ─ */
+
+.board-section-objective {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.board-section-objective.done .board-obj-item-text {
+    opacity: 0.35;
+    text-decoration: line-through;
+}
+
+.board-obj-checkbox {
+    width: 13px;
+    height: 13px;
+    border-radius: 3px;
+    border: 1.5px solid rgba(255,255,255,0.22);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.board-section-objective.done .board-obj-checkbox {
+    background: color-mix(in srgb, var(--color-green) 35%, transparent);
+    border-color: var(--color-green);
+}
+
+.board-obj-tick {
+    width: 8px;
+    height: 8px;
+    stroke: var(--color-green);
+    fill: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.board-section-objective.done .board-obj-tick {
+    opacity: 1;
+}
+
+.board-obj-item-text {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.55;
+    cursor: default;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.board-obj-item-input {
+    display: none;
+    flex: 1;
+    min-width: 0;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+    outline: none;
+    font-family: inherit;
+}
+
+
+.board-add-obj-item-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    padding: 3px 4px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.28);
+    cursor: pointer;
+    text-align: left;
+    transition: color 0.15s ease;
+    border-radius: 4px;
+}
+
+.board-add-obj-item-btn {
+    display: block;
+}
+
+.board-add-obj-item-btn:hover {
+    color: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.04);
+}
+
+/* ── Add section button (lives at bottom of scrollable body) ─────── */
+
+.board-card-add-section-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: transparent;
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding: 10px 12px 7px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.28);
+    cursor: pointer;
+    border-radius: 0;
+    transition: color 0.15s ease;
+    width: 100%;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.board-card-add-section-btn:hover {
+    color: rgba(255,255,255,0.6);
+}
+
+.board-card-add-section-btn:first-child {
+    border-top: none;
+}
+
+/* ── Section picker — inline row replacing the add button ─────────── */
+
+.board-section-picker {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+    padding: 10px 12px 7px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    background: transparent;
+    box-sizing: border-box;
+    animation: sectionPickerIn 0.22s ease forwards;
+}
+
+.board-section-picker.is-exiting {
+    animation: sectionPickerOut 0.18s ease forwards;
+    pointer-events: none;
+}
+
+@keyframes sectionPickerIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sectionPickerOut {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(4px); }
+}
+
+/* Add section button re-entry after picker closes */
+.board-card-add-section-btn.is-appearing {
+    animation: addBtnAppear 0.2s ease forwards;
+}
+
+@keyframes addBtnAppear {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.board-section-picker-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 5px 6px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: rgba(255,255,255,0.4);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.board-section-picker-item:hover {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.85);
+    transform: translateY(-1px);
+}
+
+/* ── Sketch section ───────────────────────────────────────────────── */
+
+.board-section-sketch {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.board-sketch-sep {
+    width: 1px;
+    height: 16px;
+    background: rgba(255,255,255,0.1);
+    margin: 0 2px;
+    flex-shrink: 0;
+}
+
+/* ── Card body: text content ──────────────────────────────────────── */
+
+.board-card-text {
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.5;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+}
+
+/* ── Quest card specifics ─────────────────────────────────────────── */
+
+.board-quest-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 999px;
+    width: fit-content;
+}
+
+.board-quest-status.status-active      { background: color-mix(in srgb, var(--color-green) 20%, transparent);  color: var(--color-green); }
+.board-quest-status.status-on-hold     { background: color-mix(in srgb, var(--color-orange) 20%, transparent); color: var(--color-orange); }
+.board-quest-status.status-not-started { background: rgba(200,200,200,0.12); color: rgba(255,255,255,0.5); }
+.board-quest-status.status-completed   { background: color-mix(in srgb, var(--color-cyan) 20%, transparent);   color: var(--color-cyan); }
+.board-quest-status.status-failed      { background: color-mix(in srgb, var(--color-red) 20%, transparent);    color: var(--color-red); }
+
+.board-quest-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+.board-quest-objectives {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.board-quest-objective {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.board-quest-objective.done {
+    opacity: 0.45;
+    text-decoration: line-through;
+}
+
+.board-obj-checkbox {
+    width: 13px;
+    height: 13px;
+    border-radius: 3px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.board-quest-objective.done .board-obj-checkbox {
+    background: color-mix(in srgb, var(--color-green) 40%, transparent);
+    border-color: var(--color-green);
+}
+
+.board-obj-tick {
+    width: 8px;
+    height: 8px;
+    stroke: var(--color-green);
+    fill: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.board-quest-objective.done .board-obj-tick {
+    opacity: 1;
+}
+
+.board-quest-progress {
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.board-quest-progress-fill {
+    height: 100%;
+    background: var(--color-green);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+/* ── Map card specifics ───────────────────────────────────────────── */
+
+.board-map-url {
+    font-size: 11px;
+    color: var(--color-cyan);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.8;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.board-map-url:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+/* ── Book card specifics ──────────────────────────────────────────── */
+
+.board-card[data-type="Book"] {
+    border-left: 3px solid var(--book-accent, var(--color-orange));
+}
+
+.board-book-description {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    font-style: italic;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Sketch canvas ────────────────────────────────────────────────── */
+
+.board-sketch-canvas-wrap {
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    overflow: hidden;
+    min-height: 120px;
+    position: relative;
+    pointer-events: none;
+}
+
+.board-section-editing .board-sketch-canvas-wrap {
+    pointer-events: auto;
+}
+
+.board-sketch-canvas-wrap canvas {
+    display: block;
+    touch-action: none;
+}
+
+.board-sketch-toolbar {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+}
+
+.board-section-editing .board-sketch-toolbar {
+    display: flex;
+}
+
+.board-sketch-tool-btn {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: rgba(255,255,255,0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+    padding: 0;
+}
+
+.board-sketch-tool-btn svg {
+    width: 13px;
+    height: 13px;
+}
+
+.board-sketch-dot {
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+.board-sketch-tool-btn:hover,
+.board-sketch-tool-btn.active {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.85);
+}
+
+.board-sketch-color-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.board-sketch-color-dot:hover,
+.board-sketch-color-dot.active {
+    transform: scale(1.2);
+    border-color: rgba(255,255,255,0.5);
+}
+
+
+/* ── Board empty placeholder ──────────────────────────────────────── */
+
+.board-empty-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+}
+
+.board-empty-hint-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+    color: rgba(255,255,255,0.2);
+}
+
+.board-empty-hint-icon svg {
+    width: 26px;
+    height: 26px;
+}
+
+.board-empty-hint p {
+    font-size: 13px;
+    color: rgba(255,255,255,0.2);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ==================================================================*/
+/* =================== BOARD EDIT MODAL =============================*/
+/* ==================================================================*/
+
+.board-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: boardModalIn 0.2s ease;
+}
+
+@keyframes boardModalIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.board-modal {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: 14px;
+    width: min(480px, 92%);
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--glass-shadow);
+    animation: boardModalSlideIn 0.22s ease;
+    overflow: hidden;
+}
+
+@keyframes boardModalSlideIn {
+    from { transform: translateY(16px) scale(0.98); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.board-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    flex-shrink: 0;
+}
+
+.board-modal-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.88);
+}
+
+.board-modal-close {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.board-modal-close:hover {
+    background: color-mix(in srgb, var(--color-red) 20%, transparent);
+    color: var(--color-red);
+}
+
+.board-modal-close svg {
+    width: 14px;
+    height: 14px;
+}
+
+.board-modal-body {
+    padding: 18px 20px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+
+.board-modal-footer {
+    display: flex;
+    gap: 8px;
+    padding: 14px 20px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    flex-shrink: 0;
+    justify-content: flex-end;
+}
+
+/* ── Modal form fields ──────────────────────────────────────────── */
+
+.board-field-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 6px;
+}
+
+.board-field-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    box-sizing: border-box;
+}
+
+.board-field-input:focus {
+    border-color: rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.07);
+}
+
+.board-field-input::placeholder {
+    color: rgba(255,255,255,0.2);
+}
+
+.board-field-textarea {
+    resize: vertical;
+    min-height: 80px;
+    max-height: 200px;
+    line-height: 1.5;
+}
+
+.board-type-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.board-type-btn {
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.5);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.board-type-btn:hover {
+    border-color: rgba(255,255,255,0.22);
+    color: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.07);
+}
+
+.board-type-btn.selected {
+    border-color: rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.9);
+}
+
+.board-quest-statuses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.board-status-btn {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: rgba(255,255,255,0.45);
+}
+
+.board-status-btn:hover { opacity: 0.85; }
+
+.board-status-btn.selected-active      { background: color-mix(in srgb, var(--color-green) 20%, transparent);  color: var(--color-green);  border-color: color-mix(in srgb, var(--color-green) 40%, transparent); }
+.board-status-btn.selected-on-hold     { background: color-mix(in srgb, var(--color-orange) 20%, transparent); color: var(--color-orange); border-color: color-mix(in srgb, var(--color-orange) 40%, transparent); }
+.board-status-btn.selected-not-started { background: rgba(200,200,200,0.1); color: rgba(255,255,255,0.55); border-color: rgba(255,255,255,0.2); }
+.board-status-btn.selected-completed   { background: color-mix(in srgb, var(--color-cyan) 20%, transparent);   color: var(--color-cyan);   border-color: color-mix(in srgb, var(--color-cyan) 40%, transparent); }
+.board-status-btn.selected-failed      { background: color-mix(in srgb, var(--color-red) 20%, transparent);    color: var(--color-red);    border-color: color-mix(in srgb, var(--color-red) 40%, transparent); }
+
+/* Objectives list in modal */
+
+.board-objectives-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.board-obj-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.board-obj-input {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.15s ease;
+}
+
+.board-obj-input:focus {
+    border-color: rgba(255,255,255,0.2);
+}
+
+.board-obj-remove {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: rgba(255,255,255,0.25);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.board-obj-remove:hover {
+    color: var(--color-red);
+    background: color-mix(in srgb, var(--color-red) 10%, transparent);
+}
+
+.board-add-obj-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.35);
+    background: transparent;
+    border: 1px dashed rgba(255,255,255,0.12);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+    width: 100%;
+}
+
+.board-add-obj-btn:hover {
+    color: rgba(255,255,255,0.6);
+    border-color: rgba(255,255,255,0.22);
+}
+
+/* Book color swatches */
+
+.board-color-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.board-color-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.board-color-swatch:hover {
+    transform: scale(1.1);
+}
+
+.board-color-swatch.selected {
+    border-color: rgba(255,255,255,0.7);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.2);
+    transform: scale(1.1);
+}
+
+/* Modal buttons */
+
+.board-modal-save {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    background: var(--color-green);
+    color: var(--gray-900);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.board-modal-save:hover { opacity: 0.85; }
+
+.board-modal-cancel {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: transparent;
+    color: rgba(255,255,255,0.5);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.board-modal-cancel:hover {
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.75);
+}
