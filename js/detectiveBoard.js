@@ -167,10 +167,7 @@ function bestSides(aEl, bEl) {
 }
 
 function cubicPath(x1, y1, s1, x2, y2, s2) {
-    const [vx1, vy1] = sideVec(s1), [vx2, vy2] = sideVec(s2);
-    const dist = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-    const len  = Math.min(dist * 0.42, 100);
-    return `M${x1},${y1} C${x1 + vx1 * len},${y1 + vy1 * len} ${x2 + vx2 * len},${y2 + vy2 * len} ${x2},${y2}`;
+    return `M${x1},${y1} L${x2},${y2}`;
 }
 
 // Derive a bezier tangent direction from a fractional position within a card.
@@ -285,6 +282,14 @@ function segmentsIntersect(p1, p2, p3, p4) {
 }
 
 function cutCrossesPath(cutPts, pathD) {
+    const mL = pathD.match(/M([-\d.]+),([-\d.]+)\s+L([-\d.]+),([-\d.]+)/);
+    if (mL) {
+        const [, x1, y1, x2, y2] = mL.map(Number);
+        const p1 = { x: x1, y: y1 }, p2 = { x: x2, y: y2 };
+        for (let j = 0; j < cutPts.length - 1; j++)
+            if (segmentsIntersect(p1, p2, cutPts[j], cutPts[j + 1])) return true;
+        return false;
+    }
     const m = pathD.match(/M([-\d.]+),([-\d.]+)\s+C([-\d.]+),([-\d.]+)\s+([-\d.]+),([-\d.]+)\s+([-\d.]+),([-\d.]+)/);
     if (!m) return false;
     const [, x1, y1, cx1, cy1, cx2, cy2, x2, y2] = m.map(Number);
