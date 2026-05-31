@@ -930,46 +930,87 @@ export const detectiveBoard = (() => {
                 e.preventDefault();
                 e.stopPropagation();
 
+                const isAltDuplicate = e.altKey;
                 const state  = getBoardState();
                 const startX = e.clientX, startY = e.clientY;
                 const origL  = parseFloat(card.style.left) || 0;
                 const origT  = parseFloat(card.style.top)  || 0;
                 let moved = false;
 
-                card.classList.add('board-card-dragging');
-                card.style.zIndex = '20';
-                card.setPointerCapture(e.pointerId);
+                // ── Alt+drag: ghost clone follows cursor, original stays ──
+                let ghost = null;
+                if (isAltDuplicate) {
+                    ghost = card.cloneNode(true);
+                    ghost.style.position = 'absolute';
+                    ghost.style.left     = card.style.left;
+                    ghost.style.top      = card.style.top;
+                    ghost.style.zIndex   = '20';
+                    ghost.style.opacity  = '0.75';
+                    ghost.style.pointerEvents = 'none';
+                    ghost.classList.add('board-card-dragging');
+                    boardCanvasEl.appendChild(ghost);
+                    card.setPointerCapture(e.pointerId);
+                } else {
+                    card.classList.add('board-card-dragging');
+                    card.style.zIndex = '20';
+                    card.setPointerCapture(e.pointerId);
+                }
 
                 const onMove = (me) => {
                     const dx = (me.clientX - startX) / zoom;
                     const dy = (me.clientY - startY) / zoom;
                     if (!moved && Math.abs(dx) + Math.abs(dy) < 2) return;
                     moved = true;
-                    card.style.left = (origL + dx) + 'px';
-                    card.style.top  = (origT + dy) + 'px';
-                    updateStrings();
+                    if (isAltDuplicate) {
+                        ghost.style.left = (origL + dx) + 'px';
+                        ghost.style.top  = (origT + dy) + 'px';
+                    } else {
+                        card.style.left = (origL + dx) + 'px';
+                        card.style.top  = (origT + dy) + 'px';
+                        updateStrings();
+                    }
                 };
                 const onUp = (ue) => {
-                    card.classList.remove('board-card-dragging');
-                    card.style.zIndex = '';
                     card.releasePointerCapture(ue.pointerId);
                     card.removeEventListener('pointermove', onMove);
                     card.removeEventListener('pointerup',   onUp);
                     card.removeEventListener('pointercancel', onUp);
-                    if (moved) {
-                        state.cards[blockId] = state.cards[blockId] || {};
-                        state.cards[blockId].x = parseFloat(card.style.left);
-                        state.cards[blockId].y = parseFloat(card.style.top);
-                        saveBoardState(state);
+
+                    if (isAltDuplicate) {
+                        ghost.remove();
+                        if (moved) {
+                            const finalX = origL + (ue.clientX - startX) / zoom;
+                            const finalY = origT + (ue.clientY - startY) / zoom;
+                            const src = getAllBlocks().find(b => b.id === blockId);
+                            if (src) {
+                                const newBlock = { ...src, id: crypto.randomUUID(), timestamp: Date.now() };
+                                const blocks = getAllBlocks();
+                                blocks.unshift(newBlock);
+                                localStorage.setItem(BLOCKS_KEY, JSON.stringify(blocks));
+                                const st = getBoardState();
+                                st.cards[newBlock.id] = { x: finalX, y: finalY };
+                                saveBoardState(st);
+                                cbs.onSaved();
+                            }
+                        }
                     } else {
-                        // Detect double-tap: setPointerCapture redirects pointerup to
-                        // the card, so dblclick never fires — track it manually here.
-                        const now = Date.now();
-                        if (now - lastHeaderTap < 350) {
-                            lastHeaderTap = 0;
-                            card.dispatchEvent(new CustomEvent('header-doubletap', { bubbles: false }));
+                        card.classList.remove('board-card-dragging');
+                        card.style.zIndex = '';
+                        if (moved) {
+                            state.cards[blockId] = state.cards[blockId] || {};
+                            state.cards[blockId].x = parseFloat(card.style.left);
+                            state.cards[blockId].y = parseFloat(card.style.top);
+                            saveBoardState(state);
                         } else {
-                            lastHeaderTap = now;
+                            // Detect double-tap: setPointerCapture redirects pointerup to
+                            // the card, so dblclick never fires — track it manually here.
+                            const now = Date.now();
+                            if (now - lastHeaderTap < 350) {
+                                lastHeaderTap = 0;
+                                card.dispatchEvent(new CustomEvent('header-doubletap', { bubbles: false }));
+                            } else {
+                                lastHeaderTap = now;
+                            }
                         }
                     }
                 };
