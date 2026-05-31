@@ -138,7 +138,7 @@
 
 .board-string {
     fill: none;
-    stroke: #c0392b; /* overridden inline per-connection via stroke attribute */
+    stroke: var(--string-red); /* overridden inline per-connection via style.stroke */
     stroke-width: 2;
     stroke-linecap: round;
     filter: drop-shadow(0 0 3px var(--str-glow, rgba(192,57,43,0.4)));
@@ -154,8 +154,8 @@
 
 
 .board-string-dot {
-    fill: #c0392b; /* overridden inline per-connection via fill attribute */
-    filter: drop-shadow(0 0 3px rgba(192,57,43,0.5)); /* overridden inline */
+    fill: var(--string-red); /* overridden inline per-connection via style.fill */
+    filter: drop-shadow(0 0 3px rgba(192,57,43,0.5)); /* overridden inline per style.filter */
     pointer-events: all;  /* filled circle — all picks up the fill area */
     cursor: grab;
 }
@@ -240,7 +240,7 @@
 
 .board-string-preview {
     fill: none;
-    stroke: rgba(192, 57, 43, 0.5);
+    stroke: var(--string-preview-color, rgba(192, 57, 43, 0.5));
     stroke-width: 2;
     stroke-dasharray: 6 4;
     stroke-linecap: round;
@@ -438,6 +438,60 @@
 .board-toolbar-btn.active {
     background: color-mix(in srgb, var(--color-red) 22%, transparent);
     color: var(--color-red);
+}
+
+/* ── Toolbar colour strip (shown when connect tool is active) ─── */
+
+.board-toolbar-color-strip {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    padding: 0 6px 0 3px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    margin-right: 1px;
+    transform-origin: right center;
+}
+
+.board-toolbar.connect-active .board-toolbar-color-strip {
+    display: flex;
+    /* animation handled by is-entering / is-exiting classes below */
+}
+
+.board-toolbar-color-strip.is-entering {
+    animation: colorStripIn 0.2s ease forwards;
+}
+
+.board-toolbar-color-strip.is-exiting {
+    animation: colorStripOut 0.18s ease forwards;
+}
+
+@keyframes colorStripIn {
+    from { opacity: 0; transform: translateX(12px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes colorStripOut {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(12px); }
+}
+
+.board-toolbar-color-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    transition: transform 0.1s ease, border-color 0.12s ease;
+}
+
+.board-toolbar-color-swatch:hover {
+    transform: scale(1.2);
+}
+
+.board-toolbar-color-swatch.active {
+    border-color: rgba(255,255,255,0.75);
 }
 
 /* When connect tool is on: crosshair on the board, pointer on cards */

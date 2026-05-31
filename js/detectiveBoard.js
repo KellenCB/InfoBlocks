@@ -10,16 +10,11 @@ const BLOCKS_KEY = 'userBlocks_tab3';
 const VIEW_KEY   = 'boardView_tab3';
 const CARD_W     = 240;
 
-// Colour palette offered by the string picker (swatch order = display order)
-const STRING_COLORS = [
-    '#c0392b', // red (default)
-    '#e67e22', // amber
-    '#f1c40f', // yellow
-    '#27ae60', // green
-    '#2980b9', // blue
-    '#8e44ad', // purple
-    '#ecf0f1', // white
-];
+// Resolve a CSS variable value from the document root (strips whitespace).
+// Must be called after the stylesheet is parsed (i.e. after DOMContentLoaded).
+function resolveCssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
 
 // Convert a 6-digit hex colour to rgba(…) with the given alpha
 function hexGlow(hex, alpha) {
@@ -496,8 +491,13 @@ export const detectiveBoard = (() => {
     let cbs           = {};
     let cutPts        = null;
     let cutLineEl     = null;
+    // String colour palette — resolved from CSS variables (colourpalette.css).
+    // Populated in init() once the DOM/stylesheets are ready.
+    let STRING_COLORS = [];
+
     let connectToolActive = false;
     let setConnectTool    = null; // assigned in init once the toolbar button exists
+    let newConnColor      = null; // set after STRING_COLORS is populated
     let fabricCanvases     = {};
     let lastActiveSketchId = null;
 
@@ -572,6 +572,19 @@ export const detectiveBoard = (() => {
 
     const init = (container, callbacks) => {
         cbs = callbacks;
+
+        // Resolve string colours from CSS variables now that stylesheets are loaded
+        STRING_COLORS = [
+            resolveCssVar('--string-red'),
+            resolveCssVar('--string-amber'),
+            resolveCssVar('--string-yellow'),
+            resolveCssVar('--string-green'),
+            resolveCssVar('--string-blue'),
+            resolveCssVar('--string-purple'),
+            resolveCssVar('--string-white'),
+        ];
+        newConnColor = STRING_COLORS[0];
+
         container.innerHTML = '';
 
         const board = document.createElement('div');
@@ -616,6 +629,7 @@ export const detectiveBoard = (() => {
         const boardToolbar = document.createElement('div');
         boardToolbar.className = 'board-toolbar';
         boardToolbar.innerHTML = `
+            <div class="board-toolbar-color-strip"></div>
             <button class="board-toolbar-btn board-connect-tool-btn" title="Connect tool — drag between cards to draw a string">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
                     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
@@ -625,16 +639,51 @@ export const detectiveBoard = (() => {
         `;
         board.appendChild(boardToolbar);
 
+        // ── Colour selector for new connections ──────────────────
+        const colorStrip = boardToolbar.querySelector('.board-toolbar-color-strip');
+        STRING_COLORS.forEach(hex => {
+            const sw = document.createElement('div');
+            sw.className = 'board-toolbar-color-swatch' + (hex === newConnColor ? ' active' : '');
+            sw.style.background = hex;
+            sw.title = hex;
+            sw.addEventListener('click', (e) => {
+                e.stopPropagation();
+                newConnColor = hex;
+                colorStrip.querySelectorAll('.board-toolbar-color-swatch')
+                    .forEach(s => s.classList.toggle('active', s === sw));
+            });
+            colorStrip.appendChild(sw);
+        });
+
         const connectBtn = boardToolbar.querySelector('.board-connect-tool-btn');
+        let _stripHideTimer = null;
         setConnectTool = (on) => {
             connectToolActive = on;
             connectBtn.classList.toggle('active', on);
             boardEl.classList.toggle('board-connect-tool-on', on);
-            // Exit edit mode on all cards so text fields don't intercept clicks
+
             if (on) {
+                // Cancel any in-flight hide, show strip with enter animation
+                clearTimeout(_stripHideTimer);
+                colorStrip.classList.remove('is-exiting');
+                colorStrip.classList.remove('is-entering');
+                boardToolbar.classList.add('connect-active');
+                void colorStrip.offsetWidth; // force reflow so animation restarts cleanly
+                colorStrip.classList.add('is-entering');
+                colorStrip.addEventListener('animationend', () => {
+                    colorStrip.classList.remove('is-entering');
+                }, { once: true });
+                // Exit edit mode on all cards so text fields don't intercept clicks
                 boardEl.querySelectorAll('.board-section-editing').forEach(s => s.classList.remove('board-section-editing'));
                 boardEl.querySelectorAll('.board-card-editing').forEach(c => c.classList.remove('board-card-editing'));
                 if (document.activeElement?.closest?.('.detective-board')) document.activeElement.blur();
+            } else {
+                // Play exit animation then hide
+                colorStrip.classList.add('is-exiting');
+                _stripHideTimer = setTimeout(() => {
+                    colorStrip.classList.remove('is-exiting');
+                    boardToolbar.classList.remove('connect-active');
+                }, 160); // matches colorStripOut duration (0.15s) + small buffer
             }
         };
 
@@ -874,6 +923,7 @@ export const detectiveBoard = (() => {
                 ? !!e.target.closest('.board-card-title-wrap')
                 : false;
             if (inHeader &&
+                       !connectToolActive &&
                        !titleWrapBlocks &&
                        !e.target.closest('.board-card-actions, input, button, [contenteditable]')) {
                 // ── Card drag via header (capture phase) ─────────
@@ -1881,13 +1931,14 @@ export const detectiveBoard = (() => {
 
     /* ── String management ──────────────────────────────────────── */
 
-    const addConnection = (idA, idB, sa, sb, paf, pbf) => {
+    const addConnection = (idA, idB, sa, sb, paf, pbf, color) => {
         if (idA === idB) return;
         const state = getBoardState();
         state.connections = state.connections || [];
         // Each connection gets a unique ID so multiple connections between the same
         // pair of cards are allowed and can be individually moved / cut.
         const conn = { id: Math.random().toString(36).slice(2, 9), a: idA, b: idB };
+        if (color && color !== STRING_COLORS[0]) conn.color = color;
         if (paf && pbf) {
             conn.paf = paf;
             conn.pbf = pbf;
@@ -2024,34 +2075,34 @@ export const detectiveBoard = (() => {
             const sb = conn.pbf ? sideFromVector(pb, pa) : (conn.sb || bestSides(aEl, bEl).sb);
             const d  = cubicPath(pa.x, pa.y, sa, pb.x, pb.y, sb);
 
-            // Cut: remove by unique connection ID so only this connection is deleted
-            const onCut = (e) => {
-                e.stopPropagation();
-                const state2 = getBoardState();
-                state2.connections = (state2.connections || []).filter(c => c.id !== conn.id);
-                saveBoardState(state2);
-                updateStrings();
-            };
+            // Per-connection colour (defaults to the original red)
+            const color   = conn.color || STRING_COLORS[0];
+            const glow40  = hexGlow(color, 0.4);
+            const glow70  = hexGlow(color, 0.7);
+            const glow50  = hexGlow(color, 0.5);
 
             // Tag all elements with the connection ID so drag can hide them as a group
             const cid = conn.id || `${conn.a}-${conn.b}`; // fallback for legacy connections
 
-            // Wide invisible hit zone
+            // Wide invisible hit zone — click opens the colour picker
             const hitPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             hitPath.setAttribute('class', 'board-string-hit');
             hitPath.setAttribute('d', d);
             hitPath.dataset.cid = cid;
-            hitPath.addEventListener('click', onCut);
+            hitPath.addEventListener('click', (e) => showStringPicker(e, conn));
             svgDotsEl.appendChild(hitPath);
 
-            // Visual path
+            // Visual path — coloured per conn.color
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.setAttribute('class', 'board-string');
             path.setAttribute('d', d);
+            path.style.stroke = color;
+            path.style.setProperty('--str-glow',       glow40);
+            path.style.setProperty('--str-glow-hover', glow70);
             path.dataset.cid = cid;
             svgDotsEl.appendChild(path);
 
-            // Connector dots — always draggable to reposition endpoints
+            // Connector dots — draggable to reposition endpoints; coloured to match string
             [['a', pa, conn.paf, conn.a, pb, conn.pbf, conn.b],
              ['b', pb, conn.pbf, conn.b, pa, conn.paf, conn.a]].forEach(([ep, pt, frac, cardId, otherPt, otherFrac, otherCardId]) => {
                 const thisCardEl = boardCanvasEl.querySelector(`.board-card[data-id="${cardId}"]`);
@@ -2061,9 +2112,9 @@ export const detectiveBoard = (() => {
                 dot.setAttribute('cx', pt.x);
                 dot.setAttribute('cy', pt.y);
                 dot.setAttribute('r', '3.5');
+                dot.style.fill   = color;
+                dot.style.filter = `drop-shadow(0 0 3px ${glow50})`;
                 dot.dataset.cid = cid;
-
-                dot.addEventListener('click', onCut);
 
                 // ── Drag to reposition endpoint ──
                 dot.addEventListener('pointerdown', (dragEvt) => {
@@ -2084,9 +2135,10 @@ export const detectiveBoard = (() => {
                         ? resolveEndpoint(otherCardEl, otherFrac, otherFrac ? sideFromFrac(otherFrac.fx, otherFrac.fy) : 'right')
                         : otherPt;
 
-                    // Live dashed bezier preview
+                    // Live dashed bezier preview — tinted to match this connection's colour
                     const livePreview = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                     livePreview.setAttribute('class', 'board-string-preview');
+                    livePreview.style.stroke = (conn.color || STRING_COLORS[0]) + '80';
                     svgDotsEl.appendChild(livePreview);
 
                     const updatePreview = (clientX, clientY) => {
@@ -2198,8 +2250,9 @@ export const detectiveBoard = (() => {
 
             const sourceCard = e.target.closest?.('.board-card');
             if (!sourceCard) return;
-            // Let header drags, resize handle, and interactive children pass through
-            if (e.target.closest('.board-card-header, .board-card-resize, button, input, [contenteditable], select')) return;
+            // Let resize handle and interactive controls pass through, but NOT the header —
+            // in connector mode the header should start a string, not drag the card.
+            if (e.target.closest('.board-card-resize, button, input, [contenteditable], select')) return;
 
             e.preventDefault();
             e.stopPropagation();
@@ -2214,6 +2267,8 @@ export const detectiveBoard = (() => {
             preview.setAttribute('y1', startPt.y);
             preview.setAttribute('x2', startPt.x);
             preview.setAttribute('y2', startPt.y);
+            // Match preview colour to currently selected string colour
+            preview.style.stroke = (newConnColor || STRING_COLORS[0]) + '80'; // 50% opacity
             svgDotsEl.appendChild(preview);
 
             const onMove = (me) => {
@@ -2239,7 +2294,7 @@ export const detectiveBoard = (() => {
                     const paf = cardFracFromCanvasPoint(sourceCard, startPt.x, startPt.y);
                     const tgtPt = toCanvas(ue.clientX, ue.clientY);
                     const pbf = cardFracFromCanvasPoint(targetCard, tgtPt.x, tgtPt.y);
-                    addConnection(blockId, targetCard.dataset.id, null, null, paf, pbf);
+                    addConnection(blockId, targetCard.dataset.id, null, null, paf, pbf, newConnColor);
                 }
             };
 

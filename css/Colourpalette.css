@@ -103,4 +103,13 @@
     --glass-blur: blur(12px);
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
     --glass-border: 0.5px solid rgba(255, 255, 255, 0.08);
+
+    /* ── String / Connection Colours ─────────────────────────────── */
+    --string-red:    #c0392b;
+    --string-amber:  #e67e22;
+    --string-yellow: #f1c40f;
+    --string-green:  #27ae60;
+    --string-blue:   #2980b9;
+    --string-purple: #8e44ad;
+    --string-white:  #ecf0f1;
 }
