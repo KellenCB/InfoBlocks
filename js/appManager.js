@@ -1505,6 +1505,45 @@ const applyPendingBlockAnim = () => {
               exitSave();
           }
       });
+
+      // ── Double-click viewer body or title to enter edit mode at click position ──
+      [titleEl, bodyEl].forEach(el => {
+          el.addEventListener('dblclick', (e) => {
+              if (sessionViewerEditMode) return;
+              e.preventDefault();
+
+              const clickX = e.clientX, clickY = e.clientY;
+              const targetEl = el;
+              const preTop = el.getBoundingClientRect().top; // position before toolbar appears
+
+              editBtn.click(); // enters edit mode — toolbar renders, text shifts down
+
+              requestAnimationFrame(() => {
+                  const shift = el.getBoundingClientRect().top - preTop; // how far el moved
+                  const adjustedY = clickY + shift;
+
+                  targetEl.focus();
+
+                  const caretRange = document.caretRangeFromPoint
+                      ? document.caretRangeFromPoint(clickX, adjustedY)
+                      : (document.caretPositionFromPoint
+                          ? (() => {
+                              const pos = document.caretPositionFromPoint(clickX, adjustedY);
+                              if (!pos) return null;
+                              const r = document.createRange();
+                              r.setStart(pos.offsetNode, pos.offset);
+                              r.collapse(true);
+                              return r;
+                          })()
+                          : null);
+                  if (caretRange) {
+                      const sel = window.getSelection();
+                      sel.removeAllRanges();
+                      sel.addRange(caretRange);
+                  }
+              });
+          });
+      });
   };
 
   // ── Session Log: render the condensed block list ─────────────────
