@@ -398,6 +398,10 @@ function buildSectionBodyHTML(section) {
         const content = section.content || '';
         return `<div class="board-section-notes" contenteditable="false" data-section-id="${section.id}">${content}</div>`;
     }
+    if (section.type === 'subheader') {
+        const content = section.content || '';
+        return `<div class="board-section-subheader" contenteditable="false" data-section-id="${section.id}">${content}</div>`;
+    }
     if (section.type === 'objectives') {
         // Migrate old group-based data on the fly
         const items = section.items || (section.groups || []).flatMap(g => g.items || []);
@@ -1134,12 +1138,14 @@ export const detectiveBoard = (() => {
             dragBtn.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                card.setPointerCapture(e.pointerId);
+                dragBtn.setPointerCapture(e.pointerId);
 
-                const startX   = e.clientX, startY = e.clientY;
-                const cardBody = card.querySelector('.board-card-body');
-                let didDrag    = false;
-                let placeholder = null;
+                const startX        = e.clientX, startY = e.clientY;
+                const srcCardBody   = card.querySelector('.board-card-body');
+                let activeCardBody  = srcCardBody;   // tracks which card body holds the placeholder
+                let didDrag         = false;
+                let placeholder     = null;
+                let altHeld         = false;
 
                 let ghost = null;
                 let offsetY = 0;
@@ -1187,21 +1193,46 @@ export const detectiveBoard = (() => {
 
                         document.body.appendChild(ghost);
 
-                        // Hide the original in place
-                        sectionEl.classList.add('board-section-dragging');
+                        // Hide original (move) or dim it (copy)
+                        altHeld = me.altKey;
+                        sectionEl.classList.toggle('board-section-dragging',   !altHeld);
+                        sectionEl.classList.toggle('board-section-copy-source', altHeld);
                     }
 
                     // Ghost follows cursor
-                    ghost.style.top = (me.clientY - offsetY) + 'px';
+                    ghost.style.top  = (me.clientY - offsetY) + 'px';
+                    ghost.style.left = me.clientX - ghost.offsetWidth / 2 + 'px';
+
+                    // Track alt key; update ghost badge and original visibility if alt toggled mid-drag
+                    altHeld = me.altKey;
+                    ghost.classList.toggle('board-section-ghost-copy', altHeld);
+                    sectionEl.classList.toggle('board-section-dragging',   !altHeld);
+                    sectionEl.classList.toggle('board-section-copy-source', altHeld);
+
+                    // ── Detect which card body the cursor is over ──────────
+                    ghost.style.pointerEvents = 'none';
+                    const elUnder = document.elementFromPoint(me.clientX, me.clientY);
+                    ghost.style.pointerEvents = '';
+                    const hoveredCardBody = elUnder?.closest('.board-card-body') || null;
+
+                    // If cursor moved to a different card body, migrate the placeholder
+                    if (hoveredCardBody && hoveredCardBody !== activeCardBody) {
+                        // Snap & clear FLIP on the old card body before leaving
+                        activeCardBody.querySelectorAll('.board-section').forEach(el => {
+                            el.style.transition = '';
+                            el.style.transform  = '';
+                        });
+                        activeCardBody = hoveredCardBody;
+                    }
 
                     // ── Move placeholder + FLIP-animate displaced sections ─
-                    const siblings = [...cardBody.querySelectorAll(
-                        '.board-section:not(.board-section-dragging)'
+                    const siblings = [...activeCardBody.querySelectorAll(
+                        '.board-section:not(.board-section-dragging):not(.board-section-copy-source)'
                     )];
 
                     // 1. Cancel any in-flight animations → snap all to natural positions
                     siblings.forEach(el => { el.style.transition = 'none'; el.style.transform = ''; });
-                    void cardBody.offsetHeight;
+                    void activeCardBody.offsetHeight;
 
                     // 2. Snapshot natural (unanimated) positions
                     const oldTops = new Map(siblings.map(el => [el, el.getBoundingClientRect().top]));
@@ -1213,12 +1244,12 @@ export const detectiveBoard = (() => {
                         if (me.clientY < r.top + r.height * 0.5) { target = s; break; }
                     }
 
-                    // 4. Move placeholder
+                    // 4. Move placeholder into the active card body
                     if (target) {
-                        cardBody.insertBefore(placeholder, target);
+                        activeCardBody.insertBefore(placeholder, target);
                     } else {
-                        const addBtn = cardBody.querySelector('.board-card-add-section-btn');
-                        cardBody.insertBefore(placeholder, addBtn || null);
+                        const addBtn = activeCardBody.querySelector('.board-card-add-section-btn');
+                        activeCardBody.insertBefore(placeholder, addBtn || null);
                     }
 
                     // 5. Compute deltas from natural → new DOM positions.
@@ -1234,7 +1265,7 @@ export const detectiveBoard = (() => {
 
                     // 6. Batch reflow, then animate all displaced elements together
                     if (toPlay.length) {
-                        void cardBody.offsetHeight;
+                        void activeCardBody.offsetHeight;
                         toPlay.forEach(el => {
                             el.style.transition = 'transform 0.15s ease';
                             el.style.transform  = '';
@@ -1243,47 +1274,117 @@ export const detectiveBoard = (() => {
                 };
 
                 const onUp = () => {
-                    card.releasePointerCapture(e.pointerId);
-                    card.removeEventListener('pointermove', onMove);
-                    card.removeEventListener('pointerup',   onUp);
-                    card.removeEventListener('pointercancel', onUp);
+                    dragBtn.releasePointerCapture(e.pointerId);
+                    dragBtn.removeEventListener('pointermove', onMove);
+                    dragBtn.removeEventListener('pointerup',   onUp);
+                    dragBtn.removeEventListener('pointercancel', onUp);
 
                     if (didDrag && placeholder) {
                         ghost?.remove();
                         ghost = null;
-                        placeholder.parentNode.insertBefore(sectionEl, placeholder);
-                        placeholder.remove();
-                        sectionEl.classList.remove('board-section-dragging');
+                        sectionEl.classList.remove('board-section-dragging', 'board-section-copy-source');
 
-                        // Reconnect sketch ResizeObserver now that the section is visible again
-                        if (section.type === 'sketch') {
-                            const entry = fabricCanvases[sectionId];
-                            if (entry?.resizeObs) {
-                                const wrap = sectionEl.querySelector('.board-sketch-canvas-wrap');
-                                if (wrap) entry.resizeObs.observe(wrap);
-                            }
+                        const destCard     = activeCardBody.closest('.board-card');
+                        const destBlockId  = destCard?.dataset.id;
+                        const isCrossCard  = destBlockId && destBlockId !== blockId;
+
+                        // Work out insertion index from placeholder position in dest card body
+                        let insertIndex = 0;
+                        for (const child of activeCardBody.children) {
+                            if (child === placeholder) break;
+                            if (child.classList.contains('board-section') &&
+                                !child.classList.contains('board-section-dragging') &&
+                                !child.classList.contains('board-section-copy-source')) insertIndex++;
                         }
 
-                        // Clear any residual FLIP transforms
-                        cardBody.querySelectorAll('.board-section').forEach(el => {
-                            el.style.transition = '';
-                            el.style.transform  = '';
-                        });
+                        if (isCrossCard) {
+                            // ── Cross-card drop ────────────────────────────────────
+                            placeholder.remove();
+                            if (!altHeld) sectionEl.remove();
+                            else sectionEl.classList.remove('board-section-dragging');
 
-                        // Persist new order
-                        const newOrder = [...card.querySelectorAll('.board-section')].map(s => s.dataset.sectionId);
-                        updateBlock(blockId, b => {
-                            b.sections = newOrder.map(id => b.sections.find(s => s.id === id)).filter(Boolean);
-                        });
-                        block.sections = newOrder.map(id => block.sections.find(s => s.id === id)).filter(Boolean);
+                            // Clear FLIP on both cards
+                            srcCardBody.querySelectorAll('.board-section').forEach(el => { el.style.transition = ''; el.style.transform = ''; });
+                            activeCardBody.querySelectorAll('.board-section').forEach(el => { el.style.transition = ''; el.style.transform = ''; });
+
+                            const copySection = { ...section, id: crypto.randomUUID() };
+
+                            if (altHeld) {
+                                // Copy to dest, leave source unchanged
+                                updateBlock(destBlockId, b => {
+                                    b.sections = b.sections.filter(s => s.id !== copySection.id);
+                                    b.sections.splice(insertIndex, 0, copySection);
+                                });
+                                const blocks    = getAllBlocks();
+                                const destBlock = blocks.find(b => b.id === destBlockId);
+                                if (destBlock) refreshCardContent(destCard, destBlock);
+                            } else {
+                                // Move: remove from source, insert into dest
+                                updateBlock(blockId, b => {
+                                    b.sections = b.sections.filter(s => s.id !== sectionId);
+                                });
+                                updateBlock(destBlockId, b => {
+                                    b.sections = b.sections.filter(s => s.id !== sectionId);
+                                    b.sections.splice(insertIndex, 0, section);
+                                });
+                                const blocks    = getAllBlocks();
+                                const srcBlock  = blocks.find(b => b.id === blockId);
+                                const destBlock = blocks.find(b => b.id === destBlockId);
+                                if (srcBlock)  refreshCardContent(card,     srcBlock);
+                                if (destBlock) refreshCardContent(destCard,  destBlock);
+                            }
+
+                        } else {
+                            // ── Same-card drop ─────────────────────────────────────
+                            if (altHeld) {
+                                // Insert a copy at the placeholder position, leave original in place
+                                const copySection = { ...section, id: crypto.randomUUID() };
+                                placeholder.remove();
+                                sectionEl.classList.remove('board-section-dragging', 'board-section-copy-source');
+
+                                srcCardBody.querySelectorAll('.board-section').forEach(el => { el.style.transition = ''; el.style.transform = ''; });
+
+                                updateBlock(blockId, b => {
+                                    b.sections.splice(insertIndex, 0, copySection);
+                                });
+                                block.sections = getAllBlocks().find(b => b.id === blockId)?.sections || block.sections;
+                                refreshCardContent(card, getAllBlocks().find(b => b.id === blockId));
+                            } else {
+                                // Reorder (original behaviour)
+                                placeholder.parentNode.insertBefore(sectionEl, placeholder);
+                                placeholder.remove();
+
+                                // Reconnect sketch ResizeObserver now that the section is visible again
+                                if (section.type === 'sketch') {
+                                    const entry = fabricCanvases[sectionId];
+                                    if (entry?.resizeObs) {
+                                        const wrap = sectionEl.querySelector('.board-sketch-canvas-wrap');
+                                        if (wrap) entry.resizeObs.observe(wrap);
+                                    }
+                                }
+
+                                // Clear any residual FLIP transforms
+                                srcCardBody.querySelectorAll('.board-section').forEach(el => {
+                                    el.style.transition = '';
+                                    el.style.transform  = '';
+                                });
+
+                                // Persist new order
+                                const newOrder = [...card.querySelectorAll('.board-section')].map(s => s.dataset.sectionId);
+                                updateBlock(blockId, b => {
+                                    b.sections = newOrder.map(id => b.sections.find(s => s.id === id)).filter(Boolean);
+                                });
+                                block.sections = newOrder.map(id => block.sections.find(s => s.id === id)).filter(Boolean);
+                            }
+                        }
 
                         updateStrings();
                     }
                 };
 
-                card.addEventListener('pointermove', onMove);
-                card.addEventListener('pointerup',   onUp);
-                card.addEventListener('pointercancel', onUp);
+                dragBtn.addEventListener('pointermove', onMove);
+                dragBtn.addEventListener('pointerup',   onUp);
+                dragBtn.addEventListener('pointercancel', onUp);
             });
         }
 
@@ -1340,6 +1441,36 @@ export const detectiveBoard = (() => {
                 editor.addEventListener('blur', () => {
                     editor.contentEditable = 'false';
                     if (!editor.textContent.trim() && !editor.querySelector('img, br + br')) {
+                        removeSection();
+                    }
+                });
+            }
+        }
+
+        if (section.type === 'subheader') {
+            const editor = sectionEl.querySelector('.board-section-subheader');
+            if (editor) {
+                editor.addEventListener('pointerdown', e => {
+                    if (editor.contentEditable === 'true') e.stopPropagation();
+                });
+                editor.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    editor.contentEditable = 'true';
+                    editor.focus();
+                });
+                let saveTimer = null;
+                editor.addEventListener('input', () => {
+                    clearTimeout(saveTimer);
+                    saveTimer = setTimeout(() => {
+                        updateBlock(blockId, b => {
+                            const s = b.sections.find(s => s.id === sectionId);
+                            if (s) s.content = editor.innerHTML;
+                        });
+                    }, 600);
+                });
+                editor.addEventListener('blur', () => {
+                    editor.contentEditable = 'false';
+                    if (!editor.textContent.trim()) {
                         removeSection();
                     }
                 });
@@ -1566,19 +1697,40 @@ export const detectiveBoard = (() => {
         const picker = document.createElement('div');
         picker.className = 'board-section-picker';
         picker.innerHTML = `
-            <button class="board-section-picker-item" data-type="notes">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" width="12" height="12"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                Notes
+            <button class="board-section-picker-item" data-type="subheader" data-tip="Subheader">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" width="14" height="14"><path d="M4 6h16M4 12h10"/></svg>
             </button>
-            <button class="board-section-picker-item" data-type="objective">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" width="12" height="12"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                Objective
+            <button class="board-section-picker-item" data-type="notes" data-tip="Notes">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             </button>
-            <button class="board-section-picker-item" data-type="sketch">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" width="12" height="12"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
-                Sketch
+            <button class="board-section-picker-item" data-type="objective" data-tip="Objective">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" width="14" height="14"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </button>
+            <button class="board-section-picker-item" data-type="sketch" data-tip="Sketch">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" width="14" height="14"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
             </button>
         `;
+
+        // Body-level tooltip to avoid card overflow:hidden clipping
+        const pickerTip = document.createElement('div');
+        pickerTip.className = 'board-picker-floating-tip';
+        document.body.appendChild(pickerTip);
+        let tipTimer = null;
+
+        picker.querySelectorAll('.board-section-picker-item[data-tip]').forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                clearTimeout(tipTimer);
+                const r = btn.getBoundingClientRect();
+                pickerTip.textContent = btn.dataset.tip;
+                pickerTip.style.left = (r.left + r.width / 2) + 'px';
+                pickerTip.style.top  = (r.top - 10) + 'px';
+                pickerTip.classList.add('visible');
+            });
+            btn.addEventListener('mouseleave', () => {
+                clearTimeout(tipTimer);
+                pickerTip.classList.remove('visible');
+            });
+        });
         addBtn.insertAdjacentElement('beforebegin', picker);
 
         // ── Close helper ──────────────────────────────────────────
@@ -1588,6 +1740,8 @@ export const detectiveBoard = (() => {
             isClosing = true;
             document.removeEventListener('click', outsideClick, true);
 
+            clearTimeout(tipTimer);
+            pickerTip.remove();
             picker.classList.add('is-exiting');
             setTimeout(() => {
                 picker.remove();
@@ -1620,9 +1774,10 @@ export const detectiveBoard = (() => {
 
     const addSectionToCard = (card, block, type) => {
         let newSection;
-        if (type === 'notes')           newSection = { id: crypto.randomUUID(), type: 'notes',     content: '' };
-        else if (type === 'objective')  newSection = { id: crypto.randomUUID(), type: 'objective', text: '', done: false };
-        else if (type === 'sketch')     newSection = { id: crypto.randomUUID(), type: 'sketch',    sketchData: null };
+        if (type === 'notes')           newSection = { id: crypto.randomUUID(), type: 'notes',      content: '' };
+        else if (type === 'subheader')  newSection = { id: crypto.randomUUID(), type: 'subheader',  content: '' };
+        else if (type === 'objective')  newSection = { id: crypto.randomUUID(), type: 'objective',  text: '', done: false };
+        else if (type === 'sketch')     newSection = { id: crypto.randomUUID(), type: 'sketch',     sketchData: null };
         else return;
 
         block.sections = block.sections || [];
@@ -1641,6 +1796,12 @@ export const detectiveBoard = (() => {
         if (type === 'notes') {
             requestAnimationFrame(() => {
                 const el = sectionEl.querySelector('.board-section-notes');
+                if (el) { el.contentEditable = 'true'; el.focus(); }
+            });
+        }
+        if (type === 'subheader') {
+            requestAnimationFrame(() => {
+                const el = sectionEl.querySelector('.board-section-subheader');
                 if (el) { el.contentEditable = 'true'; el.focus(); }
             });
         }

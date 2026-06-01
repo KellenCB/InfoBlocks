@@ -645,6 +645,10 @@
     display: none;
 }
 
+.board-section-copy-source {
+    opacity: 0.35;
+}
+
 .board-section-ghost {
     position: fixed;
     z-index: 100000;
@@ -652,6 +656,23 @@
     pointer-events: none;
     border-radius: 6px;
     background: var(--gray-700, #2a2a2a);
+}
+
+.board-section-ghost.board-section-ghost-copy::after {
+    content: '+';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-green, #4caf50);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    pointer-events: none;
 }
 
 .board-section-drag-placeholder {
@@ -688,6 +709,37 @@
 
 .board-section-notes:empty::before {
     content: 'Write something…';
+    color: rgba(255,255,255,0.2);
+    pointer-events: none;
+    font-style: italic;
+}
+
+.board-section-subheader {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.4;
+    outline: none;
+    min-height: 24px;
+    cursor: default;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border-radius: 5px;
+    padding: 4px 5px;
+    margin: -4px -5px;
+    transition: background 0.15s ease;
+}
+
+.board-section-subheader[contenteditable="true"] {
+    cursor: text;
+}
+
+.board-section-subheader:focus {
+    background: rgba(255,255,255,0.04);
+}
+
+.board-section-subheader:empty::before {
+    content: 'Subheader…';
     color: rgba(255,255,255,0.2);
     pointer-events: none;
     font-style: italic;
@@ -744,9 +796,9 @@
     cursor: default;
     flex: 1;
     min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
 }
 
 .board-obj-item-input {
@@ -821,11 +873,36 @@
     display: flex;
     flex-direction: row;
     gap: 2px;
-    padding: 10px 12px 7px;
+    padding: 6px 8px 4px;
     border-top: 1px solid rgba(255,255,255,0.05);
     background: transparent;
     box-sizing: border-box;
     animation: sectionPickerIn 0.22s ease forwards;
+}
+
+.board-picker-floating-tip {
+    position: fixed;
+    transform: translate(-50%, -100%);
+    white-space: nowrap;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    color: var(--gray-900);
+    padding: 8px 12px;
+    border-radius: 10px;
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
+    font-size: 13px;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+    z-index: 100001;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.board-picker-floating-tip.visible {
+    opacity: 1;
 }
 
 .board-section-picker.is-exiting {
@@ -854,23 +931,20 @@
 }
 
 .board-section-picker-item {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
-    padding: 5px 6px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
     border: none;
     border-radius: 6px;
     background: transparent;
     color: rgba(255,255,255,0.4);
-    font-size: 11px;
-    font-weight: 500;
     cursor: pointer;
-    text-align: center;
     transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease;
     font-family: inherit;
-    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .board-section-picker-item:hover {

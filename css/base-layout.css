@@ -6,6 +6,7 @@ html {
     height: 100%;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 body {
@@ -16,6 +17,7 @@ body {
     align-items: center;
     height: 100%;
     padding: 20px;
+    overflow: hidden;
 }
 
 /* ── Frosted glass utility ────────────────────────────────────────── */
@@ -1350,7 +1352,6 @@ a:hover {
     flex-direction: row;
     flex: 1;
     min-height: 0;
-    overflow: hidden;
     gap: 15px;
     container-type: inline-size;
 }
@@ -1358,9 +1359,8 @@ a:hover {
 .session-log-list-column {
     display: flex;
     flex-direction: column;
-    width: 35%;
-    min-width: 180px;
-    max-width: 350px;
+    width: 33%;
+    min-width: 290px;
     flex-shrink: 0;
     gap: 10px;
     min-height: 0;
@@ -1371,7 +1371,7 @@ a:hover {
 }
 
 .session-log-list-column.session-log-list-collapsed {
-    margin-right: calc(clamp(180px, 35%, 350px) * -1);
+    margin-right: calc(max(33%, 290px) * -1);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -2453,7 +2453,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .quest-objectives {
     font-size: 13px;
     line-height: 1.55;
-    width: fit-content;
+    width: 100%;
 }
 
 
@@ -2496,6 +2496,12 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 }
 
 .quest-objective.done .quest-objective-tick { opacity: 1; }
+
+.quest-objective-text {
+    white-space: normal;
+    word-break: break-word;
+    min-width: 0;
+}
 
 .quest-objective.done .quest-objective-text {
     color: var(--gray-700);
