@@ -632,6 +632,12 @@
     pointer-events: all;
 }
 
+.board-connect-tool-on .board-section-drag-btn,
+.board-connect-tool-on .board-section:hover .board-section-drag-btn {
+    color: rgba(255,255,255,0.0) !important;
+    pointer-events: none !important;
+}
+
 .board-section-drag-btn:hover {
     color: rgba(255,255,255,0.7);
 }

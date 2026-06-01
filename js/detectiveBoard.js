@@ -1136,6 +1136,7 @@ export const detectiveBoard = (() => {
             const DRAG_THRESHOLD = 4;
 
             dragBtn.addEventListener('pointerdown', (e) => {
+                if (connectToolActive) return;
                 e.preventDefault();
                 e.stopPropagation();
                 dragBtn.setPointerCapture(e.pointerId);
