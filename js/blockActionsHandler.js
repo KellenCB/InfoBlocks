@@ -40,7 +40,7 @@ export const blockActionsHandler = (() => {
         popup.innerHTML = `
             <span class="delete-confirm-message">Are you sure you want<br>to delete this block?</span>
             <div class="delete-confirm-buttons">
-                <button class="delete-confirm-yes"><span>Yes</span></button>
+                <button class="delete-confirm-yes hold-to-confirm"><span>Yes</span></button>
                 <button class="delete-confirm-no">No</button>
             </div>
         `;
@@ -61,15 +61,36 @@ export const blockActionsHandler = (() => {
         popup.style.left = `${left}px`;
         popup.classList.add('visible');
 
+        let leaveTimer = null;
         const dismiss = () => {
+            clearTimeout(leaveTimer);
             popup.classList.remove('visible');
             setTimeout(() => popup.remove(), 400);
             document.removeEventListener('mousedown', onOutside);
+            document.removeEventListener('mousemove', onMouseMove);
         };
         const onOutside = (e) => {
             if (!popup.contains(e.target)) dismiss();
         };
-        setTimeout(() => document.addEventListener('mousedown', onOutside), 0);
+        const onMouseMove = (e) => {
+            const rect = popup.getBoundingClientRect();
+            const padding = 16;
+            const outside =
+                e.clientX < rect.left - padding  ||
+                e.clientX > rect.right + padding ||
+                e.clientY < rect.top - padding   ||
+                e.clientY > rect.bottom + padding;
+            if (outside) {
+                leaveTimer = leaveTimer || setTimeout(dismiss, 300);
+            } else {
+                clearTimeout(leaveTimer);
+                leaveTimer = null;
+            }
+        };
+        setTimeout(() => {
+            document.addEventListener('mousedown', onOutside);
+            document.addEventListener('mousemove', onMouseMove);
+        }, 0);
 
         // Yes button: must hover for 0.5s before it becomes clickable
         const yesBtn = popup.querySelector('.delete-confirm-yes');

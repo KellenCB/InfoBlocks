@@ -6,6 +6,7 @@ html {
     height: 100%;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 body {
@@ -1358,9 +1359,8 @@ a:hover {
 .session-log-list-column {
     display: flex;
     flex-direction: column;
-    width: 35%;
-    min-width: 180px;
-    max-width: 350px;
+    width: 33%;
+    min-width: 290px;
     flex-shrink: 0;
     gap: 10px;
     min-height: 0;
@@ -1371,7 +1371,7 @@ a:hover {
 }
 
 .session-log-list-column.session-log-list-collapsed {
-    margin-right: calc(clamp(180px, 35%, 350px) * -1);
+    margin-right: calc(max(33%, 290px) * -1);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -1575,6 +1575,34 @@ a:hover {
 }
 
 .session-viewer-body[contenteditable="true"] {
+}
+
+/* When the editor toolbar wrapper replaces the body as a flex child of the
+   session viewer, it must inherit the same flex behaviour so the body inside
+   it remains height-bounded and scrollable. */
+.session-log-viewer .editor-toolbar-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    /* Reset the generic form-field appearance — not needed in the viewer */
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+}
+
+.session-log-viewer .editor-toolbar-wrapper .text-toolbar {
+    flex-shrink: 0;
+}
+
+.session-log-viewer .editor-toolbar-wrapper .find-replace-panel {
+    flex-shrink: 0;
+}
+
+.session-log-viewer .editor-toolbar-wrapper .session-viewer-body {
+    flex: 1;
+    min-height: 0;
 }
 
 .session-viewer-tags {
@@ -2425,7 +2453,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .quest-objectives {
     font-size: 13px;
     line-height: 1.55;
-    width: fit-content;
+    width: 100%;
 }
 
 
@@ -2468,6 +2496,12 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 }
 
 .quest-objective.done .quest-objective-tick { opacity: 1; }
+
+.quest-objective-text {
+    white-space: normal;
+    word-break: break-word;
+    min-width: 0;
+}
 
 .quest-objective.done .quest-objective-text {
     color: var(--gray-700);
@@ -2751,38 +2785,46 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     width: 100%;
 }
 
-.delete-confirm-yes {
+/* ── Hold-to-confirm fill animation (shared) ─────────────────────────
+   Apply this class to any button that should require a sustained hover
+   before its click fires.  Set --hold-fill-bg on the element to control
+   the fill colour; defaults to a subtle red tint.                      */
+.hold-to-confirm {
     position: relative;
     overflow: hidden;
-    background: #a33535;
-    color: #fff;
     cursor: default;
 }
 
-.delete-confirm-yes span {
+.hold-to-confirm > * {
     position: relative;
     z-index: 1;
 }
 
-.delete-confirm-yes::after {
+.hold-to-confirm::after {
     content: '';
     position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
     width: 0;
-    background: var(--color-red);
-    border-radius: 0;
+    background: var(--hold-fill-bg, color-mix(in srgb, var(--color-red) 22%, transparent));
     transition: width 0.25s ease-in;
 }
 
-.delete-confirm-yes:hover::after {
+.hold-to-confirm:hover::after {
     width: 100%;
     transition: width 0.5s linear;
 }
 
-.delete-confirm-yes.armed {
+.hold-to-confirm.armed {
     cursor: pointer;
+}
+
+/* Delete-confirm yes: solid red fill over a dark-red base */
+.delete-confirm-yes {
+    --hold-fill-bg: var(--color-red);
+    background: #a33535;
+    color: #fff;
 }
 
 .delete-confirm-no {

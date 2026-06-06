@@ -8,7 +8,6 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
 }
 
 .inventory-layout .results-wrapper {
@@ -436,6 +435,31 @@
   font-family: inherit;
   outline: none;
   resize: vertical;
+  box-sizing: border-box;
+}
+
+/* Contenteditable description editor */
+.bag-ov-desc-editor {
+  resize: none;
+  cursor: text;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.bag-ov-desc-editor:focus {
+  border-color: rgba(255, 255, 255, .15);
+}
+
+/* Links rendered inside the editor — same style as the view popup,
+   but pointer-events:none so they don't navigate while editing */
+.bag-ov-desc-editor a {
+  color: var(--color-cyan);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: 0.85;
+  pointer-events: none;
+  cursor: text;
 }
 
 /* ── Overlay — category buttons ───────────────────────────────────── */
@@ -720,4 +744,108 @@
   .bag-ov-left .bag-ov-textarea {
     flex: 1;
   }
+}
+
+/* ==================================================================*/
+/* ====================== DESCRIPTION LINK UI ======================*/
+/* ==================================================================*/
+
+.bag-ov-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.bag-ov-label-row .bag-ov-label {
+  margin-bottom: 0;
+}
+
+.bag-ov-link-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--gray-600);
+  font-size: 11px;
+  font-family: inherit;
+  letter-spacing: 0.03em;
+  padding: 2px 7px;
+  line-height: 1.6;
+  opacity: 0.7;
+  transition: opacity 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+
+.bag-ov-link-btn:hover:not(.bag-link-btn-inactive) {
+  opacity: 1;
+  background: rgba(255,255,255,.06);
+}
+
+.bag-ov-link-btn.bag-link-btn-inactive {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.bag-ov-link-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+  padding: 10px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 6px;
+}
+
+.bag-ov-link-mini.bag-link-mini-hidden {
+  display: none;
+}
+
+.bag-ov-link-mini-btns {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.bag-ov-link-confirm,
+.bag-ov-link-cancel-mini {
+  padding: 4px 12px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,.1);
+  transition: background 0.2s;
+}
+
+.bag-ov-link-confirm {
+  background: rgba(255,255,255,.08);
+  color: var(--gray-850);
+}
+
+.bag-ov-link-confirm:hover {
+  background: rgba(255,255,255,.15);
+}
+
+.bag-ov-link-cancel-mini {
+  background: none;
+  color: var(--gray-600);
+}
+
+.bag-ov-link-cancel-mini:hover {
+  background: rgba(255,255,255,.05);
+}
+
+/* Links in the item view popup */
+.bpp-b a {
+  color: var(--color-cyan);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+
+.bpp-b a:hover {
+  opacity: 1;
 }

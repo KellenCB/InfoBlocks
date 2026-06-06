@@ -84,7 +84,6 @@
     gap: 7px;
     z-index: 2;
     pointer-events: none;
-    border-bottom: 1px solid var(--gray-500);
     overflow: auto;
 }
 

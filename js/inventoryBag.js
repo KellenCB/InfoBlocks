@@ -2,6 +2,8 @@
 /* ==================== INVENTORY BAG MODE =========================*/
 /* ==================================================================*/
 
+import { applySketchSetup, updateSketchScale, updateDrawCursor, eraseFromPaths, wireSketchKeyboard, wireAltClone } from './fabricSketch.js';
+
 export const inventoryBag = (() => {
 
   let engine, matterLoaded = false, animFrameId = null;
@@ -164,6 +166,7 @@ export const inventoryBag = (() => {
     const pw = item.bb.gw*u, ph = item.bb.gh*u;
     const w = document.createElement('div'); w.className = 'bi'; w.style.width=pw+'px'; w.style.height=ph+'px';
     w._baseUnit = u;
+    w.style.pointerEvents = 'none'; // empty cells in the bounding box won't intercept events
     const bdrClr = stClr(item.block, 0.25);
     const bg = stClr(item.block,.06), dc = stClr(item.block,.55);
     const vw = item.gw<=2?item.gw*32:item.gw*28, vh = item.gh<=2?item.gh*32:item.gh*28;
@@ -172,24 +175,40 @@ export const inventoryBag = (() => {
       const d = document.createElement('div'); d.className='bc';
       d.style.left=((c.c-item.bb.c1)*u)+'px'; d.style.top=((c.r-item.bb.r1)*u)+'px';
       d.style.width=u+'px'; d.style.height=u+'px'; d.style.background=bg;
+      d.style.pointerEvents = 'auto'; // only occupied cells catch pointer events
       const bT = !cellSet.has((c.r-1)+','+c.c) ? '1px solid '+bdrClr : 'none';
       const bR = !cellSet.has(c.r+','+(c.c+1)) ? '1px solid '+bdrClr : 'none';
       const bB = !cellSet.has((c.r+1)+','+c.c) ? '1px solid '+bdrClr : 'none';
       const bL = !cellSet.has(c.r+','+(c.c-1)) ? '1px solid '+bdrClr : 'none';
       d.style.borderTop=bT; d.style.borderRight=bR; d.style.borderBottom=bB; d.style.borderLeft=bL;
-      if (item.block.bagCellImgs && item.block.bagCellImgs[c.r+','+c.c]) {
+
+      const cellKey = c.r+','+c.c;
+
+      if (item.block.bagCellImgs && item.block.bagCellImgs[cellKey]) {
         const img = document.createElement('img');
         img.style.cssText='width:100%;height:100%;display:block;pointer-events:none;position:relative;z-index:1';
-        cleanCellImage(item.block.bagCellImgs[c.r+','+c.c], (cleanSrc) => { img.src = cleanSrc; });
+        cleanCellImage(item.block.bagCellImgs[cellKey], (cleanSrc) => { img.src = cleanSrc; });
         d.appendChild(img);
       } else {
         d.innerHTML='<svg viewBox="'+((c.c-item.bb.c1)*32)+' '+((c.r-item.bb.r1)*32)+' 32 32"><path d="'+item.cfg.ic+'" fill="none" stroke="'+dc+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       }
+
+      d.addEventListener('mouseenter', () => {
+        if (tipEl && tipEl._forId === item.block.id) return;
+        showTip(item, w);
+      });
+      d.addEventListener('mouseleave', (e) => {
+        // Moving to another cell of the same item: keep the tooltip alive
+        if (e.relatedTarget && w.contains(e.relatedTarget)) return;
+        hideTip();
+      });
+      d.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showPop(item, w);
+      });
+
       w.appendChild(d);
     });
-    w.addEventListener('mouseenter', () => showTip(item, w));
-    w.addEventListener('mouseleave', hideTip);
-    w.addEventListener('click', e => { e.stopPropagation(); showPop(item, w); });
     return w;
   }
 
@@ -197,6 +216,7 @@ export const inventoryBag = (() => {
     hideTip();
     if (popOpenId === item.block.id) return;
     tipEl = document.createElement('div');
+    tipEl._forId = item.block.id; // used by per-cell mouseenter guard
     tipEl.classList.add('text-tooltip');
     tipEl.textContent = item.block.title;
     tipEl.style.padding = '8px 12px';
@@ -648,7 +668,6 @@ export const inventoryBag = (() => {
   const GRID = 5, GCELL = 42;
   let ovCat = 'Consumables';
   let activeFc = null;
-  let clipboardPaths = null;
 
   function setupFabricCanvas(canvasId, goId, catColor) {
     const S = GCELL * GRID;
@@ -667,28 +686,8 @@ export const inventoryBag = (() => {
     fc.skipOffscreen = false;
     fc._displayScale = displayS / S;
 
-    // CSS stretch to display size
-    fc.lowerCanvasEl.style.width = displayS + 'px';
-    fc.lowerCanvasEl.style.height = displayS + 'px';
-    fc.upperCanvasEl.style.width = displayS + 'px';
-    fc.upperCanvasEl.style.height = displayS + 'px';
-    fc.wrapperEl.style.width = displayS + 'px';
-    fc.wrapperEl.style.height = displayS + 'px';
-
-    // Increase the backing pixel buffer so lines render crisply at display size.
-    // Default retina gives S*dpr pixels which is too few for displayS*dpr screen pixels.
-    // We manually resize the canvas elements and context to match the display.
-    const dpr = window.devicePixelRatio || 1;
-    const bufferPx = Math.round(displayS * dpr);
-    const totalScale = bufferPx / S;
-    fc.lowerCanvasEl.setAttribute('width', bufferPx);
-    fc.lowerCanvasEl.setAttribute('height', bufferPx);
-    fc.upperCanvasEl.setAttribute('width', bufferPx);
-    fc.upperCanvasEl.setAttribute('height', bufferPx);
-    fc.contextContainer.setTransform(totalScale, 0, 0, totalScale, 0, 0);
-    fc.contextTop.setTransform(totalScale, 0, 0, totalScale, 0, 0);
-    // Tell Fabric the new retina factor so getPointer maps CSS→logical correctly
-    fc.getRetinaScaling = () => totalScale;
+    // Apply DPI scaling, display sizing, cursor, and brush smoothing via shared utility
+    applySketchSetup(fc, { logicalW: S, logicalH: S, displayW: displayS, displayH: displayS });
 
     // Resize the parent .bag-ov-da wrapper to match
     const daEl = fc.wrapperEl.parentElement;
@@ -697,34 +696,6 @@ export const inventoryBag = (() => {
       daEl.style.height = displayS + 'px';
     }
 
-    fc._updateDrawCursor = function() {
-      if (!this.freeDrawingBrush) return;
-      const size = this.freeDrawingBrush.width;
-      const scale = this._displayScale || 1;
-      const r = Math.max(size * 0.85 * scale, 2);
-      const d = Math.ceil(r * 2 + 4);
-      const c = d / 2;
-      const dpr = window.devicePixelRatio || 1;
-      const tmp = document.createElement('canvas');
-      tmp.width = d * dpr; tmp.height = d * dpr;
-      const ctx = tmp.getContext('2d');
-      ctx.scale(dpr, dpr);
-      if (this._isEraserActive) {
-        ctx.beginPath();
-        ctx.arc(c, c, r, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      } else {
-        ctx.beginPath();
-        ctx.arc(c, c, r, 0, Math.PI * 2);
-        ctx.fillStyle = this.freeDrawingBrush.color || 'rgba(255,255,255,0.5)';
-        ctx.fill();
-      }
-      this.freeDrawingCursor = 'url(' + tmp.toDataURL() + ') ' + (c * dpr) + ' ' + (c * dpr) + ', crosshair';
-      this.upperCanvasEl.style.cursor = this.freeDrawingCursor;
-    };
-
     // Style the wrapper
     const wrapper = fc.wrapperEl;
     wrapper.style.background = 'rgba(20,20,20,0.8)';
@@ -732,112 +703,6 @@ export const inventoryBag = (() => {
     wrapper.style.borderRadius = '5px';
     wrapper.style.overflow = 'hidden';
 
-    // ── Capped-speed brush smoothing ─────────────────────────────────
-    let _brushPos = null;
-    let _cursorPos = null;
-    let _brushRAF = null;
-    const MAX_BRUSH_SPEED = 1.2;
-    const origGetPointer = fc.getPointer.bind(fc);
-
-    fc.getPointer = function(e, ignoreZoom) {
-      const p = origGetPointer(e, ignoreZoom);
-      p.x = Math.max(0, Math.min(S, p.x));
-      p.y = Math.max(0, Math.min(S, p.y));
-      return p;
-    };
-
-    function brushTick() {
-      if (!fc._isCurrentlyDrawing || !fc.isDrawingMode || !_brushPos || !_cursorPos || fc._isEraserActive) {
-        _brushRAF = null;
-        return;
-      }
-      const dx = _cursorPos.x - _brushPos.x, dy = _cursorPos.y - _brushPos.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist > 0.3) {
-        const speed = Math.min(MAX_BRUSH_SPEED, dist * 0.06);
-        const move = Math.max(0.15, speed);
-        const angle = Math.atan2(dy, dx);
-        _brushPos.x += Math.cos(angle) * move;
-        _brushPos.y += Math.sin(angle) * move;
-        fc.freeDrawingBrush.onMouseMove(
-          { x: _brushPos.x, y: _brushPos.y },
-          { e: { shiftKey: false }, pointer: { x: _brushPos.x, y: _brushPos.y } }
-        );
-      }
-      _brushRAF = requestAnimationFrame(brushTick);
-    }
-
-    const _origMouseDown = fc._onMouseDownInDrawingMode;
-    fc._onMouseDownInDrawingMode = function(e) {
-      _origMouseDown.call(this, e);
-      if (this.isDrawingMode && this._isCurrentlyDrawing && !this._isEraserActive) {
-        const p = this.getPointer(e);
-        _brushPos = { x: p.x, y: p.y };
-        _cursorPos = { x: p.x, y: p.y };
-        if (!_brushRAF) _brushRAF = requestAnimationFrame(brushTick);
-      }
-    };
-
-    let _drawingOutside = false;
-    const _origDrawMove = fc._onMouseMoveInDrawingMode;
-    fc._onMouseMoveInDrawingMode = function(e) {
-      if (this._isEraserActive) {
-        const p = origGetPointer(e);
-        const outside = p.x < 0 || p.x >= S || p.y < 0 || p.y >= S;
-        if (this._isCurrentlyDrawing && outside && !_drawingOutside) {
-          _drawingOutside = true;
-          this.freeDrawingBrush.onMouseUp({ e: e, pointer: this.getPointer(e) });
-        } else if (!outside && _drawingOutside) {
-          _drawingOutside = false;
-          if (e.buttons > 0) {
-            this._isCurrentlyDrawing = true;
-            const pointer = this.getPointer(e);
-            this.freeDrawingBrush.onMouseDown(pointer, { e: e, pointer: pointer });
-          }
-        } else if (!outside) {
-          _origDrawMove.call(this, e);
-        }
-        return;
-      }
-
-      const p = origGetPointer(e);
-      const clamped = { x: Math.max(0, Math.min(S, p.x)), y: Math.max(0, Math.min(S, p.y)) };
-      const outside = p.x < 0 || p.x >= S || p.y < 0 || p.y >= S;
-
-      if (this._isCurrentlyDrawing && outside && !_drawingOutside) {
-        _drawingOutside = true;
-        cancelAnimationFrame(_brushRAF); _brushRAF = null;
-        this.freeDrawingBrush.onMouseUp({ e: e, pointer: _brushPos || clamped });
-      } else if (!outside && _drawingOutside) {
-        _drawingOutside = false;
-        if (e.buttons > 0) {
-          this._isCurrentlyDrawing = true;
-          _brushPos = { x: clamped.x, y: clamped.y };
-          _cursorPos = { x: clamped.x, y: clamped.y };
-          this.freeDrawingBrush.onMouseDown(clamped, { e: e, pointer: clamped });
-          if (!_brushRAF) _brushRAF = requestAnimationFrame(brushTick);
-        }
-      } else if (!outside && this._isCurrentlyDrawing) {
-        _cursorPos = { x: clamped.x, y: clamped.y };
-        if (this.freeDrawingCursor) this.upperCanvasEl.style.cursor = this.freeDrawingCursor;
-      }
-    };
-
-    const _origMouseUpDraw = fc._onMouseUpInDrawingMode;
-    fc._onMouseUpInDrawingMode = function(e) {
-      cancelAnimationFrame(_brushRAF); _brushRAF = null;
-      _origMouseUpDraw.call(this, e);
-    };
-
-    fc.on('mouse:up', () => {
-      _brushPos = null;
-      _cursorPos = null;
-      cancelAnimationFrame(_brushRAF); _brushRAF = null;
-      _drawingOutside = false;
-      if (_altCloneActive) { _altCloneActive = false; detectFabricCells(fc, goId, CAT[ovCat]?.c || DEF.c); }
-      if (fc.contextTop) fc.clearContext(fc.contextTop);
-      fc.renderAll();
-    });
 
     // Set default brush
     fc.freeDrawingBrush = new fabric.PencilBrush(fc);
@@ -856,90 +721,21 @@ export const inventoryBag = (() => {
       strokeUniform: true,
     });
 
-    // Keyboard: delete, copy, paste
-    const keyHandler = (e) => {
-      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
-      const mod = e.ctrlKey || e.metaKey;
-
-      if (e.key === 'Backspace' || e.key === 'Delete') {
-        const active = fc.getActiveObjects();
-        if (active.length) {
-          active.forEach(obj => fc.remove(obj));
-          fc.discardActiveObject();
-          fc.renderAll();
-          detectFabricCells(fc, goId, CAT[ovCat]?.c || DEF.c);
-        }
-      }
-
-      if (mod && e.key === 'c') {
-        const sel = fc.getActiveObject();
-        if (!sel) return;
-        const objects = fc.getActiveObjects().filter(o => !o._isEraser);
-        if (!objects.length) return;
-        e.preventDefault();
-        if (sel.type === 'activeSelection') {
-          clipboardPaths = objects.map(obj => {
-            const d = obj.toObject();
-            d.left = sel.left + obj.left;
-            d.top = sel.top + obj.top;
-            return d;
-          });
-        } else {
-          clipboardPaths = [sel.toObject()];
-        }
-      }
-
-      if (mod && e.key === 'v' && clipboardPaths && clipboardPaths.length) {
-        e.preventDefault();
-        const cc = CAT[ovCat]?.c || DEF.c;
-        const strokeColor = 'rgba(' + cc + ',.65)';
-        fabric.util.enlivenObjects(clipboardPaths, (objects) => {
-          fc.discardActiveObject();
-          objects.forEach(obj => {
-            obj.set({ stroke: strokeColor, strokeUniform: true });
-            fc.add(obj);
-          });
-          if (objects.length === 1) {
-            fc.setActiveObject(objects[0]);
-          } else if (objects.length > 1) {
-            const sel = new fabric.ActiveSelection(objects, { canvas: fc });
-            fc.setActiveObject(sel);
-          }
-          fc.renderAll();
-          detectFabricCells(fc, goId, CAT[ovCat]?.c || DEF.c);
-        });
-      }
-
-      if (mod && e.key === 'z') {
-        e.preventDefault();
-        if (fc._bagUndo) fc._bagUndo();
-      }
-    };
-    document.addEventListener('keydown', keyHandler);
+    // Keyboard: delete, copy, paste, and tool shortcuts
+    const keyHandler = wireSketchKeyboard(fc, {
+      // No guard — the overlay is always the active canvas when open.
+      onDelete:            () => detectFabricCells(fc, goId, CAT[ovCat]?.c || DEF.c),
+      onPaste:             () => detectFabricCells(fc, goId, CAT[ovCat]?.c || DEF.c),
+      getPasteStrokeColor: () => 'rgba(' + (CAT[ovCat]?.c || DEF.c) + ',.65)',
+      // Delegate to fc._toolShortcut which is set by wireToolButtons (where
+      // the prefix is available). setupFabricCanvas has no prefix parameter,
+      // so we can't reference it directly here.
+      onToolShortcut: (key) => fc._toolShortcut?.(key),
+    });
     fc._bagKeyHandler = keyHandler;
 
     // Alt+drag to duplicate selected objects
-    let _altCloneActive = false;
-    fc.on('object:moving', (opt) => {
-      if (!opt.e.altKey || _altCloneActive) return;
-      _altCloneActive = true;
-      const sel = fc.getActiveObject();
-      if (!sel) return;
-      if (sel.type === 'activeSelection') {
-        sel.getObjects().forEach(obj => {
-          obj.clone(cloned => {
-            cloned.set({ left: sel.left + obj.left, top: sel.top + obj.top, strokeUniform: true });
-            fc.add(cloned);
-          });
-        });
-      } else {
-        sel.clone(cloned => {
-          cloned.set({ strokeUniform: true });
-          fc.add(cloned);
-        });
-      }
-      fc.renderAll();
-    });
+    wireAltClone(fc, { onClone: () => detectFabricCells(fc, goId, CAT[ovCat]?.c || DEF.c) });
 
     // Build cell highlight overlay at display size
     const displayCell = displayS / GRID;
@@ -955,7 +751,7 @@ export const inventoryBag = (() => {
         goEl.appendChild(d);
       }
     }
-    fc._updateDrawCursor();
+    updateDrawCursor(fc);
     activeFc = fc;
 
     // Dynamically resize the canvas when the overlay card resizes
@@ -966,27 +762,10 @@ export const inventoryBag = (() => {
       const newDisplayS = Math.max(S, Math.min(newAvailable, 600));
       if (newDisplayS === displayS) return;
       displayS = newDisplayS;
-      fc._displayScale = displayS / S;
 
-      // Update CSS sizes
-      fc.lowerCanvasEl.style.width = displayS + 'px';
-      fc.lowerCanvasEl.style.height = displayS + 'px';
-      fc.upperCanvasEl.style.width = displayS + 'px';
-      fc.upperCanvasEl.style.height = displayS + 'px';
-      fc.wrapperEl.style.width = displayS + 'px';
-      fc.wrapperEl.style.height = displayS + 'px';
+      // Update DPI scaling + CSS sizes via shared utility
+      updateSketchScale(fc, S, S, displayS, displayS);
       if (daEl) { daEl.style.width = displayS + 'px'; daEl.style.height = displayS + 'px'; }
-
-      // Update backing buffer for crisp rendering
-      const newBuffer = Math.round(displayS * dpr);
-      const newScale = newBuffer / S;
-      fc.lowerCanvasEl.setAttribute('width', newBuffer);
-      fc.lowerCanvasEl.setAttribute('height', newBuffer);
-      fc.upperCanvasEl.setAttribute('width', newBuffer);
-      fc.upperCanvasEl.setAttribute('height', newBuffer);
-      fc.contextContainer.setTransform(newScale, 0, 0, newScale, 0, 0);
-      fc.contextTop.setTransform(newScale, 0, 0, newScale, 0, 0);
-      fc.getRetinaScaling = () => newScale;
 
       // Update grid overlay cell positions
       const newCell = displayS / GRID;
@@ -1004,7 +783,7 @@ export const inventoryBag = (() => {
       }
 
       fc.renderAll();
-      fc._updateDrawCursor();
+      updateDrawCursor(fc);
     });
     if (cardEl) _ovResizeObs.observe(cardEl);
     fc._ovResizeObs = _ovResizeObs;
@@ -1127,49 +906,6 @@ export const inventoryBag = (() => {
     return cellImgs;
   }
 
-  function splitIntoRegions(sourceCanvas) {
-    const w = sourceCanvas.width, h = sourceCanvas.height;
-    const ctx = sourceCanvas.getContext('2d');
-    const data = ctx.getImageData(0, 0, w, h).data;
-    const labels = new Int32Array(w * h);
-    let nextLabel = 1;
-    const regions = [];
-
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const idx = y * w + x;
-        if (labels[idx] !== 0 || data[idx * 4 + 3] <= 10) continue;
-        const queue = [idx];
-        labels[idx] = nextLabel;
-        let minX = x, maxX = x, minY = y, maxY = y;
-        while (queue.length) {
-          const i = queue.pop();
-          const cx = i % w, cy = (i - cx) / w;
-          if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
-          if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
-          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-            if (!dx && !dy) continue;
-            const nx = cx + dx, ny = cy + dy;
-            if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
-            const ni = ny * w + nx;
-            if (labels[ni] === 0 && data[ni * 4 + 3] > 10) { labels[ni] = nextLabel; queue.push(ni); }
-          }
-        }
-        regions.push({ minX, maxX, minY, maxY, label: nextLabel });
-        nextLabel++;
-      }
-    }
-    return regions.map(r => {
-      const rw = r.maxX - r.minX + 1, rh = r.maxY - r.minY + 1;
-      const c = document.createElement('canvas'); c.width = rw; c.height = rh;
-      const src = ctx.getImageData(r.minX, r.minY, rw, rh);
-      for (let py = 0; py < rh; py++) for (let px = 0; px < rw; px++) {
-        if (labels[(r.minY + py) * w + (r.minX + px)] !== r.label) src.data[(py * rw + px) * 4 + 3] = 0;
-      }
-      c.getContext('2d').putImageData(src, 0, 0);
-      return { canvas: c, x: r.minX, y: r.minY };
-    });
-  }
 
   function wireToolButtons(fc, prefix, goId, catColorGetter) {
     function clearToolHighlight() {
@@ -1177,81 +913,89 @@ export const inventoryBag = (() => {
     }
     let undoStack = [];
 
+    // Full-canvas snapshot — used before destructive ops (erase, Backspace-delete)
+    const pushFlatten = () => {
+      undoStack.push({ _flatten: true, _state: JSON.stringify(fc.toJSON(['_isEraser'])) });
+    };
+    fc._pushFlatten = pushFlatten; // expose so keyHandler can call it
+
+    // Capture a full canvas snapshot before any move/scale/rotate begins
+    let _preTransformState = null;
+    fc.on('before:transform', () => {
+      _preTransformState = JSON.stringify(fc.toJSON(['_isEraser']));
+    });
+
     fc.on('path:created', (e) => {
       if (fc._isEraserActive) {
-        e.path.set({
-          globalCompositeOperation: 'destination-out',
-          stroke: 'rgba(255,255,255,1)',
-          strokeUniform: true,
-          _isEraser: true
-        });
+        // Remove the eraser stroke from the canvas before snapshotting so the
+        // snapshot doesn't include it — otherwise undo restores the visible stroke.
+        // eraseFromPaths only needs the path object for its pixel coverage map,
+        // not for it to be present on the canvas.
+        fc.remove(e.path);
         const preState = JSON.stringify(fc.toJSON(['_isEraser']));
-        const logicalS = GCELL * GRID;
-        const tmp = document.createElement('canvas');
-        tmp.width = logicalS; tmp.height = logicalS;
-        const ctx = tmp.getContext('2d', { willReadFrequently: true });
-        fc.getObjects().forEach(obj => {
-          ctx.save();
-          if (obj._isEraser || obj.globalCompositeOperation === 'destination-out')
-            ctx.globalCompositeOperation = 'destination-out';
-          obj.render(ctx);
-          ctx.restore();
-        });
-        const parts = splitIntoRegions(tmp);
-        fc.clear();
-        if (!parts.length) {
-          fc.renderAll();
-          undoStack.push({ _flatten: true, _state: preState });
-          detectFabricCells(fc, goId, catColorGetter());
-          return;
+        const newFragments = eraseFromPaths(fc, GCELL * GRID, GCELL * GRID, e.path, fc._eraserTargets || null);
+        // Originals are removed and replaced by fragments — fold the new
+        // fragments into _eraserTargets so the selection follows them.
+        if (fc._eraserTargets?.length) {
+          fc._eraserTargets = [...fc._eraserTargets, ...newFragments];
         }
-        let loaded = 0;
-        parts.forEach(part => {
-          fabric.Image.fromURL(part.canvas.toDataURL('image/png'), (img) => {
-            img.set({ left: part.x, top: part.y, originX: 'left', originY: 'top' });
-            fc.add(img);
-            loaded++;
-            if (loaded === parts.length) {
-              fc.renderAll();
-              undoStack.push({ _flatten: true, _state: preState });
-              detectFabricCells(fc, goId, catColorGetter());
-            }
-          });
-        });
+        fc._applyEraserSelection?.();
+        undoStack.push({ _flatten: true, _state: preState });
+        detectFabricCells(fc, goId, catColorGetter());
         return;
       }
       e.path.set({ strokeUniform: true });
-      undoStack.push(e.path);
+      // Push the pre-draw snapshot captured in mouse:down
+      if (fc._prePathState !== undefined) {
+        undoStack.push({ _flatten: true, _state: fc._prePathState });
+        fc._prePathState = undefined;
+      }
       fc.renderAll();
+    });
+
+    fc.on('object:modified', () => {
+      // Skip transform entry when wireAltClone already pushed a flatten
+      if (!fc._suppressNextTransform && _preTransformState) {
+        undoStack.push({ _flatten: true, _state: _preTransformState });
+      }
+      fc._suppressNextTransform = false;
+      _preTransformState = null;
     });
 
     document.getElementById(prefix + '-t1').onclick = () => {
       fc.isDrawingMode = false;
       fc._isEraserActive = false;
+      fc._eraserTargets  = null;
       clearToolHighlight();
       document.getElementById(prefix + '-t1').classList.add('on');
     };
     document.getElementById(prefix + '-t2').onclick = () => {
       fc.isDrawingMode = true;
       fc._isEraserActive = false;
+      fc._eraserTargets  = null;
       fc.freeDrawingBrush = new fabric.PencilBrush(fc);
       fc.freeDrawingBrush.color = 'rgba(' + catColorGetter() + ',.65)';
       fc.freeDrawingBrush.width = 1.8;
       clearToolHighlight();
       document.getElementById(prefix + '-t2').classList.add('on');
-      fc._updateDrawCursor();
+      updateDrawCursor(fc);
     };
     document.getElementById(prefix + '-t3').onclick = () => {
       fc.isDrawingMode = true;
       fc._isEraserActive = false;
+      fc._eraserTargets  = null;
       fc.freeDrawingBrush = new fabric.PencilBrush(fc);
       fc.freeDrawingBrush.color = 'rgba(' + catColorGetter() + ',.65)';
       fc.freeDrawingBrush.width = 3;
       clearToolHighlight();
       document.getElementById(prefix + '-t3').classList.add('on');
-      fc._updateDrawCursor();
+      updateDrawCursor(fc);
     };
     document.getElementById(prefix + '-t4').onclick = () => {
+      // Capture selection before entering drawing mode (Fabric calls
+      // discardActiveObject when isDrawingMode is set to true).
+      fc._eraserTargets = fc.getActiveObjects()
+        .filter(o => o.type === 'path' && !o._isEraser);
       fc.isDrawingMode = true;
       fc._isEraserActive = true;
       fc.freeDrawingBrush = new fabric.PencilBrush(fc);
@@ -1259,29 +1003,39 @@ export const inventoryBag = (() => {
       fc.freeDrawingBrush.width = 18;
       clearToolHighlight();
       document.getElementById(prefix + '-t4').classList.add('on');
-      fc._updateDrawCursor();
+      updateDrawCursor(fc);
+      // Re-apply selection so the highlight stays visible in eraser mode.
+      fc._applyEraserSelection?.();
     };
+    // Tool shortcut handler — called by the fc._toolShortcut delegate that
+    // wireSketchKeyboard sets up.  Prefix is in scope here, unlike in setupFabricCanvas.
+    fc._toolShortcut = (key) => {
+      // t1=select  t2=small brush  t3=big brush  t4=eraser
+      if (key === 'v') {
+        document.getElementById(prefix + '-t1')?.click();
+      } else if (key === 'e') {
+        document.getElementById(prefix + '-t4')?.click();
+      } else if (key === 'b') {
+        // Cycle: small brush active → switch to big brush; otherwise → small brush
+        const isSmall = document.getElementById(prefix + '-t2')?.classList.contains('on');
+        document.getElementById(prefix + (isSmall ? '-t3' : '-t2'))?.click();
+      }
+    };
+
     fc._bagUndo = () => {
       const last = undoStack.pop();
       if (!last) return;
-      if (last._flatten) {
-        fc.loadFromJSON(last._state, () => {
-          fc.backgroundColor = '';
-          const restored = fc.getObjects();
-          undoStack.length = 0;
-          restored.forEach(obj => {
-            obj.set({ strokeUniform: true });
-            if (obj._isEraser) obj.set({ selectable: false, evented: false });
-            undoStack.push(obj);
-          });
-          fc.renderAll();
-          detectFabricCells(fc, goId, catColorGetter());
+      // All entries are full JSON snapshots — just restore and leave the
+      // rest of the stack intact so earlier history is never lost.
+      fc.loadFromJSON(last._state, () => {
+        fc.backgroundColor = '';
+        fc.getObjects().forEach(obj => {
+          obj.set({ strokeUniform: true });
+          if (obj._isEraser) obj.set({ selectable: false, evented: false });
         });
-      } else {
-        fc.remove(last);
         fc.renderAll();
         detectFabricCells(fc, goId, catColorGetter());
-      }
+      });
     };
     document.getElementById(prefix + '-t5').onclick = fc._bagUndo;
     document.getElementById(prefix + '-t6').onclick = () => {
@@ -1467,7 +1221,7 @@ export const inventoryBag = (() => {
         });
         fc.wrapperEl.style.border = '2px solid rgba(' + nc + ',.25)';
         detectFabricCells(fc, 'bov-go', nc);
-        fc._updateDrawCursor();
+        updateDrawCursor(fc);
         fabric.Object.prototype.set({
           cornerColor: 'rgba(' + nc + ',0.8)',
           borderColor: 'rgba(' + nc + ',0.4)',
@@ -1565,7 +1319,20 @@ export const inventoryBag = (() => {
           <div><div class="bag-ov-label">Type</div><div class="bag-ov-cats" id="bev-cats">${catBtns}</div></div>
           ${bagTogglesHTML('bev', b.requiresAttunement, b.equipable, b.attuned, b.equipped)}
           <div><div class="bag-ov-label">Uses</div><div class="uses-field" id="bev-uses"></div></div>
-          <div><div class="bag-ov-label">Description</div><textarea class="bag-ov-textarea" id="bev-desc">${b.text || ''}</textarea></div>
+          <div>
+            <div class="bag-ov-label-row">
+              <div class="bag-ov-label">Description</div>
+              <button class="bag-ov-link-btn bag-link-btn-inactive" id="bev-link-btn" type="button">⎘ link</button>
+            </div>
+            <div class="bag-ov-link-mini bag-link-mini-hidden" id="bev-link-mini">
+              <input class="bag-ov-input" id="bev-link-url" placeholder="https://...">
+              <div class="bag-ov-link-mini-btns">
+                <button class="bag-ov-link-cancel-mini" id="bev-link-cancel-mini" type="button">Cancel</button>
+                <button class="bag-ov-link-confirm" id="bev-link-confirm" type="button">Insert</button>
+              </div>
+            </div>
+            <div class="bag-ov-textarea bag-ov-desc-editor" id="bev-desc" contenteditable="true" spellcheck="false"></div>
+          </div>
           <div class="bag-ov-btns">
             <button class="bag-ov-btn bag-ov-cn" id="bev-cancel">Cancel</button>
             <button class="bag-ov-btn bag-ov-sv" id="bev-save">Save changes</button>
@@ -1585,6 +1352,165 @@ export const inventoryBag = (() => {
       </div>
     </div>`;
     document.body.appendChild(ov);
+
+    // ── Description editor — set initial content ──────────────────────
+    const bevDescEditor = document.getElementById('bev-desc');
+    bevDescEditor.innerHTML = b.text || '';
+    // Force <br> for new lines (prevents Chrome from using <div>)
+    try { document.execCommand('defaultParagraphSeparator', false, 'br'); } catch(e) {}
+
+    // ── Insert / Edit Link ────────────────────────────────────────────
+    const bevLinkBtn  = document.getElementById('bev-link-btn');
+    const bevLinkMini = document.getElementById('bev-link-mini');
+    const bevLinkUrl  = document.getElementById('bev-link-url');
+    let bevSavedRange = null;
+    let bevLinkTipEl  = null;
+
+    // Custom tooltip — same pattern as showTip() / text-tooltip class
+    function showLinkBtnTip(text) {
+        hideLinkBtnTip();
+        bevLinkTipEl = document.createElement('div');
+        bevLinkTipEl.className = 'text-tooltip';
+        bevLinkTipEl.textContent = text;
+        bevLinkTipEl.style.opacity = '0';
+        bevLinkTipEl.style.transition = 'opacity 0.15s ease';
+        document.body.appendChild(bevLinkTipEl);
+        const r = bevLinkBtn.getBoundingClientRect();
+        bevLinkTipEl.style.left = (r.left + r.width / 2 - bevLinkTipEl.offsetWidth / 2) + 'px';
+        bevLinkTipEl.style.top  = (r.top - bevLinkTipEl.offsetHeight - 6) + 'px';
+        bevLinkTipEl.offsetHeight; // force reflow
+        bevLinkTipEl.style.opacity = '1';
+    }
+    function hideLinkBtnTip() {
+        if (bevLinkTipEl) {
+            const el = bevLinkTipEl; bevLinkTipEl = null;
+            el.style.opacity = '0';
+            el.addEventListener('transitionend', () => el.remove(), { once: true });
+            setTimeout(() => el.remove(), 200);
+        }
+    }
+
+    // Find an <a> element intersected by a Range
+    function findLinkInRange(range) {
+        let node = range.startContainer;
+        while (node && node !== bevDescEditor) { if (node.nodeName === 'A') return node; node = node.parentNode; }
+        node = range.endContainer;
+        while (node && node !== bevDescEditor) { if (node.nodeName === 'A') return node; node = node.parentNode; }
+        for (const a of bevDescEditor.querySelectorAll('a')) {
+            if (range.intersectsNode(a)) return a;
+        }
+        return null;
+    }
+
+    // Get a non-collapsed Range inside the editor, or null
+    function getEditorRange() {
+        const sel = window.getSelection();
+        if (!sel || !sel.rangeCount || sel.isCollapsed) return null;
+        const range = sel.getRangeAt(0);
+        if (!bevDescEditor.contains(range.commonAncestorContainer)) return null;
+        return range;
+    }
+
+    function updateLinkBtn() {
+        const range = getEditorRange();
+        bevLinkBtn.classList.toggle('bag-link-btn-inactive', !range);
+    }
+    document.addEventListener('selectionchange', updateLinkBtn);
+
+    // Dynamic tooltip on hover
+    bevLinkBtn.addEventListener('mouseenter', () => {
+        const range = getEditorRange();
+        let tip;
+        if (!range)                       tip = 'Highlight text and use this button to add a link to it';
+        else if (findLinkInRange(range))  tip = 'Edit text link';
+        else                              tip = 'Add a link to the highlighted text';
+        showLinkBtnTip(tip);
+    });
+    bevLinkBtn.addEventListener('mouseleave', hideLinkBtnTip);
+
+    // mousedown: prevent focus theft so the editor selection stays intact
+    bevLinkBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        const range = getEditorRange();
+        bevSavedRange = range ? range.cloneRange() : null;
+    });
+
+    bevLinkBtn.addEventListener('click', () => {
+        if (!bevSavedRange) return;
+        const existingLink = findLinkInRange(bevSavedRange);
+        bevLinkUrl.value = existingLink ? existingLink.href : '';
+        bevLinkMini.classList.remove('bag-link-mini-hidden');
+        bevLinkUrl.focus();
+        bevLinkUrl.select();
+    });
+
+    document.getElementById('bev-link-cancel-mini').addEventListener('click', () => {
+        bevLinkMini.classList.add('bag-link-mini-hidden');
+    });
+
+    document.getElementById('bev-link-confirm').addEventListener('click', () => {
+        const url = bevLinkUrl.value.trim();
+        if (!url) { bevLinkUrl.style.borderColor = 'rgba(255,107,107,.5)'; return; }
+        bevLinkUrl.style.borderColor = '';
+        if (!bevSavedRange) { bevLinkMini.classList.add('bag-link-mini-hidden'); return; }
+
+        const selectedText = bevSavedRange.toString() || url;
+        const existingLink = findLinkInRange(bevSavedRange);
+        const newA = document.createElement('a');
+        newA.href = url; newA.target = '_blank'; newA.rel = 'noopener';
+        newA.textContent = selectedText;
+
+        const selectionWithinLink = existingLink
+            && existingLink.contains(bevSavedRange.startContainer)
+            && existingLink.contains(bevSavedRange.endContainer);
+
+        if (selectionWithinLink) {
+            // Selection is a subset of an existing link.
+            // Split the old <a> into: plain-before / new-<a> / plain-after
+            // so the unselected portions lose the link.
+            const linkText = existingLink.textContent;
+
+            // Measure how many characters precede the selection inside the link
+            const measureRange = document.createRange();
+            measureRange.selectNodeContents(existingLink);
+            measureRange.setEnd(bevSavedRange.startContainer, bevSavedRange.startOffset);
+            const beforeLen = measureRange.toString().length;
+            const afterLen  = linkText.length - beforeLen - selectedText.length;
+
+            const frag = document.createDocumentFragment();
+            if (beforeLen > 0) frag.appendChild(document.createTextNode(linkText.substring(0, beforeLen)));
+            frag.appendChild(newA);
+            if (afterLen  > 0) frag.appendChild(document.createTextNode(linkText.substring(beforeLen + selectedText.length)));
+            existingLink.parentNode.replaceChild(frag, existingLink);
+        } else {
+            // Selection spans a link boundary, or there is no existing link.
+            // deleteContents correctly strips any partial <a> overlap, then we insert fresh.
+            bevSavedRange.deleteContents();
+            bevSavedRange.insertNode(newA);
+        }
+
+        // Place cursor after the new link
+        const sel = window.getSelection();
+        const after = document.createRange();
+        after.setStartAfter(newA); after.collapse(true);
+        sel.removeAllRanges(); sel.addRange(after);
+        bevDescEditor.focus();
+
+        bevLinkMini.classList.add('bag-link-mini-hidden');
+        bevSavedRange = null;
+        updateLinkBtn();
+    });
+
+    bevLinkUrl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('bev-link-confirm').click();
+        if (e.key === 'Escape') bevLinkMini.classList.add('bag-link-mini-hidden');
+    });
+
+    // Cleanup helper called by cancel/save so the document listener doesn't leak
+    ov._linkCleanup = () => {
+        document.removeEventListener('selectionchange', updateLinkBtn);
+        hideLinkBtnTip();
+    };
 
     const bevUsesKey = 'bag_edit_uses_temp';
     localStorage.setItem(bevUsesKey, JSON.stringify(b.uses || []));
@@ -1640,7 +1566,7 @@ export const inventoryBag = (() => {
         });
         fc.wrapperEl.style.border = '2px solid rgba(' + nc + ',.25)';
         detectFabricCells(fc, 'bev-go', nc);
-        fc._updateDrawCursor();
+        updateDrawCursor(fc);
         fabric.Object.prototype.set({
           cornerColor: 'rgba(' + nc + ',0.8)',
           borderColor: 'rgba(' + nc + ',0.4)',
@@ -1654,12 +1580,22 @@ export const inventoryBag = (() => {
         fc.renderAll();
       }));
 
-      document.getElementById('bev-cancel').onclick = () => { destroyFabricCanvas(fc); localStorage.removeItem(bevUsesKey); ov.remove(); };
+      document.getElementById('bev-cancel').onclick = () => { ov._linkCleanup?.(); destroyFabricCanvas(fc); localStorage.removeItem(bevUsesKey); ov.remove(); };
 
       document.getElementById('bev-save').onclick = async () => {
         const name = document.getElementById('bev-name').value.trim();
         if (!name) { document.getElementById('bev-name').style.borderColor = 'rgba(255,107,107,.5)'; return; }
-        const desc = document.getElementById('bev-desc').value.trim();
+        // Serialize contenteditable → storage HTML
+        // Chrome wraps new lines in <div>; normalize to <br>
+        const descEl = document.getElementById('bev-desc');
+        const desc = descEl.innerHTML
+            .replace(/<div><br\s*\/?><\/div>/gi, '<br>')
+            .replace(/<\/div><div>/gi, '<br>')
+            .replace(/<div>/gi, '<br>').replace(/<\/div>/gi, '')
+            .replace(/<p><br\s*\/?><\/p>/gi, '<br>')
+            .replace(/<\/p><p>/gi, '<br>')
+            .replace(/<p>/gi, '<br>').replace(/<\/p>/gi, '')
+            .trim().replace(/^<br\s*\/?>/, '');
         const reqAttune = document.getElementById('bev-attune').checked;
         const equipable = document.getElementById('bev-equip').checked;
         const attuned = reqAttune && document.getElementById('bev-attuned-btn')?.dataset.on === 'true';
@@ -1687,7 +1623,7 @@ export const inventoryBag = (() => {
         const uses = JSON.parse(localStorage.getItem(bevUsesKey) || '[]');
         localStorage.removeItem(bevUsesKey);
         appManager.saveBlock('tab6', name, desc, b.tags || [], uses, [], ovCat, b.id, b.timestamp, extras);
-        destroyFabricCanvas(fc); ov.remove();
+        ov._linkCleanup?.(); destroyFabricCanvas(fc); ov.remove();
 
         const idx = currentItems.findIndex(ci => ci.block.id === b.id);
         const updatedBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');

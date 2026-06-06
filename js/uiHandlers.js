@@ -1412,7 +1412,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const charName = localStorage.getItem('tab4_character_name') || 'InfoBlocks';
-            let filename = prompt('Enter a name for your file:', charName);
+            const now = new Date();
+            const dateStr = `_${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getFullYear()).slice(-2)}`;
+            let filename = prompt('Enter a name for your file:', `InfoBlocks_${charName}${dateStr}`);
             if (!filename) return;
             if (!filename.endsWith('.json')) filename += '.json';
 
@@ -1476,7 +1478,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('📦 Lite export — all drawing data stripped');
 
             const charName = localStorage.getItem('tab4_character_name') || 'InfoBlocks';
-            let filename = prompt('Enter a name for your file:', charName + '_lite');
+            const now = new Date();
+            const dateStr = `_${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getFullYear()).slice(-2)}`;
+            let filename = prompt('Enter a name for your file:', `InfoBlocks_${charName}${dateStr}_lite`);
             if (!filename) return;
             if (!filename.endsWith('.json')) filename += '.json';
 
