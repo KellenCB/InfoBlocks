@@ -251,48 +251,59 @@ export function initDiceRoller() {
   if (diceRollerInitialized) return;
   diceRollerInitialized = true;
 
-  const container = document.querySelector("#dice-panel .dice-roller-container");
+  const container  = document.querySelector("#dice-panel .dice-roller-container");
   if (!container) { console.warn("Dice panel container not found."); return; }
 
-  const diceButtons           = container.querySelectorAll(".dice-button");
-  const selectedDiceContainer = container.querySelector(".selected-dice-container");
-  const rollButton            = container.querySelector("#roll-button");
-  const clearButton           = container.querySelector("#clear-selected-button");
-  const rollResult            = document.querySelector("#dice-history-popover .roll-results");
+  const diceButtons = container.querySelectorAll(".dice-button");
+  const rollButton  = container.querySelector("#roll-button");
+  const clearButton = container.querySelector("#clear-selected-button");
+  const rollResult  = document.querySelector("#dice-panel .roll-results");
 
-  // Refresh onclick closures after any mutation so indices stay correct.
-  // Only sets a property — no DOM mutations, no repaints.
-  function refreshOnclicks() {
-    Array.from(selectedDiceContainer.children).forEach((el, i) => {
-      el.onclick = () => {
-        selectedDice.splice(i, 1);
-        el.remove();
-        refreshOnclicks();
-      };
-    });
+  // Count-based selection — keyed by die sides
+  const diceSelections = {};
+
+  function totalSelected() {
+    return Object.values(diceSelections).reduce((a, b) => a + b, 0);
   }
 
-  // Build a single selected-die element with inline SVG
-  function makeDieElement(sides) {
-    const el = document.createElement("div");
-    el.classList.add("selected-die");
-    el.innerHTML = `
-      <div class="selected-die-wrapper" data-dice="${sides}">
-        ${getSvg(sides)}
-        <span class="dice-label">D${sides}</span>
-      </div>`;
-    return el;
+  function updateBadge(btn, sides) {
+    const count = diceSelections[sides] || 0;
+    let badge = btn.querySelector('.dice-count-badge');
+    if (count > 0) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'dice-count-badge';
+        badge.title = 'Click to remove one';
+        badge.addEventListener('click', (e) => {
+          e.stopPropagation();
+          diceSelections[sides] = Math.max(0, (diceSelections[sides] || 0) - 1);
+          updateBadge(btn, sides);
+        });
+        btn.appendChild(badge);
+      }
+      badge.textContent = count;
+      btn.classList.add('has-selection');
+    } else {
+      badge?.remove();
+      btn.classList.remove('has-selection');
+    }
   }
 
   diceButtons.forEach(btn => {
-    btn.addEventListener("click", async () => {
+    btn.addEventListener("click", (e) => {
+      if (e.target.classList.contains('dice-count-badge')) return;
       const sides = parseInt(btn.dataset.dice, 10);
-      selectedDice.push(sides);
-      // Ensure SVG cache is ready before injecting — resolves instantly
-      // after the first load since svgsReady is already settled
-      await svgsReady;
-      selectedDiceContainer.appendChild(makeDieElement(sides));
-      refreshOnclicks();
+      diceSelections[sides] = (diceSelections[sides] || 0) + 1;
+      updateBadge(btn, sides);
+    });
+
+    // Right-click = remove one
+    btn.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      const sides = parseInt(btn.dataset.dice, 10);
+      if ((diceSelections[sides] || 0) === 0) return;
+      diceSelections[sides]--;
+      updateBadge(btn, sides);
     });
   });
 
@@ -300,22 +311,21 @@ export function initDiceRoller() {
     rollButton.addEventListener("click", async () => {
       if (isRolling) return;
 
-      if (selectedDice.length === 0) {
-        appendResult("No dice selected!");
+      if (totalSelected() === 0) {
+        appendResult("No dice selected");
         return;
       }
 
       isRolling           = true;
       rollButton.disabled = true;
 
-      const counts = {};
-      selectedDice.forEach(s => { counts[s] = (counts[s] || 0) + 1; });
-
-      const notation = Object.entries(counts).map(([sides, count]) => ({
-        qty:        count,
-        sides:      parseInt(sides),
-        themeColor: diceColors[sides] ?? '#ffffff',
-      }));
+      const notation = Object.entries(diceSelections)
+        .filter(([, n]) => n > 0)
+        .map(([sides, count]) => ({
+          qty:        count,
+          sides:      parseInt(sides),
+          themeColor: diceColors[sides] ?? '#ffffff',
+        }));
 
       try {
         const box = await loadDiceBox();
@@ -328,10 +338,10 @@ export function initDiceRoller() {
 
         clearDiceBox();
         const results = await Promise.race([
-            box.roll(notation),
-            new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Roll timed out')), 6000)
-            )
+          box.roll(notation),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Roll timed out')), 6000)
+          )
         ]);
 
         const rolls = results.map(r => r.value);
@@ -343,7 +353,7 @@ export function initDiceRoller() {
 
       } catch (err) {
         console.error('Dice-box error:', err);
-        appendResult('Error rolling dice — check console.');
+        appendResult('Error rolling dice');
       } finally {
         isRolling           = false;
         rollButton.disabled = false;
@@ -352,51 +362,50 @@ export function initDiceRoller() {
   }
 
   _rollDiceFn = async (groups, modifier = 0, label = null) => {
-      if (isRolling) return;
-      isRolling = true;
+    if (isRolling) return;
+    isRolling = true;
 
-      const notation = groups.map(({ qty, sides }) => ({
-          qty,
-          sides,
-          themeColor: diceColors[sides] ?? '#ffffff',
-      }));
+    const notation = groups.map(({ qty, sides }) => ({
+      qty,
+      sides,
+      themeColor: diceColors[sides] ?? '#ffffff',
+    }));
 
-      try {
-          const box = await loadDiceBox();
-          const canvas = getDiceCanvas();
-          if (canvas) {
-              if (fadeTimer) clearTimeout(fadeTimer);
-              canvas.style.opacity = '1';
-          }
-          clearDiceBox();
-          const results = await Promise.race([
-              box.roll(notation),
-              new Promise((_, reject) =>
-                  setTimeout(() => reject(new Error('Roll timed out')), 6000)
-              )
-          ]);
-          const rolls   = results.map(r => r.value);
-          const sides   = results.map(r => r.sides);
-          const total   = rolls.reduce((a, b) => a + b, 0);
-          appendHistoryEntry(rolls, sides, total, modifier, label);
-          fadeOutDice();
-          return { rolls, total };
-      } catch (err) {
-          console.error('Dice-box error:', err);
-          appendResult('Error rolling dice — check console.');
-      } finally {
-          isRolling = false;
+    try {
+      const box = await loadDiceBox();
+      const canvas = getDiceCanvas();
+      if (canvas) {
+        if (fadeTimer) clearTimeout(fadeTimer);
+        canvas.style.opacity = '1';
       }
+      clearDiceBox();
+      const results = await Promise.race([
+        box.roll(notation),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Roll timed out')), 6000)
+        )
+      ]);
+      const rolls = results.map(r => r.value);
+      const sides = results.map(r => r.sides);
+      const total = rolls.reduce((a, b) => a + b, 0);
+      appendHistoryEntry(rolls, sides, total, modifier, label);
+      fadeOutDice();
+      return { rolls, total };
+    } catch (err) {
+      console.error('Dice-box error:', err);
+      appendResult('Error rolling dice');
+    } finally {
+      isRolling = false;
+    }
   };
-
 
   if (clearButton) {
     clearButton.addEventListener("click", () => {
-      selectedDice = [];
-      selectedDiceContainer.replaceChildren();
-      // Don't call clearDiceBox() here — clearDice() is async and calling it
-      // outside the roll flow breaks dice-box internal state. The roll
-      // handler's own clearDiceBox() cleans up before the next roll.
+      Object.keys(diceSelections).forEach(k => { diceSelections[k] = 0; });
+      diceButtons.forEach(btn => {
+        btn.querySelector('.dice-count-badge')?.remove();
+        btn.classList.remove('has-selection');
+      });
       const canvas = getDiceCanvas();
       if (canvas) {
         if (fadeTimer) clearTimeout(fadeTimer);
@@ -408,41 +417,115 @@ export function initDiceRoller() {
   function appendResult(msg) {
     const entry = document.createElement("div");
     entry.classList.add("roll-history-entry");
-    entry.textContent = msg;
+    const chip = document.createElement("span");
+    chip.classList.add("roll-error");
+    chip.innerHTML = `<svg aria-hidden="true" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:rgba(255,107,107,0.6)"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="5.5" x2="8" y2="9"/><circle cx="8" cy="11.5" r="0.75" fill="currentColor" stroke="none"/></svg>${msg}`;
+    entry.appendChild(chip);
     insertHistoryEntry(entry);
+  }
+
+  // Die polygon points within a 32×32 viewBox
+  const dieShapes = {
+    4:  { type: 'polygon', points: '16,5 30,29 2,29' },
+    6:  { type: 'rect',    x: 3, y: 3, width: 26, height: 26, rx: 2 },
+    8:  { type: 'polygon', points: '16,3 27,10 27,22 16,29 5,22 5,10' },
+    10: { type: 'polygon', points: '16,2 30,16 16,30 2,16' },
+    12: { type: 'polygon', points: '3,16 5,8 12,4 20,4 27,8 29,16 27,24 20,28 12,28 5,24' },
+    20: { type: 'polygon', points: '16,3 27,10 27,22 16,29 5,22 5,10' },
+  };
+
+  function makeDieChip(roll, sides) {
+    const ns  = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.classList.add('roll-die-chip');
+    svg.setAttribute('viewBox', '0 0 32 32');
+    svg.style.setProperty('--chip-color', diceColors[sides] ?? '#888');
+
+    const def = dieShapes[sides] ?? dieShapes[20];
+    let shape;
+    if (def.type === 'rect') {
+      shape = document.createElementNS(ns, 'rect');
+      shape.setAttribute('x',      def.x);
+      shape.setAttribute('y',      def.y);
+      shape.setAttribute('width',  def.width);
+      shape.setAttribute('height', def.height);
+      shape.setAttribute('rx',     def.rx);
+    } else {
+      shape = document.createElementNS(ns, 'polygon');
+      shape.setAttribute('points', def.points);
+    }
+    shape.classList.add('die-shape');
+    svg.appendChild(shape);
+
+    const text = document.createElementNS(ns, 'text');
+    text.setAttribute('x', '16');
+    text.setAttribute('y', sides === 4 ? '66%' : '50%');
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'middle');
+    text.classList.add('die-number');
+    text.textContent = roll;
+    svg.appendChild(text);
+
+    return svg;
   }
 
   function appendHistoryEntry(rolls, sides, total, modifier = 0, label = null) {
     const entry = document.createElement("div");
     entry.classList.add("roll-history-entry");
 
-    const rollsContainer = document.createElement("div");
-    rollsContainer.classList.add("rolls-container");
+    const finalTotal = total + modifier;
+    const displayLabel = label
+      ? label
+          .replace(/\bSkill check\b/gi, 'check')
+          .replace(/\s*[\(\[](STR|DEX|CON|INT|WIS|CHA|PROF|PB|INIT)[\)\]]/gi, '')
+          .trim()
+      : null;
+    // Show modifier chip for any non-zero modifier, or always when the roll is
+    // a named roll (label present) — +0 is meaningful info for a stat check.
+    const showModifierChip = modifier !== 0 || displayLabel !== null;
+    const showBreakdown = rolls.length > 1 || showModifierChip;
 
-    rolls.forEach((roll, i) => {
-      const el = document.createElement("div");
-      el.classList.add("roll-die");
-      el.innerHTML = `
-        <div class="roll-die-wrapper" data-dice="${sides[i]}">
-          <img src="${diceImages[sides[i]]}" alt="D${sides[i]}" />
-          <span class="roll-number">${roll}</span>
-        </div>`;
-      rollsContainer.appendChild(el);
-    });
-
-    const totalDiv = document.createElement("div");
-    totalDiv.classList.add("total");
-    const prefix = label || 'Total';
-    if (modifier !== 0) {
-        const sign       = modifier > 0 ? '+' : '';
-        const finalTotal = total + modifier;
-        totalDiv.innerHTML = `<span style="opacity:0.3">${prefix}:</span> (${total} ${sign}${modifier}) = ${finalTotal}`;
-    } else {
-        totalDiv.innerHTML = `<span style="opacity:0.3">${prefix}:</span> ${total}`;
+    // ── Label row (full width, only when present) ─────────────────────────────
+    if (displayLabel) {
+      const labelEl = document.createElement("div");
+      labelEl.classList.add("roll-label");
+      labelEl.textContent = displayLabel;
+      entry.appendChild(labelEl);
     }
 
-    entry.appendChild(rollsContainer);
-    entry.appendChild(totalDiv);
+    // ── Content row: number + optional divider + chips ────────────────────────
+    const contentRow = document.createElement("div");
+    contentRow.classList.add("roll-content");
+
+    const valueEl = document.createElement("div");
+    valueEl.classList.add("roll-value");
+    valueEl.textContent = finalTotal;
+    contentRow.appendChild(valueEl);
+
+    if (showBreakdown) {
+      const divider = document.createElement("div");
+      divider.classList.add("roll-divider");
+      contentRow.appendChild(divider);
+
+      const breakdown = document.createElement("div");
+      breakdown.classList.add("rolls-breakdown");
+
+      rolls.forEach((roll, i) => {
+        breakdown.appendChild(makeDieChip(roll, sides[i]));
+      });
+
+      if (showModifierChip) {
+        const sign = modifier >= 0 ? '+' : '';
+        const modChip = document.createElement("span");
+        modChip.classList.add("roll-chip", "modifier");
+        modChip.textContent = `${sign}${modifier}`;
+        breakdown.appendChild(modChip);
+      }
+
+      contentRow.appendChild(breakdown);
+    }
+
+    entry.appendChild(contentRow);
     insertHistoryEntry(entry);
   }
   
@@ -451,13 +534,39 @@ export function initDiceRoller() {
     rollResult.querySelector('.latest-roll')?.classList.remove('latest-roll');
     entry.classList.add('latest-roll');
 
-    // Prepend — newest always first
-    rollResult.prepend(entry);
+    // Append at full height to measure, then trim
+    rollResult.append(entry);
+    const allEntries = rollResult.querySelectorAll('.roll-history-entry');
+    if (allEntries.length > 20) {
+      for (let i = 0; i < allEntries.length - 20; i++) allEntries[i].remove();
+    }
 
-    // Trim old entries
-    const entries = rollResult.querySelectorAll('.roll-history-entry');
-    if (entries.length > 20) {
-      for (let i = 20; i < entries.length; i++) entries[i].remove();
+    // Only run the grow animation when the panel is visible.
+    // Applying CSS animations to elements inside display:none can cause
+    // the panel to briefly flash in some browsers.
+    const panelVisible = document.getElementById('dice-panel')?.classList.contains('open');
+
+    if (panelVisible) {
+      // Collapse entry to zero so the grow animation starts from nothing
+      entry.style.maxHeight     = '0';
+      entry.style.paddingBottom = '0';
+      entry.style.overflow      = 'hidden';
+      entry.style.opacity       = '0';
+
+      requestAnimationFrame(() => {
+        entry.style.maxHeight     = '';
+        entry.style.paddingBottom = '';
+        entry.style.overflow      = '';
+        entry.style.opacity       = '';
+        entry.classList.add('new-entry');
+        entry.addEventListener('animationend', () => {
+          entry.classList.remove('new-entry');
+          rollResult.scrollTo({ top: rollResult.scrollHeight, behavior: 'smooth' });
+        }, { once: true });
+      });
+    } else {
+      // Panel is hidden — just scroll silently to the new entry
+      rollResult.scrollTop = rollResult.scrollHeight;
     }
 
     // Notify the app that a roll completed

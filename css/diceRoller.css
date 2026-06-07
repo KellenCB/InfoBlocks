@@ -85,11 +85,23 @@
 ───────────────────────────────────────────────────────────────────────────── */
 
 #dice-menu-button img {
-  transition: opacity 1s ease;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+#dice-menu-button:hover img {
+  opacity: 1;
 }
 
 #dice-menu-button.active {
-  opacity: 1;
+  background: transparent;
+}
+
+.dice-roll-label {
+  display: none;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -101,6 +113,18 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   COMBINED PANEL — fixed bottom-right, aligned with the dice button
+───────────────────────────────────────────────────────────────────────────── */
+
+#dice-panel {
+  width: 300px;
+  right: 20px;
+  bottom: 20px;
+  top: auto;
+  left: auto;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -124,12 +148,14 @@
   background: transparent;
   border: none;
   cursor: pointer;
+  position: relative;
   transition: transform 0.2s, opacity 0.3s;
   opacity: 0.5;
 }
 
 .dice-button:hover  { opacity: 0.8; }
 .dice-button:active { transform: scale(0.95); }
+.dice-button.has-selection { opacity: 1; }
 
 .dice-wrapper {
   position: relative;
@@ -153,10 +179,45 @@
   pointer-events: none;
 }
 
-.dice-button[data-dice="4"]          .dice-label,
-.selected-die-wrapper[data-dice="4"] .dice-label,
-.roll-die-wrapper[data-dice="4"]     .roll-number {
+.dice-button[data-dice="4"] .dice-label {
   top: 60%;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   COUNT BADGE
+───────────────────────────────────────────────────────────────────────────── */
+
+.dice-count-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  background: var(--color-green);
+  color: #111;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.15s, color 0.15s;
+}
+
+.dice-count-badge:hover {
+  background: var(--color-red);
+  color: #fff;
+  font-size: 0;
+}
+
+.dice-count-badge:hover::before {
+  content: '−';
+  font-size: 12px;
+  line-height: 1;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -199,176 +260,258 @@
 #clear-selected-button:hover { opacity: 0.6; }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   SELECTED DICE TRAY
-───────────────────────────────────────────────────────────────────────────── */
-
-.selected-dice-wrapper {
-  width: 100%;
-  min-height: 60px;
-  position: relative;
-  background-color: var(--gray-200);
-  padding: 12px 10px;
-  border-radius: 12px;
-  box-sizing: border-box;
-  overflow-y: auto;
-  max-height: 120px;
-  box-shadow: inset 0 4px 10px color-mix(in srgb, black 50%, transparent);
-}
-
-.selected-dice-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: center;
-}
-
-.selected-die {
-  cursor: pointer;
-  transition: transform 0.3s;
-}
-
-.selected-die:hover { background-color: color-mix(in srgb, var(--charges-color) 25%, transparent); }
-
-.selected-die-wrapper {
-  position: relative;
-  width: 38px;
-  height: 38px;
-}
-
-.selected-die-wrapper img,
-.selected-die-wrapper svg {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.selected-die .dice-label {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: var(--gray-900);
-  font-weight: bold;
-  font-size: 11px;
-  pointer-events: none;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   ROLL RESULTS (inside history popover)
+   ROLL RESULTS — lives inside #dice-panel (combined)
 ───────────────────────────────────────────────────────────────────────────── */
 
 .roll-results {
-    min-height: 60px;
-    max-height: 50vh;
-    overflow-y: auto;
-    display: block;
-    color: var(--gray-900);
-    font-size: 14px;
-    line-height: 1.4;
-    text-align: center;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+  max-height: 220px;
+  overflow-y: auto;
+  display: block;
+  color: var(--gray-900);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-/* Latest roll popover — compact, no scroll */
+/* Hide results section + divider when empty */
+#dice-panel .roll-results:empty {
+  display: none;
+}
+
+#dice-panel .roll-results:empty + .dice-panel-divider {
+  display: none;
+}
+
+.dice-panel-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 0px 0 12px 0;
+}
+
+/* Latest roll — transparent positioning anchor, items spawn inside */
 #dice-latest-roll {
-    padding: 10px;
-    width: auto;
-    min-width: 200px;
-    max-width: 340px;
+  display: block; /* override .dice-popover display:none — container is always present */
+  position: fixed;
+  bottom: 32px;
+  left: 0;
+  right: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: none;
+  box-shadow: none;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
+  width: auto;
 }
 
-#dice-latest-roll .roll-history-entry {
-    margin-bottom: 0;
+/* Individual popup items — each runs its own lifecycle */
+@keyframes latest-roll-item-move {
+  from { transform: translateX(-50%) translateY(10px); }
+  to   { transform: translateX(-50%) translateY(-52px); }
+}
+
+@keyframes latest-roll-item-fade {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  55%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.latest-roll-item {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: fit-content;
+  min-width: 200px;
+  padding: 12px 16px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+  border: var(--glass-border);
+  border-radius: 16px;
+  pointer-events: auto;
+  animation: latest-roll-item-move 3s ease-out forwards,
+             latest-roll-item-fade 3s ease-out forwards;
+}
+
+.latest-roll-item:hover {
+  animation-play-state: paused;
+}
+
+.latest-roll-item .roll-history-entry {
+  background: transparent;
+  border: none;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.latest-roll-item .roll-error {
+  background: transparent;
+  border: none;
+  padding: 0;
+  height: auto;
 }
 
 .roll-results::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .roll-results::before {
-    content: '';
-    position: sticky;
-    top: 0;
-    display: block;
-    height: 30px;
-    margin-bottom: -30px;
-    background: linear-gradient(
-        var(--glass-bg) 0%,
-        transparent 100%
-    );
-    pointer-events: none;
-    z-index: 1;
-    opacity: var(--dice-fade-top-opacity, 0);
+  content: '';
+  position: sticky;
+  top: 0;
+  display: block;
+  height: 30px;
+  margin-bottom: -30px;
+  background: linear-gradient(var(--glass-bg) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: var(--dice-fade-top-opacity, 0);
 }
 
 .roll-results::after {
-    content: '';
-    position: sticky;
-    bottom: 0;
-    display: block;
-    height: 30px;
-    margin-top: -30px;
-    background: linear-gradient(
-        transparent 0%,
-        var(--glass-bg) 100%
-    );
-    pointer-events: none;
-    z-index: 1;
-    opacity: var(--dice-fade-bottom-opacity, 1);
+  content: '';
+  position: sticky;
+  bottom: 0;
+  display: block;
+  height: 30px;
+  margin-top: -30px;
+  background: linear-gradient(transparent 0%, var(--glass-bg) 100%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: var(--dice-fade-bottom-opacity, 0);
 }
 
-.rolls-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-  margin: 8px 0 10px 0;
+/* ── New entry animation ────────────────────────────────────────────────── */
+
+@keyframes roll-entry-in {
+  from { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
+  to   { max-height: 150px; opacity: 1; padding-top: 8px; padding-bottom: 16px; }
 }
 
-.total {
-  font-weight: bold;
-  font-size: 14px;
-  text-align: center;
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid var(--gray-500);
-  width: 100%;
+.roll-history-entry.new-entry {
+  overflow: hidden;
+  animation: roll-entry-in 0.45s ease-out both;
 }
+
+/* ── History entry card ─────────────────────────────────────────────────── */
 
 .roll-history-entry {
-  background-color: var(--gray-350);
-  border-radius: 10px;
-  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0 16px 0;
   width: 100%;
-  margin-bottom: 8px;
+  box-sizing: border-box;
 }
 
-.roll-history-entry:last-child {
-    margin-bottom: 0;
+.roll-history-entry.latest-roll {
+  /* no special box — just let it sit naturally */
 }
 
-.roll-die-wrapper {
-  position: relative;
-  width: 38px;
-  height: 38px;
-  margin: 0 auto;
-}
+/* ── Label — full-width top row ─────────────────────────────────────────── */
 
-.roll-die-wrapper img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.roll-number {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: var(--gray-900);
-  font-weight: bold;
+.roll-label {
   font-size: 12px;
-  pointer-events: none;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  width: 100%;
+  text-align: left;
+}
+
+/* ── Content row — number + divider + chips ─────────────────────────────── */
+
+.roll-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.roll-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ── Error chip ─────────────────────────────────────────────────────────── */
+
+.roll-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(136, 136, 136, 0.15);
+  color: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(136, 136, 136, 0.22);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.roll-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+/* ── Per-die chips ──────────────────────────────────────────────────────── */
+
+.rolls-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Die-shaped SVG chips */
+svg.roll-die-chip {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+svg.roll-die-chip .die-shape {
+  fill: color-mix(in srgb, var(--chip-color) 18%, transparent);
+  stroke: color-mix(in srgb, var(--chip-color) 35%, transparent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+svg.roll-die-chip .die-number {
+  fill: color-mix(in srgb, var(--chip-color) 90%, white);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+/* Modifier chip — stays as a plain span */
+.roll-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--chip-color) 18%, transparent);
+  color: color-mix(in srgb, var(--chip-color) 90%, white);
+  border: 1px solid color-mix(in srgb, var(--chip-color) 28%, transparent);
+}
+
+.roll-chip.modifier {
+  --chip-color: #888;
 }

@@ -177,12 +177,6 @@ function initSaveSkillRollHandlers() {
             const modifier  = parseInt(bonusEl.textContent.trim(), 10) || 0;
             const rollLabel = `${label} ${isSave ? 'Saving Throw' : 'Skill Check'}`;
 
-            // Open dice panel if closed — consistent with inline dice buttons
-            const dicePanel = document.getElementById('dice-panel');
-            if (dicePanel && !dicePanel.classList.contains('open')) {
-                document.getElementById('dice-menu-button')?.click();
-            }
-
             const { rollDice } = await import('./diceRoller.js');
             rollDice([{ qty: 1, sides: 20 }], modifier, rollLabel);
         });

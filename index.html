@@ -106,8 +106,10 @@
         <!-- Hidden buttons — functionality preserved, no UCH display -->
         <button id="split-view-button" style="display:none"></button>
 
-        <!-- Dice Roller Popover -->
+        <!-- Dice Roller + History (combined) -->
         <div id="dice-panel" class="dice-popover">
+            <div class="roll-results"></div>
+            <div class="dice-panel-divider"></div>
             <div class="dice-roller-container">
                 <div class="dice-selection">
                     <button class="dice-button" data-dice="4">
@@ -151,16 +153,11 @@
                     <button id="roll-button">Roll!</button>
                     <button id="clear-selected-button">Clear All</button>
                 </div>
-                <div class="selected-dice-wrapper">
-                    <div class="selected-dice-container"></div>
-                </div>
             </div>
         </div>
 
-        <!-- Dice History Popover -->
-        <div id="dice-history-popover" class="dice-popover">
-            <div class="roll-results"></div>
-        </div>
+        <!-- Dice History Popover (kept for JS compatibility) -->
+        <div id="dice-history-popover" class="dice-popover"></div>
 
     </div>
 
@@ -1028,12 +1025,9 @@
 
     <!-- Floating dice pill — bottom right corner -->
     <div id="dice-floating-pill">
-        <button id="dice-history-button" class="uch-btn uch-pill-btn">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
-            <span class="uch-tooltip uch-tooltip-above">Roll History</span>
-        </button>
         <button id="dice-menu-button" class="uch-btn uch-pill-btn">
-            <img src="images/Dice_Button_v2.svg" alt="D20" style="width:42px;height:42px;" />
+            <img src="images/Dice_Button_v2.svg" alt="D20" />
+            <span class="dice-roll-label">Roll</span>
             <span class="uch-tooltip uch-tooltip-above">Dice Roller</span>
         </button>
     </div>
