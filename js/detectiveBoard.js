@@ -24,6 +24,56 @@ function hexGlow(hex, alpha) {
     return `rgba(${r},${g},${b},${alpha})`;
 }
 
+// ── Board search helpers (module-level so updateStrings can access them) ──
+
+function stripHTMLBoard(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+    return tmp.textContent || '';
+}
+
+function escapeRegexBoard(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Returns true if any searchable text in this block contains `query` (lowercase).
+function blockMatchesQuery(block, query) {
+    if (!query) return true;
+    const q = query.toLowerCase();
+    if ((block.title || '').toLowerCase().includes(q)) return true;
+    for (const section of (block.sections || [])) {
+        if ((section.type === 'notes' || section.type === 'subheader') &&
+            stripHTMLBoard(section.content || '').toLowerCase().includes(q)) return true;
+        if (section.type === 'objective' &&
+            (section.text || '').toLowerCase().includes(q)) return true;
+    }
+    // Legacy pre-sections fields
+    if (block.text        && stripHTMLBoard(block.text).toLowerCase().includes(q))        return true;
+    if (block.description && stripHTMLBoard(block.description).toLowerCase().includes(q)) return true;
+    return false;
+}
+
+// Returns true if the specific section (by ID) that a connector is anchored to contains `query`.
+// Falls back to whole-block matching when the connector wasn't anchored to a section
+// (e.g. dropped on the card header, or the section has since been deleted).
+function sectionMatchesQuery(block, sectionId, query) {
+    if (!query || !block) return true;
+    if (sectionId) {
+        const section = (block.sections || []).find(s => s.id === sectionId);
+        if (section) {
+            const q = query.toLowerCase();
+            if ((section.type === 'notes' || section.type === 'subheader') &&
+                stripHTMLBoard(section.content || '').toLowerCase().includes(q)) return true;
+            if (section.type === 'objective' &&
+                (section.text || '').toLowerCase().includes(q)) return true;
+            return false; // section found but doesn't contain the query
+        }
+        // sectionId not found (section deleted) — fall back to block-level check
+    }
+    // No sectionId: connector anchored to card header → check whole block
+    return blockMatchesQuery(block, query);
+}
+
 /* ==================================================================*/
 /* ======================== PERSISTENCE =============================*/
 /* ==================================================================*/
@@ -577,6 +627,90 @@ export const detectiveBoard = (() => {
         saveBoardState(state); // sets _canvas: true
     };
 
+    /* ── Board search: highlight + dim ─────────────────────────── */
+
+    // Strip all highlight spans injected by _applyBoardSearch from a card element.
+    const _stripBoardHighlights = (card) => {
+        card.querySelectorAll('.board-search-highlight').forEach(span => {
+            span.replaceWith(span.textContent);
+        });
+        // Re-join split text nodes so future replacements see clean strings.
+        card.querySelector('.board-card-title')?.normalize();
+        card.querySelectorAll('.board-obj-item-text').forEach(el => el.normalize());
+        card.querySelectorAll('.board-section-notes, .board-section-subheader')
+            .forEach(el => el.normalize());
+    };
+
+    // Walk text nodes inside `container` and wrap matches with a highlight span.
+    const _highlightTextNodes = (container, re) => {
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(node => {
+            re.lastIndex = 0;
+            if (!re.test(node.nodeValue)) return;
+            re.lastIndex = 0;
+            const txt  = node.nodeValue;
+            const frag = document.createDocumentFragment();
+            let last = 0;
+            txt.replace(re, (match, _p1, offset) => {
+                if (offset > last) frag.appendChild(document.createTextNode(txt.slice(last, offset)));
+                const span = document.createElement('span');
+                span.className = 'highlight board-search-highlight';
+                span.textContent = match;
+                frag.appendChild(span);
+                last = offset + match.length;
+            });
+            re.lastIndex = 0;
+            if (last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+            node.parentNode.replaceChild(frag, node);
+        });
+    };
+
+    // Apply highlight spans and dim classes to all board cards based on `query`.
+    // Called after each render and by updateStrings (which is also called after render).
+    const _applyBoardSearch = (query) => {
+        const allBlocks = getAllBlocks();
+        const blockMap  = new Map(allBlocks.map(b => [b.id, b]));
+        const re        = query ? new RegExp(`(${escapeRegexBoard(query)})`, 'gi') : null;
+
+        boardCanvasEl.querySelectorAll('.board-card').forEach(card => {
+            const block = blockMap.get(card.dataset.id);
+
+            // Always strip stale highlights first
+            _stripBoardHighlights(card);
+
+            if (!query) {
+                card.classList.remove('board-search-dim');
+                return;
+            }
+
+            const matches = block ? blockMatchesQuery(block, query) : false;
+            card.classList.toggle('board-search-dim', !matches);
+            if (!matches || !re) return;
+
+            // ── Highlight title span (not when the input is active) ──
+            const titleSpan = card.querySelector('.board-card-title');
+            if (titleSpan && titleSpan.style.display !== 'none') {
+                re.lastIndex = 0;
+                _highlightTextNodes(titleSpan, re);
+            }
+
+            // ── Highlight notes + subheader sections (skip active editors) ──
+            card.querySelectorAll('.board-section-notes, .board-section-subheader').forEach(el => {
+                if (el.contentEditable === 'true') return;
+                re.lastIndex = 0;
+                _highlightTextNodes(el, re);
+            });
+
+            // ── Highlight objective text spans ──
+            card.querySelectorAll('.board-obj-item-text').forEach(el => {
+                re.lastIndex = 0;
+                _highlightTextNodes(el, re);
+            });
+        });
+    };
+
     /* ── Init ──────────────────────────────────────────────────── */
 
     const init = (container, callbacks) => {
@@ -781,6 +915,9 @@ export const detectiveBoard = (() => {
         }
 
         cleanOrphanConnections(state, blocks);
+        // Apply search highlighting / dim (board-specific — other tabs use filterManager filtering)
+        const _boardQuery = document.getElementById('uch-search')?.value.trim().toLowerCase() || '';
+        _applyBoardSearch(_boardQuery);
         updateStrings();
     };
 
@@ -1425,6 +1562,9 @@ export const detectiveBoard = (() => {
                 // Double-click → activate editing
                 editor.addEventListener('dblclick', (e) => {
                     e.stopPropagation();
+                    // Strip search highlight spans before editing so they don't get saved
+                    editor.querySelectorAll('.board-search-highlight').forEach(s => s.replaceWith(s.textContent));
+                    editor.normalize();
                     editor.contentEditable = 'true';
                     editor.focus();
                 });
@@ -1456,6 +1596,9 @@ export const detectiveBoard = (() => {
                 });
                 editor.addEventListener('dblclick', (e) => {
                     e.stopPropagation();
+                    // Strip search highlight spans before editing so they don't get saved
+                    editor.querySelectorAll('.board-search-highlight').forEach(s => s.replaceWith(s.textContent));
+                    editor.normalize();
                     editor.contentEditable = 'true';
                     editor.focus();
                 });
@@ -2254,6 +2397,20 @@ export const detectiveBoard = (() => {
         if (!svgDotsEl) return;
         svgDotsEl.querySelectorAll('.board-string, .board-string-hit, .board-string-dot').forEach(el => el.remove());
 
+        // ── Search dim / gradient state ──────────────────────────────────────
+        const _srchQ = document.getElementById('uch-search')?.value.trim().toLowerCase() || '';
+        // Build a block map so sectionMatchesQuery can look up section content per connection.
+        const _blockMap = _srchQ
+            ? new Map(getAllBlocks().map(b => [b.id, b]))
+            : null;
+        // Gradient <defs> container — lives inside svgDotsEl so url(#id) resolves correctly
+        let _defsEl = svgDotsEl.querySelector('defs');
+        if (!_defsEl) {
+            _defsEl = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            svgDotsEl.insertBefore(_defsEl, svgDotsEl.firstChild);
+        }
+        _defsEl.innerHTML = ''; // rebuild gradients fresh each call
+
         const state = getBoardState();
         (state.connections || []).forEach(conn => {
             const aEl = boardCanvasEl.querySelector(`.board-card[data-id="${conn.a}"]`);
@@ -2285,34 +2442,68 @@ export const detectiveBoard = (() => {
 
             // Per-connection colour (defaults to the original red)
             const color   = conn.color || STRING_COLORS[0];
-            const glow40  = hexGlow(color, 0.4);
-            const glow70  = hexGlow(color, 0.7);
-            const glow50  = hexGlow(color, 0.5);
+
+            // ── Search dim / gradient per connection ─────────────────────────
+            // Each endpoint is checked against the specific section it's anchored to
+            // (conn.paf.sectionId / conn.pbf.sectionId).  If the connector was dropped
+            // on the card header (no sectionId) or the section was deleted, we fall
+            // back to whole-block matching.  No search → everything full opacity.
+            const _aMatch   = !_srchQ || sectionMatchesQuery(_blockMap.get(conn.a), conn.paf?.sectionId, _srchQ);
+            const _bMatch   = !_srchQ || sectionMatchesQuery(_blockMap.get(conn.b), conn.pbf?.sectionId, _srchQ);
+            const _bothDim  = _srchQ && !_aMatch && !_bMatch; // neither anchored section matches → 50%
+            const _gradient = _srchQ && (_aMatch !== _bMatch); // exactly one end matches → gradient
+
+            const glow40  = hexGlow(color, _bothDim ? 0.2  : 0.4);
+            const glow70  = hexGlow(color, _bothDim ? 0.35 : 0.7);
+            const glow50  = hexGlow(color, _bothDim ? 0.25 : 0.5);
 
             // Tag all elements with the connection ID so drag can hide them as a group
             const cid = conn.id || `${conn.a}-${conn.b}`; // fallback for legacy connections
+
+            // Build stroke value: solid colour, or a linearGradient when one end matches
+            let _strokeVal = color;
+            if (_gradient) {
+                const gradId = `bsg-${cid}`;
+                const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+                grad.id = gradId;
+                grad.setAttribute('gradientUnits', 'userSpaceOnUse');
+                grad.setAttribute('x1', pa.x); grad.setAttribute('y1', pa.y);
+                grad.setAttribute('x2', pb.x); grad.setAttribute('y2', pb.y);
+                [ [_aMatch ? '1' : '0.5', '0%'], [_bMatch ? '1' : '0.5', '100%'] ]
+                    .forEach(([op, off]) => {
+                        const stop = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+                        stop.setAttribute('offset', off);
+                        stop.setAttribute('stop-color', color);
+                        stop.setAttribute('stop-opacity', op);
+                        grad.appendChild(stop);
+                    });
+                _defsEl.appendChild(grad);
+                _strokeVal = `url(#${gradId})`;
+            }
 
             // Wide invisible hit zone — click opens the colour picker
             const hitPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             hitPath.setAttribute('class', 'board-string-hit');
             hitPath.setAttribute('d', d);
             hitPath.dataset.cid = cid;
+            if (_bothDim) hitPath.style.opacity = '0.5';
             hitPath.addEventListener('click', (e) => showStringPicker(e, conn));
             svgDotsEl.appendChild(hitPath);
 
-            // Visual path — coloured per conn.color
+            // Visual path — solid colour or gradient depending on search state
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.setAttribute('class', 'board-string');
             path.setAttribute('d', d);
-            path.style.stroke = color;
+            path.style.stroke = _strokeVal;
             path.style.setProperty('--str-glow',       glow40);
             path.style.setProperty('--str-glow-hover', glow70);
             path.dataset.cid = cid;
+            if (_bothDim) path.style.opacity = '0.5';
             svgDotsEl.appendChild(path);
 
             // Connector dots — draggable to reposition endpoints; coloured to match string
-            [['a', pa, conn.paf, conn.a, pb, conn.pbf, conn.b],
-             ['b', pb, conn.pbf, conn.b, pa, conn.paf, conn.a]].forEach(([ep, pt, frac, cardId, otherPt, otherFrac, otherCardId]) => {
+            [['a', pa, conn.paf, conn.a, pb, conn.pbf, conn.b, _aMatch],
+             ['b', pb, conn.pbf, conn.b, pa, conn.paf, conn.a, _bMatch]].forEach(([ep, pt, frac, cardId, otherPt, otherFrac, otherCardId, _epMatch]) => {
                 const thisCardEl = boardCanvasEl.querySelector(`.board-card[data-id="${cardId}"]`);
                 const isCollapsed = thisCardEl?.classList.contains('board-card-collapsed') ?? false;
                 const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -2323,6 +2514,7 @@ export const detectiveBoard = (() => {
                 dot.style.fill   = color;
                 dot.style.filter = `drop-shadow(0 0 3px ${glow50})`;
                 dot.dataset.cid = cid;
+                if (_srchQ && !_epMatch) dot.style.opacity = '0.5';
 
                 // ── Drag to reposition endpoint ──
                 dot.addEventListener('pointerdown', (dragEvt) => {

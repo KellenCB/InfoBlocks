@@ -309,9 +309,11 @@ export const filterManager = (() => {
         }
 
         // 4. Search query (from universal search bar)
+        // For tab3 (detective board) the board handles search visually (dim + highlight),
+        // so skip block filtering here to keep all cards on the canvas.
         const query = document.getElementById('uch-search')
             ?.value.trim().toLowerCase() || '';
-        if (query) {
+        if (query && activeTab !== 'tab3') {
             blocks = blocks.filter(b =>
                 b.title.toLowerCase().includes(query) ||
                 stripHTML(b.text).toLowerCase().includes(query) ||

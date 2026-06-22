@@ -2,6 +2,17 @@
 /* =================== DETECTIVE BOARD (TAB3) =======================*/
 /* ==================================================================*/
 
+/* ── Search highlight / dim ───────────────────────────────────────── */
+
+/* Cards whose content doesn't contain the current search phrase fade to 50%.
+   Cards that do match stay at full opacity and get .highlight spans inside. */
+.board-card {
+    transition: opacity 0.25s ease;
+}
+.board-card.board-search-dim {
+    opacity: 0.5;
+}
+
 /* ── Board container ──────────────────────────────────────────────── */
 
 #tab3 {
