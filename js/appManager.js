@@ -1049,7 +1049,7 @@ const applyPendingBlockAnim = () => {
 
       const body = blockEl.querySelector('.inline-edit-body');
       const text = body ? body.innerHTML.trim() : '';
-      if (!text) { alert('Title and text are required.'); return null; }
+      if (!text) { alert('Block text is required.'); return null; }
 
       const selectedTypes = Array.from(blockEl.querySelectorAll('.inline-edit-block-types .tag-button.selected'))
           .map(b => b.dataset.tag);

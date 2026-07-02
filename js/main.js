@@ -1579,7 +1579,7 @@ window.onload = async () => {
             onSwipeRight:  () => appManager.setSessionListCollapsed(true),
         });
 
-        console.log('✅ Swipe gesture registered on tab 9 results section.');
+        console.log('✅ Swipe gesture registered on tab 7 results section.');
     }
 
 };
