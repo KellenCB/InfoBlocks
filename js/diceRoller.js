@@ -647,9 +647,9 @@ function resolveStatValue(statName, tabPrefix) {
         INT:  `${tabPrefix}_int_bonus`,
         WIS:  `${tabPrefix}_wis_bonus`,
         CHA:  `${tabPrefix}_cha_bonus`,
-        PROF: 'tab4_prof',
-        PB:   'tab4_prof',
-        INIT: 'tab4_initiative',
+        PROF: `${tabPrefix}_prof`,
+        PB:   `${tabPrefix}_prof`,
+        INIT: `${tabPrefix}_initiative`,
     };
     const key = statMap[statName.toUpperCase()];
     return key ? safeInt(localStorage.getItem(key)) : 0;

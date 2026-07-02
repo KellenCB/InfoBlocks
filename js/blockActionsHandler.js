@@ -2,7 +2,6 @@ import { filterManager } from './filterManager.js';
 import { appManager } from './appManager.js';
 
 export const blockActionsHandler = (() => {
-    let pendingDeleteBlockId = null;
     let lastDeletedBlock    = null;
     
     const initUndoLastDelete = () => {
@@ -16,7 +15,7 @@ export const blockActionsHandler = (() => {
             }
             const { tab, block } = lastDeletedBlock;
             document.querySelector(`.tab-button[data-tab="${tab}"]`)?.click();
-            appManager.restoreBlock(block);
+            appManager.restoreBlock(block, tab);
             lastDeletedBlock = null;
             reapplySearchAndFilters(tab);
             document.getElementById("menu_overlay")?.classList.remove("active");
@@ -52,6 +51,12 @@ export const blockActionsHandler = (() => {
         let left = clickEvent.clientX - (popupRect.width / 2);
 
         if (top < 4) top = clickEvent.clientY + 14;
+        // Clamp to the bottom of the viewport too — the fallback above only
+        // pushes the popup further down (past the click), which can run the
+        // popup off the bottom edge for clicks in the lower part of the screen.
+        if (top + popupRect.height > window.innerHeight - 4) {
+            top = window.innerHeight - popupRect.height - 4;
+        }
         if (left < 4) left = 4;
         if (left + popupRect.width > window.innerWidth - 4) {
             left = window.innerWidth - popupRect.width - 4;
@@ -233,30 +238,8 @@ export const blockActionsHandler = (() => {
         filterManager.applyFilters(activeTab.replace('tab', ''));
     }
 
-    const initDeleteConfirmation = () => {
-        const confirmBtn = document.getElementById("confirm_remove_button");
-        const cancelBtn  = document.getElementById("cancel_remove_button");
-        if (confirmBtn && cancelBtn) {
-            confirmBtn.addEventListener("click", () => {
-                if (pendingDeleteBlockId) {
-                    const deletedTab   = appManager.getActiveTab();
-                    const deletedBlock = appManager.removeBlock(pendingDeleteBlockId);
-                    lastDeletedBlock   = { tab: deletedTab, block: deletedBlock };
-                    pendingDeleteBlockId = null;
-                    reapplySearchAndFilters();
-                }
-                document.querySelector(".remove-block-overlay").classList.remove("show");
-            });
-            cancelBtn.addEventListener("click", () => {
-                pendingDeleteBlockId = null;
-                document.querySelector(".remove-block-overlay").classList.remove("show");
-            });
-        }
-    };
-
     const attachBlockActions = () => {
         initUndoLastDelete();
-        initDeleteConfirmation();
 
         document.querySelectorAll(".results-section").forEach(resultsSection => {
             resultsSection.removeEventListener("click", handleBlockActions);

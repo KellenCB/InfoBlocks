@@ -223,8 +223,10 @@ document.addEventListener("click", (e) => {
 /* ===================================================================*/
 
 // All overlays whose cancel/close button simply dismisses the overlay.
-// Note: cancel_remove_button is handled in blockActionsHandler because it
-// also needs to clear pendingDeleteBlockId.
+// Note: cancel_remove_button/confirm_remove_button and the
+// .remove-block-overlay they belong to are legacy — the delete flow now uses
+// blockActionsHandler's inline popup (showDeletePopup) instead, so that
+// overlay is never shown and isn't included here.
 const overlayCloseConfigs = [
     { buttonId: 'close_spell_slot_edit',       overlaySelector: '.spell-slot-edit-overlay' },
     { buttonId: 'cancel_long_rest_button',     overlaySelector: '.long-rest-overlay' },

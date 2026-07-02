@@ -915,127 +915,6 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ========================= EDIT BUTTON HANDLER ====================*/
 /* ==================================================================*/
 
-document.addEventListener('DOMContentLoaded', () => {
-    function initSpellSlotSection() {
-      // =======================================
-      // Tab 9: Spell Slot Section with 9 Groups
-      // =======================================
-      const spellSlotSection = document.querySelector('.spell-slot-section');
-        if (spellSlotSection) {
-            const updateGroupVisibility = (groupContainer) => {
-            const circles = groupContainer.querySelectorAll('.circle:not(.circle-button)');
-            if (circles.length === 0) {
-                groupContainer.classList.add('hidden');
-            } else {
-                groupContainer.classList.remove('hidden');
-            }
-            };
-    
-            const groups = spellSlotSection.querySelectorAll('.spell-slot-group[data-group]');
-            groups.forEach((groupContainer, idx) => {
-            const groupId = groupContainer.dataset.group || (idx + 1);
-            let circles = [];
-            const stateKey = `spellSlotStates_group_${groupId}`;
-            const totalKey = `spellSlotTotalCircles_group_${groupId}`;
-            let circleStates = JSON.parse(localStorage.getItem(stateKey)) || {};
-            let totalCircles = localStorage.getItem(totalKey)
-                ? parseInt(localStorage.getItem(totalKey), 10)
-                : 0;
-                                          
-            const createCircle = (index, state = true, prepend = false) => {
-                const circle = document.createElement('div');
-                circle.classList.add('circle');
-                if (state) circle.classList.add('unfilled');
-    
-                circle.addEventListener('click', () => {
-                circle.classList.toggle('unfilled');
-                circleStates[index] = circle.classList.contains('unfilled');
-                localStorage.setItem(stateKey, JSON.stringify(circleStates));
-                });
-    
-                if (prepend) {
-                circles.unshift(circle);
-                groupContainer.insertBefore(circle, groupContainer.firstChild);
-                } else {
-                circles.push(circle);
-                groupContainer.appendChild(circle);
-                }
-            };
-    
-            for (let i = 0; i < totalCircles; i++) {
-                createCircle(i, circleStates[i] ?? true, false);
-            }
-    
-            updateGroupVisibility(groupContainer);
-            });
-    
-            const visibleGroups = spellSlotSection.querySelectorAll('.spell-slot-group:not(.hidden)');
-            if (visibleGroups.length === 0) {
-              const placeholder = document.createElement('p');
-              placeholder.textContent = 'Use the edit tab button to add spell slots here…';
-              placeholder.style.margin = 'auto';
-              placeholder.style.textAlign = 'center';
-              placeholder.style.opacity = '0.25';
-              spellSlotSection.appendChild(placeholder);
-            }
-            
-            const saveButton = document.getElementById('save_spell_slot_changes');
-            if (saveButton) {
-            saveButton.addEventListener('click', () => {
-                const overlaySpellSlots = document.querySelectorAll('.spell-slot-edit-overlay .spell-slot-group');
-                const mainSpellSlots = document.querySelectorAll('.spell-slot-section .spell-slot-group');
-    
-                overlaySpellSlots.forEach((overlayGroup, index) => {
-                const mainGroup = mainSpellSlots[index];
-                if (!mainGroup) return;
-    
-                let titleElement = mainGroup.querySelector('.spell-slot-title');
-                if (!titleElement) {
-                    titleElement = document.createElement('span');
-                    titleElement.classList.add('spell-slot-title');
-                    titleElement.textContent = `Level ${index + 1}`;
-                    mainGroup.appendChild(titleElement);
-                }
-    
-                mainGroup.querySelectorAll('.circle:not(.circle-button)').forEach(circle => circle.remove());
-    
-                let circleStates = [];
-    
-                overlayGroup.querySelectorAll('.circle:not(.circle-button)').forEach((circle, circleIndex) => {
-                    const newCircle = document.createElement('div');
-                    newCircle.classList.add('circle');
-                    if (circle.classList.contains('unfilled')) {
-                    newCircle.classList.add('unfilled');
-                    }
-                    newCircle.addEventListener('click', () => {
-                    newCircle.classList.toggle('unfilled');
-                    circleStates[circleIndex] = newCircle.classList.contains('unfilled');
-                    localStorage.setItem(`spellSlotStates_group_${index + 1}`, JSON.stringify(circleStates));
-                    });
-                    mainGroup.appendChild(newCircle);
-                    circleStates.push(newCircle.classList.contains('unfilled'));
-                });
-    
-                localStorage.setItem(`spellSlotStates_group_${index + 1}`, JSON.stringify(circleStates));
-                localStorage.setItem(`spellSlotTotalCircles_group_${index + 1}`, circleStates.length);
-                updateGroupVisibility(mainGroup);
-                });
-    
-                console.log('✅ Spell slot changes saved to localStorage.');
-                const overlay = document.querySelector('.spell-slot-edit-overlay');
-                if (overlay) {
-                overlay.classList.remove('show');
-                }
-            });
-            } else {
-            console.warn('Save button with id "save_spell_slot_changes" not found.');
-            }
-        }
-    }
-  
-    initSpellSlotSection();
-});
-    
 /* ==================================================================*/
 /* ============ RESOURCES STRIP INLINE EDIT MODE ====================*/
 /* ==================================================================*/
@@ -1358,18 +1237,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    longRestBtn?.addEventListener('mouseleave', () => {
-        if (!longRestBtn.classList.contains('arming')) return;
-        cancelArmTimer();
-    });
-
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && strip.classList.contains('edit-mode')) exitEditMode();
     });
 
-    // ── Initial render: overwrites legacy handlers from older init code ─
+    // ── Initial render ───────────────────────────────────────────────
     renderSuit(false);
     for (let n = 1; n <= 9; n++) renderLevel(n, false);
+
+    // Show a hint when no spell slots have been configured yet
+    const visibleGroups = spellSlotSection.querySelectorAll('.spell-slot-group:not(.hidden)');
+    if (visibleGroups.length === 0 && !spellSlotSection.querySelector('p')) {
+        const placeholder = document.createElement('p');
+        placeholder.textContent = 'Use the edit tab button to add spell slots here…';
+        placeholder.style.margin = 'auto';
+        placeholder.style.textAlign = 'center';
+        placeholder.style.opacity = '0.25';
+        spellSlotSection.appendChild(placeholder);
+    }
 
     console.log('✅ Resources strip inline edit mode initialised.');
 });
@@ -1377,11 +1262,78 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ==================================================================*/
 /* ==================== UPLOAD / DOWNLOAD ===========================*/
 
+// Only these key patterns are restored on import — guards against a crafted
+// JSON file overwriting unrelated localStorage keys (app settings, keys used
+// by other sites/apps on the same origin, etc.).
+const IMPORT_ALLOWED_KEY_PREFIXES = [
+    'userBlocks_', 'tab3_', 'tab4_', 'tab6_', 'tab7_', 'tab8_', 'tab9_',
+    'pinnedBlockOrder_', 'activeSortOrder_', 'activeViewState_',
+    'filterVisible_', 'accordionOpen_', 'spellSlotStates_group_',
+    'spellSlotTotalCircles_group_', 'boardState_', 'boardView_',
+    'migration_', 'inline_edit_uses_', 'inline_add_uses_',
+];
+const IMPORT_ALLOWED_KEYS = new Set([
+    'circleStates', 'totalCircles', 'activeTab', 'activeCharTab',
+    'splitViewActive', 'sessionListCollapsed', 'shared_header_condensed',
+    'resultsTitles',
+]);
+function isImportAllowedKey(key) {
+    return IMPORT_ALLOWED_KEYS.has(key)
+        || IMPORT_ALLOWED_KEY_PREFIXES.some(prefix => key.startsWith(prefix));
+}
+
+// Replacement for window.prompt() — prompt() is blocked in iframes and some
+// privacy/extension configurations, and can't be styled. Resolves with the
+// trimmed filename, or null if the user cancels.
+function promptForFilename(defaultName) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'filename-prompt-overlay';
+        Object.assign(overlay.style, {
+            position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: '100000',
+        });
+        overlay.innerHTML = `
+            <div class="filename-prompt-box" style="background:#222;border-radius:10px;padding:20px;min-width:280px;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,0.4);display:flex;flex-direction:column;gap:12px;">
+                <span style="color:#eee;font-size:14px;">Enter a name for your file:</span>
+                <input type="text" class="filename-prompt-input" style="padding:8px 10px;border-radius:6px;border:1px solid #555;background:#111;color:#eee;font-size:14px;" />
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button type="button" class="button red-button filename-prompt-cancel">Cancel</button>
+                    <button type="button" class="button green-button filename-prompt-save">Save</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const input = overlay.querySelector('.filename-prompt-input');
+        input.value = defaultName;
+
+        const cleanup = (result) => {
+            document.removeEventListener('keydown', onKeydown);
+            overlay.remove();
+            resolve(result);
+        };
+
+        const onKeydown = (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); cleanup(input.value.trim() || null); }
+            else if (e.key === 'Escape') { e.preventDefault(); cleanup(null); }
+        };
+
+        overlay.querySelector('.filename-prompt-save').addEventListener('click', () => cleanup(input.value.trim() || null));
+        overlay.querySelector('.filename-prompt-cancel').addEventListener('click', () => cleanup(null));
+        overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) cleanup(null); });
+        document.addEventListener('keydown', onKeydown);
+
+        requestAnimationFrame(() => { input.focus(); input.select(); });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
 
     /* ── Download ──────────────────────────────────────────────────── */
 
-    document.getElementById('download_button')?.addEventListener('click', () => {
+    document.getElementById('download_button')?.addEventListener('click', async () => {
         try {
             const data = Object.fromEntries(
                 Array.from({ length: localStorage.length }, (_, i) => {
@@ -1408,7 +1360,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const charName = localStorage.getItem('tab4_character_name') || 'InfoBlocks';
             const now = new Date();
             const dateStr = `_${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getFullYear()).slice(-2)}`;
-            let filename = prompt('Enter a name for your file:', `InfoBlocks_${charName}${dateStr}`);
+            let filename = await promptForFilename(`InfoBlocks_${charName}${dateStr}`);
             if (!filename) return;
             if (!filename.endsWith('.json')) filename += '.json';
 
@@ -1430,7 +1382,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ── Download Lite (no inventory drawings) ────────────────────── */
 
-    document.getElementById('download_lite_button')?.addEventListener('click', () => {
+    document.getElementById('download_lite_button')?.addEventListener('click', async () => {
         try {
             const data = Object.fromEntries(
                 Array.from({ length: localStorage.length }, (_, i) => {
@@ -1474,7 +1426,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const charName = localStorage.getItem('tab4_character_name') || 'InfoBlocks';
             const now = new Date();
             const dateStr = `_${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getFullYear()).slice(-2)}`;
-            let filename = prompt('Enter a name for your file:', `InfoBlocks_${charName}${dateStr}_lite`);
+            let filename = await promptForFilename(`InfoBlocks_${charName}${dateStr}_lite`);
             if (!filename) return;
             if (!filename.endsWith('.json')) filename += '.json';
 
@@ -1508,6 +1460,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof data !== 'object' || Array.isArray(data)) throw new Error('Data must be an object.');
 
                     Object.entries(data).forEach(([key, value]) => {
+                        if (!isImportAllowedKey(key)) {
+                            console.warn(`⚠️ Skipped unrecognized key during import: ${key}`);
+                            return;
+                        }
                         if (key === 'resultsTitles' && typeof value === 'object') {
                             Object.entries(value).forEach(([id, text]) => {
                                 const el = document.getElementById(id);

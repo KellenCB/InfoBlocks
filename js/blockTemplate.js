@@ -2,6 +2,24 @@ import { filterManager } from './filterManager.js';
 import { categoryTags, blockTypeConfig, BOOK_ACCENT_COLORS, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
 import { toggleBlockUse } from './uiHandlers.js';
 
+// Title-case a tag, word by word (mirrors appManager.js's normalizeTag) so
+// multi-word tags like "Dungeon Master" don't get mangled to "Dungeon master"
+// when rendered. Duplicated locally to avoid a circular import with appManager.js.
+const normalizeTag = tag => tag.trim().split(/\s+/).filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+
+// Escape a plain-text string before injecting it into an innerHTML template
+// literal. Applied to block titles and other short user-entered fields that
+// are rendered as text (not as rich HTML, which goes through sanitizeBlockHTML
+// instead).
+const escapeHtml = (str) => String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 export function sanitizeBlockHTML(html) {
     return (html || '')
         .replace(/<div[^>]*>/gi, '')
@@ -46,7 +64,7 @@ const buildQuestStatusPillHTML = (status, blockId) => {
 
 const buildQuestLocationPillHTML = (location) => {
     if (!location || location === "N/A") return "";
-    return `<span class="quest-location-pill">${location}</span>`;
+    return `<span class="quest-location-pill">${escapeHtml(location)}</span>`;
 };
 
 const buildQuestObjectivesHTML = (blockId, objectives) => {
@@ -60,7 +78,7 @@ const buildQuestObjectivesHTML = (blockId, objectives) => {
                     <span class="quest-objective-checkbox">
                         <svg class="quest-objective-tick" viewBox="0 0 9 9" aria-hidden="true"><path d="M1 4.5 L4 7 L8 1.5" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </span>
-                    <span class="quest-objective-text">${o.text || ""}</span>
+                    <span class="quest-objective-text">${escapeHtml(o.text || "")}</span>
                 </div>
             `).join('')}
         </div>
@@ -103,7 +121,7 @@ export const blockTemplate = (block, tab = "tab4") => {
 
     const userTags = block.tags
         .filter(tag => !tabPredefinedTags.includes(tag))
-        .map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase());
+        .map(normalizeTag);
 
     const userTagsHTML = userTags.map(tag =>
         `<span class="tag-button tag-user ${selClass(tag)}" data-tag="${tag}">${tag}</span>`
@@ -140,7 +158,7 @@ export const blockTemplate = (block, tab = "tab4") => {
         effectiveBlockTypeHTML = '';
         effectiveUserTagsHTML  = '';
         if (!isTab3Quest && block.location && block.location !== 'N/A') {
-            tab3LocationTagHTML = `<span class="quest-location-pill">${block.location}</span>`;
+            tab3LocationTagHTML = `<span class="quest-location-pill">${escapeHtml(block.location)}</span>`;
         }
     }
 
@@ -223,7 +241,7 @@ export const blockTemplate = (block, tab = "tab4") => {
                 <div class="block-header">
                     <div class="block-header-left">
                         <div class="quest-card-thumb">${questIconSVG}</div>
-                        <div class="block-title"><h4>${block.title}</h4></div>
+                        <div class="block-title"><h4>${escapeHtml(block.title)}</h4></div>
                     </div>
                     ${tab6ActionMenu}
                 </div>
@@ -249,8 +267,8 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class="block-header-left">
                         <div class="notes-card-thumb">${notesIconSVG}</div>
                         <div class="notes-card-text${notesDescription ? '' : ' notes-card-text-no-desc'}">
-                            <div class="block-title"><h4>${block.title}</h4></div>
-                            ${notesDescription ? `<div class="notes-card-description">${notesDescription}</div>` : ''}
+                            <div class="block-title"><h4>${escapeHtml(block.title)}</h4></div>
+                            ${notesDescription ? `<div class="notes-card-description">${escapeHtml(notesDescription)}</div>` : ''}
                         </div>
                         ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
                     </div>
@@ -271,8 +289,8 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class="block-header-left">
                         <div class="book-card-thumb">${bookIconSVG}</div>
                         <div class="book-card-text${bookDescription ? '' : ' book-card-text-no-desc'}">
-                            <div class="book-card-title"><h4>${block.title}</h4></div>
-                            ${bookDescription ? `<div class="book-card-description">${bookDescription}</div>` : ''}
+                            <div class="book-card-title"><h4>${escapeHtml(block.title)}</h4></div>
+                            ${bookDescription ? `<div class="book-card-description">${escapeHtml(bookDescription)}</div>` : ''}
                         </div>
                         ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
                     </div>
@@ -292,7 +310,7 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class="block-header-left">
                         ${chainHTML}
                         ${handHTML}
-                        <div class="block-title"><h4>${block.title}</h4></div>
+                        <div class="block-title"><h4>${escapeHtml(block.title)}</h4></div>
                         ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
                     </div>
                     ${tab6ActionMenu}
@@ -310,7 +328,7 @@ export const blockTemplate = (block, tab = "tab4") => {
                 <div class="block-header">
                     <div class="block-header-left">
                         <div class="quest-card-thumb">${questIconSVG}</div>
-                        <div class="block-title"><h4>${block.title}</h4></div>
+                        <div class="block-title"><h4>${escapeHtml(block.title)}</h4></div>
                     </div>
                     ${tab6ActionMenu}
                 </div>
@@ -327,8 +345,8 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class="block-header-left">
                         <div class="map-card-thumb">${mapIconSVG}</div>
                         <div class="map-card-text">
-                            <div class="map-card-title"><h4>${block.title}</h4></div>
-                            ${block.url ? `<div class="map-card-url">${block.url}</div>` : ''}
+                            <div class="map-card-title"><h4>${escapeHtml(block.title)}</h4></div>
+                            ${block.url ? `<div class="map-card-url">${escapeHtml(block.url)}</div>` : ''}
                         </div>
                     </div>
                     ${tab6ActionMenu}
@@ -341,8 +359,8 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class="block-header-left">
                         <div class="book-card-thumb">${bookIconSVG}</div>
                         <div class="book-card-text${bookDescription ? '' : ' book-card-text-no-desc'}">
-                            <div class="book-card-title"><h4>${block.title}</h4></div>
-                            ${bookDescription ? `<div class="book-card-description">${bookDescription}</div>` : ''}
+                            <div class="book-card-title"><h4>${escapeHtml(block.title)}</h4></div>
+                            ${bookDescription ? `<div class="book-card-description">${escapeHtml(bookDescription)}</div>` : ''}
                         </div>
                     </div>
                     ${tab6ActionMenu}
@@ -356,8 +374,8 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class="block-header-left">
                         <div class="notes-card-thumb">${notesIconSVG}</div>
                         <div class="notes-card-text${notesDescription ? '' : ' notes-card-text-no-desc'}">
-                            <div class="block-title"><h4>${block.title}</h4></div>
-                            ${notesDescription ? `<div class="notes-card-description">${notesDescription}</div>` : ''}
+                            <div class="block-title"><h4>${escapeHtml(block.title)}</h4></div>
+                            ${notesDescription ? `<div class="notes-card-description">${escapeHtml(notesDescription)}</div>` : ''}
                         </div>
                     </div>
                     ${tab6ActionMenu}
@@ -381,7 +399,7 @@ export const blockTemplate = (block, tab = "tab4") => {
                 <div class="block-header">
                     ${chainHTML}
                     ${handHTML}
-                    <div class="block-title"><h4>${block.title}</h4></div>
+                    <div class="block-title"><h4>${escapeHtml(block.title)}</h4></div>
                     ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
                     ${condensedTagsHTML}
                     ${tab6ActionMenu}
@@ -391,7 +409,7 @@ export const blockTemplate = (block, tab = "tab4") => {
     } else if (viewState === 'session-log') {
         content = `
             <div class="block-header">
-                <div class="block-title"><h4>${block.title}</h4></div>
+                <div class="block-title"><h4>${escapeHtml(block.title)}</h4></div>
             </div>
         `;
     } else if (viewState === 'minimized') {
@@ -404,7 +422,7 @@ export const blockTemplate = (block, tab = "tab4") => {
             <div class="block-header">
                 ${chainHTML}
                 ${handHTML}
-                <div class="block-title-minimized"><h4>${block.title}</h4></div>
+                <div class="block-title-minimized"><h4>${escapeHtml(block.title)}</h4></div>
                 ${usesHTML ? `<div class="block-uses">${usesHTML}</div>` : ""}
             </div>
         `;

@@ -8,7 +8,11 @@ import { isSwipeGestureActive } from './swipeGesture.js';
 import { inventoryBag } from './inventoryBag.js';
 import { detectiveBoard } from './detectiveBoard.js';
 
-const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
+// Title-case a tag, word by word, so multi-word tags like "dungeon master"
+// become "Dungeon Master" instead of "Dungeon master".
+const normalizeTag = tag => tag.trim().split(/\s+/).filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
 
 export function stripHTML(html) {
   const tmp = document.createElement('div');
@@ -249,7 +253,7 @@ export function initToolbarForEditor(editor) {
           editor.normalize();
         } else {
           frIndex = replacedIndex - 1;
-          if (frIndex < -1) frIndex = frMatches.length - 1;
+          if (frIndex < 0) frIndex = frMatches.length - 1;
           frFeedback.textContent = `${frMatches.length} match${frMatches.length !== 1 ? 'es' : ''} remaining — use Find Next to continue`;
           editor.querySelectorAll('span.fr-highlight').forEach(span => span.replaceWith(...span.childNodes));
           editor.normalize();
@@ -634,7 +638,14 @@ export function setupSearchInput(inputEl, clearBtnEl, onInput, onClear) {
 /* ==================================================================*/
 
 const getActiveTab = () => {
-  return document.querySelector(".tab-button.active")?.dataset.tab || "tab4";
+  // In landscape split view, char-sheet tabs (tab4/tab8) use .uch-selected
+  // instead of .active — see layoutMode.js — so .tab-button.active reliably
+  // resolves to the active list tab there. If no button matches at all
+  // (e.g. queried before the DOM is ready), fall back to layoutMode's
+  // persisted value before defaulting to tab4.
+  return document.querySelector(".tab-button.active")?.dataset.tab
+      || localStorage.getItem('activeTab')
+      || "tab4";
 };
 
 /* ==================================================================*/
@@ -873,7 +884,7 @@ const applyPendingBlockAnim = () => {
       const userDefinedTags = [
           ...new Set(getBlocks(tab).flatMap(b => b.tags).map(t => t.toLowerCase()))
       ].filter(t => !predefinedTagList.map(pt => pt.toLowerCase()).includes(t))
-       .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
+       .map(normalizeTag)
        .sort((a, b) => a.localeCompare(b));
 
       let html = '';
@@ -1002,7 +1013,7 @@ const applyPendingBlockAnim = () => {
               const commit = () => {
                   const tagName = input.textContent.trim();
                   if (tagName) {
-                      const normalized = tagName.charAt(0).toUpperCase() + tagName.slice(1).toLowerCase();
+                      const normalized = normalizeTag(tagName);
                       const existing = blockEl.querySelector(`.inline-edit-tags .tag-button[data-tag="${normalized}"]`);
                       if (existing) { existing.classList.add('selected'); }
                       else {
@@ -1224,7 +1235,7 @@ const applyPendingBlockAnim = () => {
         if (predefinedTags.has(tag)) {
           usedTags.add(tag);
         } else {
-          usedTags.add(tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase());
+          usedTags.add(normalizeTag(tag));
         }
       });
     });
@@ -2267,7 +2278,7 @@ const applyPendingBlockAnim = () => {
       const newBody = bodyEl ? bodyEl.innerHTML.trim() : '';
       const textOptional = blockType === 'Quest' || blockType === 'Map';
       if (!textOptional && !newBody) {
-          alert('Title and text are required.');
+          alert('Block text is required.');
           return null;
       }
 
@@ -2838,8 +2849,6 @@ const applyPendingBlockAnim = () => {
   };
 
   const renderBlocks = (tab = getActiveTab(), filteredBlocks = null, skipTagUpdate = false) => {
-    console.log("🔍 Checking tab value:", tab, typeof tab);
-
     if (typeof tab !== "string") {
       console.error("❌ Error: 'tab' should be a string but got:", tab);
       tab = "tab4";
@@ -2941,8 +2950,6 @@ const applyPendingBlockAnim = () => {
         return ai - bi;
     });
 
-    console.log(`📦 Blocks to render for ${tab}:`, displayBlocks);
-
     // ── MAP EXISTING DOM BLOCKS ─────────────────────────────────────
     const existingDisplayEls = new Map();
     resultsSection.querySelectorAll(':scope > .block[data-id]').forEach(el => {
@@ -2980,7 +2987,6 @@ const applyPendingBlockAnim = () => {
             el.style.marginBottom = '0';
             el.style.paddingTop = '0';
             el.style.paddingBottom = '0';
-            console.log('🗑️ Animating block removal:', id);
             setTimeout(() => el.remove(), 650);
         }
     });
@@ -3171,7 +3177,6 @@ const applyPendingBlockAnim = () => {
     }
 
     applyInlineDiceRolls(resultsSection, tab);
-    console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
 
     if (!skipTagUpdate) updateTags();
     attachDynamicTooltips();
@@ -3263,7 +3268,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       );
       const formattedTags = tags.map(tag => {
         const predefined = predefinedTagsMap.get(tag.toLowerCase());
-        return predefined || (tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase());
+        return predefined || normalizeTag(tag);
       });
 
       newId = crypto.randomUUID();
@@ -3295,9 +3300,9 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
     return removed;
   };
 
-  const restoreBlock = (block) => {
+  const restoreBlock = (block, tabOverride = null) => {
     if (!block) return false;
-    const activeTab  = getActiveTab();
+    const activeTab  = tabOverride || getActiveTab();
     const userBlocks = getBlocks(activeTab);
     userBlocks.unshift(block);
     localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(userBlocks));
@@ -3461,11 +3466,10 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
           filterManager.applyFilters('9');
       };
 
-      const saveBtn = blockEl.querySelector('.inline-edit-save');
-      const cancelBtn = blockEl.querySelector('.inline-edit-cancel');
-      console.log('SAVE BTN:', saveBtn);
-      console.log('CANCEL BTN:', cancelBtn);
-if (saveBtn) saveBtn.addEventListener('click', (e) => { e.stopPropagation(); console.log('SAVE CLICKED'); console.log('FORM DATA:', collectTab9FormData(blockEl, usesKey)); doSave(); });      if (cancelBtn) cancelBtn.addEventListener('click', (e) => { e.stopPropagation(); console.log('CANCEL CLICKED'); doCancel(); });
+      wireEditControls(blockEl, {
+          saveSel: '.inline-edit-save', cancelSel: '.inline-edit-cancel',
+          onSave: doSave, onCancel: doCancel,
+      });
 
       focusAndCursorToEnd(blockEl.querySelector('.inline-edit-title'));
 
@@ -3527,7 +3531,6 @@ if (saveBtn) saveBtn.addEventListener('click', (e) => { e.stopPropagation(); con
       };
 
       const doCancel = () => {
-          console.log('CANCEL FIRED');
           localStorage.removeItem(usesKey);
           blockEl.remove();
       };

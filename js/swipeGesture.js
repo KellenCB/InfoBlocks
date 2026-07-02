@@ -14,14 +14,20 @@
 //       canSwipeRight:  () => true,
 //   });
 
-let _gestureActive = false;
+// Tracks which registered elements currently have an in-progress horizontal
+// gesture. A Set (rather than a single boolean) is required because
+// registerSwipe() can be called on multiple elements — a single shared
+// boolean would let one element's gesture ending clobber another element's
+// still-active gesture (or vice versa).
+const _activeGestures = new Set();
 
 /**
- * Returns true while a horizontal swipe gesture is being tracked.
- * Other drag systems (e.g. drag-to-scroll) should check this and yield.
+ * Returns true while a horizontal swipe gesture is being tracked on any
+ * registered element. Other drag systems (e.g. drag-to-scroll) should check
+ * this and yield.
  */
 export function isSwipeGestureActive() {
-    return _gestureActive;
+    return _activeGestures.size > 0;
 }
 
 /**
@@ -88,7 +94,7 @@ export function registerSwipe(element, opts = {}) {
             locked    = true;
             direction = absDx >= absDy ? 'horizontal' : 'vertical';
             if (direction === 'horizontal') {
-                _gestureActive = true;
+                _activeGestures.add(element);
             } else {
                 // Vertical intent — this module is done for this gesture
                 tracking = false;
@@ -119,7 +125,7 @@ export function registerSwipe(element, opts = {}) {
     };
 
     const end = () => {
-        if (!tracking && !_gestureActive) return;
+        if (!tracking) return;
 
         if (previewShowing) {
             // Remove the preview first
@@ -137,7 +143,7 @@ export function registerSwipe(element, opts = {}) {
         direction      = null;
         previewShowing = false;
         previewDir     = null;
-        _gestureActive = false;
+        _activeGestures.delete(element);
     };
 
     const cancel = () => {
@@ -151,7 +157,7 @@ export function registerSwipe(element, opts = {}) {
         direction      = null;
         previewShowing = false;
         previewDir     = null;
-        _gestureActive = false;
+        _activeGestures.delete(element);
     };
 
     // ── Ignored interactive targets ───────────────────────────────────
@@ -194,10 +200,14 @@ export function registerSwipe(element, opts = {}) {
     // ── Click suppression after a committed swipe ─────────────────────
 
     document.addEventListener('click', e => {
-        if (didSwipe) {
+        if (!didSwipe) return;
+        didSwipe = false;
+        // Only swallow the click if it actually landed on the swiped element —
+        // otherwise a swipe on one element could eat an unrelated click
+        // elsewhere on the page (e.g. a toast/popover the swipe just revealed).
+        if (element.contains(e.target)) {
             e.stopPropagation();
             e.preventDefault();
-            didSwipe = false;
         }
     }, true);
 }

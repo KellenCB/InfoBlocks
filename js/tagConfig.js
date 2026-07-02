@@ -59,9 +59,7 @@ export const categoryTags = {
 export const blockTypeConfig = {
     tab6: {
         types: ["Consumables", "Weapons", "Armor & clothing", "Magic & curiosities", "Tools", "Scrap & parts", "Keys", "Documents"],
-        className: "tag-itemCategory",
-        singleSelect: true,
-        required: true
+        className: "tag-itemCategory"
     },
     tab9: {
         types: ["Hazard", "Crank", "Feat", "Suit", "Spell", "Magic Item"],

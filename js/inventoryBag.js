@@ -1260,35 +1260,39 @@ export const inventoryBag = (() => {
         const uses = JSON.parse(localStorage.getItem(bovUsesKey) || '[]');
         localStorage.removeItem(bovUsesKey);
         _suppressRender = true;
-        const newId = appManager.saveBlock('tab6', name, desc, [], uses, [], ovCat, null, null, {
-          requiresAttunement: reqAttune, equipable, attuned, equipped,
-          bagGW: gw, bagGH: gh, bagCells: cells, bagCellImgs: cellImgs, bagFabricData: fabricData,
-        });
+        try {
+          const newId = appManager.saveBlock('tab6', name, desc, [], uses, [], ovCat, null, null, {
+            requiresAttunement: reqAttune, equipable, attuned, equipped,
+            bagGW: gw, bagGH: gh, bagCells: cells, bagCellImgs: cellImgs, bagFabricData: fabricData,
+          });
 
-        destroyFabricCanvas(fc); ov.remove();
+          destroyFabricCanvas(fc); ov.remove();
 
-        const newBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
-        const newBlock = newBlocks.find(nb => nb.id === newId);
-        if (newBlock && engine) {
-          const items = processBlocks([newBlock]);
-          const itm = items[0];
-          currentItems.push(itm);
-          const pw = itm.bb.gw * currentUnit;
-          const tl = PAD + 10, tr = containerW - PAD - 10;
-          const x = tl + pw / 2 + Math.random() * (tr - tl - pw);
-          const y = -itm.bb.gh * currentUnit - 20;
-          const bd = makeBody(itm, x, y, currentUnit);
-          Matter.Body.setAngle(bd, Math.random() * 0.2 - 0.1);
-          bd._item = itm; itemBodies.push(bd); Matter.Composite.add(engine.world, bd);
-          const el = mkEl(itm, currentUnit);
-          document.getElementById('bag-il').appendChild(el); itemElements.push(el);
-          const allBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
-          const fb = document.querySelector('.bfb');
-          if (fb) { fb.outerHTML = buildFilterHTML(allBlocks); wireFilterBar(); }
+          const newBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
+          const newBlock = newBlocks.find(nb => nb.id === newId);
+          if (newBlock && engine) {
+            const items = processBlocks([newBlock]);
+            const itm = items[0];
+            currentItems.push(itm);
+            const pw = itm.bb.gw * currentUnit;
+            const tl = PAD + 10, tr = containerW - PAD - 10;
+            const x = tl + pw / 2 + Math.random() * (tr - tl - pw);
+            const y = -itm.bb.gh * currentUnit - 20;
+            const bd = makeBody(itm, x, y, currentUnit);
+            Matter.Body.setAngle(bd, Math.random() * 0.2 - 0.1);
+            bd._item = itm; itemBodies.push(bd); Matter.Composite.add(engine.world, bd);
+            const el = mkEl(itm, currentUnit);
+            document.getElementById('bag-il').appendChild(el); itemElements.push(el);
+            const allBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
+            const fb = document.querySelector('.bfb');
+            if (fb) { fb.outerHTML = buildFilterHTML(allBlocks); wireFilterBar(); }
+          }
+        } finally {
+          // Keep render suppressed through the current event loop + microtasks,
+          // catching any async re-render triggers caused by saveBlock — but
+          // always reset it, even if something above threw.
+          requestAnimationFrame(() => { _suppressRender = false; });
         }
-        // Keep render suppressed through the current event loop + microtasks,
-        // catching any async re-render triggers caused by saveBlock.
-        requestAnimationFrame(() => { _suppressRender = false; });
       };
     });
   }
