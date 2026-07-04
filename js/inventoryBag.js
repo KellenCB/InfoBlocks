@@ -247,19 +247,19 @@ export const inventoryBag = (() => {
     let st = '';
     if (b.equipped) st+='<span style="color:#ff8c00;background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.2)">Equipped</span>';
     if (b.attuned) st+='<span style="color:#06ade4;background:rgba(6,173,228,.1);border:1px solid rgba(6,173,228,.2)">Attuned</span>';
-    let tg = b.tags&&b.tags.length ? '<div class="bpp-tg">'+b.tags.map(t=>'<span>'+t+'</span>').join('')+'</div>' : '';
+    let tg = b.tags&&b.tags.length ? '<div class="block-preview-tags">'+b.tags.map(t=>'<span>'+t+'</span>').join('')+'</div>' : '';
     let usesHTML = (b.uses && b.uses.length > 0)
         ? '<div class="block-uses" style="margin:8px 0">' + b.uses.map((state, idx) =>
             `<span class="circle ${state ? 'unfilled' : ''}" onclick="toggleBlockUse('${b.id}', ${idx}, event, this)"></span>`
           ).join('') + '</div>'
         : '';
-    const p = document.createElement('div'); p.className='bpp';
+    const p = document.createElement('div'); p.className='block-preview';
     const cn = document.getElementById('bag-cn');
     p._srcEl = srcEl;
     p._cn = cn;
     p.innerHTML=`
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-        <div class="bpp-n">${b.title}</div>
+        <div class="block-preview-name text-md">${b.title}</div>
         <div class="block-actions" style="position:static;flex-shrink:0">
           <div class="block-actions-menu">
             <div class="block-actions-reveal">
@@ -271,10 +271,10 @@ export const inventoryBag = (() => {
           </div>
         </div>
       </div>
-      <span class="bpp-t" style="background:rgba(${cc},.12);color:rgba(${cc},.7)">${bt}</span>
-      ${st?'<div class="bpp-s">'+st+'</div>':''}
+      <span class="block-preview-type" style="background:rgba(${cc},.12);color:rgba(${cc},.7)">${bt}</span>
+      ${st?'<div class="block-preview-subtitle text-body">'+st+'</div>':''}
       ${usesHTML}
-      <div class="bpp-b scroll-fade" style="--mask-fade-size:20px">${b.text||'<em style="color:var(--gray-500)">No description</em>'}</div>
+      <div class="block-preview-body scroll-fade text-body" style="--mask-fade-size:20px">${b.text||'<em style="color:var(--gray-500)">No description</em>'}</div>
       ${tg}`;
 
     const menu = p.querySelector('.block-actions-menu');
@@ -302,7 +302,7 @@ export const inventoryBag = (() => {
         }
         L.innerHTML = '';
         const allBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
-        const fb = document.querySelector('.bfb');
+        const fb = document.querySelector('.bag-filter-bar');
         if (fb) { fb.outerHTML = buildFilterHTML(allBlocks); wireFilterBar(); }
       });
     });
@@ -344,7 +344,7 @@ export const inventoryBag = (() => {
         document.getElementById('bag-il').appendChild(el);
         itemElements.push(el);
         const allBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
-        const fb = document.querySelector('.bfb');
+        const fb = document.querySelector('.bag-filter-bar');
         if (fb) { fb.outerHTML = buildFilterHTML(allBlocks); wireFilterBar(); }
       }
     });
@@ -359,7 +359,7 @@ export const inventoryBag = (() => {
     L.appendChild(p);
 
     // Wire scroll-fade mask on body copy
-    const bodyEl = p.querySelector('.bpp-b');
+    const bodyEl = p.querySelector('.block-preview-body');
     if (bodyEl) {
       const fadeSize = 20;
       const checkMask = () => {
@@ -397,17 +397,17 @@ export const inventoryBag = (() => {
   }
 
   function wireFilterBar() {
-    document.querySelectorAll('.bf[data-f]').forEach(btn => btn.addEventListener('click', () => { activeFilter = btn.dataset.f; render(null); }));
-    const ddTrigger = document.querySelector('.bf-dd-trigger');
-    const ddMenu = document.querySelector('.bf-dd-menu');
+    document.querySelectorAll('.bag-filter[data-f]').forEach(btn => btn.addEventListener('click', () => { activeFilter = btn.dataset.f; render(null); }));
+    const ddTrigger = document.querySelector('.bag-filter-dropdown-trigger');
+    const ddMenu = document.querySelector('.bag-filter-dropdown-menu');
     if (ddTrigger && ddMenu) {
       ddTrigger.addEventListener('click', (e) => {
         e.stopPropagation();
         const open = ddMenu.style.display !== 'none';
         ddMenu.style.display = open ? 'none' : 'flex';
-        ddTrigger.querySelector('.bf-dd-chev').style.transform = open ? '' : 'rotate(180deg)';
+        ddTrigger.querySelector('.bag-filter-dropdown-chevron').style.transform = open ? '' : 'rotate(180deg)';
       });
-      ddMenu.querySelectorAll('.bf-dd-item').forEach(item => {
+      ddMenu.querySelectorAll('.bag-filter-dropdown-item').forEach(item => {
         item.addEventListener('click', (e) => {
           e.stopPropagation();
           activeFilter = (activeFilter === item.dataset.f) ? 'all' : item.dataset.f;
@@ -415,7 +415,7 @@ export const inventoryBag = (() => {
         });
       });
       document.addEventListener('click', function closeDD(e) {
-        if (!e.target.closest('.bf-dd')) { ddMenu.style.display = 'none'; ddTrigger.querySelector('.bf-dd-chev').style.transform = ''; }
+        if (!e.target.closest('.bag-filter-dropdown')) { ddMenu.style.display = 'none'; ddTrigger.querySelector('.bag-filter-dropdown-chevron').style.transform = ''; }
       });
     }
     const ab = document.getElementById('bag-add-btn'); if (ab) ab.addEventListener('click', () => showAddOverlay());
@@ -432,27 +432,27 @@ export const inventoryBag = (() => {
     const ac = all.filter(b=>b.attuned).length, am = parseInt(localStorage.getItem('tab6_attunement_max')||'3');
     const cSvg = '<path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/>';
     const cnt = k => { if(k==='all')return all.length; if(k==='equipped')return all.filter(b=>b.equipped).length; if(k==='attuned')return all.filter(b=>b.attuned).length; return all.filter(b=>{const t=Array.isArray(b.blockType)?b.blockType[0]:b.blockType;return t===k;}).length; };
-    let h = '<div class="bfb">';
+    let h = '<div class="bag-filter-bar">';
     const FL = { all:'All', equipped:'Equipped', attuned:'Attuned' };
     ['all','equipped','attuned'].forEach(k=>{
-      h+=`<button class="bf${activeFilter===k?' on':''}" data-f="${k}">${FL[k]}<span class="bfc">${cnt(k)}</span></button>`;
+      h+=`<button class="bag-filter${activeFilter===k?' on':''}" data-f="${k}">${FL[k]}<span class="bag-filter-count text-body-sm">${cnt(k)}</span></button>`;
     });
-    h+='<span class="bfd"></span>';
+    h+='<span class="bag-filter-divider"></span>';
     const catKeys = Object.keys(CAT);
     const isCatFilter = catKeys.includes(activeFilter);
     const ddLabel = isCatFilter ? (activeFilter.length > 12 ? activeFilter.split(' ')[0] : activeFilter) : 'Type';
-    h+=`<div class="bf-dd"><button class="bf bf-dd-trigger${isCatFilter?' on':''}">`;
+    h+=`<div class="bag-filter-dropdown"><button class="bag-filter bag-filter-dropdown-trigger${isCatFilter?' on':''} text-body">`;
     h+=ddLabel;
-    if(isCatFilter) h+=`<span class="bfc">${cnt(activeFilter)}</span>`;
-    h+=`<svg class="bf-dd-chev" viewBox="0 0 12 12"><path d="M3 4.5L6 7.5L9 4.5"/></svg></button>`;
-    h+=`<div class="bf-dd-menu" style="display:none">`;
+    if(isCatFilter) h+=`<span class="bag-filter-count text-body-sm">${cnt(activeFilter)}</span>`;
+    h+=`<svg class="bag-filter-dropdown-chevron" viewBox="0 0 12 12"><path d="M3 4.5L6 7.5L9 4.5"/></svg></button>`;
+    h+=`<div class="bag-filter-dropdown-menu" style="display:none">`;
     catKeys.forEach(k=>{
       const label = k.length > 12 ? k.split(' ')[0] : k;
-      h+=`<button class="bf-dd-item${activeFilter===k?' on':''}" data-f="${k}">${label}<span class="bf-dd-cnt">${cnt(k)}</span></button>`;
+      h+=`<button class="text-body bag-filter-dropdown-item${activeFilter===k?' on':''}" data-f="${k}">${label}<span class="bag-filter-dropdown-count text-body-sm">${cnt(k)}</span></button>`;
     });
     h+=`</div></div>`;
-    h+=`<span class="bat"><svg viewBox="0 0 24 24">${cSvg}</svg>${ac}/${am}</span>`;
-    h+=`<button class="bf bag-add-btn" id="bag-add-btn" title="Add item"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
+    h+=`<span class="attunement-count text-body-sm"><svg viewBox="0 0 24 24">${cSvg}</svg>${ac}/${am}</span>`;
+    h+=`<button class="bag-filter bag-add-btn text-body" id="bag-add-btn" title="Add item"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
     h+='</div>';
     return h;
   }
@@ -498,18 +498,18 @@ export const inventoryBag = (() => {
     const layout = document.querySelector('#tab6 .inventory-layout');
     const rs = document.getElementById('results_section_6');
     if (!layout || !rs) return;
-    layout.classList.add('inv-bag-mode');
+    layout.classList.add('inventory-bag-mode');
 
     if (display.length === 0) {
       destroy();
-      rs.innerHTML = buildFilterHTML(all) + '<div class="bem">No items in inventory</div>';
+      rs.innerHTML = buildFilterHTML(all) + '<div class="bag-empty-message text-body">No items in inventory</div>';
       wireFilterBar();
       return;
     }
 
     rs.innerHTML = buildFilterHTML(all) + `<div class="bcn" id="bag-cn"><canvas id="bag-cv"></canvas><div class="bil" id="bag-il"></div><div class="bpl" id="bag-pl"></div></div>`;
     wireFilterBar();
-    document.getElementById('bag-cn').addEventListener('click',e=>{if(!e.target.closest('.bi')&&!e.target.closest('.bpp')){document.getElementById('bag-pl').innerHTML='';popOpenId=null;}});
+    document.getElementById('bag-cn').addEventListener('click',e=>{if(!e.target.closest('.bi')&&!e.target.closest('.block-preview')){document.getElementById('bag-pl').innerHTML='';popOpenId=null;}});
 
     const cn = document.getElementById('bag-cn');
     containerW = cn.offsetWidth||400; containerH = cn.offsetHeight||300;
@@ -671,8 +671,8 @@ export const inventoryBag = (() => {
 
   function setupFabricCanvas(canvasId, goId, catColor) {
     const S = GCELL * GRID;
-    const rightCol = document.getElementById(canvasId).closest('.bag-ov-right');
-    const cardEl = document.getElementById(canvasId).closest('.bag-ov-card');
+    const rightCol = document.getElementById(canvasId).closest('.bag-overview-right');
+    const cardEl = document.getElementById(canvasId).closest('.bag-overview-card');
     const cardInner = cardEl ? cardEl.clientWidth - 40 : S;
     const colInner = rightCol ? rightCol.clientWidth - 10 : cardInner;
     let available = Math.min(cardInner, colInner);
@@ -689,9 +689,9 @@ export const inventoryBag = (() => {
     // Apply DPI scaling, display sizing, cursor, and brush smoothing via shared utility
     applySketchSetup(fc, { logicalW: S, logicalH: S, displayW: displayS, displayH: displayS });
 
-    // Resize the parent .bag-ov-da wrapper to match
+    // Resize the parent .bag-overview-draw-area wrapper to match
     const daEl = fc.wrapperEl.parentElement;
-    if (daEl && daEl.classList.contains('bag-ov-da')) {
+    if (daEl && daEl.classList.contains('bag-overview-draw-area')) {
       daEl.style.width = displayS + 'px';
       daEl.style.height = displayS + 'px';
     }
@@ -746,7 +746,7 @@ export const inventoryBag = (() => {
       goEl.style.height = displayS + 'px';
       for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) {
         const d = document.createElement('div');
-        d.className = 'bag-ov-gc'; d.dataset.r = r; d.dataset.c = c;
+        d.className = 'bag-overview-grid-cell'; d.dataset.r = r; d.dataset.c = c;
         d.style.cssText = 'left:' + (c * displayCell) + 'px;top:' + (r * displayCell) + 'px;width:' + displayCell + 'px;height:' + displayCell + 'px';
         goEl.appendChild(d);
       }
@@ -773,7 +773,7 @@ export const inventoryBag = (() => {
       if (goEl) {
         goEl.style.width = displayS + 'px';
         goEl.style.height = displayS + 'px';
-        goEl.querySelectorAll('.bag-ov-gc').forEach(d => {
+        goEl.querySelectorAll('.bag-overview-grid-cell').forEach(d => {
           const r = +d.dataset.r, c = +d.dataset.c;
           d.style.left = (c * newCell) + 'px';
           d.style.top = (r * newCell) + 'px';
@@ -865,7 +865,7 @@ export const inventoryBag = (() => {
     }
 
     const cc = catColor;
-    document.querySelectorAll('#' + goId + ' .bag-ov-gc').forEach(el => {
+    document.querySelectorAll('#' + goId + ' .bag-overview-grid-cell').forEach(el => {
       const r = +el.dataset.r, c = +el.dataset.c;
       const h = oc.some(o => o.r === r && o.c === c);
       el.style.background = h ? 'rgba(' + cc + ',.12)' : 'transparent';
@@ -875,9 +875,9 @@ export const inventoryBag = (() => {
     const detId = goId.replace('-go', '-det');
     const di = document.getElementById(detId);
     if (di) {
-      if (!oc.length) { di.textContent = 'Draw to set shape'; di.className = 'bag-ov-det em'; di.style.color = ''; }
-      else if (!connected) { di.innerHTML = '<b>' + oc.length + '</b> cells — must be connected'; di.className = 'bag-ov-det'; di.style.color = '#ff6b6b'; }
-      else { di.innerHTML = '<b>' + oc.length + '</b> cells'; di.className = 'bag-ov-det'; di.style.color = ''; }
+      if (!oc.length) { di.textContent = 'Draw to set shape'; di.className = 'bag-overview-detail em'; di.style.color = ''; }
+      else if (!connected) { di.innerHTML = '<b>' + oc.length + '</b> cells — must be connected'; di.className = 'bag-overview-detail'; di.style.color = '#ff6b6b'; }
+      else { di.innerHTML = '<b>' + oc.length + '</b> cells'; di.className = 'bag-overview-detail'; di.style.color = ''; }
     }
 
     oc._connected = connected;
@@ -909,7 +909,7 @@ export const inventoryBag = (() => {
 
   function wireToolButtons(fc, prefix, goId, catColorGetter) {
     function clearToolHighlight() {
-      document.querySelectorAll('#' + prefix + '-tools .bag-ov-tb').forEach(t => t.classList.remove('on'));
+      document.querySelectorAll('#' + prefix + '-tools .bag-overview-tool-btn').forEach(t => t.classList.remove('on'));
     }
     let undoStack = [];
 
@@ -1058,12 +1058,12 @@ export const inventoryBag = (() => {
   }
 
   function toolButtonsHTML(prefix) {
-    return `<div class="bag-ov-tw" id="${prefix}-tools">
-      <button class="bag-ov-tb" id="${prefix}-t1" title="Select / Move"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51z"/><path d="M13 13l6 6"/></svg></button>
-      <button class="bag-ov-tb on" id="${prefix}-t2" title="Fine pen"><div class="bag-ov-dd" style="width:2px;height:2px"></div></button>
-      <button class="bag-ov-tb" id="${prefix}-t3" title="Pen"><div class="bag-ov-dd" style="width:4px;height:4px"></div></button>      <button class="bag-ov-tb" id="${prefix}-t4" title="Eraser"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(12,10) rotate(-15)"><rect x="-4" y="-9" width="8" height="18" rx="1"/><line x1="-4" y1="3" x2="4" y2="3"/></g><line x1="3" y1="21" x2="9" y2="21" opacity="0.35" stroke-dasharray="2 2"/><line x1="15" y1="21" x2="21" y2="21"/></svg>
-      <button class="bag-ov-tb" id="${prefix}-t5" title="Undo"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h10a5 5 0 0 1 0 10H9"/><path d="M3 10l4-4M3 10l4 4"/></svg></button>
-      <button class="bag-ov-tb" id="${prefix}-t6" title="Clear all"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M5 6v14a1 1 0 001 1h12a1 1 0 001-1V6"/></svg></button>
+    return `<div class="bag-overview-tools" id="${prefix}-tools">
+      <button class="bag-overview-tool-btn" id="${prefix}-t1" title="Select / Move"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51z"/><path d="M13 13l6 6"/></svg></button>
+      <button class="bag-overview-tool-btn on" id="${prefix}-t2" title="Fine pen"><div class="bag-overview-pen-dot" style="width:2px;height:2px"></div></button>
+      <button class="bag-overview-tool-btn" id="${prefix}-t3" title="Pen"><div class="bag-overview-pen-dot" style="width:4px;height:4px"></div></button>      <button class="bag-overview-tool-btn" id="${prefix}-t4" title="Eraser"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(12,10) rotate(-15)"><rect x="-4" y="-9" width="8" height="18" rx="1"/><line x1="-4" y1="3" x2="4" y2="3"/></g><line x1="3" y1="21" x2="9" y2="21" opacity="0.35" stroke-dasharray="2 2"/><line x1="15" y1="21" x2="21" y2="21"/></svg>
+      <button class="bag-overview-tool-btn" id="${prefix}-t5" title="Undo"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h10a5 5 0 0 1 0 10H9"/><path d="M3 10l4-4M3 10l4 4"/></svg></button>
+      <button class="bag-overview-tool-btn" id="${prefix}-t6" title="Clear all"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M5 6v14a1 1 0 001 1h12a1 1 0 001-1V6"/></svg></button>
     </div>`;
   }
 
@@ -1074,22 +1074,22 @@ export const inventoryBag = (() => {
   function bagTogglesHTML(prefix, reqAtt, equipable, attuned, equipped) {
     return `<div class="inventory-edit-toggles">
       <div class="inventory-toggle-pair">
-        <label class="inv-toggle inv-toggle--sm inv-toggle-attune">
+        <label class="inventory-toggle inventory-toggle--sm inventory-toggle-attune text-body-sm">
           <input type="checkbox" id="${prefix}-attune"${reqAtt ? ' checked' : ''} />
-          <span class="inv-track"><span class="inv-thumb"></span></span>
+          <span class="inventory-track"><span class="inventory-thumb"></span></span>
           <span>Requires attunement</span>
         </label>
-        <button type="button" class="inv-state-btn inv-state-chain" id="${prefix}-attuned-btn" data-on="${attuned}" title="Attune">
+        <button type="button" class="inventory-state-btn inventory-state-chain text-body-sm" id="${prefix}-attuned-btn" data-on="${attuned}" title="Attune">
           ${chainSVG}<span>Attuned to</span>
         </button>
       </div>
       <div class="inventory-toggle-pair">
-        <label class="inv-toggle inv-toggle--sm inv-toggle-equip">
+        <label class="inventory-toggle inventory-toggle--sm inventory-toggle-equip text-body-sm">
           <input type="checkbox" id="${prefix}-equip"${equipable ? ' checked' : ''} />
-          <span class="inv-track"><span class="inv-thumb"></span></span>
+          <span class="inventory-track"><span class="inventory-thumb"></span></span>
           <span>Equipable</span>
         </label>
-        <button type="button" class="inv-state-btn inv-state-hand" id="${prefix}-equipped-btn" data-on="${equipped}" title="Equip">
+        <button type="button" class="inventory-state-btn inventory-state-hand text-body-sm" id="${prefix}-equipped-btn" data-on="${equipped}" title="Equip">
           ${handSVG}<span>Equipped</span>
         </button>
       </div>
@@ -1103,8 +1103,8 @@ export const inventoryBag = (() => {
     const equippedBtn = document.getElementById(prefix + '-equipped-btn');
 
     const sync = () => {
-      if (attunedBtn)  attunedBtn.classList.toggle('inv-state-on',  attunedBtn.dataset.on === 'true');
-      if (equippedBtn) equippedBtn.classList.toggle('inv-state-on', equippedBtn.dataset.on === 'true');
+      if (attunedBtn)  attunedBtn.classList.toggle('inventory-state-on',  attunedBtn.dataset.on === 'true');
+      if (equippedBtn) equippedBtn.classList.toggle('inventory-state-on', equippedBtn.dataset.on === 'true');
     };
     sync();
 
@@ -1156,35 +1156,35 @@ export const inventoryBag = (() => {
     const catBtns = Object.keys(CAT).map(k => {
       const c = CAT[k].c;
       const sel = k === ovCat;
-      return `<button class="bag-ov-cat${sel ? ' on' : ''}" data-cat="${k}" style="${sel ? 'background:rgba(' + c + ',.12);border-color:rgba(' + c + ',.3);color:rgba(' + c + ',.8)' : ''}">` +
+      return `<button class="text-label bag-overview-category${sel ? ' on' : ''}" data-cat="${k}" style="${sel ? 'background:rgba(' + c + ',.12);border-color:rgba(' + c + ',.3);color:rgba(' + c + ',.8)' : ''}">` +
         (k.length > 12 ? k.split(' ')[0] : k) + '</button>';
     }).join('');
 
     const ov = document.createElement('div');
-    ov.className = 'bag-ov'; ov.id = 'bag-add-ov';
-    ov.innerHTML = `<div class="bag-ov-card bag-ov-wide">
-      <div class="bag-ov-title">Add Item</div>
-      <div class="bag-ov-layout">
-        <div class="bag-ov-left">
-          <div><div class="bag-ov-label">Name</div><input class="bag-ov-input" id="bov-name" placeholder="Item name..."></div>
-          <div><div class="bag-ov-label">Type</div><div class="bag-ov-cats" id="bov-cats">${catBtns}</div></div>
-          ${bagTogglesHTML('bov', false, false, false, false)}
-          <div><div class="bag-ov-label">Uses</div><div class="uses-field" id="bov-uses"></div></div>
-          <div><div class="bag-ov-label">Description (optional)</div><textarea class="bag-ov-textarea" id="bov-desc" placeholder="Item description..."></textarea></div>
-          <div class="bag-ov-btns">
-            <button class="bag-ov-btn bag-ov-cn" id="bov-cancel">Cancel</button>
-            <button class="bag-ov-btn bag-ov-sv" id="bov-save">Add to bag</button>
+    ov.className = 'bag-overview'; ov.id = 'bag-add-ov';
+    ov.innerHTML = `<div class="bag-overview-card bag-overview-wide">
+      <div class="bag-overview-title text-md">Add Item</div>
+      <div class="bag-overview-layout">
+        <div class="bag-overview-left">
+          <div><div class="bag-overview-label text-label">Name</div><input class="bag-overview-input text-body" id="bag-overview-name" placeholder="Item name..."></div>
+          <div><div class="bag-overview-label text-label">Type</div><div class="bag-overview-categories" id="bag-overview-cats">${catBtns}</div></div>
+          ${bagTogglesHTML('bag-overview', false, false, false, false)}
+          <div><div class="bag-overview-label text-label">Uses</div><div class="uses-field" id="bag-overview-uses"></div></div>
+          <div><div class="bag-overview-label text-label">Description (optional)</div><textarea class="bag-overview-textarea text-body" id="bag-overview-desc" placeholder="Item description..."></textarea></div>
+          <div class="bag-overview-btns">
+            <button class="bag-overview-btn bag-overview-cancel text-body" id="bag-overview-cancel">Cancel</button>
+            <button class="bag-overview-btn bag-overview-save text-body" id="bag-overview-save">Add to bag</button>
           </div>
         </div>
-        <div class="bag-ov-right">
-          <div class="bag-ov-label">Draw your item</div>
-          <div class="bag-ov-cw">
-            <div class="bag-ov-da" style="width:${S}px;height:${S}px">
-              <canvas id="bov-cv" width="${S}" height="${S}"></canvas>
-              <div class="bag-ov-gc-wrap" id="bov-go"></div>
+        <div class="bag-overview-right">
+          <div class="bag-overview-label text-label">Draw your item</div>
+          <div class="bag-overview-canvas-wrap">
+            <div class="bag-overview-draw-area" style="width:${S}px;height:${S}px">
+              <canvas id="bag-overview-cv" width="${S}" height="${S}"></canvas>
+              <div class="bag-overview-grid-wrap" id="bag-overview-go"></div>
             </div>
-            ${toolButtonsHTML('bov')}
-            <div class="bag-ov-det em" id="bov-det">Draw to set shape</div>
+            ${toolButtonsHTML('bag-overview')}
+            <div class="bag-overview-detail em text-body-sm" id="bag-overview-det">Draw to set shape</div>
           </div>
         </div>
       </div>
@@ -1194,22 +1194,22 @@ export const inventoryBag = (() => {
     const bovUsesKey = 'bag_add_uses_temp';
     localStorage.setItem(bovUsesKey, '[]');
     import('./appManager.js').then(({ initUsesField }) => {
-        initUsesField(document.getElementById('bov-uses'), bovUsesKey);
+        initUsesField(document.getElementById('bag-overview-uses'), bovUsesKey);
     });
 
     loadFabric().then(() => {
       const cc = CAT[ovCat]?.c || DEF.c;
-      const fc = setupFabricCanvas('bov-cv', 'bov-go', cc);
+      const fc = setupFabricCanvas('bag-overview-cv', 'bag-overview-go', cc);
 
-      fc.on('path:created', () => { if (!fc._isEraserActive) detectFabricCells(fc, 'bov-go', CAT[ovCat]?.c || DEF.c); });
-      fc.on('object:modified', () => detectFabricCells(fc, 'bov-go', CAT[ovCat]?.c || DEF.c));
+      fc.on('path:created', () => { if (!fc._isEraserActive) detectFabricCells(fc, 'bag-overview-go', CAT[ovCat]?.c || DEF.c); });
+      fc.on('object:modified', () => detectFabricCells(fc, 'bag-overview-go', CAT[ovCat]?.c || DEF.c));
 
-      wireToolButtons(fc, 'bov', 'bov-go', () => CAT[ovCat]?.c || DEF.c);
-      wireBagToggles('bov');
+      wireToolButtons(fc, 'bag-overview', 'bag-overview-go', () => CAT[ovCat]?.c || DEF.c);
+      wireBagToggles('bag-overview');
 
-      ov.querySelectorAll('.bag-ov-cat').forEach(b => b.addEventListener('click', () => {
+      ov.querySelectorAll('.bag-overview-category').forEach(b => b.addEventListener('click', () => {
         ovCat = b.dataset.cat;
-        ov.querySelectorAll('.bag-ov-cat').forEach(x => { x.classList.remove('on'); x.style.background = ''; x.style.borderColor = ''; x.style.color = ''; });
+        ov.querySelectorAll('.bag-overview-category').forEach(x => { x.classList.remove('on'); x.style.background = ''; x.style.borderColor = ''; x.style.color = ''; });
         b.classList.add('on');
         const nc = CAT[ovCat]?.c || DEF.c;
         b.style.background = 'rgba(' + nc + ',.12)'; b.style.borderColor = 'rgba(' + nc + ',.3)'; b.style.color = 'rgba(' + nc + ',.8)';
@@ -1220,7 +1220,7 @@ export const inventoryBag = (() => {
           if (!obj._isEraser) obj.set({ stroke: 'rgba(' + nc + ',.65)' });
         });
         fc.wrapperEl.style.border = '2px solid rgba(' + nc + ',.25)';
-        detectFabricCells(fc, 'bov-go', nc);
+        detectFabricCells(fc, 'bag-overview-go', nc);
         updateDrawCursor(fc);
         fabric.Object.prototype.set({
           cornerColor: 'rgba(' + nc + ',0.8)',
@@ -1235,13 +1235,13 @@ export const inventoryBag = (() => {
         fc.renderAll();
       }));
 
-      document.getElementById('bov-cancel').onclick = () => { destroyFabricCanvas(fc); localStorage.removeItem(bovUsesKey); ov.remove(); };
+      document.getElementById('bag-overview-cancel').onclick = () => { destroyFabricCanvas(fc); localStorage.removeItem(bovUsesKey); ov.remove(); };
 
-      document.getElementById('bov-save').onclick = async () => {
-        const name = document.getElementById('bov-name').value.trim();
-        if (!name) { document.getElementById('bov-name').style.borderColor = 'rgba(255,107,107,.5)'; return; }
-        const oc = detectFabricCells(fc, 'bov-go', CAT[ovCat]?.c || DEF.c);
-        if (!oc.length) { document.getElementById('bov-det').textContent = 'Please draw something'; document.getElementById('bov-det').style.color = '#ff6b6b'; return; }
+      document.getElementById('bag-overview-save').onclick = async () => {
+        const name = document.getElementById('bag-overview-name').value.trim();
+        if (!name) { document.getElementById('bag-overview-name').style.borderColor = 'rgba(255,107,107,.5)'; return; }
+        const oc = detectFabricCells(fc, 'bag-overview-go', CAT[ovCat]?.c || DEF.c);
+        if (!oc.length) { document.getElementById('bag-overview-det').textContent = 'Please draw something'; document.getElementById('bag-overview-det').style.color = '#ff6b6b'; return; }
         if (!oc._connected) { return; }
 
         let r1 = GRID, r2 = -1, c1 = GRID, c2 = -1;
@@ -1250,11 +1250,11 @@ export const inventoryBag = (() => {
         const cellImgs = exportFabricCells(fc, oc, r1, c1);
         const fabricData = JSON.stringify(fc.toJSON());
         const cells = oc.map(o => ({ r: o.r - r1, c: o.c - c1 }));
-        const desc = document.getElementById('bov-desc').value.trim();
-        const reqAttune = document.getElementById('bov-attune').checked;
-        const equipable = document.getElementById('bov-equip').checked;
-        const attuned = reqAttune && document.getElementById('bov-attuned-btn')?.dataset.on === 'true';
-        const equipped = equipable && document.getElementById('bov-equipped-btn')?.dataset.on === 'true';
+        const desc = document.getElementById('bag-overview-desc').value.trim();
+        const reqAttune = document.getElementById('bag-overview-attune').checked;
+        const equipable = document.getElementById('bag-overview-equip').checked;
+        const attuned = reqAttune && document.getElementById('bag-overview-attuned-btn')?.dataset.on === 'true';
+        const equipped = equipable && document.getElementById('bag-overview-equipped-btn')?.dataset.on === 'true';
 
         const { appManager } = await import('./appManager.js');
         const uses = JSON.parse(localStorage.getItem(bovUsesKey) || '[]');
@@ -1284,7 +1284,7 @@ export const inventoryBag = (() => {
             const el = mkEl(itm, currentUnit);
             document.getElementById('bag-il').appendChild(el); itemElements.push(el);
             const allBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
-            const fb = document.querySelector('.bfb');
+            const fb = document.querySelector('.bag-filter-bar');
             if (fb) { fb.outerHTML = buildFilterHTML(allBlocks); wireFilterBar(); }
           }
         } finally {
@@ -1309,48 +1309,48 @@ export const inventoryBag = (() => {
     const catBtns = Object.keys(CAT).map(k => {
       const c = CAT[k].c;
       const sel = k === currentType;
-      return `<button class="bag-ov-cat${sel ? ' on' : ''}" data-cat="${k}" style="${sel ? 'background:rgba(' + c + ',.12);border-color:rgba(' + c + ',.3);color:rgba(' + c + ',.8)' : ''}">` +
+      return `<button class="text-label bag-overview-category${sel ? ' on' : ''}" data-cat="${k}" style="${sel ? 'background:rgba(' + c + ',.12);border-color:rgba(' + c + ',.3);color:rgba(' + c + ',.8)' : ''}">` +
         (k.length > 12 ? k.split(' ')[0] : k) + '</button>';
     }).join('');
 
     const ov = document.createElement('div');
-    ov.className = 'bag-ov'; ov.id = 'bag-edit-ov';
-    ov.innerHTML = `<div class="bag-ov-card bag-ov-wide">
-      <div class="bag-ov-title">Edit Item</div>
-      <div class="bag-ov-layout">
-        <div class="bag-ov-left">
-          <div><div class="bag-ov-label">Name</div><input class="bag-ov-input" id="bev-name" value="${b.title.replace(/"/g, '&quot;')}"></div>
-          <div><div class="bag-ov-label">Type</div><div class="bag-ov-cats" id="bev-cats">${catBtns}</div></div>
-          ${bagTogglesHTML('bev', b.requiresAttunement, b.equipable, b.attuned, b.equipped)}
-          <div><div class="bag-ov-label">Uses</div><div class="uses-field" id="bev-uses"></div></div>
+    ov.className = 'bag-overview'; ov.id = 'bag-edit-ov';
+    ov.innerHTML = `<div class="bag-overview-card bag-overview-wide">
+      <div class="bag-overview-title text-md">Edit Item</div>
+      <div class="bag-overview-layout">
+        <div class="bag-overview-left">
+          <div><div class="bag-overview-label text-label">Name</div><input class="bag-overview-input text-body" id="bag-edit-name" value="${b.title.replace(/"/g, '&quot;')}"></div>
+          <div><div class="bag-overview-label text-label">Type</div><div class="bag-overview-categories" id="bag-edit-cats">${catBtns}</div></div>
+          ${bagTogglesHTML('bag-edit', b.requiresAttunement, b.equipable, b.attuned, b.equipped)}
+          <div><div class="bag-overview-label text-label">Uses</div><div class="uses-field" id="bag-edit-uses"></div></div>
           <div>
-            <div class="bag-ov-label-row">
-              <div class="bag-ov-label">Description</div>
-              <button class="bag-ov-link-btn bag-link-btn-inactive" id="bev-link-btn" type="button">⎘ link</button>
+            <div class="bag-overview-label-row">
+              <div class="bag-overview-label text-label">Description</div>
+              <button class="bag-overview-link-btn bag-link-btn-inactive text-body-sm" id="bag-edit-link-btn" type="button">⎘ link</button>
             </div>
-            <div class="bag-ov-link-mini bag-link-mini-hidden" id="bev-link-mini">
-              <input class="bag-ov-input" id="bev-link-url" placeholder="https://...">
-              <div class="bag-ov-link-mini-btns">
-                <button class="bag-ov-link-cancel-mini" id="bev-link-cancel-mini" type="button">Cancel</button>
-                <button class="bag-ov-link-confirm" id="bev-link-confirm" type="button">Insert</button>
+            <div class="bag-overview-link-mini bag-link-mini-hidden" id="bag-edit-link-mini">
+              <input class="bag-overview-input text-body" id="bag-edit-link-url" placeholder="https://...">
+              <div class="bag-overview-link-mini-btns">
+                <button class="bag-overview-link-cancel-mini text-body-sm" id="bag-edit-link-cancel-mini" type="button">Cancel</button>
+                <button class="bag-overview-link-confirm text-body-sm" id="bag-edit-link-confirm" type="button">Insert</button>
               </div>
             </div>
-            <div class="bag-ov-textarea bag-ov-desc-editor" id="bev-desc" contenteditable="true" spellcheck="false"></div>
+            <div class="bag-overview-textarea bag-overview-desc-editor text-body" id="bag-edit-desc" contenteditable="true" spellcheck="false"></div>
           </div>
-          <div class="bag-ov-btns">
-            <button class="bag-ov-btn bag-ov-cn" id="bev-cancel">Cancel</button>
-            <button class="bag-ov-btn bag-ov-sv" id="bev-save">Save changes</button>
+          <div class="bag-overview-btns">
+            <button class="bag-overview-btn bag-overview-cancel text-body" id="bag-edit-cancel">Cancel</button>
+            <button class="bag-overview-btn bag-overview-save text-body" id="bag-edit-save">Save changes</button>
           </div>
         </div>
-        <div class="bag-ov-right">
-          <div class="bag-ov-label">Redraw item (leave blank to keep current)</div>
-          <div class="bag-ov-cw">
-            <div class="bag-ov-da" style="width:${S}px;height:${S}px">
-              <canvas id="bev-cv" width="${S}" height="${S}"></canvas>
-              <div class="bag-ov-gc-wrap" id="bev-go"></div>
+        <div class="bag-overview-right">
+          <div class="bag-overview-label text-label">Redraw item (leave blank to keep current)</div>
+          <div class="bag-overview-canvas-wrap">
+            <div class="bag-overview-draw-area" style="width:${S}px;height:${S}px">
+              <canvas id="bag-edit-cv" width="${S}" height="${S}"></canvas>
+              <div class="bag-overview-grid-wrap" id="bag-edit-go"></div>
             </div>
-            ${toolButtonsHTML('bev')}
-            <div class="bag-ov-det em" id="bev-det">Draw to change shape</div>
+            ${toolButtonsHTML('bag-edit')}
+            <div class="bag-overview-detail em text-body-sm" id="bag-edit-det">Draw to change shape</div>
           </div>
         </div>
       </div>
@@ -1358,15 +1358,15 @@ export const inventoryBag = (() => {
     document.body.appendChild(ov);
 
     // ── Description editor — set initial content ──────────────────────
-    const bevDescEditor = document.getElementById('bev-desc');
+    const bevDescEditor = document.getElementById('bag-edit-desc');
     bevDescEditor.innerHTML = b.text || '';
     // Force <br> for new lines (prevents Chrome from using <div>)
     try { document.execCommand('defaultParagraphSeparator', false, 'br'); } catch(e) {}
 
     // ── Insert / Edit Link ────────────────────────────────────────────
-    const bevLinkBtn  = document.getElementById('bev-link-btn');
-    const bevLinkMini = document.getElementById('bev-link-mini');
-    const bevLinkUrl  = document.getElementById('bev-link-url');
+    const bevLinkBtn  = document.getElementById('bag-edit-link-btn');
+    const bevLinkMini = document.getElementById('bag-edit-link-mini');
+    const bevLinkUrl  = document.getElementById('bag-edit-link-url');
     let bevSavedRange = null;
     let bevLinkTipEl  = null;
 
@@ -1448,11 +1448,11 @@ export const inventoryBag = (() => {
         bevLinkUrl.select();
     });
 
-    document.getElementById('bev-link-cancel-mini').addEventListener('click', () => {
+    document.getElementById('bag-edit-link-cancel-mini').addEventListener('click', () => {
         bevLinkMini.classList.add('bag-link-mini-hidden');
     });
 
-    document.getElementById('bev-link-confirm').addEventListener('click', () => {
+    document.getElementById('bag-edit-link-confirm').addEventListener('click', () => {
         const url = bevLinkUrl.value.trim();
         if (!url) { bevLinkUrl.style.borderColor = 'rgba(255,107,107,.5)'; return; }
         bevLinkUrl.style.borderColor = '';
@@ -1506,7 +1506,7 @@ export const inventoryBag = (() => {
     });
 
     bevLinkUrl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') document.getElementById('bev-link-confirm').click();
+        if (e.key === 'Enter') document.getElementById('bag-edit-link-confirm').click();
         if (e.key === 'Escape') bevLinkMini.classList.add('bag-link-mini-hidden');
     });
 
@@ -1519,19 +1519,19 @@ export const inventoryBag = (() => {
     const bevUsesKey = 'bag_edit_uses_temp';
     localStorage.setItem(bevUsesKey, JSON.stringify(b.uses || []));
     import('./appManager.js').then(({ initUsesField }) => {
-        initUsesField(document.getElementById('bev-uses'), bevUsesKey);
+        initUsesField(document.getElementById('bag-edit-uses'), bevUsesKey);
     });
 
     loadFabric().then(() => {
       const cc = CAT[ovCat]?.c || DEF.c;
-      const fc = setupFabricCanvas('bev-cv', 'bev-go', cc);
+      const fc = setupFabricCanvas('bag-edit-cv', 'bag-edit-go', cc);
 
       if (b.bagFabricData) {
         fc.loadFromJSON(b.bagFabricData, () => {
           fc.backgroundColor = '';
           fc.getObjects().forEach(obj => obj.set({ strokeUniform: true }));
           fc.renderAll();
-          detectFabricCells(fc, 'bev-go', cc);
+          detectFabricCells(fc, 'bag-edit-go', cc);
         });
       } else if (b.bagCellImgs && b.bagCells && b.bagCells.length) {
         let loaded = 0;
@@ -1546,21 +1546,21 @@ export const inventoryBag = (() => {
             loaded++;
             if (loaded >= total) {
               fc.renderAll();
-              detectFabricCells(fc, 'bev-go', cc);
+              detectFabricCells(fc, 'bag-edit-go', cc);
             }
           });
         });
       }
 
-      fc.on('path:created', () => { if (!fc._isEraserActive) detectFabricCells(fc, 'bev-go', CAT[ovCat]?.c || DEF.c); });
-      fc.on('object:modified', () => detectFabricCells(fc, 'bev-go', CAT[ovCat]?.c || DEF.c));
+      fc.on('path:created', () => { if (!fc._isEraserActive) detectFabricCells(fc, 'bag-edit-go', CAT[ovCat]?.c || DEF.c); });
+      fc.on('object:modified', () => detectFabricCells(fc, 'bag-edit-go', CAT[ovCat]?.c || DEF.c));
 
-      wireToolButtons(fc, 'bev', 'bev-go', () => CAT[ovCat]?.c || DEF.c);
-      wireBagToggles('bev');
+      wireToolButtons(fc, 'bag-edit', 'bag-edit-go', () => CAT[ovCat]?.c || DEF.c);
+      wireBagToggles('bag-edit');
 
-      ov.querySelectorAll('.bag-ov-cat').forEach(btn => btn.addEventListener('click', () => {
+      ov.querySelectorAll('.bag-overview-category').forEach(btn => btn.addEventListener('click', () => {
         ovCat = btn.dataset.cat;
-        ov.querySelectorAll('.bag-ov-cat').forEach(x => { x.classList.remove('on'); x.style.background = ''; x.style.borderColor = ''; x.style.color = ''; });
+        ov.querySelectorAll('.bag-overview-category').forEach(x => { x.classList.remove('on'); x.style.background = ''; x.style.borderColor = ''; x.style.color = ''; });
         btn.classList.add('on');
         const nc = CAT[ovCat]?.c || DEF.c;
         btn.style.background = 'rgba(' + nc + ',.12)'; btn.style.borderColor = 'rgba(' + nc + ',.3)'; btn.style.color = 'rgba(' + nc + ',.8)';
@@ -1569,7 +1569,7 @@ export const inventoryBag = (() => {
           if (!obj._isEraser) obj.set({ stroke: 'rgba(' + nc + ',.65)' });
         });
         fc.wrapperEl.style.border = '2px solid rgba(' + nc + ',.25)';
-        detectFabricCells(fc, 'bev-go', nc);
+        detectFabricCells(fc, 'bag-edit-go', nc);
         updateDrawCursor(fc);
         fabric.Object.prototype.set({
           cornerColor: 'rgba(' + nc + ',0.8)',
@@ -1584,14 +1584,14 @@ export const inventoryBag = (() => {
         fc.renderAll();
       }));
 
-      document.getElementById('bev-cancel').onclick = () => { ov._linkCleanup?.(); destroyFabricCanvas(fc); localStorage.removeItem(bevUsesKey); ov.remove(); };
+      document.getElementById('bag-edit-cancel').onclick = () => { ov._linkCleanup?.(); destroyFabricCanvas(fc); localStorage.removeItem(bevUsesKey); ov.remove(); };
 
-      document.getElementById('bev-save').onclick = async () => {
-        const name = document.getElementById('bev-name').value.trim();
-        if (!name) { document.getElementById('bev-name').style.borderColor = 'rgba(255,107,107,.5)'; return; }
+      document.getElementById('bag-edit-save').onclick = async () => {
+        const name = document.getElementById('bag-edit-name').value.trim();
+        if (!name) { document.getElementById('bag-edit-name').style.borderColor = 'rgba(255,107,107,.5)'; return; }
         // Serialize contenteditable → storage HTML
         // Chrome wraps new lines in <div>; normalize to <br>
-        const descEl = document.getElementById('bev-desc');
+        const descEl = document.getElementById('bag-edit-desc');
         const desc = descEl.innerHTML
             .replace(/<div><br\s*\/?><\/div>/gi, '<br>')
             .replace(/<\/div><div>/gi, '<br>')
@@ -1600,12 +1600,12 @@ export const inventoryBag = (() => {
             .replace(/<\/p><p>/gi, '<br>')
             .replace(/<p>/gi, '<br>').replace(/<\/p>/gi, '')
             .trim().replace(/^<br\s*\/?>/, '');
-        const reqAttune = document.getElementById('bev-attune').checked;
-        const equipable = document.getElementById('bev-equip').checked;
-        const attuned = reqAttune && document.getElementById('bev-attuned-btn')?.dataset.on === 'true';
-        const equipped = equipable && document.getElementById('bev-equipped-btn')?.dataset.on === 'true';
+        const reqAttune = document.getElementById('bag-edit-attune').checked;
+        const equipable = document.getElementById('bag-edit-equip').checked;
+        const attuned = reqAttune && document.getElementById('bag-edit-attuned-btn')?.dataset.on === 'true';
+        const equipped = equipable && document.getElementById('bag-edit-equipped-btn')?.dataset.on === 'true';
 
-        const oc = detectFabricCells(fc, 'bev-go', CAT[ovCat]?.c || DEF.c);
+        const oc = detectFabricCells(fc, 'bag-edit-go', CAT[ovCat]?.c || DEF.c);
         if (oc.length > 0 && !oc._connected) { return; }
         let extras = { requiresAttunement: reqAttune, equipable, attuned, equipped };
 
@@ -1649,7 +1649,7 @@ export const inventoryBag = (() => {
             itemBodies[idx] = newBody; Matter.Composite.add(engine.world, newBody);
             itemBodies.forEach(bd => Matter.Sleeping.set(bd, false));
           } else { itemBodies[idx]._item = currentItems[idx]; }
-          const fb = document.querySelector('.bfb');
+          const fb = document.querySelector('.bag-filter-bar');
           if (fb) { fb.outerHTML = buildFilterHTML(updatedBlocks); wireFilterBar(); }
         }
       };

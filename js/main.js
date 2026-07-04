@@ -637,7 +637,7 @@ function initBlockTypeFilterButtons() {
         const container = document.getElementById(`character_type_tags_${tabNum}`);
         if (!container) return;
         container.innerHTML = config.types.map(type =>
-            `<button class="tag-button tag-button--compact ${config.className}" data-tag="${type}">${type}</button>`
+            `<button class="tag-button tag-button--compact ${config.className} text-body" data-tag="${type}">${type}</button>`
         ).join("");
         // filterManager.handleTagClick handles all interaction including shift+click
     });
@@ -895,10 +895,10 @@ document.addEventListener("DOMContentLoaded", () => {
         sortPopover.className = 'uch-dropdown-popover';
         sortPopover.id = 'uch-sort-popover';
         sortPopover.innerHTML = `
-            <button class="sort-item" data-sort="newest">Newest</button>
-            <button class="sort-item" data-sort="oldest">Oldest</button>
-            <button class="sort-item" data-sort="alpha">A–Z</button>
-            <button class="sort-item" data-sort="unalpha">Z–A</button>
+            <button class="sort-item text-md" data-sort="newest">Newest</button>
+            <button class="sort-item text-md" data-sort="oldest">Oldest</button>
+            <button class="sort-item text-md" data-sort="alpha">A–Z</button>
+            <button class="sort-item text-md" data-sort="unalpha">Z–A</button>
         `;
         document.body.appendChild(sortPopover);
 
@@ -940,9 +940,9 @@ document.addEventListener("DOMContentLoaded", () => {
         viewPopover.className = 'uch-dropdown-popover';
         viewPopover.id = 'uch-view-popover';
         viewPopover.innerHTML = `
-            <button class="view-toggle-item" data-state="expanded">Expand all</button>
-            <button class="view-toggle-item" data-state="condensed">Condense all</button>
-            <button class="view-toggle-item" data-state="minimized">Minimize all</button>
+            <button class="view-toggle-item text-md" data-state="expanded">Expand all</button>
+            <button class="view-toggle-item text-md" data-state="condensed">Condense all</button>
+            <button class="view-toggle-item text-md" data-state="minimized">Minimize all</button>
         `;
         document.body.appendChild(viewPopover);
 
@@ -1225,7 +1225,7 @@ window.onload = async () => {
         popover.id = 'stat-breakdown-popover';
         popover.innerHTML = `
             <div class="sb-rows"></div>
-            <div class="sb-add">${plusSvg} Add</div>
+            <div class="sb-add text-body-sm">${plusSvg} Add</div>
         `;
         document.body.appendChild(popover);
 
@@ -1297,13 +1297,13 @@ window.onload = async () => {
             row.className = 'sb-row';
 
             const valInput = document.createElement('input');
-            valInput.className = 'sb-row-val';
+            valInput.className = 'sb-row-val text-body';
             valInput.value = val;
             valInput.placeholder = '±0';
             valInput.inputMode = 'numeric';
 
             const descInput = document.createElement('input');
-            descInput.className = 'sb-row-desc';
+            descInput.className = 'sb-row-desc text-body-sm';
             descInput.value = desc;
             descInput.placeholder = 'Source...';
 

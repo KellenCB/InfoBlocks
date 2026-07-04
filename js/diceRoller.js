@@ -272,7 +272,7 @@ export function initDiceRoller() {
     if (count > 0) {
       if (!badge) {
         badge = document.createElement('span');
-        badge.className = 'dice-count-badge';
+        badge.className = 'dice-count-badge text-label';
         badge.title = 'Click to remove one';
         badge.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -418,7 +418,7 @@ export function initDiceRoller() {
     const entry = document.createElement("div");
     entry.classList.add("roll-history-entry");
     const chip = document.createElement("span");
-    chip.classList.add("roll-error");
+    chip.classList.add("roll-error", "text-label");
     chip.innerHTML = `<svg aria-hidden="true" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:rgba(255,107,107,0.6)"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="5.5" x2="8" y2="9"/><circle cx="8" cy="11.5" r="0.75" fill="currentColor" stroke="none"/></svg>${msg}`;
     entry.appendChild(chip);
     insertHistoryEntry(entry);
@@ -462,7 +462,7 @@ export function initDiceRoller() {
     text.setAttribute('y', sides === 4 ? '66%' : '50%');
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('dominant-baseline', 'middle');
-    text.classList.add('die-number');
+    text.classList.add('die-number', 'text-body');
     text.textContent = roll;
     svg.appendChild(text);
 
@@ -488,7 +488,7 @@ export function initDiceRoller() {
     // ── Label row (full width, only when present) ─────────────────────────────
     if (displayLabel) {
       const labelEl = document.createElement("div");
-      labelEl.classList.add("roll-label");
+      labelEl.classList.add("roll-label", "text-label");
       labelEl.textContent = displayLabel;
       entry.appendChild(labelEl);
     }
@@ -498,7 +498,7 @@ export function initDiceRoller() {
     contentRow.classList.add("roll-content");
 
     const valueEl = document.createElement("div");
-    valueEl.classList.add("roll-value");
+    valueEl.classList.add("roll-value", "text-xl");
     valueEl.textContent = finalTotal;
     contentRow.appendChild(valueEl);
 
@@ -517,7 +517,7 @@ export function initDiceRoller() {
       if (showModifierChip) {
         const sign = modifier >= 0 ? '+' : '';
         const modChip = document.createElement("span");
-        modChip.classList.add("roll-chip", "modifier");
+        modChip.classList.add("roll-chip", "modifier", "text-body");
         modChip.textContent = `${sign}${modifier}`;
         breakdown.appendChild(modChip);
       }

@@ -876,9 +876,6 @@
 }
 
 .cs-ac-val {
-    font-size: var(--font-36);
-    font-weight: 700;
-    line-height: 1;
     color: var(--gray-900);
     min-width: 1ch;
     outline: none;
@@ -914,10 +911,6 @@
     outline: none;
 }
 
-.cs-ref-spell .cs-ref-val {
-    font-weight: 700;
-}
-
 .cs-combat-sep {
     border-top: var(--cs-dash-border);
 }
@@ -944,10 +937,7 @@
 }
 
 .cs-mod-col .stat-value {
-    font-size: var(--font-28);
-    font-weight: 700;
     color: var(--gray-900);
-    line-height: 1.15;
     min-width: unset;
     margin: 0;
 }
@@ -1344,7 +1334,6 @@
 
 .stat-breakdown-popover .sb-row-val {
     width: 30px;
-    font-weight: 600;
     color: var(--gray-800);
     background: none;
     border: none;

@@ -137,9 +137,16 @@
 }
 
 .tag-accordion-pill::after {
-    content: '▾';
+    content: '';
+    display: inline-block;
+    width: 9px;
+    height: 9px;
     margin-left: var(--space-2px);
     opacity: 0.9;
+    background-color: currentColor;
+    -webkit-mask: url(../images/Chevron_Icon.svg) center / contain no-repeat;
+    mask: url(../images/Chevron_Icon.svg) center / contain no-repeat;
+    transition: transform 0.15s ease;
 }
 
 .tag-accordion-pill:hover {
@@ -151,7 +158,7 @@
 }
 
 .tag-accordion-group.open .tag-accordion-pill::after {
-    content: '▸';
+    transform: rotate(-90deg);
 }
 
 .tag-accordion-body {

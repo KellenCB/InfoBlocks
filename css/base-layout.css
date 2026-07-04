@@ -1,169 +1,4 @@
 /* ====================================================================== */
-/* ========================= SHARED TEXT STYLES ========================= */
-/* ====================================================================== */
-/* Selectors below share identical font-size declarations, */
-/* consolidated from ~10 separate files into one rule per size. */
-/* ====================================================================== */
-
-/* Group A: var(--font-10) (10px) */
-.stat-label,
-.stat-subvalue,
-.descriptor-label,
-.hd-roll-detail,
-.cs-ref-label,
-.cs-mod-col .stat-subvalue,
-.saving-throws-and-skills-column h3,
-.stat-breakdown-popover .sb-row-desc,
-.stat-breakdown-popover .sb-add,
-.resources-strip .circle-add,
-.map-card-url,
-.quest-progress-count,
-.block.inline-editing .block-property-wrap,
-.inline-edit-new-prop,
-.block.inline-editing .uses-field .circle-button,
-.board-zoom-label,
-.board-add-obj-item-btn,
-.board-card-add-section-btn,
-.dice-label,
-.tag-accordion-pill::after,
-.bf .bfc,
-.bf-dd-cnt,
-.bat,
-.bag-ov-det,
-.bag-ov-link-btn,
-.bag-ov-link-confirm,
-.bag-ov-link-cancel-mini,
-.inv-toggle--sm,
-.bag-ov-card .inv-state-btn {
-    font-size: var(--font-10);
-}
-
-/* Group B: var(--font-12) (12px) */
-.tag-accordion-pill,
-.tag-accordion-header,
-.block.condensed .block-tags-condensed .tag-button.selected,
-.block.condensed .block-tags-condensed .tag-button.selected-or,
-.inline-edit-add-tag,
-.book-card-description,
-.notes-card-description,
-.quest-objectives-empty,
-.quest-objectives,
-.property-remove-btn,
-.hp-max-edit,
-.hd-remaining,
-.descriptor-value,
-.save-label,
-.skill-label,
-.resources-strip .circle-remove,
-.resources-strip .ghost-chip .ghost-chip-plus,
-.board-section-notes,
-.board-obj-item-text,
-.board-obj-item-input,
-.board-empty-hint p,
-.fr-feedback,
-.notes-edit-body,
-.quest-add-objective-btn,
-.quest-status-item,
-.bf,
-.bf-dd-item,
-.bpp-b,
-.bpp-s,
-.bem,
-.bag-ov-input,
-.bag-ov-textarea,
-.bag-ov-tb,
-.bag-ov-btn,
-.inv-toggle {
-    font-size: var(--font-12);
-}
-
-/* Group C: var(--font-14) (14px) */
-.button,
-.block-title h3,
-.block-title-minimized h3,
-.block.session-log .block-title h3,
-.map-card-title h3,
-.book-card-title h3,
-.menu-item-button,
-#long_rest_button,
-.board-zoom-btn,
-.board-string-picker-delete,
-#clear-selected-button,
-.editor-toolbar-wrapper,
-.text-toolbar button,
-#font-size-select,
-.fr-btn,
-.quest-overlay-input,
-.quest-objective-input,
-.find-replace-row input,
-.text-tooltip {
-    font-size: var(--font-14);
-}
-
-/* Group D: var(--font-12) (12px), font-weight: 500 */
-.ds-roll-btn,
-.hd-type,
-.hd-roll-btn,
-.hp-action-btn,
-.long-rest-popup-message,
-.map-link-popup-action,
-.delete-confirm-message,
-.clear-data-confirm-message {
-    font-size: var(--font-12);
-}
-
-/* Group E: var(--font-12) (12px), font-weight: 600 */
-.board-card-title,
-.board-card-title-input,
-.board-section-subheader,
-.roll-chip,
-.delete-confirm-buttons button,
-.clear-data-confirm-buttons button,
-.stat-breakdown-popover .sb-row-val {
-    font-size: var(--font-12);
-}
-
-/* Group F: var(--font-14) (14px), font-weight: 500 */
-.hp-input-field,
-.hd-qty-btn,
-.hd-qty-display,
-.coin-delta-popup,
-.hp-drag-delta,
-.bpp-n,
-.bag-ov-title,
-#roll-button {
-    font-size: var(--font-14);
-}
-
-/* Group G: var(--font-14) (14px), font-weight: 700 */
-.character-name,
-.stat-value,
-.cs-ref-val,
-.cs-ref-spell .cs-ref-val {
-    font-size: var(--font-14);
-}
-
-/* Group H: var(--font-18) (18px) */
-.add-block-button,
-.session-viewer-delete-btn,
-.quest-objective-remove {
-    font-size: var(--font-18);
-}
-
-/* Group I: var(--font-10) (10px), font-weight: 700 */
-.coin-icon-letter,
-.dice-count-badge {
-    font-size: var(--font-10);
-}
-
-/* Group J: var(--font-12) (12px), letter-spacing: 0.02em (kept individually) */
-.uch-tooltip,
-.cs-currency-card .currency-tooltip,
-.board-picker-floating-tip {
-    font-size: var(--font-12);
-}
-
-/* ====================================================================== */
 /* ============================ ROOT & BASE ============================= */
 /* ====================================================================== */
 
@@ -1277,7 +1112,6 @@ body.app-ready #app-row {
 }
 
 .block.session-log .block-title h3 {
-    font-weight: 400;
     letter-spacing: 0.03em;
 }
 
@@ -1617,6 +1451,7 @@ a:hover {
 }
 
 .session-viewer-body {
+    font-size: var(--font-14);
     flex: 1;
     min-height: 0;
     overflow-y: auto;

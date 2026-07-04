@@ -185,7 +185,6 @@
     --easing-signature: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-
 /* ==========================================================================
    8 · TYPOGRAPHY  —  complete text styles
    Each locks size + weight + case + letter-spacing + line-height.
@@ -193,150 +192,23 @@
    change weight). +/-, edit, ellipsis etc. are SVG icons, not text.
    ========================================================================== */
 
-/* text-2xl 36/600 */
-.cs-ac-val {
-    font-size: var(--font-36); font-weight: 600; letter-spacing: 0.03em; line-height: 1.2;
-}
+/* --------------------------------------------------------------------------
+   UTILITY CLASSES — apply these in markup (Option B). Same specs as the
+   selector-list rules below, which stay live during migration so nothing
+   breaks. Once every element carries a text-* class, the selector lists
+   are removed and these become the single source.
+   -------------------------------------------------------------------------- */
+.text-2xl     { font-size: var(--font-36); font-weight: 600; text-transform: none; letter-spacing: 0.03em; line-height: 1.2; }
+.text-xl      { font-size: var(--font-28); font-weight: 600; text-transform: none; letter-spacing: 0.03em; line-height: 1.2; }
+.text-lg      { font-size: var(--font-18); font-weight: 600; text-transform: none; letter-spacing: 0.03em; line-height: 1.2; }
+.text-md      { font-size: var(--font-14); font-weight: 500; text-transform: none; letter-spacing: 0.03em; line-height: 1.2; }
+.text-body    { font-size: var(--font-12); font-weight: 400; text-transform: none; letter-spacing: 0;      line-height: 1.5; }
+.text-body-sm { font-size: var(--font-10); font-weight: 400; text-transform: none; letter-spacing: 0.03em; line-height: 1.3; }
+.text-label   { font-size: var(--font-10); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.2; }
+.text-left    { text-align: left; }
+.text-center  { text-align: center; }
+.text-right   { text-align: right; }
 
-/* text-xl 28/600 */
-.roll-value,
-.cs-mod-col .stat-value {
-    font-size: var(--font-28); font-weight: 600; letter-spacing: 0.03em; line-height: 1.2;
-}
-
-/* text-lg 18/600 */
-h3,
-.session-viewer-title,
-.notes-edit-title,
-.hp-bar-text {
-    font-size: var(--font-18); font-weight: 600; text-transform: none; letter-spacing: 0.03em; line-height: 1.2;
-}
 .hp-bar-dead { color: var(--color-red); text-transform: none; letter-spacing: 0.03em; }
 .hp-bar-stabilized { color: var(--color-green); text-transform: none; letter-spacing: 0.03em; }
 
-/* text-md 14/500 */
-.block-title h3,
-.block-title-minimized h3,
-.block.session-log .block-title h3,
-.map-card-title h3,
-.book-card-title h3,
-.board-card-title,
-.board-card-title-input,
-.character-name,
-.stat-value,
-.cs-ref-val,
-.cs-ref-spell .cs-ref-val,
-.clear_filters_button,
-.hp-input-field,
-.hd-qty-btn,
-.hd-qty-display,
-.coin-pill-num,
-.coin-pill-input,
-.coin-delta-popup,
-.hp-drag-delta,
-.bpp-n,
-.bag-ov-title,
-#roll-button,
-.board-section-subheader,
-.button,
-.menu-item-button,
-#long_rest_button,
-.board-zoom-btn,
-.board-string-picker-delete,
-#clear-selected-button,
-.text-toolbar button,
-.fr-btn,
-#font-size-select,
-.quest-overlay-input,
-.quest-objective-input,
-.find-replace-row input,
-.sort-item,
-.view-toggle-item,
-.tag-button,
-.bpp-x {
-    font-size: var(--font-14); font-weight: 500; text-transform: none; letter-spacing: 0.03em; line-height: 1.2;
-}
-
-/* body 12/400 */
-body,
-.block-body,
-.book-card-description,
-.notes-card-description,
-.board-book-description,
-.notes-edit-body,
-.board-section-notes,
-.board-obj-item-text,
-.quest-objectives,
-.tag-button--compact,
-.tab3-location-pill,
-.tag-accordion-pill,
-.tag-accordion-header,
-.tag-accordion-chips .tag-button,
-.block-property,
-.inline-edit-add-tag,
-.quest-status-item,
-.stat-breakdown-popover .sb-row-val,
-.roll-chip,
-svg.roll-die-chip .die-number,
-.ds-roll-btn,
-.hd-type,
-.hd-roll-btn,
-.hp-action-btn,
-.map-link-popup-action,
-.delete-confirm-message,
-.clear-data-confirm-message,
-.long-rest-popup-message,
-.delete-confirm-buttons button,
-.clear-data-confirm-buttons button,
-.block.inline-editing .inline-edit-controls .button,
-.notes-viewer .inline-edit-controls .button {
-    font-size: var(--font-12); font-weight: 400; text-transform: none; letter-spacing: 0; line-height: 1.5;
-}
-
-/* body-sm 10/400 (tooltips, small values, small text buttons — NOT uppercase) */
-.board-add-obj-item-btn,
-.board-card-add-section-btn,
-.stat-breakdown-popover .sb-add,
-.stat-breakdown-popover .sb-row-desc,
-.stat-subvalue,
-.cs-mod-col .stat-subvalue,
-.descriptor-value,
-.hd-roll-detail,
-.hd-remaining,
-.skill-plus,
-.map-card-url,
-.quest-progress-count,
-.quest-progress.mini .quest-progress-count,
-.hp-max-edit,
-.hp-max-val,
-.uch-tooltip,
-.cs-currency-card .currency-tooltip,
-.board-picker-floating-tip,
-.board-empty-hint p,
-.tag-button--tiny,
-.inv-state-btn {
-    font-size: var(--font-10); font-weight: 400; text-transform: none; letter-spacing: 0.03em; line-height: 1.3;
-}
-
-/* label 10/500 UPPERCASE */
-.hp-section-label,
-.hd-label,
-.cs-mod-label,
-.ds-group-label,
-.tab3-location-label,
-.bag-ov-label,
-.quest-overlay-label,
-.roll-error,
-.coin-icon-letter,
-.dice-count-badge,
-.roll-label,
-.stat-label,
-.cs-ref-label,
-.save-label,
-.skill-label,
-.descriptor-label,
-.dice-label,
-.bag-ov-cat,
-.saving-throws-and-skills-column h3 {
-    font-size: var(--font-10); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.2;
-}

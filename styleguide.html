@@ -269,57 +269,57 @@ body { padding: 0; }
     <!-- ============================================================ -->
     <section class="sg-section" id="typography">
         <h2>Typography</h2>
-        <p class="sg-section-desc">One family app-wide (<strong>Roboto</strong> 400/500/600/700). Typography is a set of <strong>complete text styles</strong> — each locks size, weight, case, letter-spacing and line-height. The only per-instance change allowed is <strong>colour / grey tone</strong>; interaction states (<code>:hover</code> / <code>.selected</code>) may change weight. Each row's name is rendered in its own style, so it doubles as the live specimen (from <code>design-system.css</code>).</p>
-        <p class="sg-section-desc" style="margin-bottom:8px;">Tracking: <code>0.03em</code> (text) · <code>0.05em</code> (CAPS label) · <code>0</code> (body). Leading: <code>1.2</code> (text &amp; label) · <code>1.3</code> (body-sm) · <code>1.5</code> (body). Size primitives <code>--font-10 … --font-36</code>. Glyph buttons (+/-, edit, ···) are SVG icons, not type.</p>
+        <p class="sg-section-desc">One family app-wide (<strong>Roboto</strong> 400/500/600/700). Typography is a set of <strong>complete text styles</strong> — each locks size, weight, case, letter-spacing and line-height. The only per-instance change allowed is <strong>colour / grey tone</strong>; interaction states (<code>:hover</code> / <code>.selected</code>) may change weight. Each style is a <strong>utility class</strong> (<code>.text-*</code>) applied directly in markup; every specimen below is rendered with that class, so it's a live sample (from <code>design-system.css</code>).</p>
+        <p class="sg-section-desc" style="margin-bottom:8px;">Tracking: <code>0.03em</code> (text) · <code>0.05em</code> (CAPS label) · <code>0</code> (body). Leading: <code>1.2</code> (text &amp; label) · <code>1.3</code> (body-sm) · <code>1.5</code> (body). Size primitives <code>--font-10 … --font-36</code>. Glyph buttons (+/-, edit, ···) are SVG icons, not type. Alignment modifiers: <code>.text-left</code> / <code>.text-center</code> / <code>.text-right</code>.</p>
 
         <div class="sg-role-list">
             <div class="sg-role">
-                <div class="sg-role-sample"><span class="cs-ac-val sg-spec">Text-2xl</span></div>
+                <div class="sg-role-sample"><span class="text-2xl sg-spec">Text-2xl</span></div>
                 <div class="sg-role-meta">
-                    <div class="sg-role-spec">36px / 600 · leading 1.2</div>
-                    <div class="sg-role-uses"><span class="uses-label">uses</span> <code>.cs-ac-val</code></div>
+                    <div class="sg-role-spec"><code>.text-2xl</code> · 36px / 600 · leading 1.2</div>
+                    <div class="sg-role-uses"><span class="uses-label">applied to</span> <code>.cs-ac-val</code></div>
                 </div>
             </div>
             <div class="sg-role">
-                <div class="sg-role-sample"><span class="roll-value sg-spec">Text-xl</span></div>
+                <div class="sg-role-sample"><span class="text-xl sg-spec">Text-xl</span></div>
                 <div class="sg-role-meta">
-                    <div class="sg-role-spec">28px / 600 · leading 1.2</div>
-                    <div class="sg-role-uses"><span class="uses-label">uses</span> <code>.roll-value</code> · <code>.cs-mod-col .stat-value</code></div>
+                    <div class="sg-role-spec"><code>.text-xl</code> · 28px / 600 · leading 1.2</div>
+                    <div class="sg-role-uses"><span class="uses-label">applied to</span> <code>.roll-value</code> · <code>.cs-mod-col .stat-value</code></div>
                 </div>
             </div>
             <div class="sg-role">
-                <div class="sg-role-sample"><h3 class="sg-spec">Text-lg</h3></div>
+                <div class="sg-role-sample"><span class="text-lg sg-spec">Text-lg</span></div>
                 <div class="sg-role-meta">
-                    <div class="sg-role-spec">18px / 600 · leading 1.2</div>
-                    <div class="sg-role-uses"><span class="uses-label">uses</span> <code>h3</code> · <code>.session-viewer-title</code> · <code>.notes-edit-title</code> · <code>.hp-bar-text</code></div>
+                    <div class="sg-role-spec"><code>.text-lg</code> · 18px / 600 · leading 1.2</div>
+                    <div class="sg-role-uses"><span class="uses-label">applied to</span> <code>h3</code> · <code>.session-viewer-title</code> · <code>.notes-edit-title</code> · <code>.hp-bar-text</code></div>
                 </div>
             </div>
             <div class="sg-role">
-                <div class="sg-role-sample"><div class="block-title"><h3 class="sg-spec">Text-md</h3></div></div>
+                <div class="sg-role-sample"><span class="text-md sg-spec">Text-md</span></div>
                 <div class="sg-role-meta">
-                    <div class="sg-role-spec">14px / 500 · leading 1.2</div>
-                    <div class="sg-role-uses"><span class="uses-label">uses</span> <code>.block-title h3</code> · <code>.block-title-minimized h3</code> · <code>.block.session-log .block-title h3</code> · <code>.map-card-title h3</code> · <code>.book-card-title h3</code> · <code>.board-card-title</code> · <code>.board-card-title-input</code> · <code>.character-name</code> · <code>.stat-value</code> · <code>.cs-ref-val</code> · <code>.cs-ref-spell .cs-ref-val</code> · <code>.clear_filters_button</code> · <code>.hp-input-field</code> · <code>.hd-qty-btn</code> · <code>.hd-qty-display</code> · <code>.coin-pill-num</code> · <code>.coin-pill-input</code> · <code>.coin-delta-popup</code> · <code>.hp-drag-delta</code> · <code>.bpp-n</code> · <code>.bag-ov-title</code> · <code>#roll-button</code> · <code>.board-section-subheader</code> · <code>.button</code> · <code>.menu-item-button</code> · <code>#long_rest_button</code> · <code>.board-zoom-btn</code> · <code>.board-string-picker-delete</code> · <code>#clear-selected-button</code> · <code>.text-toolbar button</code> · <code>.fr-btn</code> · <code>#font-size-select</code> · <code>.quest-overlay-input</code> · <code>.quest-objective-input</code> · <code>.find-replace-row input</code> · <code>.sort-item</code> · <code>.view-toggle-item</code> · <code>.tag-button</code> · <code>.bpp-x</code></div>
+                    <div class="sg-role-spec"><code>.text-md</code> · 14px / 500 · leading 1.2</div>
+                    <div class="sg-role-uses"><span class="uses-label">applied to</span> <code>.block-title h3</code> · <code>.block-title-minimized h3</code> · <code>.block.session-log .block-title h3</code> · <code>.map-card-title h3</code> · <code>.book-card-title h3</code> · <code>.board-card-title</code> · <code>.board-card-title-input</code> · <code>.character-name</code> · <code>.cs-ref-val</code> · <code>.cs-ref-spell .cs-ref-val</code> · <code>.clear_filters_button</code> · <code>.hp-input-field</code> · <code>.hd-qty-btn</code> · <code>.hd-qty-display</code> · <code>.coin-pill-num</code> · <code>.coin-pill-input</code> · <code>.coin-delta-popup</code> · <code>.hp-drag-delta</code> · <code>.block-preview-name</code> · <code>.bag-overview-title</code> · <code>#roll-button</code> · <code>.board-section-subheader</code> · <code>.button</code> · <code>.menu-item-button</code> · <code>#long_rest_button</code> · <code>.board-zoom-btn</code> · <code>.board-string-picker-delete</code> · <code>#clear-selected-button</code> · <code>.text-toolbar button</code> · <code>.fr-btn</code> · <code>#font-size-select</code> · <code>.quest-overlay-input</code> · <code>.quest-objective-input</code> · <code>.find-replace-row input</code> · <code>.sort-item</code> · <code>.view-toggle-item</code> · <code>.tag-button</code></div>
                 </div>
             </div>
             <div class="sg-role">
-                <div class="sg-role-sample"><div class="block-body sg-spec">Body</div></div>
+                <div class="sg-role-sample"><div class="text-body sg-spec">Body</div></div>
                 <div class="sg-role-meta">
-                    <div class="sg-role-spec">12px / 400 · leading 1.5</div>
-                    <div class="sg-role-uses"><span class="uses-label">uses</span> <code>body</code> · <code>.block-body</code> · <code>.book-card-description</code> · <code>.notes-card-description</code> · <code>.board-book-description</code> · <code>.notes-edit-body</code> · <code>.board-section-notes</code> · <code>.board-obj-item-text</code> · <code>.quest-objectives</code> · <code>.tag-button--compact</code> · <code>.tab3-location-pill</code> · <code>.tag-accordion-pill</code> · <code>.tag-accordion-header</code> · <code>.tag-accordion-chips .tag-button</code> · <code>.block-property</code> · <code>.inline-edit-add-tag</code> · <code>.quest-status-item</code> · <code>.stat-breakdown-popover .sb-row-val</code> · <code>.roll-chip</code> · <code>svg.roll-die-chip .die-number</code> · <code>.ds-roll-btn</code> · <code>.hd-type</code> · <code>.hd-roll-btn</code> · <code>.hp-action-btn</code> · <code>.map-link-popup-action</code> · <code>.delete-confirm-message</code> · <code>.clear-data-confirm-message</code> · <code>.long-rest-popup-message</code> · <code>.delete-confirm-buttons button</code> · <code>.clear-data-confirm-buttons button</code> · <code>.block.inline-editing .inline-edit-controls .button</code> · <code>.notes-viewer .inline-edit-controls .button</code></div>
+                    <div class="sg-role-spec"><code>.text-body</code> · 12px / 400 · leading 1.5</div>
+                    <div class="sg-role-uses"><span class="uses-label">applied to</span> <code>body</code> · <code>.block-body</code> · <code>.book-card-description</code> · <code>.notes-card-description</code> · <code>.notes-edit-body</code> · <code>.board-section-notes</code> · <code>.board-obj-item-text</code> · <code>.quest-objectives</code> · <code>.tag-button--compact</code> · <code>.tab3-location-pill</code> · <code>.tag-accordion-pill</code> · <code>.tag-accordion-header</code> · <code>.tag-accordion-chips .tag-button</code> · <code>.block-property</code> · <code>.inline-edit-add-tag</code> · <code>.quest-status-item</code> · <code>.stat-breakdown-popover .sb-row-val</code> · <code>.roll-chip</code> · <code>svg.roll-die-chip .die-number</code> · <code>.ds-roll-btn</code> · <code>.hd-type</code> · <code>.hd-roll-btn</code> · <code>.hp-action-btn</code> · <code>.map-link-popup-action</code> · <code>.delete-confirm-message</code> · <code>.clear-data-confirm-message</code> · <code>.long-rest-popup-message</code> · <code>.delete-confirm-buttons button</code> · <code>.clear-data-confirm-buttons button</code> · <code>.block.inline-editing .inline-edit-controls .button</code> · <code>.notes-viewer .inline-edit-controls .button</code></div>
                 </div>
             </div>
             <div class="sg-role">
-                <div class="sg-role-sample"><span class="hd-remaining sg-spec">Body-sm</span></div>
+                <div class="sg-role-sample"><span class="text-body-sm sg-spec">Body-sm</span></div>
                 <div class="sg-role-meta">
-                    <div class="sg-role-spec">10px / 400 · leading 1.3</div>
-                    <div class="sg-role-uses"><span class="uses-label">uses</span> <code>.board-add-obj-item-btn</code> · <code>.board-card-add-section-btn</code> · <code>.stat-breakdown-popover .sb-add</code> · <code>.stat-breakdown-popover .sb-row-desc</code> · <code>.stat-subvalue</code> · <code>.cs-mod-col .stat-subvalue</code> · <code>.descriptor-value</code> · <code>.hd-roll-detail</code> · <code>.hd-remaining</code> · <code>.skill-plus</code> · <code>.map-card-url</code> · <code>.quest-progress-count</code> · <code>.quest-progress.mini .quest-progress-count</code> · <code>.hp-max-edit</code> · <code>.hp-max-val</code> · <code>.uch-tooltip</code> · <code>.cs-currency-card .currency-tooltip</code> · <code>.board-picker-floating-tip</code> · <code>.board-empty-hint p</code> · <code>.tag-button--tiny</code> · <code>.inv-state-btn</code></div>
+                    <div class="sg-role-spec"><code>.text-body-sm</code> · 10px / 400 · leading 1.3</div>
+                    <div class="sg-role-uses"><span class="uses-label">applied to</span> <code>.board-add-obj-item-btn</code> · <code>.board-card-add-section-btn</code> · <code>.stat-breakdown-popover .sb-add</code> · <code>.stat-breakdown-popover .sb-row-desc</code> · <code>.stat-subvalue</code> · <code>.cs-mod-col .stat-subvalue</code> · <code>.descriptor-value</code> · <code>.hd-roll-detail</code> · <code>.hd-remaining</code> · <code>.skill-plus</code> · <code>.map-card-url</code> · <code>.quest-progress-count</code> · <code>.quest-progress.mini .quest-progress-count</code> · <code>.hp-max-edit</code> · <code>.hp-max-val</code> · <code>.uch-tooltip</code> · <code>.cs-currency-card .currency-tooltip</code> · <code>.board-picker-floating-tip</code> · <code>.board-empty-hint p</code> · <code>.tag-button--tiny</code> · <code>.inventory-state-btn</code></div>
                 </div>
             </div>
             <div class="sg-role">
-                <div class="sg-role-sample"><span class="hp-section-label sg-spec">Label</span></div>
+                <div class="sg-role-sample"><span class="text-label sg-spec">Label</span></div>
                 <div class="sg-role-meta">
-                    <div class="sg-role-spec">10px / 500 · CAPS · 0.05em · leading 1.2</div>
-                    <div class="sg-role-uses"><span class="uses-label">uses</span> <code>.hp-section-label</code> · <code>.hd-label</code> · <code>.cs-mod-label</code> · <code>.ds-group-label</code> · <code>.tab3-location-label</code> · <code>.bag-ov-label</code> · <code>.quest-overlay-label</code> · <code>.roll-error</code> · <code>.coin-icon-letter</code> · <code>.dice-count-badge</code> · <code>.roll-label</code> · <code>.stat-label</code> · <code>.cs-ref-label</code> · <code>.save-label</code> · <code>.skill-label</code> · <code>.descriptor-label</code> · <code>.dice-label</code> · <code>.bag-ov-cat</code> · <code>.saving-throws-and-skills-column h3</code></div>
+                    <div class="sg-role-spec"><code>.text-label</code> · 10px / 500 · CAPS · 0.05em · leading 1.2</div>
+                    <div class="sg-role-uses"><span class="uses-label">applied to</span> <code>.hp-section-label</code> · <code>.hd-label</code> · <code>.cs-mod-label</code> · <code>.ds-group-label</code> · <code>.tab3-location-label</code> · <code>.bag-overview-label</code> · <code>.quest-overlay-label</code> · <code>.roll-error</code> · <code>.coin-icon-letter</code> · <code>.dice-count-badge</code> · <code>.roll-label</code> · <code>.stat-label</code> · <code>.cs-ref-label</code> · <code>.save-label</code> · <code>.skill-label</code> · <code>.descriptor-label</code> · <code>.dice-label</code> · <code>.bag-overview-category</code> · <code>.saving-throws-and-skills-column h3</code></div>
                 </div>
             </div>
         </div>
@@ -436,10 +436,10 @@ body { padding: 0; }
 
         <div class="sg-sub"><h3>Action buttons (used on block cards)</h3></div>
         <div class="sg-row">
-            <button class="action-button remove-button red-button" title="Remove" style="font-size:14px;">×</button>
-            <button class="action-button duplicate-button blue-button" title="Copy" style="font-size:12px;">❐</button>
-            <button class="action-button edit-button orange-button" title="Edit" style="font-size:12px;">✎</button>
-            <button class="actions-trigger" title="Actions">···</button>
+            <button class="action-button remove-button red-button" title="Remove"><span class="svg-icon icon-x" style="width:16px;height:16px"></span></button>
+            <button class="action-button duplicate-button blue-button" title="Copy"><span class="svg-icon icon-duplicate" style="width:80%;height:80%"></span></button>
+            <button class="action-button edit-button orange-button" title="Edit"><span class="svg-icon icon-pencil" style="width:78%;height:78%"></span></button>
+            <button class="actions-trigger" title="Actions"><span class="svg-icon icon-ellipsis" style="width:75%;height:75%"></span></button>
             <button class="pin-button pin-active" title="Unpin" style="opacity:1;">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--color-blue)" stroke-width="2"><path d="M12 2 L12 12 M8 12 L16 12 L14 22 L10 22 Z"/></svg>
             </button>
@@ -463,7 +463,7 @@ body { padding: 0; }
 
         <div class="sg-sub"><h3>Clear-filters button (still active)</h3></div>
         <div class="sg-row">
-            <button class="clear_filters_button" title="Clear filters, 34px">✕</button>
+            <button class="clear_filters_button" title="Clear filters, 34px"><span class="svg-icon icon-x" style="width:20px;height:20px"></span></button>
         </div>
 
         <div class="sg-sub"><h3>Inline dice-roll chip</h3></div>
@@ -563,15 +563,15 @@ body { padding: 0; }
 
         <div class="sg-sub"><h3>Toggle switch</h3></div>
         <div class="sg-row">
-            <label class="inv-toggle inv-toggle-attune" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <label class="inventory-toggle inventory-toggle-attune" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                 <input type="checkbox">
-                <span class="inv-track"><span class="inv-thumb"></span></span>
+                <span class="inventory-track"><span class="inventory-thumb"></span></span>
                 Default size
             </label>
-            <label class="inv-toggle inv-toggle--sm inv-toggle-attune" style="display:flex;align-items:center;cursor:pointer;">
+            <label class="inventory-toggle inventory-toggle--sm inventory-toggle-attune" style="display:flex;align-items:center;cursor:pointer;">
                 <input type="checkbox" checked>
-                <span class="inv-track" style="background:var(--color-green);"><span class="inv-thumb" style="transform:translateX(14px);background:var(--gray-900);"></span></span>
-                .inv-toggle--sm (bag overlay)
+                <span class="inventory-track" style="background:var(--color-green);"><span class="inventory-thumb" style="transform:translateX(14px);background:var(--gray-900);"></span></span>
+                .inventory-toggle--sm (bag overlay)
             </label>
         </div>
     </section>
@@ -595,7 +595,7 @@ body { padding: 0; }
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--gray-700)" stroke-width="2"><path d="M12 2 L12 12 M8 12 L16 12 L14 22 L10 22 Z"/></svg>
                     </button>
                     <div class="block-actions-menu">
-                        <button class="actions-trigger" title="Actions">···</button>
+                        <button class="actions-trigger" title="Actions"><span class="svg-icon icon-ellipsis" style="width:75%;height:75%"></span></button>
                     </div>
                 </div>
             </div>
@@ -732,11 +732,11 @@ body { padding: 0; }
 
         <div class="sg-sub"><h3>Equip / attune indicator icons</h3></div>
         <div class="sg-row">
-            <button class="inv-state-btn inv-state-chain inv-state-on">
+            <button class="inventory-state-btn inventory-state-chain inventory-state-on">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6M8 8h1a3 3 0 010 6H8a3 3 0 010-6zM16 8h-1a3 3 0 000 6h1a3 3 0 000-6z"/></svg>
                 Attuned
             </button>
-            <button class="inv-state-btn inv-state-hand inv-state-on">
+            <button class="inventory-state-btn inventory-state-hand inventory-state-on">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11V6a2 2 0 114 0v5M11 11V4a2 2 0 114 0v7M15 11V6a2 2 0 114 0v6"/></svg>
                 Equipped
             </button>
@@ -748,7 +748,7 @@ body { padding: 0; }
     <!-- ============================================================ -->
     <section class="sg-section" id="icons">
         <h2>Icons</h2>
-        <p class="sg-section-desc">Three delivery methods are currently mixed:</p>
+        <p class="sg-section-desc">Four delivery methods are currently mixed. The small action/circle/toggle buttons now use the <strong>masked-SVG</strong> system (<code>.svg-icon.icon-*</code>), which reads an editable file from <code>images/</code> and recolours via <code>currentColor</code>:</p>
         <div class="sg-grid">
             <div class="sg-swatch" style="width:180px;text-align:center;">
                 <div class="sg-icon-wrap" style="margin:0 auto 8px;"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div>
@@ -761,6 +761,10 @@ body { padding: 0; }
             <div class="sg-swatch" style="width:180px;text-align:center;">
                 <div class="sg-icon-wrap" style="margin:0 auto 8px;font-size:18px;">Aa</div>
                 <div class="sg-swatch-label">Font Awesome (8 icons)<br><span class="sg-swatch-value">rich-text toolbar only</span></div>
+            </div>
+            <div class="sg-swatch" style="width:180px;text-align:center;">
+                <div class="sg-icon-wrap" style="margin:0 auto 8px;"><span class="svg-icon icon-pencil" style="width:24px;height:24px;color:var(--gray-800)"></span></div>
+                <div class="sg-swatch-label">Masked SVG file (action / circle / tag buttons)<br><span class="sg-swatch-value">editable file, recolours via currentColor</span></div>
             </div>
         </div>
     </section>

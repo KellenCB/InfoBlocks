@@ -404,10 +404,7 @@
 }
 
 .roll-value {
-  font-size: var(--font-28);
-  font-weight: 700;
   color: var(--gray-900);
-  line-height: 1;
   flex-shrink: 0;
 }
 
@@ -456,8 +453,6 @@ svg.roll-die-chip .die-shape {
 
 svg.roll-die-chip .die-number {
   fill: color-mix(in srgb, var(--chip-color) 90%, white);
-  font-size: var(--font-10);
-  font-weight: 600;
   font-family: inherit;
 }
 

@@ -204,7 +204,7 @@
 /* ====================== INVENTORY TOGGLE STYLES ======================= */
 /* ====================================================================== */
 
-.inv-toggle {
+.inventory-toggle {
     display: inline-flex;
     align-items: center;
     gap: var(--space-4);
@@ -214,7 +214,7 @@
     letter-spacing: 0.03em;
 }
 
-.inv-toggle input[type="checkbox"] {
+.inventory-toggle input[type="checkbox"] {
     position: absolute;
     opacity: 0;
     pointer-events: none;
@@ -222,7 +222,7 @@
     height: 0;
 }
 
-.inv-track {
+.inventory-track {
     width: 40px;
     height: 22px;
     border-radius: var(--radius-pill);
@@ -233,7 +233,7 @@
     transition: background-color var(--transition-medium) ease, border-color var(--transition-medium) ease, box-shadow var(--transition-medium) ease;
 }
 
-.inv-thumb {
+.inventory-thumb {
     position: absolute;
     top: 2px;
     left: 2px;
@@ -244,44 +244,44 @@
     transition: transform var(--transition-medium) ease, background-color var(--transition-medium) ease;
 }
 
-.inv-toggle input[type="checkbox"]:checked ~ .inv-track .inv-thumb {
+.inventory-toggle input[type="checkbox"]:checked ~ .inventory-track .inventory-thumb {
     transform: translateX(18px);
     background: var(--gray-900);
 }
 
-.inv-toggle--sm {
+.inventory-toggle--sm {
     gap: var(--space-7px);
 }
 
-.inv-toggle--sm .inv-track {
+.inventory-toggle--sm .inventory-track {
     width: 32px;
     height: 18px;
 }
 
-.inv-toggle--sm .inv-thumb {
+.inventory-toggle--sm .inventory-thumb {
     width: 12px;
     height: 12px;
     top: 2px;
     left: 2px;
 }
 
-.inv-toggle--sm input[type="checkbox"]:checked ~ .inv-track .inv-thumb {
+.inventory-toggle--sm input[type="checkbox"]:checked ~ .inventory-track .inventory-thumb {
     transform: translateX(14px);
 }
 
-.inv-toggle-attune input[type="checkbox"]:checked ~ .inv-track {
+.inventory-toggle-attune input[type="checkbox"]:checked ~ .inventory-track {
     background: color-mix(in srgb, var(--color-cyan) 55%, var(--gray-400));
     border-color: rgba(6, 173, 228, 0.75);
     box-shadow: var(--shadow-toggle-glow-attune);
 }
 
-.inv-toggle-equip input[type="checkbox"]:checked ~ .inv-track {
+.inventory-toggle-equip input[type="checkbox"]:checked ~ .inventory-track {
     background: color-mix(in srgb, #ff8c00 55%, var(--gray-400));
     border-color: rgba(255, 140, 0, 0.75);
     box-shadow: var(--shadow-toggle-glow-equip);
 }
 
-.inv-state-btn {
+.inventory-state-btn {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
@@ -297,15 +297,15 @@
     transition: color var(--transition-medium), filter var(--transition-medium);
 }
 
-.inv-state-btn svg { display: block; flex-shrink: 0; }
-.inv-state-btn.inv-state-chain svg { width: 16px; height: 16px; }
-.inv-state-btn.inv-state-hand  svg { width: 18px; height: 18px; }
+.inventory-state-btn svg { display: block; flex-shrink: 0; }
+.inventory-state-btn.inventory-state-chain svg { width: 16px; height: 16px; }
+.inventory-state-btn.inventory-state-hand  svg { width: 18px; height: 18px; }
 
-.inv-state-btn.inv-state-on.inv-state-chain {
+.inventory-state-btn.inventory-state-on.inventory-state-chain {
     color: var(--color-cyan);
     filter: drop-shadow(0 0 6px rgba(6, 173, 228, 0.7));
 }
-.inv-state-btn.inv-state-on.inv-state-hand {
+.inventory-state-btn.inventory-state-on.inventory-state-hand {
     color: #ff8c00;
     filter: drop-shadow(0 0 6px rgba(255, 140, 0, 0.7));
 }

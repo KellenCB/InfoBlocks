@@ -51,7 +51,7 @@ const buildQuestProgressHTML = (done, total, mini = false) => {
     return `
         <div class="quest-progress${mini ? ' mini' : ''}">
             <div class="quest-progress-track"><div class="quest-progress-fill" style="width:${pct}%"></div></div>
-            <span class="quest-progress-count">${done} / ${total}</span>
+            <span class="quest-progress-count text-body-sm">${done} / ${total}</span>
         </div>
     `;
 };
@@ -69,10 +69,10 @@ const buildQuestLocationPillHTML = (location) => {
 
 const buildQuestObjectivesHTML = (blockId, objectives) => {
     if (!Array.isArray(objectives) || objectives.length === 0) {
-        return `<div class="quest-objectives-empty">No objectives yet</div>`;
+        return `<div class="quest-objectives-empty text-body">No objectives yet</div>`;
     }
     return `
-        <div class="quest-objectives">
+        <div class="quest-objectives text-body">
             ${objectives.map((o, idx) => `
                 <div class="quest-objective${o.done ? ' done' : ''}" onclick="toggleObjective('${blockId}', ${idx}, event, this)">
                     <span class="quest-objective-checkbox">
@@ -114,7 +114,7 @@ export const blockTemplate = (block, tab = "tab4") => {
         .map(([category, tags]) =>
             tags.map(tag => {
                 const tagClass = categoryTags[category]?.className || "tag-default";
-                return `<span class="tag-button tag-button--tiny ${tagClass} ${selClass(tag)}" data-tag="${tag}">${tag}</span>`;
+                return `<span class="tag-button tag-button--tiny ${tagClass} ${selClass(tag)} text-body-sm" data-tag="${tag}">${tag}</span>`;
             }).join("")
         )
         .join("");
@@ -124,12 +124,12 @@ export const blockTemplate = (block, tab = "tab4") => {
         .map(normalizeTag);
 
     const userTagsHTML = userTags.map(tag =>
-        `<span class="tag-button tag-button--tiny tag-user ${selClass(tag)}" data-tag="${tag}">${tag}</span>`
+        `<span class="tag-button tag-button--tiny tag-user ${selClass(tag)} text-body-sm" data-tag="${tag}">${tag}</span>`
     ).join("");
 
     const propertiesHTML = (viewState === 'expanded' && !isTab6 && block.properties && block.properties.length > 0)
         ? `<div class="block-properties">${block.properties.map(p =>
-            `<span class="block-property">${p}</span>`
+            `<span class="block-property text-body">${p}</span>`
           ).join("")}</div>`
         : "";
 
@@ -139,7 +139,7 @@ export const blockTemplate = (block, tab = "tab4") => {
 
     const blockTypeClass = blockTypeConfig[tab]?.className || "tag-characterType";
     const blockTypeHTML = blockTypes.map(bt =>
-        `<span class="tag-button tag-button--tiny ${blockTypeClass} ${selClass(bt)}" data-tag="${bt}">${bt}</span>`
+        `<span class="tag-button tag-button--tiny ${blockTypeClass} ${selClass(bt)} text-body-sm" data-tag="${bt}">${bt}</span>`
     ).join("");
 
     // ── Tab3 state (needed for tag overrides below) ────────────────
@@ -241,7 +241,7 @@ export const blockTemplate = (block, tab = "tab4") => {
                 <div class="block-header">
                     <div class="block-header-left">
                         <div class="quest-card-thumb">${questIconSVG}</div>
-                        <div class="block-title"><h3>${escapeHtml(block.title)}</h3></div>
+                        <div class="block-title"><h3 class="text-md">${escapeHtml(block.title)}</h3></div>
                     </div>
                     ${tab6ActionMenu}
                 </div>
@@ -252,7 +252,7 @@ export const blockTemplate = (block, tab = "tab4") => {
                 ${tagSectionsHTML}
                 ${buildQuestProgressHTML(questDone, questObjectives.length)}
                 ${buildQuestObjectivesHTML(block.id, questObjectives)}
-                ${ hasBody ? `<div class="block-body"><span>${bodyHTML}</span></div>` : "" }
+                ${ hasBody ? `<div class="block-body text-body"><span>${bodyHTML}</span></div>` : "" }
             `;
         } else if (isTab3Notes) {
             const notesIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
@@ -267,15 +267,15 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class="block-header-left">
                         <div class="notes-card-thumb">${notesIconSVG}</div>
                         <div class="notes-card-text${notesDescription ? '' : ' notes-card-text-no-desc'}">
-                            <div class="block-title"><h3>${escapeHtml(block.title)}</h3></div>
-                            ${notesDescription ? `<div class="notes-card-description">${escapeHtml(notesDescription)}</div>` : ''}
+                            <div class="block-title"><h3 class="text-md">${escapeHtml(block.title)}</h3></div>
+                            ${notesDescription ? `<div class="notes-card-description text-body">${escapeHtml(notesDescription)}</div>` : ''}
                         </div>
                         ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
                     </div>
                     ${tab6ActionMenu}
                 </div>
                 ${tagSectionsHTML}
-                ${ hasBody ? `<div class="block-body"><span>${bodyHTML}</span></div>` : "" }
+                ${ hasBody ? `<div class="block-body text-body"><span>${bodyHTML}</span></div>` : "" }
             `;
         } else if (isTab3Book) {
             const bookIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 4.5A2.5 2.5 0 0 0 6.5 7H20"/></svg>`;
@@ -289,15 +289,15 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class="block-header-left">
                         <div class="book-card-thumb">${bookIconSVG}</div>
                         <div class="book-card-text${bookDescription ? '' : ' book-card-text-no-desc'}">
-                            <div class="book-card-title"><h3>${escapeHtml(block.title)}</h3></div>
-                            ${bookDescription ? `<div class="book-card-description">${escapeHtml(bookDescription)}</div>` : ''}
+                            <div class="book-card-title"><h3 class="text-md">${escapeHtml(block.title)}</h3></div>
+                            ${bookDescription ? `<div class="book-card-description text-body">${escapeHtml(bookDescription)}</div>` : ''}
                         </div>
                         ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
                     </div>
                     ${tab6ActionMenu}
                 </div>
                 ${tagSectionsHTML}
-                ${ hasBody ? `<div class="block-body"><span>${bodyHTML}</span></div>` : "" }
+                ${ hasBody ? `<div class="block-body text-body"><span>${bodyHTML}</span></div>` : "" }
             `;
         } else {
             const usesHTML = block.uses
@@ -310,14 +310,14 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class="block-header-left">
                         ${chainHTML}
                         ${handHTML}
-                        <div class="block-title"><h3>${escapeHtml(block.title)}</h3></div>
+                        <div class="block-title"><h3 class="text-md">${escapeHtml(block.title)}</h3></div>
                         ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
                     </div>
                     ${tab6ActionMenu}
                 </div>
                 ${tagSectionsHTML}
                 ${propertiesHTML}
-                ${ hasBody ? `<div class="block-body"><span>${bodyHTML}</span></div>` : "" }
+                ${ hasBody ? `<div class="block-body text-body"><span>${bodyHTML}</span></div>` : "" }
             `;
         }
 
@@ -328,7 +328,7 @@ export const blockTemplate = (block, tab = "tab4") => {
                 <div class="block-header">
                     <div class="block-header-left">
                         <div class="quest-card-thumb">${questIconSVG}</div>
-                        <div class="block-title"><h3>${escapeHtml(block.title)}</h3></div>
+                        <div class="block-title"><h3 class="text-md">${escapeHtml(block.title)}</h3></div>
                     </div>
                     ${tab6ActionMenu}
                 </div>
@@ -345,8 +345,8 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class="block-header-left">
                         <div class="map-card-thumb">${mapIconSVG}</div>
                         <div class="map-card-text">
-                            <div class="map-card-title"><h3>${escapeHtml(block.title)}</h3></div>
-                            ${block.url ? `<div class="map-card-url">${escapeHtml(block.url)}</div>` : ''}
+                            <div class="map-card-title"><h3 class="text-md">${escapeHtml(block.title)}</h3></div>
+                            ${block.url ? `<div class="map-card-url text-body-sm">${escapeHtml(block.url)}</div>` : ''}
                         </div>
                     </div>
                     ${tab6ActionMenu}
@@ -359,8 +359,8 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class="block-header-left">
                         <div class="book-card-thumb">${bookIconSVG}</div>
                         <div class="book-card-text${bookDescription ? '' : ' book-card-text-no-desc'}">
-                            <div class="book-card-title"><h3>${escapeHtml(block.title)}</h3></div>
-                            ${bookDescription ? `<div class="book-card-description">${escapeHtml(bookDescription)}</div>` : ''}
+                            <div class="book-card-title"><h3 class="text-md">${escapeHtml(block.title)}</h3></div>
+                            ${bookDescription ? `<div class="book-card-description text-body">${escapeHtml(bookDescription)}</div>` : ''}
                         </div>
                     </div>
                     ${tab6ActionMenu}
@@ -374,8 +374,8 @@ export const blockTemplate = (block, tab = "tab4") => {
                     <div class="block-header-left">
                         <div class="notes-card-thumb">${notesIconSVG}</div>
                         <div class="notes-card-text${notesDescription ? '' : ' notes-card-text-no-desc'}">
-                            <div class="block-title"><h3>${escapeHtml(block.title)}</h3></div>
-                            ${notesDescription ? `<div class="notes-card-description">${escapeHtml(notesDescription)}</div>` : ''}
+                            <div class="block-title"><h3 class="text-md">${escapeHtml(block.title)}</h3></div>
+                            ${notesDescription ? `<div class="notes-card-description text-body">${escapeHtml(notesDescription)}</div>` : ''}
                         </div>
                     </div>
                     ${tab6ActionMenu}
@@ -399,7 +399,7 @@ export const blockTemplate = (block, tab = "tab4") => {
                 <div class="block-header">
                     ${chainHTML}
                     ${handHTML}
-                    <div class="block-title"><h3>${escapeHtml(block.title)}</h3></div>
+                    <div class="block-title"><h3 class="text-md">${escapeHtml(block.title)}</h3></div>
                     ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
                     ${condensedTagsHTML}
                     ${tab6ActionMenu}
@@ -409,7 +409,7 @@ export const blockTemplate = (block, tab = "tab4") => {
     } else if (viewState === 'session-log') {
         content = `
             <div class="block-header">
-                <div class="block-title"><h3>${escapeHtml(block.title)}</h3></div>
+                <div class="block-title"><h3 class="text-md">${escapeHtml(block.title)}</h3></div>
             </div>
         `;
     } else if (viewState === 'minimized') {
@@ -422,7 +422,7 @@ export const blockTemplate = (block, tab = "tab4") => {
             <div class="block-header">
                 ${chainHTML}
                 ${handHTML}
-                <div class="block-title-minimized"><h3>${escapeHtml(block.title)}</h3></div>
+                <div class="block-title-minimized"><h3 class="text-md">${escapeHtml(block.title)}</h3></div>
                 ${usesHTML ? `<div class="block-uses">${usesHTML}</div>` : ""}
             </div>
         `;

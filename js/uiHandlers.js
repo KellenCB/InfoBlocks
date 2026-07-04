@@ -667,16 +667,16 @@ const renderBar = () => {
     let hpDragState = null;
 
     const hpDragDelta = document.createElement('div');
-    hpDragDelta.className = 'hp-drag-delta';
+    hpDragDelta.className = 'hp-drag-delta text-md';
     barArea.appendChild(hpDragDelta);
 
     function showHpDelta(d) {
         hpDragDelta.style.animation = 'none';
         hpDragDelta.offsetHeight;
         hpDragDelta.style.animation = '';
-        if (d === 0) { hpDragDelta.className = 'hp-drag-delta'; return; }
+        if (d === 0) { hpDragDelta.className = 'hp-drag-delta text-md'; return; }
         hpDragDelta.textContent = (d > 0 ? '+' : '') + d;
-        hpDragDelta.className = 'hp-drag-delta hp-drag-live ' + (d > 0 ? 'hp-drag-pos' : 'hp-drag-neg');
+        hpDragDelta.className = 'hp-drag-delta text-md hp-drag-live ' + (d > 0 ? 'hp-drag-pos' : 'hp-drag-neg');
     }
 
     function floatHpDelta() {
@@ -685,9 +685,9 @@ const renderBar = () => {
         hpDragDelta.style.animation = 'none';
         hpDragDelta.offsetHeight;
         hpDragDelta.style.animation = '';
-        hpDragDelta.className = 'hp-drag-delta hp-drag-floating ' + color;
+        hpDragDelta.className = 'hp-drag-delta text-md hp-drag-floating ' + color;
         hpDragDelta.addEventListener('animationend', () => {
-            hpDragDelta.className = 'hp-drag-delta';
+            hpDragDelta.className = 'hp-drag-delta text-md';
         }, { once: true });
     }
 
@@ -767,7 +767,7 @@ const renderBar = () => {
         if (!hpDragState) return;
         hpDragState = null;
         hpDragDelta.style.animation = 'none';
-        hpDragDelta.className = 'hp-drag-delta';
+        hpDragDelta.className = 'hp-drag-delta text-md';
     });
 
     // ── Long rest listener ───────────────────────────────────────────
@@ -1065,7 +1065,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (getLevelTotal(n) > 0) continue;
             const chip = document.createElement('div');
             chip.classList.add('ghost-chip');
-            chip.innerHTML = `<span>${n}</span><span class="ghost-chip-plus"><span class="svg-icon icon-plus" style="width:1em;height:1em;vertical-align:-0.12em"></span></span>`;
+            chip.innerHTML = `<span>${n}</span><span class="ghost-chip-plus"><span class="svg-icon icon-plus" style="width:12px;height:12px;vertical-align:-0.12em"></span></span>`;
             chip.addEventListener('click', () => {
                 saveLevel(n, { 0: false }, 1);
                 renderLevel(n, true);
@@ -1196,7 +1196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const popup = document.createElement('div');
         popup.id = 'long-rest-popup';
         popup.className = 'long-rest-popup';
-        popup.innerHTML = `<span class="long-rest-popup-message">Long rest — refill all<br>suit uses and spell slots?</span>`;
+        popup.innerHTML = `<span class="long-rest-popup-message text-body">Long rest — refill all<br>suit uses and spell slots?</span>`;
         document.getElementById('header-row').appendChild(popup);
 
         const moonRect = longRestBtn.getBoundingClientRect();
@@ -1299,8 +1299,8 @@ function promptForFilename(defaultName) {
                 <span style="color:#eee;font-size:14px;">Enter a name for your file:</span>
                 <input type="text" class="filename-prompt-input" style="padding:8px 10px;border-radius:6px;border:1px solid #555;background:#111;color:#eee;font-size:14px;" />
                 <div style="display:flex;gap:8px;justify-content:flex-end;">
-                    <button type="button" class="button red-button filename-prompt-cancel">Cancel</button>
-                    <button type="button" class="button green-button filename-prompt-save">Save</button>
+                    <button type="button" class="button red-button filename-prompt-cancel text-md">Cancel</button>
+                    <button type="button" class="button green-button filename-prompt-save text-md">Save</button>
                 </div>
             </div>
         `;

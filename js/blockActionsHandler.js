@@ -37,10 +37,10 @@ export const blockActionsHandler = (() => {
         popup.id = 'delete-confirm-popup';
         popup.className = 'delete-confirm-popup';
         popup.innerHTML = `
-            <span class="delete-confirm-message">Are you sure you want<br>to delete this block?</span>
+            <span class="delete-confirm-message text-body">Are you sure you want<br>to delete this block?</span>
             <div class="delete-confirm-buttons">
-                <button class="delete-confirm-yes hold-to-confirm"><span>Yes</span></button>
-                <button class="delete-confirm-no">No</button>
+                <button class="delete-confirm-yes hold-to-confirm text-body"><span>Yes</span></button>
+                <button class="delete-confirm-no text-body">No</button>
             </div>
         `;
         document.body.appendChild(popup);

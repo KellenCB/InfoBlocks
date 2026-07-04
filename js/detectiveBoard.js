@@ -385,8 +385,8 @@ function buildCardHTML(block) {
     return `
         <div class="board-card-header">
             <div class="board-card-title-wrap">
-                <span class="board-card-title">${titleDisp}</span>
-                <input class="board-card-title-input" value="${titleEsc}" placeholder="Untitled" />
+                <span class="board-card-title text-md">${titleDisp}</span>
+                <input class="board-card-title-input text-md" value="${titleEsc}" placeholder="Untitled" />
             </div>
             <div class="board-card-actions">
                 <button class="board-card-btn board-card-collapse-btn" title="Toggle collapse">
@@ -401,7 +401,7 @@ function buildCardHTML(block) {
 
         <div class="board-card-body">
             ${buildSectionsHTML(block.sections || [])}
-            <button class="board-card-add-section-btn">
+            <button class="board-card-add-section-btn text-body-sm">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="11" height="11"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Add section
             </button>
@@ -439,18 +439,18 @@ function buildSectionBodyHTML(section) {
                 <span class="board-obj-checkbox">
                     <svg class="board-obj-tick" viewBox="0 0 9 9"><path d="M1 4.5L3.5 7 8 1.5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
-                <span class="board-obj-item-text">${textDisp || ''}</span>
-                <input class="board-obj-item-input" value="${textEsc}" placeholder="Objective…" />
+                <span class="board-obj-item-text text-body">${textDisp || ''}</span>
+                <input class="board-obj-item-input text-body" value="${textEsc}" placeholder="Objective…" />
             </div>
         `;
     }
     if (section.type === 'notes') {
         const content = section.content || '';
-        return `<div class="board-section-notes" contenteditable="false" data-section-id="${section.id}">${content}</div>`;
+        return `<div class="board-section-notes text-body" contenteditable="false" data-section-id="${section.id}">${content}</div>`;
     }
     if (section.type === 'subheader') {
         const content = section.content || '';
-        return `<div class="board-section-subheader" contenteditable="false" data-section-id="${section.id}">${content}</div>`;
+        return `<div class="board-section-subheader text-md" contenteditable="false" data-section-id="${section.id}">${content}</div>`;
     }
     if (section.type === 'objectives') {
         // Migrate old group-based data on the fly
@@ -460,7 +460,7 @@ function buildSectionBodyHTML(section) {
                 <div class="board-obj-items">
                     ${items.map(buildObjectiveItemHTML).join('')}
                 </div>
-                <button class="board-add-obj-item-btn">+ Add objective</button>
+                <button class="board-add-obj-item-btn text-body-sm">+ Add objective</button>
             </div>
         `;
     }
@@ -510,8 +510,8 @@ function buildObjectiveItemHTML(item) {
             <span class="board-obj-checkbox">
                 <svg class="board-obj-tick" viewBox="0 0 9 9"><path d="M1 4.5L3.5 7 8 1.5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
-            <span class="board-obj-item-text">${textDisp}</span>
-            <input class="board-obj-item-input" value="${textEsc}" placeholder="Objective…" />
+            <span class="board-obj-item-text text-body">${textDisp}</span>
+            <input class="board-obj-item-input text-body" value="${textEsc}" placeholder="Objective…" />
         </div>
     `;
 }
@@ -762,9 +762,9 @@ export const detectiveBoard = (() => {
         const zoomControls = document.createElement('div');
         zoomControls.className = 'board-zoom-controls';
         zoomControls.innerHTML = `
-            <button class="board-zoom-btn" data-action="out" title="Zoom out">−</button>
-            <span class="board-zoom-label">100%</span>
-            <button class="board-zoom-btn" data-action="in"  title="Zoom in">+</button>
+            <button class="board-zoom-btn text-md" data-action="out" title="Zoom out">−</button>
+            <span class="board-zoom-label text-body-sm">100%</span>
+            <button class="board-zoom-btn text-md" data-action="in"  title="Zoom in">+</button>
         `;
         board.appendChild(zoomControls);
 
@@ -906,7 +906,7 @@ export const detectiveBoard = (() => {
                             <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
                         </svg>
                     </div>
-                    <p>Double-click anywhere to add a block</p>
+                    <p class="text-body-sm">Double-click anywhere to add a block</p>
                 `;
                 boardEl.appendChild(hint);
             }
@@ -1857,7 +1857,7 @@ export const detectiveBoard = (() => {
 
         // Body-level tooltip to avoid card overflow:hidden clipping
         const pickerTip = document.createElement('div');
-        pickerTip.className = 'board-picker-floating-tip';
+        pickerTip.className = 'board-picker-floating-tip text-body-sm';
         document.body.appendChild(pickerTip);
         let tipTimer = null;
 
@@ -2358,7 +2358,7 @@ export const detectiveBoard = (() => {
         picker.appendChild(sep);
 
         const del = document.createElement('button');
-        del.className = 'board-string-picker-delete';
+        del.className = 'board-string-picker-delete text-md';
         del.title = 'Remove connection';
         del.textContent = '×';
         del.addEventListener('click', (de) => {
