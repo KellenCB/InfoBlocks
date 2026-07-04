@@ -991,7 +991,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const states = getSuitStates();
 
         if (editMode) {
-            circlesWrapper.appendChild(makeButton('circle-add', '+', () => {
+            circlesWrapper.appendChild(makeButton('circle-add', '<span class="svg-icon icon-plus" style="width:70%;height:70%"></span>', () => {
                 const t = getSuitTotal();
                 const s = getSuitStates();
                 const newStates = { 0: false };
@@ -999,7 +999,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveSuit(newStates, t + 1);
                 renderSuit(true);
             }));
-            circlesWrapper.appendChild(makeButton('circle-remove', '−', () => {
+            circlesWrapper.appendChild(makeButton('circle-remove', '<span class="svg-icon icon-minus" style="width:70%;height:70%"></span>', () => {
                 const t = getSuitTotal();
                 if (t <= 0) return;
                 const s = getSuitStates();
@@ -1028,7 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const states = getLevelStates(n);
 
         if (editMode && total > 0) {
-            group.appendChild(makeButton('circle-add', '+', () => {
+            group.appendChild(makeButton('circle-add', '<span class="svg-icon icon-plus" style="width:70%;height:70%"></span>', () => {
                 const t = getLevelTotal(n);
                 const s = getLevelStates(n);
                 const newStates = { 0: false };
@@ -1036,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveLevel(n, newStates, t + 1);
                 renderLevel(n, true);
             }));
-            group.appendChild(makeButton('circle-remove', '−', () => {
+            group.appendChild(makeButton('circle-remove', '<span class="svg-icon icon-minus" style="width:70%;height:70%"></span>', () => {
                 const t = getLevelTotal(n);
                 if (t <= 0) return;
                 const s = getLevelStates(n);
@@ -1065,7 +1065,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (getLevelTotal(n) > 0) continue;
             const chip = document.createElement('div');
             chip.classList.add('ghost-chip');
-            chip.innerHTML = `<span>${n}</span><span class="ghost-chip-plus">+</span>`;
+            chip.innerHTML = `<span>${n}</span><span class="ghost-chip-plus"><span class="svg-icon icon-plus" style="width:1em;height:1em;vertical-align:-0.12em"></span></span>`;
             chip.addEventListener('click', () => {
                 saveLevel(n, { 0: false }, 1);
                 renderLevel(n, true);
@@ -1082,7 +1082,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSuit(true);
         for (let n = 1; n <= 9; n++) renderLevel(n, true);
         renderGhostChips();
-        if (editSpellBtn) editSpellBtn.textContent = '✓';
+        if (editSpellBtn) editSpellBtn.innerHTML = '<span class="svg-icon icon-check" style="width:78%;height:78%"></span>';
     };
 
     const exitEditMode = () => {
@@ -1090,7 +1090,7 @@ document.addEventListener('DOMContentLoaded', () => {
         spellSlotSection.querySelectorAll('.ghost-chip').forEach(c => c.remove());
         renderSuit(false);
         for (let n = 1; n <= 9; n++) renderLevel(n, false);
-        if (editSpellBtn) editSpellBtn.textContent = '✎';
+        if (editSpellBtn) editSpellBtn.innerHTML = '<span class="svg-icon icon-pencil" style="width:78%;height:78%"></span>';
     };
 
     const toggleEditMode = () => {

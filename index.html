@@ -6,7 +6,6 @@
     <title>Information Blocks</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" sizes="any">
     <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
-    <link rel="stylesheet" href="./css/Colourpalette.css">
     <link rel="stylesheet" href="./css/base-layout.css">
     <link rel="stylesheet" href="./css/buttons.css">
     <link rel="stylesheet" href="./css/forms.css">
@@ -16,6 +15,7 @@
     <link rel="stylesheet" href="./css/CharacterSheet.css">
     <link rel="stylesheet" href="./css/inventoryBag.css">
     <link rel="stylesheet" href="./css/detectiveBoard.css">
+    <link rel="stylesheet" href="./css/design-system.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
@@ -87,7 +87,7 @@
                         <span class="uch-tooltip">Feats &amp; Magic</span>
                     </button>
                     <button class="tab-button uch-tab" data-tab="tab3">
-                        <svg viewBox="0 0 24 24"><path d="M6 20l4-4 10-10c1-1 3-1 3 1L13 17l-4 4z"/><path d="M20 6L10 16" stroke-width="1"/><path d="M4 22l2-2" stroke-width="1"/></svg>
+                        <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="20" y1="20" x2="15.4" y2="15.4"/></svg>
                         <span class="uch-tooltip">Quests &amp; Notes</span>
                     </button>
                     <button class="tab-button uch-tab" data-tab="tab6">
@@ -365,7 +365,7 @@
                         <div class="spell-slot-group" data-group="9"><span class="spell-slot-title">L9</span></div>
                     </div>
                     <div class="resources-strip-actions">
-                        <button id="edit_spell_slots_button" class="spell-slot-edit-btn" title="Edit spell slots">✎</button>
+                        <button id="edit_spell_slots_button" class="spell-slot-edit-btn" title="Edit spell slots"><span class="svg-icon icon-pencil" style="width:78%;height:78%"></span></button>
                     </div>
                 </div>
 
@@ -902,7 +902,7 @@
                     <div class="filter-divider"></div>
                     <div class="filter-section-wrapper frosted-glass">
                         <div class="filter-panel-header">
-                            <button id="clear_filters_button_9" class="clear_filters_button" title="Clear filters">✕</button>
+                            <button id="clear_filters_button_9" class="clear_filters_button" title="Clear filters"><span class="svg-icon icon-x" style="width:20px;height:20px"></span></button>
                         </div>
                         <div id="filter_section_9" class="filter-section scroll-fade">
                             <div class="block-type-tags" id="character_type_tags_9"></div>

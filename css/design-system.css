@@ -1,0 +1,342 @@
+/* ==========================================================================
+   DESIGN SYSTEM  —  single source of truth for tokens + typography
+   --------------------------------------------------------------------------
+   Loaded LAST. Tokens (1-7) are :root custom properties and are global no
+   matter where they're declared. The typography text styles (8) rely on
+   loading last so they override the older per-component declarations.
+   --------------------------------------------------------------------------
+   CONTENTS
+     1 · COLOURS        (greys, semantic, accents, block states, find,
+                         tags, inventory state, glass, board strings)
+     2 · SPACING
+     3 · TYPE SCALE     (font sizes)
+     4 · LINE-HEIGHT
+     5 · RADIUS
+     6 · SHADOWS
+     7 · MOTION         (transitions & easing)
+     8 · TYPOGRAPHY     (the complete text styles)
+   ========================================================================== */
+
+/* ==========================================================================
+   1 · COLOURS
+   ========================================================================== */
+:root {
+
+    /* -- Greys -- */
+    --gray-150: #1e1e1e;
+    --gray-400: #444;
+    --gray-500: #555;
+    --gray-600: #666;
+    --gray-700: #888;
+    --gray-800: #bbb;
+    --gray-850: #ddd;
+    --gray-900: #fff;
+
+    /* -- Semantic (text / surface / border) -- */
+    --color-text: var(--gray-850);
+    --color-text-strong: var(--gray-900);
+    --color-text-muted: var(--gray-700);
+    --color-border: var(--gray-500);
+    --color-surface: var(--gray-400);
+    --color-surface-hover: var(--gray-500);
+
+    /* -- Accents -- */
+    --color-green: #4CAF50;
+    --color-green-dark: #388e3c;
+    --color-orange: #f4a261;
+    --color-red: #ff6b6b;
+    --color-blue: #2d81ff;
+    --color-cyan: #06ade4;
+
+    /* -- Block states (pinned / selected) -- */
+    --block-bg-pinned-base: color-mix(in srgb, var(--color-blue) 12%, var(--glass-bg));
+    --block-bg-pinned-highlight: rgba(45, 129, 255, 0.35);
+    --block-border-pinned: rgba(45, 129, 255, 0.25);
+    --block-bg-selected-base: color-mix(in srgb, var(--gray-900) 8%, var(--glass-bg));
+    --block-bg-selected-highlight: rgba(255, 255, 255, 0.25);
+    --block-border-selected: rgba(255, 255, 255, 0.22);
+
+    /* -- Find / search highlight -- */
+    --color-find:                rgba(255, 200, 0, 0.35);
+    --color-find-active:         rgba(255, 200, 0, 0.75);
+    --color-find-active-outline: rgba(255, 180, 0, 0.90);
+    --color-find-close-hover:    #ff8e8e;
+
+    /* -- Tag category colours -- */
+    --user-color:           #e4e0e0;
+    --characterType-color:  #00e5ff;
+    --part-color:           #CDF564;
+    --action-color:         #07f371;
+    --ability-color:        #bf5eff;
+    --range-color:          #2b7bf1;
+    --condition-color:      #ffa927;
+    --spellLevel-color:     #49c1e6;
+    --infusion-color:       #49c1e6;
+    --attribute-color:      #FF4632;
+    --charges-color:        #43ffef;
+    --itemCategory-color:   var(--characterType-color);
+   --or-selected-opacity: 50%;
+   --tag-bg-opacity: 18%;
+
+    /* -- Inventory state -- */
+    --chain-attuned-color:    var(--color-cyan);
+    --chain-unattuned-color:  var(--gray-600);
+    --hand-equipped-color:    var(--color-orange);
+    --hand-unequipped-color:  var(--gray-600);
+
+    /* -- Misc -- */
+    --circle-color: #e4e0e0;
+
+    /* -- Glass surfaces -- */
+    --glass-bg: rgba(30, 30, 30, 0.6);
+    --glass-blur: blur(12px);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --glass-border: 0.5px solid rgba(255, 255, 255, 0.08);
+
+    /* -- Detective-board string colours -- */
+    --string-red:    #c0392b;
+    --string-amber:  #e67e22;
+    --string-yellow: #f1c40f;
+    --string-green:  #27ae60;
+    --string-blue:   #2980b9;
+    --string-purple: #8e44ad;
+    --string-white:  #ecf0f1;
+
+    /* ============ 2 · SPACING ============ */
+    --space-1: 4px;
+    --space-2: 6px;
+    --space-3: 8px;
+    --space-4: 10px;
+    --space-5: 12px;
+    --space-6: 15px;
+    --space-7: 16px;
+    --space-8: 20px;
+    --space-9: 25px;
+    --space-10: 30px;
+    --space-1px: 1px;
+    --space-2px: 2px;
+    --space-3px: 3px;
+    --space-5px: 5px;
+    --space-7px: 7px;
+    --space-7-5px: 7.5px;
+    --space-9px: 9px;
+    --space-14px: 14px;
+    --space-18px: 18px;
+
+    /* ============ 3 · TYPE SCALE (font sizes) ============ */
+    --font-10: 10px;
+    --font-12: 12px;
+    --font-14: 14px;
+    --font-16: 16px;
+    --font-18: 18px;
+    --font-28: 28px;
+    --font-36: 36px;
+
+    /* ============ 4 · LINE-HEIGHT ============ */
+    --lh-body: 1.5;
+    --lh-compact: 1.3;
+
+    /* ============ 5 · RADIUS ============ */
+    --radius-2xs: 2px;
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 15px;
+    --radius-pill: 999px;
+
+    /* ============ 6 · SHADOWS ============ */
+    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 6px 24px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 10px 32px rgba(0, 0, 0, 0.55);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.7);
+    --shadow-popup: 0 4px 16px rgba(0, 0, 0, 0.25);
+    --shadow-board-card-hover: 0 6px 28px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
+    --shadow-board-card-dragging: var(--shadow-xl), 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-board-card-connect-hover: 0 0 0 1px rgba(192, 57, 43, 0.25), 0 6px 28px rgba(0, 0, 0, 0.6);
+    --shadow-board-tack: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+    --shadow-block-pinned-dragging: 0 6px 20px rgba(0, 0, 0, 0.35);
+    --shadow-swatch-ring: 0 0 0 2px rgba(255, 255, 255, 0.2);
+    --shadow-book-swatch: 0 1px 2px rgba(0, 0, 0, 0.15);
+    --shadow-book-swatch-selected: 0 0 0 2px var(--gray-400), 0 0 0 4px var(--gray-900);
+    --shadow-coin-pill-hover: 0 0 0 1px rgba(255, 255, 255, 0.12);
+    --shadow-coin-pill-active: 0 0 0 2px rgba(255, 255, 255, 0.18);
+    --shadow-coin-pill-editing: 0 0 0 2px rgba(255, 255, 255, 0.15);
+    --shadow-coin-bevel-gold: inset 0 1px 2px rgba(232, 196, 56, 0.35), inset 0 -1px 2px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-coin-bevel-silver: inset 0 1px 2px rgba(200, 200, 200, 0.35), inset 0 -1px 2px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-coin-bevel-copper: inset 0 1px 2px rgba(200, 120, 80, 0.35), inset 0 -1px 2px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-toggle-glow-attune: 0 0 10px rgba(6, 173, 228, 0.55), inset 0 0 6px rgba(6, 173, 228, 0.4);
+    --shadow-toggle-glow-equip: 0 0 10px rgba(255, 140, 0, 0.55), inset 0 0 6px rgba(255, 140, 0, 0.4);
+    --shadow-slider-glow: color-mix(in srgb, var(--color-green) 20%, transparent) 0px -6px 24px 0px;
+
+    /* -- Text shadows -- */
+    --text-shadow-hp-bar: 0 1px 3px rgba(0, 0, 0, 0.6);
+    --text-shadow-coin-letter: 0 1px 1px rgba(0, 0, 0, 0.35);
+
+    /* ============ 7 · MOTION (transitions & easing) ============ */
+    --transition-xfast: 0.1s;
+    --transition-micro: 0.12s;
+    --transition-fast: 0.15s;
+    --transition-medium: 0.2s;
+    --transition-dim: 0.25s;
+    --transition-slow: 0.3s;
+    --transition-overlay: 0.4s;
+    --transition-slower: 0.5s;
+    --easing-signature: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+/* ==========================================================================
+   8 · TYPOGRAPHY  —  complete text styles
+   Each locks size + weight + case + letter-spacing + line-height.
+   Only colour / grey tone varies per instance (interaction states may
+   change weight). +/-, edit, ellipsis etc. are SVG icons, not text.
+   ========================================================================== */
+
+/* text-2xl 36/600 */
+.cs-ac-val {
+    font-size: var(--font-36); font-weight: 600; letter-spacing: 0.03em; line-height: 1.2;
+}
+
+/* text-xl 28/600 */
+.roll-value,
+.cs-mod-col .stat-value {
+    font-size: var(--font-28); font-weight: 600; letter-spacing: 0.03em; line-height: 1.2;
+}
+
+/* text-lg 18/600 */
+h3,
+.session-viewer-title,
+.notes-edit-title,
+.hp-bar-text {
+    font-size: var(--font-18); font-weight: 600; text-transform: none; letter-spacing: 0.03em; line-height: 1.2;
+}
+.hp-bar-dead { color: var(--color-red); text-transform: none; letter-spacing: 0.03em; }
+.hp-bar-stabilized { color: var(--color-green); text-transform: none; letter-spacing: 0.03em; }
+
+/* text-md 14/500 */
+.block-title h3,
+.block-title-minimized h3,
+.block.session-log .block-title h3,
+.map-card-title h3,
+.book-card-title h3,
+.board-card-title,
+.board-card-title-input,
+.character-name,
+.stat-value,
+.cs-ref-val,
+.cs-ref-spell .cs-ref-val,
+.clear_filters_button,
+.hp-input-field,
+.hd-qty-btn,
+.hd-qty-display,
+.coin-pill-num,
+.coin-pill-input,
+.coin-delta-popup,
+.hp-drag-delta,
+.bpp-n,
+.bag-ov-title,
+#roll-button,
+.board-section-subheader,
+.button,
+.menu-item-button,
+#long_rest_button,
+.board-zoom-btn,
+.board-string-picker-delete,
+#clear-selected-button,
+.text-toolbar button,
+.fr-btn,
+#font-size-select,
+.quest-overlay-input,
+.quest-objective-input,
+.find-replace-row input,
+.sort-item,
+.view-toggle-item,
+.tag-button,
+.bpp-x {
+    font-size: var(--font-14); font-weight: 500; text-transform: none; letter-spacing: 0.03em; line-height: 1.2;
+}
+
+/* body 12/400 */
+body,
+.block-body,
+.book-card-description,
+.notes-card-description,
+.board-book-description,
+.notes-edit-body,
+.board-section-notes,
+.board-obj-item-text,
+.quest-objectives,
+.tag-button--compact,
+.tab3-location-pill,
+.tag-accordion-pill,
+.tag-accordion-header,
+.tag-accordion-chips .tag-button,
+.block-property,
+.inline-edit-add-tag,
+.quest-status-item,
+.stat-breakdown-popover .sb-row-val,
+.roll-chip,
+svg.roll-die-chip .die-number,
+.ds-roll-btn,
+.hd-type,
+.hd-roll-btn,
+.hp-action-btn,
+.map-link-popup-action,
+.delete-confirm-message,
+.clear-data-confirm-message,
+.long-rest-popup-message,
+.delete-confirm-buttons button,
+.clear-data-confirm-buttons button,
+.block.inline-editing .inline-edit-controls .button,
+.notes-viewer .inline-edit-controls .button {
+    font-size: var(--font-12); font-weight: 400; text-transform: none; letter-spacing: 0; line-height: 1.5;
+}
+
+/* body-sm 10/400 (tooltips, small values, small text buttons — NOT uppercase) */
+.board-add-obj-item-btn,
+.board-card-add-section-btn,
+.stat-breakdown-popover .sb-add,
+.stat-breakdown-popover .sb-row-desc,
+.stat-subvalue,
+.cs-mod-col .stat-subvalue,
+.descriptor-value,
+.hd-roll-detail,
+.hd-remaining,
+.skill-plus,
+.map-card-url,
+.quest-progress-count,
+.quest-progress.mini .quest-progress-count,
+.hp-max-edit,
+.hp-max-val,
+.uch-tooltip,
+.cs-currency-card .currency-tooltip,
+.board-picker-floating-tip,
+.board-empty-hint p,
+.tag-button--tiny,
+.inv-state-btn {
+    font-size: var(--font-10); font-weight: 400; text-transform: none; letter-spacing: 0.03em; line-height: 1.3;
+}
+
+/* label 10/500 UPPERCASE */
+.hp-section-label,
+.hd-label,
+.cs-mod-label,
+.ds-group-label,
+.tab3-location-label,
+.bag-ov-label,
+.quest-overlay-label,
+.roll-error,
+.coin-icon-letter,
+.dice-count-badge,
+.roll-label,
+.stat-label,
+.cs-ref-label,
+.save-label,
+.skill-label,
+.descriptor-label,
+.dice-label,
+.bag-ov-cat,
+.saving-throws-and-skills-column h3 {
+    font-size: var(--font-10); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.2;
+}

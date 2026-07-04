@@ -42,7 +42,29 @@
     cursor: pointer;
     transition: background-color var(--transition-medium) ease;
     color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
+
+/* File-based icon: uses an SVG file as a mask, painted in the button's own colour.
+   Edit the .svg file and it updates everywhere. Set --icon + width/height per use. */
+.svg-icon {
+    display: inline-block;
+    background-color: currentColor;
+    -webkit-mask-repeat: no-repeat;    mask-repeat: no-repeat;
+    -webkit-mask-position: center;     mask-position: center;
+    -webkit-mask-size: contain;        mask-size: contain;
+}
+/* one class per icon file; path is relative to THIS stylesheet (css/) */
+.svg-icon.icon-x { -webkit-mask-image: url(../images/X_Icon.svg); mask-image: url(../images/X_Icon.svg); }
+.svg-icon.icon-plus      { -webkit-mask-image: url(../images/Plus_Icon.svg);      mask-image: url(../images/Plus_Icon.svg); }
+.svg-icon.icon-minus     { -webkit-mask-image: url(../images/Minus_Icon.svg);     mask-image: url(../images/Minus_Icon.svg); }
+.svg-icon.icon-ellipsis  { -webkit-mask-image: url(../images/Ellipses_Icon.svg);  mask-image: url(../images/Ellipses_Icon.svg); }
+.svg-icon.icon-pencil    { -webkit-mask-image: url(../images/Pencil_Icon.svg);    mask-image: url(../images/Pencil_Icon.svg); }
+.svg-icon.icon-duplicate { -webkit-mask-image: url(../images/Duplicate_Icon.svg); mask-image: url(../images/Duplicate_Icon.svg); }
+.svg-icon.icon-check     { -webkit-mask-image: url(../images/Check_Icon.svg);     mask-image: url(../images/Check_Icon.svg); }
 
 .add-block-button {
     width: 34px;
@@ -94,7 +116,7 @@
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    font-size: var(--font-lg);
+    font-size: var(--font-14);
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -134,7 +156,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-3xl);
+    font-size: var(--font-18);
     font-weight: 700;
     cursor: pointer;
     user-select: none;
@@ -228,7 +250,7 @@
     cursor: pointer;
     background-color: var(--gray-600);
     color: var(--gray-900);
-    font-size: var(--font-micro);
+    font-size: var(--font-10);
     letter-spacing: 0.5px;
     display: flex;
     align-items: center;

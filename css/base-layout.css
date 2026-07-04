@@ -5,7 +5,7 @@
 /* consolidated from ~10 separate files into one rule per size. */
 /* ====================================================================== */
 
-/* Group A: var(--font-micro) (10px) */
+/* Group A: var(--font-10) (10px) */
 .stat-label,
 .stat-subvalue,
 .descriptor-label,
@@ -35,10 +35,10 @@
 .bag-ov-link-cancel-mini,
 .inv-toggle--sm,
 .bag-ov-card .inv-state-btn {
-    font-size: var(--font-micro);
+    font-size: var(--font-10);
 }
 
-/* Group B: var(--font-md) (12px) */
+/* Group B: var(--font-12) (12px) */
 .tag-accordion-pill,
 .tag-accordion-header,
 .block.condensed .block-tags-condensed .tag-button.selected,
@@ -74,10 +74,10 @@
 .bag-ov-tb,
 .bag-ov-btn,
 .inv-toggle {
-    font-size: var(--font-md);
+    font-size: var(--font-12);
 }
 
-/* Group C: var(--font-lg) (14px) */
+/* Group C: var(--font-14) (14px) */
 .button,
 .block-title h3,
 .block-title-minimized h3,
@@ -97,10 +97,10 @@
 .quest-objective-input,
 .find-replace-row input,
 .text-tooltip {
-    font-size: var(--font-lg);
+    font-size: var(--font-14);
 }
 
-/* Group D: var(--font-md) (12px), font-weight: 500 */
+/* Group D: var(--font-12) (12px), font-weight: 500 */
 .ds-roll-btn,
 .hd-type,
 .hd-roll-btn,
@@ -109,10 +109,10 @@
 .map-link-popup-action,
 .delete-confirm-message,
 .clear-data-confirm-message {
-    font-size: var(--font-md);
+    font-size: var(--font-12);
 }
 
-/* Group E: var(--font-md) (12px), font-weight: 600 */
+/* Group E: var(--font-12) (12px), font-weight: 600 */
 .board-card-title,
 .board-card-title-input,
 .board-section-subheader,
@@ -120,10 +120,10 @@
 .delete-confirm-buttons button,
 .clear-data-confirm-buttons button,
 .stat-breakdown-popover .sb-row-val {
-    font-size: var(--font-md);
+    font-size: var(--font-12);
 }
 
-/* Group F: var(--font-lg) (14px), font-weight: 500 */
+/* Group F: var(--font-14) (14px), font-weight: 500 */
 .hp-input-field,
 .hd-qty-btn,
 .hd-qty-display,
@@ -132,35 +132,35 @@
 .bpp-n,
 .bag-ov-title,
 #roll-button {
-    font-size: var(--font-lg);
+    font-size: var(--font-14);
 }
 
-/* Group G: var(--font-lg) (14px), font-weight: 700 */
+/* Group G: var(--font-14) (14px), font-weight: 700 */
 .character-name,
 .stat-value,
 .cs-ref-val,
 .cs-ref-spell .cs-ref-val {
-    font-size: var(--font-lg);
+    font-size: var(--font-14);
 }
 
-/* Group H: var(--font-3xl) (18px) */
+/* Group H: var(--font-18) (18px) */
 .add-block-button,
 .session-viewer-delete-btn,
 .quest-objective-remove {
-    font-size: var(--font-3xl);
+    font-size: var(--font-18);
 }
 
-/* Group I: var(--font-micro) (10px), font-weight: 700 */
+/* Group I: var(--font-10) (10px), font-weight: 700 */
 .coin-icon-letter,
 .dice-count-badge {
-    font-size: var(--font-micro);
+    font-size: var(--font-10);
 }
 
-/* Group J: var(--font-md) (12px), letter-spacing: 0.02em (kept individually) */
+/* Group J: var(--font-12) (12px), letter-spacing: 0.02em (kept individually) */
 .uch-tooltip,
 .cs-currency-card .currency-tooltip,
 .board-picker-floating-tip {
-    font-size: var(--font-md);
+    font-size: var(--font-12);
 }
 
 /* ====================================================================== */
@@ -177,6 +177,7 @@ html {
 body {
     background-color: var(--gray-150);
     color: var(--gray-850);
+    font-size: var(--font-16);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -393,7 +394,7 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     border: none;
     border-radius: var(--radius-pill);
     padding: 0 var(--space-7);
-    font-size: var(--font-md);
+    font-size: var(--font-12);
     background: transparent;
     color: var(--gray-900);
     outline: none;
@@ -1076,7 +1077,7 @@ body.app-ready #app-row {
 .block.inline-editing .inline-edit-controls .button {
     margin: 0;
     padding: var(--space-5px) var(--space-5);
-    font-size: var(--font-md);
+    font-size: var(--font-12);
 }
 
 .block.inline-editing .inline-edit-block-types,
@@ -1231,7 +1232,7 @@ body.app-ready #app-row {
 }
 
 .inline-edit-tags .tag-accordion-group > .tag-button {
-    font-size: var(--font-md);
+    font-size: var(--font-12);
     padding: var(--space-2px) var(--space-3);
 }
 
@@ -1293,7 +1294,7 @@ body.app-ready #app-row {
     border: none;
     color: var(--color-red);
     cursor: pointer;
-    font-size: var(--font-3xl);
+    font-size: var(--font-18);
     line-height: 1;
     padding: 0 var(--space-2px);
     margin-left: auto;
@@ -1382,8 +1383,8 @@ body.app-ready #app-row {
     flex-direction: column;
     width: 100%;
     padding: 0px;
-    font-size: var(--font-md);
-    line-height: 1.5;
+    font-size: var(--font-12);
+    line-height: var(--lh-body);
     color: var(--gray-800);
     font-weight: 400;
     letter-spacing: 0.00em;
@@ -1402,18 +1403,13 @@ body.app-ready #app-row {
     outline: none;
 }
 
-h1 {
-    font-size: 1.75rem;
-    letter-spacing: 0.05em;
-}
-
 h2 {
     letter-spacing: 0.05em;
     padding-bottom: var(--space-8);
 }
 
 h3 {
-    font-size: var(--font-3xl);
+    font-size: var(--font-18);
     font-weight: normal;
     letter-spacing: 0.045em;
     color: var(--gray-900);
@@ -1536,7 +1532,7 @@ a:hover {
 .session-viewer-title {
     flex: 1;
     min-width: 0;
-    font-size: var(--font-3xl);
+    font-size: var(--font-18);
     color: var(--gray-900);
     letter-spacing: 0.045em;
     margin: 0 0 var(--space-4) 0;
@@ -1939,7 +1935,7 @@ a:hover {
 }
 
 .resources-strip .spell-slot-title {
-    font-size: var(--font-micro);
+    font-size: var(--font-10);
     font-weight: 500;
     letter-spacing: 0;
     color: var(--gray-700);
@@ -2031,7 +2027,7 @@ a:hover {
     border: 1px dashed #555;
     color: #888;
     cursor: pointer;
-    font-size: var(--font-micro);
+    font-size: var(--font-10);
     font-weight: 500;
     line-height: 1;
     user-select: none;
@@ -2178,9 +2174,9 @@ a:hover {
 
 .spell-slot-title {
     font-weight: 700;
-    font-size: var(--font-lg);
-    color: white;
-    letter-spacing: 1px;
+    font-size: var(--font-14);
+    color: var(--gray-900);
+    letter-spacing: 0.06em;
     margin-right: var(--space-3px);
 }
 
@@ -2237,7 +2233,7 @@ a:hover {
     border-radius: var(--radius-lg);
     box-shadow: var(--glass-shadow);
     border: var(--glass-border);
-    line-height: 1.5;
+    line-height: var(--lh-body);
     z-index: 10000;
     max-width: 300px;
     word-break: break-word;
@@ -2277,7 +2273,7 @@ a:hover {
     border-radius: var(--radius-sm);
     padding: var(--space-2) var(--space-5);
     cursor: pointer;
-    font-size: 0.9em;
+    font-size: var(--font-14);
     text-align: left;
     transition: background-color var(--transition-slow) ease;
 }
@@ -2402,14 +2398,14 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .quest-status-pill,
 .quest-location-pill,
 .tag-button--tiny {
-    font-size: var(--font-micro);
+    font-size: var(--font-10);
     padding: var(--space-1) var(--space-4);
     border-radius: var(--radius-pill);
 }
 
 .tag-button--compact,
 .tab3-location-pill {
-    font-size: var(--font-md);
+    font-size: var(--font-12);
     padding: var(--space-1) var(--space-4);
     border-radius: var(--radius-pill);
 }
@@ -2510,7 +2506,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 }
 
 .quest-progress.mini .quest-progress-count {
-    font-size: var(--font-micro);
+    font-size: var(--font-10);
     min-width: 26px;
 }
 
@@ -2628,7 +2624,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 }
 
 .tab3-location-label {
-    font-size: var(--font-micro);
+    font-size: var(--font-10);
     text-transform: uppercase;
 }
 
@@ -2811,7 +2807,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     font-weight: 500;
     color: var(--gray-900);
     text-align: center;
-    line-height: 1.4;
+    line-height: var(--lh-compact);
 }
 
 .delete-confirm-buttons {
@@ -2903,7 +2899,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     font-weight: 500;
     color: var(--gray-900);
     text-align: center;
-    line-height: 1.4;
+    line-height: var(--lh-compact);
 }
 
 .clear-data-confirm-buttons {
@@ -2980,7 +2976,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .long-rest-popup-message {
     font-weight: 500;
     color: var(--gray-900);
-    line-height: 1.3;
+    line-height: var(--lh-compact);
     white-space: nowrap;
 }
 
@@ -3252,7 +3248,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .book-card-description,
 .notes-card-description {
     color: var(--gray-700);
-    line-height: 1.3;
+    line-height: var(--lh-compact);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -3290,7 +3286,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 }
 
 .notes-edit-title {
-    font-size: 1.1rem;
+    font-size: var(--font-18);
     font-weight: 700;
     flex: 1;
     min-width: 0;
@@ -3334,6 +3330,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     overflow: auto;
     max-height: 60vh;
     position: relative;
+    line-height: var(--lh-body);
     font-family: inherit;
 }
 
@@ -3383,7 +3380,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .notes-viewer .inline-edit-controls .button {
     margin: 0;
     padding: var(--space-5px) var(--space-5);
-    font-size: var(--font-md);
+    font-size: var(--font-12);
 }
 
 /* ====================================================================== */

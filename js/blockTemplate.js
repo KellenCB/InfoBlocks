@@ -204,11 +204,11 @@ export const blockTemplate = (block, tab = "tab4") => {
             ${pinButtonHTML}
             <div class="block-actions-menu">
                 <div class="block-actions-reveal">
-                    <button class="action-button remove-button red-button" data-id="${block.id}" title="Remove">×</button>
-                    <button class="action-button duplicate-button blue-button" data-id="${block.id}" title="Copy">❐</button>
-                    <button class="action-button edit-button orange-button" data-id="${block.id}" title="Edit">✎</button>
+                    <button class="action-button remove-button red-button" data-id="${block.id}" title="Remove"><span class="svg-icon icon-x" style="width:16px;height:16px"></span></button>
+                    <button class="action-button duplicate-button blue-button" data-id="${block.id}" title="Copy"><span class="svg-icon icon-duplicate" style="width:80%;height:80%"></span></button>
+                    <button class="action-button edit-button orange-button" data-id="${block.id}" title="Edit"><span class="svg-icon icon-pencil" style="width:78%;height:78%"></span></button>
                 </div>
-                <button class="actions-trigger" title="Actions">···</button>
+                <button class="actions-trigger" title="Actions"><span class="svg-icon icon-ellipsis" style="width:75%;height:75%"></span></button>
             </div>
         </div>
     `;

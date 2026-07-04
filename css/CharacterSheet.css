@@ -241,11 +241,6 @@
     margin-right: 0;
 }
 
-.stat-divider {
-    font-weight: 100;
-    opacity: 0.5;
-}
-
 .ModifiersRow .vertical-break {
     opacity: 0.15;
 }
@@ -260,13 +255,6 @@
     width: fit-content;
     margin-left: auto;
     margin-right: auto;
-    text-align: center;
-}
-
-.large-value {
-    font-size: var(--font-5xl);
-    font-weight: 700;
-    min-width: 10px;
     text-align: center;
 }
 
@@ -344,7 +332,7 @@
 }
 
 .hp-section-label {
-    font-size: var(--font-micro);
+    font-size: var(--font-10);
     color: var(--gray-700);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -454,8 +442,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-3xl);
-    font-weight: 500;
+    font-size: var(--font-18);
+    font-weight: 600;
     color: var(--gray-900);
     z-index: 3;
     letter-spacing: 0.02em;
@@ -531,7 +519,7 @@
 }
 
 .ds-group-label {
-    font-size: var(--font-micro);
+    font-size: var(--font-10);
     color: var(--gray-700);
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -704,7 +692,7 @@
 }
 
 .hd-label {
-    font-size: var(--font-micro);
+    font-size: var(--font-10);
     color: var(--gray-700);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -888,7 +876,7 @@
 }
 
 .cs-ac-val {
-    font-size: var(--font-8xl);
+    font-size: var(--font-36);
     font-weight: 700;
     line-height: 1;
     color: var(--gray-900);
@@ -949,14 +937,14 @@
 }
 
 .cs-mod-label {
-    font-size: var(--font-micro);
+    font-size: var(--font-10);
     color: var(--gray-700);
     text-transform: uppercase;
     letter-spacing: 0.02em;
 }
 
 .cs-mod-col .stat-value {
-    font-size: var(--font-6xl);
+    font-size: var(--font-28);
     font-weight: 700;
     color: var(--gray-900);
     line-height: 1.15;
@@ -1046,7 +1034,7 @@
     min-width: 3ch;
     display: inline-block;
     white-space: nowrap;
-    font-size: var(--font-md);
+    font-size: var(--font-12);
 }
 
 /* ====================================================================== */
@@ -1063,7 +1051,7 @@
     border: none;
     background-color: var(--gray-900);
     color: var(--gray-150);
-    font-size: var(--font-micro);
+    font-size: var(--font-10);
     cursor: pointer;
     opacity: 0.25;
     display: inline-flex;
@@ -1200,7 +1188,7 @@
 .coin-pill-num {
     flex: 1;
     min-width: 0;
-    font-size: var(--font-lg);
+    font-size: var(--font-14);
     font-weight: 500;
     text-align: right;
     padding-right: var(--space-5);
@@ -1216,7 +1204,7 @@
     flex: 1;
     width: 0;
     min-width: 0;
-    font-size: var(--font-lg);
+    font-size: var(--font-14);
     font-weight: 500;
     text-align: right;
     padding-right: var(--space-5);

@@ -37,7 +37,7 @@ export function initUsesField(overlayElement, storageKeyPrefix, defaultSlots = 5
 
     const addButton = document.createElement("div");
     addButton.classList.add("circle", "circle-button", "circle-add");
-    addButton.innerHTML = "+";
+    addButton.innerHTML = '<span class="svg-icon icon-plus" style="width:70%;height:70%"></span>';
     addButton.addEventListener("click", () => {
         usesState.push(false);
         localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
@@ -47,7 +47,7 @@ export function initUsesField(overlayElement, storageKeyPrefix, defaultSlots = 5
 
     const removeButton = document.createElement("div");
     removeButton.classList.add("circle", "circle-button", "circle-remove");
-    removeButton.innerHTML = "−";
+    removeButton.innerHTML = '<span class="svg-icon icon-minus" style="width:70%;height:70%"></span>';
     removeButton.addEventListener("click", () => {
         if (usesState.length > 0) {
             usesState.pop();

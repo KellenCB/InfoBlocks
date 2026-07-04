@@ -30,7 +30,7 @@
     border: none;
     border-radius: var(--radius-pill);
     cursor: pointer;
-    font-size: var(--font-lg);
+    font-size: var(--font-14);
     letter-spacing: 0.3px;
     transition: background-color var(--transition-slow), color var(--transition-slow), outline-color var(--transition-slow);
     white-space: nowrap;
@@ -167,7 +167,7 @@
 }
 
 .tag-accordion-chips .tag-button {
-    font-size: var(--font-md);
+    font-size: var(--font-12);
     padding: var(--space-2px) var(--space-3);
 }
 
@@ -343,7 +343,7 @@
     background-color: color-mix(in srgb, var(--gray-900) 8%, transparent);
     border: none;
     border-radius: var(--radius-sm);
-    font-size: var(--font-md);
+    font-size: var(--font-12);
     letter-spacing: normal;
     white-space: pre-wrap;
     display: inline-flex;
