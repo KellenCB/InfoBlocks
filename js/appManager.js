@@ -896,7 +896,7 @@ const applyPendingBlockAnim = () => {
           html += `<div class="tag-accordion-body">`;
           html += `<span class="tag-accordion-label">${label}</span>`;
           html += data.tags.map(t =>
-              `<button class="tag-button ${data.className}${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
+              `<button class="tag-button tag-button--compact ${data.className}${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
           ).join('');
           html += `</div></div>`;
       });
@@ -904,7 +904,7 @@ const applyPendingBlockAnim = () => {
       html += `<div class="tag-category user-tags-edit">`;
       if (userDefinedTags.length > 0) {
           html += userDefinedTags.map(t =>
-              `<button class="tag-button tag-user${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
+              `<button class="tag-button tag-button--compact tag-user${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
           ).join('');
       }
       html += `<span class="inline-edit-add-tag"></span>`;
@@ -1018,7 +1018,7 @@ const applyPendingBlockAnim = () => {
                       if (existing) { existing.classList.add('selected'); }
                       else {
                           const newBtn = document.createElement('button');
-                          newBtn.className = 'tag-button tag-user selected';
+                          newBtn.className = 'tag-button tag-button--compact tag-user selected';
                           newBtn.dataset.tag = normalized;
                           newBtn.textContent = normalized;
                           input.before(newBtn);
@@ -1043,7 +1043,7 @@ const applyPendingBlockAnim = () => {
           const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group' && c !== 'open') || '';
           body.querySelectorAll('.tag-button.selected').forEach(btn => {
               const chip = document.createElement('button');
-              chip.classList.add('tag-button', 'selected');
+              chip.classList.add('tag-button', 'tag-button--compact', 'selected');
               if (tagClass) chip.classList.add(tagClass);
               chip.dataset.tag = btn.dataset.tag;
               chip.textContent = btn.dataset.tag;
@@ -1200,7 +1200,7 @@ const applyPendingBlockAnim = () => {
       html += `<div class="tag-accordion-body" id="${category}_tags_list_${tabSuffix}">`;
       html += `<div class="tag-accordion-body-inner">`;
       html += usedPredefined.map(tag =>
-        `<button class="tag-button ${className}" data-tag="${tag}">${tag}</button>`
+        `<button class="tag-button tag-button--compact ${className}" data-tag="${tag}">${tag}</button>`
       ).join("");
       html += `</div></div></div>`;
     });
@@ -1208,7 +1208,7 @@ const applyPendingBlockAnim = () => {
     if (userGeneratedTags.length > 0) {
       html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}">`;
       html += userGeneratedTags.map(tag =>
-        `<button class="tag-button tag-user" data-tag="${tag}">${tag}</button>`
+        `<button class="tag-button tag-button--compact tag-user" data-tag="${tag}">${tag}</button>`
       ).join("");
       html += `</div>`;
     } else {
@@ -1329,7 +1329,7 @@ const applyPendingBlockAnim = () => {
 
       viewer.innerHTML = `
           <div class="session-viewer-header">
-              <h4 class="session-viewer-title">${block.title}</h4>
+              <h3 class="session-viewer-title">${block.title}</h3>
               <div class="session-viewer-header-actions">
                   <button class="session-viewer-delete-btn" data-id="${block.id}" title="Delete">×</button>
                   <button class="session-viewer-edit-btn" id="session_edit_toggle" title="Edit">                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1640,7 +1640,7 @@ const applyPendingBlockAnim = () => {
                   const prevId = activeSessionLogBlockId;
                   saveCurrentViewerEdits();
                   const listTitle = resultsSection.querySelector(
-                      `.block[data-id="${prevId}"] .block-title h4`
+                      `.block[data-id="${prevId}"] .block-title h3`
                   );
                   if (listTitle) {
                       const fresh = getBlocks('tab7').find(b => b.id === prevId);
@@ -2043,7 +2043,7 @@ const applyPendingBlockAnim = () => {
           ? (Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []))
           : ['Notes'];
       const blockTypeHTML = tabBTConfig.types.map(type =>
-          `<button class="tag-button ${tabBTConfig.className}${currentTypes.includes(type) ? ' selected' : ''}" data-tag="${type}">${type}</button>`
+          `<button class="tag-button tag-button--compact ${tabBTConfig.className}${currentTypes.includes(type) ? ' selected' : ''}" data-tag="${type}">${type}</button>`
       ).join('');
 
       // ── Current type for initial field visibility ──
@@ -2322,7 +2322,7 @@ const applyPendingBlockAnim = () => {
 
       return `
           <div class="notes-edit-header">
-              <h4 contenteditable="true" class="notes-edit-title">${title}</h4>
+              <h3 contenteditable="true" class="notes-edit-title">${title}</h3>
               <div class="inline-edit-controls">
                   <button class="button green-button notes-edit-save">Save</button>
                   <button class="button red-button notes-edit-cancel">Cancel</button>
@@ -3354,7 +3354,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
   );
 
   function attachDynamicTooltips() {
-    attachTooltipHandlers(document.querySelectorAll('.block-title h4, .action-name, .action-description'));
+    attachTooltipHandlers(document.querySelectorAll('.block-title h3, .action-name, .action-description'));
   }
 
 /* ==================================================================*/
@@ -3416,7 +3416,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       const tabBTConfig = blockTypeConfig[tab];
       const blockTypeHTML = tabBTConfig
           ? tabBTConfig.types.map(type =>
-              `<button class="tag-button ${tabBTConfig.className}${blockTypes.includes(type) ? ' selected' : ''}" data-tag="${type}">${type}</button>`
+              `<button class="tag-button tag-button--compact ${tabBTConfig.className}${blockTypes.includes(type) ? ' selected' : ''}" data-tag="${type}">${type}</button>`
             ).join('')
           : '';
 
@@ -3430,7 +3430,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       blockEl.innerHTML = `
               <div class="block-header">
                   <div class="block-header-left">
-                      <div class="block-title"><h4 contenteditable="true" class="inline-edit-title">${block.title}</h4></div>
+                      <div class="block-title"><h3 contenteditable="true" class="inline-edit-title">${block.title}</h3></div>
                   </div>
                   <div class="inline-edit-controls">
                       <button class="button green-button inline-edit-save">Save</button>
@@ -3485,7 +3485,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       const tabBTConfig = blockTypeConfig[tab];
       const blockTypeHTML = tabBTConfig
           ? tabBTConfig.types.map(type =>
-              `<button class="tag-button ${tabBTConfig.className}" data-tag="${type}">${type}</button>`
+              `<button class="tag-button tag-button--compact ${tabBTConfig.className}" data-tag="${type}">${type}</button>`
             ).join('')
           : '';
 
@@ -3501,7 +3501,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       blockEl.innerHTML = `
               <div class="block-header">
                   <div class="block-header-left">
-                      <div class="block-title"><h4 contenteditable="true" class="inline-edit-title"></h4></div>
+                      <div class="block-title"><h3 contenteditable="true" class="inline-edit-title"></h3></div>
                   </div>
                   <div class="inline-edit-controls">
                       <button class="button green-button inline-edit-save">Save</button>

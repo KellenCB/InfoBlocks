@@ -5,5 +5,8 @@
 .DS_Store
 Thumbs.db
 
+# Google Drive FUSE artifacts (leftover temp files from concurrent sync + edits)
+.fuse_hidden*
+
 # VS Code
 .vscode/

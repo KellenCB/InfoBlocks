@@ -1,25 +1,19 @@
-/* ==================================================================*/
-/* =================== DETECTIVE BOARD (TAB3) =======================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ======================= DETECTIVE BOARD (TAB3) ======================= */
+/* ====================================================================== */
 
-/* ── Search highlight / dim ───────────────────────────────────────── */
-
-/* Cards whose content doesn't contain the current search phrase fade to 50%.
-   Cards that do match stay at full opacity and get .highlight spans inside. */
 .board-card {
-    transition: opacity 0.25s ease;
+    transition: opacity var(--transition-dim) ease;
 }
 .board-card.board-search-dim {
     opacity: 0.5;
 }
 
-/* ── Board container ──────────────────────────────────────────────── */
-
 #tab3 {
     position: relative;
     overflow: hidden;
     padding: 0 !important;
-    border-radius: 15px;
+    border-radius: var(--radius-xl);
     background: var(--glass-bg);
     box-shadow: var(--glass-shadow);
     border: var(--glass-border);
@@ -30,41 +24,21 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: var(--gray-100);
+    background-color: var(--gray-150);
     background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
     background-size: 28px 28px;
     cursor: grab;
     user-select: none;
 }
 
-/* ── Inner canvas — pan/zoom transform target ─────────────────────── */
-
 .board-canvas {
     position: absolute;
     top: 0;
     left: 0;
     transform-origin: 0 0;
-    /* No will-change: transform — that would promote to a GPU compositor layer
-       and cause the browser to scale a fixed-resolution texture on zoom, making
-       text and cards look pixelated. Without it the browser re-rasterizes at
-       each zoom level so everything stays sharp. */
-    z-index: 2; /* sits above string SVG (z:1), below dot SVG (z:3) */
+    z-index: 2;
 }
 
-/* ── SVG layers — siblings of .board-canvas inside .detective-board ──
- *
- * The SVGs live OUTSIDE .board-canvas so they are not inside its GPU
- * compositing layer (will-change:transform with a 0×0 layout box clips
- * SVG overflow regardless of the overflow:visible declaration).
- *
- * applyTransform() applies the identical CSS transform to the SVGs and
- * to .board-canvas, so canvas-space coordinates stay in sync.
- *
- * overflow:visible lets bezier curves extend beyond the SVG's own
- * 100%×100% viewport; the only clip is .detective-board overflow:hidden.
- *
- * pointer-events:none on the containers; child paths/dots set their own.
- */
 .board-svg,
 .board-svg-dots {
     position: absolute;
@@ -77,10 +51,8 @@
     pointer-events: none;
 }
 
-.board-svg      { z-index: 1; }  /* strings — below cards  */
-.board-svg-dots { z-index: 3; }  /* dots    — above cards  */
-
-/* ── Zoom controls ────────────────────────────────────────────────── */
+.board-svg      { z-index: 1; }
+.board-svg-dots { z-index: 3; }
 
 .board-zoom-controls {
     position: absolute;
@@ -89,13 +61,13 @@
     z-index: 30;
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: var(--space-2px);
     background: var(--glass-bg);
     border: var(--glass-border);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    border-radius: 8px;
-    padding: 3px 4px;
+    border-radius: var(--radius-md);
+    padding: var(--space-3px) var(--space-1);
     user-select: none;
 }
 
@@ -104,15 +76,14 @@
     border: none;
     color: var(--gray-800);
     cursor: pointer;
-    font-size: 16px;
     line-height: 1;
     width: 24px;
     height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 5px;
-    transition: background 0.15s ease, color 0.15s ease;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast) ease, color var(--transition-fast) ease;
 }
 
 .board-zoom-btn:hover {
@@ -121,15 +92,14 @@
 }
 
 .board-zoom-label {
-    font-size: 11px;
-    color: var(--gray-750);
+    color: var(--gray-800);
     min-width: 36px;
     text-align: center;
     font-family: inherit;
     cursor: pointer;
-    border-radius: 4px;
-    padding: 2px 3px;
-    transition: background 0.15s ease, color 0.15s ease;
+    border-radius: var(--radius-xs);
+    padding: var(--space-2px) var(--space-3px);
+    transition: background var(--transition-fast) ease, color var(--transition-fast) ease;
 }
 
 .board-zoom-label:hover {
@@ -137,8 +107,6 @@
     color: var(--gray-900);
 }
 
-
-/* Wide invisible hit zone — sits behind the visual string, makes it easy to click */
 .board-string-hit {
     fill: none;
     stroke: transparent;
@@ -149,43 +117,41 @@
 
 .board-string {
     fill: none;
-    stroke: var(--string-red); /* overridden inline per-connection via style.stroke */
+    stroke: var(--string-red);
     stroke-width: 2;
     stroke-linecap: round;
     filter: drop-shadow(0 0 3px var(--str-glow, rgba(192,57,43,0.4)));
-    transition: stroke-width 0.2s ease, filter 0.2s ease;
-    pointer-events: none; /* hit zone handles clicks */
+    transition: stroke-width var(--transition-medium) ease, filter var(--transition-medium) ease;
+    pointer-events: none;
 }
 
-/* Highlight the visual string when its hit zone is hovered */
 .board-string-hit:hover + .board-string {
     stroke-width: 3;
     filter: drop-shadow(0 0 6px var(--str-glow-hover, rgba(192,57,43,0.7)));
 }
 
-
 .board-string-dot {
-    fill: var(--string-red); /* overridden inline per-connection via style.fill */
-    filter: drop-shadow(0 0 3px rgba(192,57,43,0.5)); /* overridden inline per style.filter */
-    pointer-events: all;  /* filled circle — all picks up the fill area */
+    fill: var(--string-red);
+    filter: drop-shadow(0 0 3px rgba(192,57,43,0.5));
+    pointer-events: all;
     cursor: grab;
 }
-
-/* ── String colour picker popup ───────────────────────────────── */
 
 .board-string-picker {
     position: fixed;
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 6px 9px;
-    background: rgba(22, 22, 28, 0.97);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 20px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.55);
+    gap: var(--space-5px);
+    padding: var(--space-2) var(--space-9px);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--glass-shadow);
     z-index: 9999;
     transform-origin: center bottom;
-    animation: stringPickerIn 0.15s ease forwards;
+    animation: stringPickerIn var(--transition-fast) ease forwards;
 }
 
 @keyframes stringPickerIn {
@@ -201,7 +167,7 @@
     border: 2px solid transparent;
     box-sizing: border-box;
     flex-shrink: 0;
-    transition: transform 0.1s ease, border-color 0.12s ease;
+    transition: transform var(--transition-xfast) ease, border-color var(--transition-micro) ease;
 }
 
 .board-string-picker-swatch:hover {
@@ -217,7 +183,7 @@
     height: 13px;
     background: rgba(255,255,255,0.13);
     flex-shrink: 0;
-    margin: 0 2px;
+    margin: 0 var(--space-2px);
 }
 
 .board-string-picker-delete {
@@ -227,7 +193,6 @@
     background: transparent;
     border: none;
     color: rgba(255,255,255,0.35);
-    font-size: 14px;
     line-height: 1;
     cursor: pointer;
     display: flex;
@@ -235,7 +200,7 @@
     justify-content: center;
     padding: 0;
     flex-shrink: 0;
-    transition: color 0.12s ease;
+    transition: color var(--transition-micro) ease;
 }
 
 .board-string-picker-delete:hover {
@@ -244,7 +209,7 @@
 .board-string-dot:active {
     cursor: grabbing;
 }
-/* Dots on collapsed cards are fixed — no grab cursor */
+
 .board-string-dot.is-collapsed {
     cursor: default;
 }
@@ -267,8 +232,6 @@
     pointer-events: none;
 }
 
-/* ── Cards ────────────────────────────────────────────────────────── */
-
 .board-card {
     position: absolute;
     width: 240px;
@@ -276,24 +239,24 @@
     min-height: 80px;
     background: var(--glass-bg);
     border: var(--glass-border);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     box-shadow: var(--glass-shadow);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     display: flex;
     flex-direction: column;
     z-index: 10;
-    transition: box-shadow 0.2s ease, opacity 0.3s ease;
+    transition: box-shadow var(--transition-medium) ease, opacity var(--transition-slow) ease;
     overflow: visible;
 }
 
 .board-card:hover {
     border-color: rgba(255,255,255,0.18);
-    box-shadow: 0 6px 28px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.4);
+    box-shadow: var(--shadow-board-card-hover);
 }
 
 .board-card.board-card-dragging {
-    box-shadow: 0 16px 48px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.5);
+    box-shadow: var(--shadow-board-card-dragging);
     z-index: 100;
     opacity: 0.95;
 }
@@ -310,8 +273,6 @@
     transform: rotate(180deg);
 }
 
-/* ── Tack pin ─────────────────────────────────────────────────────── */
-
 .board-tack {
     position: absolute;
     top: -8px;
@@ -321,7 +282,7 @@
     height: 14px;
     border-radius: 50%;
     background: radial-gradient(circle at 35% 35%, var(--color-red), color-mix(in srgb, var(--color-red) 55%, black));
-    box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.2);
+    box-shadow: var(--shadow-board-tack);
     z-index: 5;
     pointer-events: none;
 }
@@ -335,19 +296,17 @@
     width: 2px;
     height: 5px;
     background: rgba(0,0,0,0.4);
-    border-radius: 0 0 2px 2px;
+    border-radius: 0 0 var(--radius-2xs) var(--radius-2xs);
 }
-
-/* ── Card header ──────────────────────────────────────────────────── */
 
 .board-card-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 12px 8px;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5) var(--space-3);
     cursor: grab;
     border-bottom: 1px solid rgba(255,255,255,0.06);
-    border-radius: 10px 10px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     flex-shrink: 0;
 }
 
@@ -357,18 +316,16 @@
 
 .board-card.board-card-collapsed .board-card-header {
     border-bottom: none;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
 }
-
-/* ── Card action buttons ──────────────────────────────────────────── */
 
 .board-card-actions {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: var(--space-2px);
     flex-shrink: 0;
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--transition-fast) ease;
 }
 
 .board-card:hover .board-card-actions,
@@ -380,14 +337,14 @@
     width: 24px;
     height: 24px;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: rgba(255,255,255,0.4);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background var(--transition-fast) ease, color var(--transition-fast) ease;
     padding: 0;
     flex-shrink: 0;
 }
@@ -407,8 +364,6 @@
     color: var(--color-red);
 }
 
-/* ── Board toolbar (bottom-right corner) ──────────────────────── */
-
 .board-toolbar {
     position: absolute;
     top: 14px;
@@ -416,13 +371,13 @@
     z-index: 30;
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: var(--space-2px);
     background: var(--glass-bg);
     border: var(--glass-border);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    border-radius: 8px;
-    padding: 3px 4px;
+    border-radius: var(--radius-md);
+    padding: var(--space-3px) var(--space-1);
     user-select: none;
 }
 
@@ -436,8 +391,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 5px;
-    transition: background 0.15s ease, color 0.15s ease;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast) ease, color var(--transition-fast) ease;
 }
 
 .board-toolbar-btn:hover {
@@ -445,31 +400,27 @@
     color: var(--gray-900);
 }
 
-/* Active state: connect tool is on */
 .board-toolbar-btn.active {
     background: color-mix(in srgb, var(--color-red) 22%, transparent);
     color: var(--color-red);
 }
 
-/* ── Toolbar colour strip (shown when connect tool is active) ─── */
-
 .board-toolbar-color-strip {
     display: none;
     align-items: center;
-    gap: 5px;
-    padding: 0 6px 0 3px;
+    gap: var(--space-5px);
+    padding: 0 var(--space-2) 0 var(--space-3px);
     border-right: 1px solid rgba(255,255,255,0.1);
-    margin-right: 1px;
+    margin-right: var(--space-1px);
     transform-origin: right center;
 }
 
 .board-toolbar.connect-active .board-toolbar-color-strip {
     display: flex;
-    /* animation handled by is-entering / is-exiting classes below */
 }
 
 .board-toolbar-color-strip.is-entering {
-    animation: colorStripIn 0.2s ease forwards;
+    animation: colorStripIn var(--transition-medium) ease forwards;
 }
 
 .board-toolbar-color-strip.is-exiting {
@@ -494,7 +445,7 @@
     border: 2px solid transparent;
     box-sizing: border-box;
     flex-shrink: 0;
-    transition: transform 0.1s ease, border-color 0.12s ease;
+    transition: transform var(--transition-xfast) ease, border-color var(--transition-micro) ease;
 }
 
 .board-toolbar-color-swatch:hover {
@@ -505,7 +456,6 @@
     border-color: rgba(255,255,255,0.75);
 }
 
-/* When connect tool is on: crosshair on the board, pointer on cards */
 .board-connect-tool-on {
     cursor: crosshair !important;
 }
@@ -514,9 +464,6 @@
     cursor: crosshair;
 }
 
-/* Dots are always grab-handles (connect tool no longer needed to move them) */
-
-/* Block all text interaction while connect tool is on */
 .board-connect-tool-on [contenteditable],
 .board-connect-tool-on input,
 .board-connect-tool-on textarea {
@@ -524,17 +471,14 @@
     user-select: none !important;
 }
 
-/* Highlight hovered target card while connect tool is on */
 .board-connect-tool-on .board-card:hover {
     border-color: rgba(192, 57, 43, 0.5);
-    box-shadow: 0 0 0 1px rgba(192, 57, 43, 0.25), 0 6px 28px rgba(0,0,0,0.6);
+    box-shadow: var(--shadow-board-card-connect-hover);
 }
 
 .board-card-collapse-btn svg {
-    transition: transform 0.25s ease;
+    transition: transform var(--transition-dim) ease;
 }
-
-/* ── Card title inline editing ────────────────────────────────────── */
 
 .board-card-title-wrap {
     flex: 1;
@@ -545,14 +489,13 @@
 }
 
 .board-card-title {
-    font-size: 13px;
     font-weight: 600;
     color: rgba(255,255,255,0.88);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     line-height: 1.2;
-    cursor: inherit; /* inherits grab/move from header; text cursor set only in edit mode */
+    cursor: inherit;
     flex: 1;
     min-width: 0;
 }
@@ -561,7 +504,6 @@
     color: var(--gray-900);
 }
 
-/* Only show text cursor on the title when the card is in edit mode */
 .board-card-editing .board-card-title {
     cursor: text;
 }
@@ -572,9 +514,8 @@
     min-width: 0;
     background: rgba(255,255,255,0.07);
     border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 5px;
-    padding: 2px 6px;
-    font-size: 13px;
+    border-radius: var(--radius-sm);
+    padding: var(--space-2px) var(--space-2);
     font-weight: 600;
     color: rgba(255,255,255,0.9);
     outline: none;
@@ -582,39 +523,31 @@
     line-height: 1.4;
 }
 
-/* ── Card body ────────────────────────────────────────────────────── */
-
 .board-card-body {
-    /* No horizontal padding — sections own it, preventing double-spacing */
-    padding: 4px 0;
+    padding: var(--space-1) 0;
     display: flex;
     flex-direction: column;
     gap: 0;
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
 }
 
 .board-card-body::-webkit-scrollbar {
-    display: none; /* Chrome / Safari */
+    display: none;
 }
-
-/* ── Section ──────────────────────────────────────────────────────── */
 
 .board-section {
     position: relative;
     border-top: 1px solid rgba(255,255,255,0.05);
-    /* 18px left gutter keeps the drag grip clear of text at all times */
-    padding: 7px 12px 5px 18px;
+    padding: var(--space-7px) var(--space-5) var(--space-5px) var(--space-18px);
 }
 
 .board-section:first-child {
     border-top: none;
-    padding-top: 4px;
+    padding-top: var(--space-1);
 }
-
-/* ── Drag grip — sits in the section's own 12px left padding gutter ── */
 
 .board-section-drag-btn {
     position: absolute;
@@ -624,16 +557,16 @@
     width: 14px;
     height: 22px;
     border: none;
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
     background: transparent;
-    color: rgba(255,255,255,0.0);  /* invisible until hover */
+    color: rgba(255,255,255,0.0);
     cursor: grab;
     padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     touch-action: none;
-    transition: color 0.12s, background 0.12s;
+    transition: color var(--transition-micro), background var(--transition-micro);
     z-index: 2;
     pointer-events: none;
 }
@@ -657,7 +590,6 @@
     cursor: grabbing;
 }
 
-
 .board-section-dragging {
     display: none;
 }
@@ -671,7 +603,7 @@
     z-index: 100000;
     opacity: 0.5;
     pointer-events: none;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: var(--gray-700, #2a2a2a);
 }
 
@@ -683,9 +615,9 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: var(--color-green, #4caf50);
+    background: var(--color-green);
     color: #fff;
-    font-size: 13px;
+    font-size: var(--font-md);
     font-weight: 700;
     line-height: 18px;
     text-align: center;
@@ -694,16 +626,13 @@
 
 .board-section-drag-placeholder {
     background: var(--gray-400);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     opacity: 0.25;
-    margin: 2px 0;
+    margin: var(--space-2px) 0;
     pointer-events: none;
 }
 
-/* ── Notes section ────────────────────────────────────────────────── */
-
 .board-section-notes {
-    font-size: 12px;
     color: rgba(255,255,255,0.6);
     line-height: 1.55;
     outline: none;
@@ -711,10 +640,10 @@
     cursor: default;
     white-space: pre-wrap;
     word-break: break-word;
-    border-radius: 5px;
-    padding: 4px 5px;
+    border-radius: var(--radius-sm);
+    padding: var(--space-1) var(--space-5px);
     margin: -4px -5px;
-    transition: background 0.15s ease;
+    transition: background var(--transition-fast) ease;
 }
 
 .board-section-notes[contenteditable="true"] {
@@ -732,7 +661,6 @@
 }
 
 .board-section-subheader {
-    font-size: 12px;
     font-weight: 600;
     color: rgba(255,255,255,0.85);
     line-height: 1.4;
@@ -741,10 +669,10 @@
     cursor: default;
     white-space: pre-wrap;
     word-break: break-word;
-    border-radius: 5px;
-    padding: 4px 5px;
+    border-radius: var(--radius-sm);
+    padding: var(--space-1) var(--space-5px);
     margin: -4px -5px;
-    transition: background 0.15s ease;
+    transition: background var(--transition-fast) ease;
 }
 
 .board-section-subheader[contenteditable="true"] {
@@ -762,12 +690,10 @@
     font-style: italic;
 }
 
-/* ── Objective section (each objective is its own draggable section) ─ */
-
 .board-section-objective {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-2);
 }
 
 .board-section-objective.done .board-obj-item-text {
@@ -778,14 +704,14 @@
 .board-obj-checkbox {
     width: 13px;
     height: 13px;
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
     border: 1.5px solid rgba(255,255,255,0.22);
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition: background var(--transition-fast) ease, border-color var(--transition-fast) ease;
 }
 
 .board-section-objective.done .board-obj-checkbox {
@@ -799,7 +725,7 @@
     stroke: var(--color-green);
     fill: none;
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--transition-fast) ease;
 }
 
 .board-section-objective.done .board-obj-tick {
@@ -807,7 +733,6 @@
 }
 
 .board-obj-item-text {
-    font-size: 12px;
     color: rgba(255,255,255,0.6);
     line-height: 1.55;
     cursor: default;
@@ -824,26 +749,23 @@
     min-width: 0;
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 12px;
+    border-radius: var(--radius-xs);
+    padding: var(--space-2px) var(--space-2);
     color: rgba(255,255,255,0.8);
     outline: none;
     font-family: inherit;
 }
 
-
 .board-add-obj-item-btn {
     display: none;
     background: transparent;
     border: none;
-    padding: 3px 4px;
-    font-size: 11px;
+    padding: var(--space-3px) var(--space-1);
     color: rgba(255,255,255,0.28);
     cursor: pointer;
     text-align: left;
-    transition: color 0.15s ease;
-    border-radius: 4px;
+    transition: color var(--transition-fast) ease;
+    border-radius: var(--radius-xs);
 }
 
 .board-add-obj-item-btn {
@@ -855,22 +777,19 @@
     background: rgba(255,255,255,0.04);
 }
 
-/* ── Add section button (lives at bottom of scrollable body) ─────── */
-
 .board-card-add-section-btn {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: var(--space-5px);
     background: transparent;
     border: none;
     border-top: 1px solid rgba(255,255,255,0.05);
-    padding: 10px 12px 7px;
-    font-size: 11px;
+    padding: var(--space-4) var(--space-5) var(--space-7px);
     color: rgba(255,255,255,0.28);
     cursor: pointer;
     border-radius: 0;
-    transition: color 0.15s ease;
+    transition: color var(--transition-fast) ease;
     width: 100%;
     font-family: inherit;
     box-sizing: border-box;
@@ -884,13 +803,11 @@
     border-top: none;
 }
 
-/* ── Section picker — inline row replacing the add button ─────────── */
-
 .board-section-picker {
     display: flex;
     flex-direction: row;
-    gap: 2px;
-    padding: 6px 8px 4px;
+    gap: var(--space-2px);
+    padding: var(--space-2) var(--space-3) var(--space-1);
     border-top: 1px solid rgba(255,255,255,0.05);
     background: transparent;
     box-sizing: border-box;
@@ -905,17 +822,16 @@
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     color: var(--gray-900);
-    padding: 8px 12px;
-    border-radius: 10px;
+    padding: var(--space-3) var(--space-5);
+    border-radius: var(--radius-lg);
     box-shadow: var(--glass-shadow);
     border: var(--glass-border);
-    font-size: 13px;
     line-height: 1.4;
     letter-spacing: 0.02em;
     z-index: 100001;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--transition-fast) ease;
 }
 
 .board-picker-floating-tip.visible {
@@ -937,9 +853,8 @@
     to   { opacity: 0; transform: translateY(4px); }
 }
 
-/* Add section button re-entry after picker closes */
 .board-card-add-section-btn.is-appearing {
-    animation: addBtnAppear 0.2s ease forwards;
+    animation: addBtnAppear var(--transition-medium) ease forwards;
 }
 
 @keyframes addBtnAppear {
@@ -955,11 +870,11 @@
     height: 32px;
     padding: 0;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: rgba(255,255,255,0.4);
     cursor: pointer;
-    transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease;
+    transition: background var(--transition-micro) ease, color var(--transition-micro) ease, transform var(--transition-xfast) ease;
     font-family: inherit;
     flex-shrink: 0;
 }
@@ -970,26 +885,22 @@
     transform: translateY(-1px);
 }
 
-/* ── Sketch section ───────────────────────────────────────────────── */
-
 .board-section-sketch {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-2);
 }
 
 .board-sketch-sep {
     width: 1px;
     height: 16px;
     background: rgba(255,255,255,0.1);
-    margin: 0 2px;
+    margin: 0 var(--space-2px);
     flex-shrink: 0;
 }
 
-/* ── Card body: text content ──────────────────────────────────────── */
-
 .board-card-text {
-    font-size: 12px;
+    font-size: var(--font-md);
     color: rgba(255,255,255,0.55);
     line-height: 1.5;
     overflow: hidden;
@@ -998,16 +909,14 @@
     -webkit-box-orient: vertical;
 }
 
-/* ── Quest card specifics ─────────────────────────────────────────── */
-
 .board-quest-status {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-size: 11px;
+    gap: var(--space-5px);
+    font-size: var(--font-micro);
     font-weight: 500;
-    padding: 3px 8px;
-    border-radius: 999px;
+    padding: var(--space-3px) var(--space-3);
+    border-radius: var(--radius-pill);
     width: fit-content;
 }
 
@@ -1028,14 +937,14 @@
 .board-quest-objectives {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--space-1);
 }
 
 .board-quest-objective {
     display: flex;
     align-items: flex-start;
-    gap: 6px;
-    font-size: 11px;
+    gap: var(--space-2);
+    font-size: var(--font-micro);
     color: rgba(255,255,255,0.55);
     line-height: 1.4;
     cursor: pointer;
@@ -1049,14 +958,14 @@
 .board-obj-checkbox {
     width: 13px;
     height: 13px;
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
     border: 1.5px solid rgba(255,255,255,0.25);
     flex-shrink: 0;
-    margin-top: 1px;
+    margin-top: var(--space-1px);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition: background var(--transition-fast) ease, border-color var(--transition-fast) ease;
 }
 
 .board-quest-objective.done .board-obj-checkbox {
@@ -1070,7 +979,7 @@
     stroke: var(--color-green);
     fill: none;
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--transition-fast) ease;
 }
 
 .board-quest-objective.done .board-obj-tick {
@@ -1080,21 +989,19 @@
 .board-quest-progress {
     height: 3px;
     background: rgba(255,255,255,0.1);
-    border-radius: 2px;
+    border-radius: var(--radius-2xs);
     overflow: hidden;
 }
 
 .board-quest-progress-fill {
     height: 100%;
     background: var(--color-green);
-    border-radius: 2px;
-    transition: width 0.3s ease;
+    border-radius: var(--radius-2xs);
+    transition: width var(--transition-slow) ease;
 }
 
-/* ── Map card specifics ───────────────────────────────────────────── */
-
 .board-map-url {
-    font-size: 11px;
+    font-size: var(--font-micro);
     color: var(--color-cyan);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1109,14 +1016,12 @@
     text-decoration: underline;
 }
 
-/* ── Book card specifics ──────────────────────────────────────────── */
-
 .board-card[data-type="Book"] {
     border-left: 3px solid var(--book-accent, var(--color-orange));
 }
 
 .board-book-description {
-    font-size: 11px;
+    font-size: var(--font-micro);
     color: rgba(255,255,255,0.4);
     font-style: italic;
     line-height: 1.4;
@@ -1125,12 +1030,10 @@
     white-space: nowrap;
 }
 
-/* ── Sketch canvas ────────────────────────────────────────────────── */
-
 .board-sketch-canvas-wrap {
     width: 100%;
     background: rgba(255,255,255,0.03);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     overflow: hidden;
     min-height: 120px;
     position: relative;
@@ -1149,8 +1052,8 @@
 .board-sketch-toolbar {
     display: none;
     align-items: center;
-    gap: 6px;
-    padding: 4px 0;
+    gap: var(--space-2);
+    padding: var(--space-1) 0;
 }
 
 .board-section-editing .board-sketch-toolbar {
@@ -1161,14 +1064,14 @@
     width: 22px;
     height: 22px;
     border: none;
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: rgba(255,255,255,0.4);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background var(--transition-fast) ease, color var(--transition-fast) ease;
     padding: 0;
 }
 
@@ -1195,7 +1098,7 @@
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid transparent;
-    transition: transform 0.15s ease, border-color 0.15s ease;
+    transition: transform var(--transition-fast) ease, border-color var(--transition-fast) ease;
 }
 
 .board-sketch-color-dot:hover,
@@ -1203,9 +1106,6 @@
     transform: scale(1.2);
     border-color: rgba(255,255,255,0.5);
 }
-
-
-/* ── Board empty placeholder ──────────────────────────────────────── */
 
 .board-empty-hint {
     position: absolute;
@@ -1226,7 +1126,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 14px;
+    margin: 0 auto var(--space-14px);
     color: rgba(255,255,255,0.2);
 }
 
@@ -1236,15 +1136,14 @@
 }
 
 .board-empty-hint p {
-    font-size: 13px;
     color: rgba(255,255,255,0.2);
     margin: 0;
     line-height: 1.5;
 }
 
-/* ==================================================================*/
-/* =================== BOARD EDIT MODAL =============================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================== BOARD EDIT MODAL ========================== */
+/* ====================================================================== */
 
 .board-modal-backdrop {
     position: absolute;
@@ -1256,7 +1155,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: boardModalIn 0.2s ease;
+    animation: boardModalIn var(--transition-medium) ease;
 }
 
 @keyframes boardModalIn {
@@ -1269,7 +1168,7 @@
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border: var(--glass-border);
-    border-radius: 14px;
+    border-radius: var(--radius-xl);
     width: min(480px, 92%);
     max-height: 82vh;
     display: flex;
@@ -1288,13 +1187,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px 14px;
+    padding: var(--space-7) var(--space-8) var(--space-14px);
     border-bottom: 1px solid rgba(255,255,255,0.07);
     flex-shrink: 0;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .board-modal-title {
-    font-size: 15px;
+    font-size: var(--font-lg);
     font-weight: 600;
     color: rgba(255,255,255,0.88);
 }
@@ -1310,7 +1210,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background var(--transition-fast) ease, color var(--transition-fast) ease;
 }
 
 .board-modal-close:hover {
@@ -1324,47 +1224,45 @@
 }
 
 .board-modal-body {
-    padding: 18px 20px;
+    padding: var(--space-18px) var(--space-8);
     overflow-y: auto;
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: var(--space-14px);
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.12) transparent;
 }
 
 .board-modal-footer {
     display: flex;
-    gap: 8px;
-    padding: 14px 20px;
+    gap: var(--space-3);
+    padding: var(--space-14px) var(--space-8);
     border-top: 1px solid rgba(255,255,255,0.07);
     flex-shrink: 0;
     justify-content: flex-end;
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 
-/* ── Modal form fields ──────────────────────────────────────────── */
-
 .board-field-label {
-    font-size: 11px;
+    font-size: var(--font-micro);
     font-weight: 600;
     color: rgba(255,255,255,0.35);
     text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin-bottom: 6px;
+    margin-bottom: var(--space-2);
 }
 
 .board-field-input {
     width: 100%;
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 13px;
+    border-radius: var(--radius-md);
+    padding: var(--space-4) var(--space-5);
+    font-size: var(--font-md);
     color: rgba(255,255,255,0.85);
     outline: none;
     font-family: inherit;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    transition: border-color var(--transition-fast) ease, background var(--transition-fast) ease;
     box-sizing: border-box;
 }
 
@@ -1387,19 +1285,19 @@
 .board-type-buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: var(--space-2);
 }
 
 .board-type-btn {
-    padding: 5px 12px;
-    border-radius: 999px;
+    padding: var(--space-5px) var(--space-5);
+    border-radius: var(--radius-pill);
     border: 1px solid rgba(255,255,255,0.12);
     background: rgba(255,255,255,0.04);
     color: rgba(255,255,255,0.5);
-    font-size: 12px;
+    font-size: var(--font-md);
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all var(--transition-fast) ease;
 }
 
 .board-type-btn:hover {
@@ -1417,18 +1315,18 @@
 .board-quest-statuses {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: var(--space-2);
 }
 
 .board-status-btn {
-    padding: 4px 10px;
-    border-radius: 999px;
+    padding: var(--space-1) var(--space-4);
+    border-radius: var(--radius-pill);
     border: 1px solid rgba(255,255,255,0.08);
     background: rgba(255,255,255,0.04);
-    font-size: 11px;
+    font-size: var(--font-micro);
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all var(--transition-fast) ease;
     color: rgba(255,255,255,0.45);
 }
 
@@ -1440,31 +1338,29 @@
 .board-status-btn.selected-completed   { background: color-mix(in srgb, var(--color-cyan) 20%, transparent);   color: var(--color-cyan);   border-color: color-mix(in srgb, var(--color-cyan) 40%, transparent); }
 .board-status-btn.selected-failed      { background: color-mix(in srgb, var(--color-red) 20%, transparent);    color: var(--color-red);    border-color: color-mix(in srgb, var(--color-red) 40%, transparent); }
 
-/* Objectives list in modal */
-
 .board-objectives-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-2);
 }
 
 .board-obj-row {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-2);
 }
 
 .board-obj-input {
     flex: 1;
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 12px;
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-md);
     color: rgba(255,255,255,0.75);
     outline: none;
     font-family: inherit;
-    transition: border-color 0.15s ease;
+    transition: border-color var(--transition-fast) ease;
 }
 
 .board-obj-input:focus {
@@ -1482,9 +1378,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: var(--font-lg);
     line-height: 1;
-    transition: color 0.15s ease, background 0.15s ease;
+    transition: color var(--transition-fast) ease, background var(--transition-fast) ease;
 }
 
 .board-obj-remove:hover {
@@ -1495,15 +1391,15 @@
 .board-add-obj-btn {
     display: flex;
     align-items: center;
-    gap: 5px;
-    font-size: 12px;
+    gap: var(--space-5px);
+    font-size: var(--font-md);
     color: rgba(255,255,255,0.35);
     background: transparent;
     border: 1px dashed rgba(255,255,255,0.12);
-    border-radius: 6px;
-    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-4);
     cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease;
+    transition: color var(--transition-fast) ease, border-color var(--transition-fast) ease;
     width: 100%;
 }
 
@@ -1512,12 +1408,10 @@
     border-color: rgba(255,255,255,0.22);
 }
 
-/* Book color swatches */
-
 .board-color-swatches {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-3);
 }
 
 .board-color-swatch {
@@ -1526,7 +1420,7 @@
     border-radius: 50%;
     border: 2px solid transparent;
     cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    transition: transform var(--transition-fast) ease, border-color var(--transition-fast) ease, box-shadow var(--transition-fast) ease;
 }
 
 .board-color-swatch:hover {
@@ -1535,36 +1429,34 @@
 
 .board-color-swatch.selected {
     border-color: rgba(255,255,255,0.7);
-    box-shadow: 0 0 0 2px rgba(255,255,255,0.2);
+    box-shadow: var(--shadow-swatch-ring);
     transform: scale(1.1);
 }
 
-/* Modal buttons */
-
 .board-modal-save {
-    padding: 8px 20px;
-    border-radius: 8px;
+    padding: var(--space-3) var(--space-8);
+    border-radius: var(--radius-md);
     border: none;
     background: var(--color-green);
     color: var(--gray-900);
-    font-size: 13px;
+    font-size: var(--font-md);
     font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--transition-fast) ease;
 }
 
 .board-modal-save:hover { opacity: 0.85; }
 
 .board-modal-cancel {
-    padding: 8px 16px;
-    border-radius: 8px;
+    padding: var(--space-3) var(--space-7);
+    border-radius: var(--radius-md);
     border: 1px solid rgba(255,255,255,0.1);
     background: transparent;
     color: rgba(255,255,255,0.5);
-    font-size: 13px;
+    font-size: var(--font-md);
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all var(--transition-fast) ease;
 }
 
 .board-modal-cancel:hover {

@@ -637,7 +637,7 @@ function initBlockTypeFilterButtons() {
         const container = document.getElementById(`character_type_tags_${tabNum}`);
         if (!container) return;
         container.innerHTML = config.types.map(type =>
-            `<button class="tag-button ${config.className}" data-tag="${type}">${type}</button>`
+            `<button class="tag-button tag-button--compact ${config.className}" data-tag="${type}">${type}</button>`
         ).join("");
         // filterManager.handleTagClick handles all interaction including shift+click
     });
@@ -1070,7 +1070,7 @@ document.addEventListener("click", (e) => {
         const target = chipsContainer || group;
         body.querySelectorAll(".tag-button.selected, .tag-button.selected-or").forEach(btn => {
             const chip = document.createElement("button");
-            chip.classList.add("tag-button", "selected");
+            chip.classList.add("tag-button", "tag-button--compact", "selected");
             if (tagClass) chip.classList.add(tagClass);
             if (btn.classList.contains("selected-or")) { chip.classList.remove("selected"); chip.classList.add("selected-or"); }
             chip.dataset.tag = btn.dataset.tag;

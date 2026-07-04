@@ -1074,7 +1074,7 @@ export const inventoryBag = (() => {
   function bagTogglesHTML(prefix, reqAtt, equipable, attuned, equipped) {
     return `<div class="inventory-edit-toggles">
       <div class="inventory-toggle-pair">
-        <label class="inv-toggle inv-toggle-attune">
+        <label class="inv-toggle inv-toggle--sm inv-toggle-attune">
           <input type="checkbox" id="${prefix}-attune"${reqAtt ? ' checked' : ''} />
           <span class="inv-track"><span class="inv-thumb"></span></span>
           <span>Requires attunement</span>
@@ -1084,7 +1084,7 @@ export const inventoryBag = (() => {
         </button>
       </div>
       <div class="inventory-toggle-pair">
-        <label class="inv-toggle inv-toggle-equip">
+        <label class="inv-toggle inv-toggle--sm inv-toggle-equip">
           <input type="checkbox" id="${prefix}-equip"${equipable ? ' checked' : ''} />
           <span class="inv-track"><span class="inv-thumb"></span></span>
           <span>Equipable</span>

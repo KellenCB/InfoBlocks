@@ -1,7 +1,6 @@
-/* ==================================================================*/
-/* ==================== INVENTORY BAG MODE =========================*/
-/* ==================================================================*/
-
+/* ====================================================================== */
+/* ========================= INVENTORY BAG MODE ========================= */
+/* ====================================================================== */
 
 .inventory-layout {
   display: flex;
@@ -21,36 +20,33 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  padding: 15px;
+  padding: var(--space-6);
 }
-
-/* ── Filter bar ───────────────────────────────────────────────────── */
 
 .bfb {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 0 0 8px;
+  gap: var(--space-1);
+  padding: 0 0 var(--space-3);
   flex-wrap: wrap;
 }
 
 .bf {
     min-height: 28px;
-    padding: 4px 6px;
+    padding: var(--space-1) var(--space-2);
     background: rgba(255, 255, 255, .04);
     border: 1px solid rgba(255, 255, 255, .05);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     flex-shrink: 0;
-    transition: all .15s;
-    font-size: 12px;
+    transition: all var(--transition-fast);
     color: #555;
     font-family: inherit;
-    gap: 6px;
+    gap: var(--space-2);
 }
 
 .bf:hover {
@@ -70,39 +66,36 @@
 .bf.on {
   background: rgba(76, 175, 80, .12);
   border-color: rgba(76, 175, 80, .25);
-  color: #4CAF50;
+  color: var(--color-green);
 }
 
 .bf.on svg {
-  stroke: #4CAF50;
+  stroke: var(--color-green);
 }
 
 .bf .bfc {
   min-width: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, .06);
-  font-size: 10px;
   color: #666;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2px;
+  padding: var(--space-2px);
 }
 
 .bf.on .bfc {
   background: rgba(76, 175, 80, .18);
-  color: #4CAF50;
+  color: var(--color-green);
 }
 
 .bfd {
   width: 1px;
   height: 16px;
   background: rgba(255, 255, 255, .04);
-  margin: 0 2px;
+  margin: 0 var(--space-2px);
   flex-shrink: 0;
 }
-
-/* ── Type dropdown ────────────────────────────────────────────────── */
 
 .bf-dd {
   position: relative;
@@ -116,11 +109,9 @@
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-  margin-left: 2px;
-  transition: transform .15s;
+  margin-left: var(--space-2px);
+  transition: transform var(--transition-fast);
 }
-
-
 
 .bf-dd-menu {
   position: absolute;
@@ -128,30 +119,29 @@
   left: 0;
   background: rgba(20, 20, 20, .97);
   border: 1px solid rgba(255, 255, 255, .08);
-  border-radius: 8px;
-  padding: 4px;
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
   min-width: 140px;
   z-index: 100;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--space-1px);
 }
 
 .bf-dd-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px;
-  border-radius: 5px;
-  font-size: 12px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
   color: #888;
   cursor: pointer;
   background: none;
   border: none;
   font-family: inherit;
-  transition: background .1s;
+  transition: background var(--transition-xfast);
   text-align: left;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .bf-dd-item:hover {
@@ -159,39 +149,35 @@
 }
 
 .bf-dd-item.on {
-  color: #4CAF50;
+  color: var(--color-green);
 }
 
 .bf-dd-cnt {
   min-width: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, .05);
-  font-size: 10px;
   color: #555;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2px;
+  padding: var(--space-2px);
 }
 
 .bf-dd-item.on .bf-dd-cnt {
   background: rgba(76, 175, 80, .15);
-  color: #4CAF50;
+  color: var(--color-green);
 }
-
-/* ── Attunement tracker ───────────────────────────────────────────── */
 
 .bat {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 7px;
+  gap: var(--space-1);
+  padding: var(--space-2px) var(--space-7px);
   background: rgba(6, 173, 228, .08);
   border: 1px solid rgba(6, 173, 228, .15);
-  border-radius: 8px;
-  font-size: 10px;
-  color: #06ade4;
+  border-radius: var(--radius-md);
+  color: var(--color-cyan);
 }
 
 .bat svg {
@@ -203,8 +189,6 @@
   stroke-linecap: round;
 }
 
-/* ── Bag container & physics canvas ───────────────────────────────── */
-
 .bcn {
   position: relative;
   width: 100%;
@@ -213,10 +197,6 @@
   overflow: hidden;
 }
 
-/* In bag mode the results-section has padding: 15px. width: 100% on a flex
-   child can resolve against the container's border-box (ignoring padding),
-   so we switch to width: auto and let align-self: stretch fill only the
-   content area, which correctly honours the 15px inset on all sides. */
 .inv-bag-mode .results-section .bcn {
   width: auto;
 }
@@ -232,8 +212,6 @@
   inset: 0;
 }
 
-/* ── Bag items ────────────────────────────────────────────────────── */
-
 .bi {
   position: absolute;
   pointer-events: auto;
@@ -242,7 +220,7 @@
 
 .bc {
   position: absolute;
-  border-radius: 2px;
+  border-radius: var(--radius-2xs);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -252,12 +230,10 @@
 .bc svg {
   width: 100%;
   height: 100%;
-  padding: 2px;
+  padding: var(--space-2px);
   position: relative;
   z-index: 1;
 }
-
-/* ── Popover layer & popup ────────────────────────────────────────── */
 
 .bpl {
   position: absolute;
@@ -270,14 +246,14 @@
   position: absolute;
   background: rgba(20, 20, 20, .96);
   border: .5px solid rgba(255, 255, 255, .12);
-  border-radius: 10px;
-  padding: 16px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-7);
   width: 420px;
   pointer-events: auto;
   z-index: 61;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-4);
 }
 
 .bpp-x {
@@ -286,13 +262,12 @@
   right: 12px;
   color: #555;
   cursor: pointer;
-  font-size: 16px;
+  font-size: var(--font-lg);
   background: none;
   border: none;
 }
 
 .bpp-n {
-  font-size: 16px;
   color: #fff;
   font-weight: 500;
   overflow: hidden;
@@ -303,14 +278,13 @@
 
 .bpp-t {
   display: inline-block;
-  padding: 3px 9px;
-  border-radius: 5px;
-  font-size: 11px;
+  padding: var(--space-3px) var(--space-9px);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-micro);
   align-self: flex-start;
 }
 
 .bpp-b {
-  font-size: 13px;
   color: #888;
   line-height: 1.5;
   max-height: 180px;
@@ -320,29 +294,26 @@
 .bpp-tg {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .bpp-tg span {
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 10px;
+  padding: var(--space-3px) var(--space-3);
+  border-radius: var(--radius-xs);
+  font-size: var(--font-micro);
   background: rgba(255, 255, 255, .05);
   color: #777;
 }
 
 .bpp-s {
   display: flex;
-  gap: 6px;
-  font-size: 12px;
+  gap: var(--space-2);
 }
 
 .bpp-s span {
-  padding: 3px 10px;
-  border-radius: 6px;
+  padding: var(--space-3px) var(--space-4);
+  border-radius: var(--radius-sm);
 }
-
-/* ── Empty state ──────────────────────────────────────────────────── */
 
 .bem {
   display: flex;
@@ -350,23 +321,18 @@
   justify-content: center;
   height: 100%;
   color: var(--gray-600);
-  font-size: 13px;
   font-style: italic;
 }
 
-/* ── Add button ───────────────────────────────────────────────────── */
-
 .bag-add-btn {
-  margin-left: 4px;
+  margin-left: var(--space-1);
   background: rgba(76, 175, 80, .15) !important;
   border-color: rgba(76, 175, 80, .25) !important;
 }
 
 .bag-add-btn svg {
-  stroke: #4CAF50 !important;
+  stroke: var(--color-green) !important;
 }
-
-/* ── Overlay (add / edit) ─────────────────────────────────────────── */
 
 .bag-ov {
   position: fixed;
@@ -376,34 +342,32 @@
   align-items: flex-start;
   justify-content: center;
   z-index: 9999;
-  padding: 10px;
+  padding: var(--space-4);
   overflow-y: auto;
 }
 
 .bag-ov-card {
   background: var(--gray-150);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: .5px solid rgba(255, 255, 255, .08);
-  padding: 16px;
+  padding: var(--space-7);
   width: min(320px, calc(100vw - 20px));
   margin: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-4);
 }
 
 .bag-ov-title {
-  font-size: 15px;
   color: var(--gray-900);
   font-weight: 500;
 }
 
 .bag-ov-label {
-  font-size: 9px;
+  font-size: var(--font-micro);
   color: var(--gray-600);
-  letter-spacing: .06em;
   text-transform: uppercase;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .bag-ov-input {
@@ -411,10 +375,9 @@
   height: 32px;
   background: rgba(255, 255, 255, .04);
   border: 1px solid rgba(255, 255, 255, .06);
-  border-radius: 6px;
-  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-4);
   color: var(--gray-850);
-  font-size: 12px;
   font-family: inherit;
   outline: none;
 }
@@ -428,17 +391,15 @@
   min-height: 50px;
   background: rgba(255, 255, 255, .04);
   border: 1px solid rgba(255, 255, 255, .06);
-  border-radius: 6px;
-  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
   color: var(--gray-850);
-  font-size: 12px;
   font-family: inherit;
   outline: none;
   resize: vertical;
   box-sizing: border-box;
 }
 
-/* Contenteditable description editor */
 .bag-ov-desc-editor {
   resize: none;
   cursor: text;
@@ -451,8 +412,6 @@
   border-color: rgba(255, 255, 255, .15);
 }
 
-/* Links rendered inside the editor — same style as the view popup,
-   but pointer-events:none so they don't navigate while editing */
 .bag-ov-desc-editor a {
   color: var(--color-cyan);
   text-decoration: underline;
@@ -462,18 +421,16 @@
   cursor: text;
 }
 
-/* ── Overlay — category buttons ───────────────────────────────────── */
-
 .bag-ov-cats {
   display: flex;
   flex-wrap: wrap;
-  gap: 3px;
+  gap: var(--space-3px);
 }
 
 .bag-ov-cat {
-  padding: 4px 9px;
-  border-radius: 6px;
-  font-size: 10px;
+  padding: var(--space-1) var(--space-9px);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-micro);
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, .06);
   background: rgba(255, 255, 255, .03);
@@ -481,19 +438,17 @@
   font-family: inherit;
 }
 
-/* ── Overlay — toggles ────────────────────────────────────────────── */
-
 .bag-ov-toggles {
   display: flex;
-  gap: 12px;
+  gap: var(--space-5);
   align-items: center;
 }
 
 .bag-ov-tgl {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
+  gap: var(--space-2);
+  font-size: var(--font-micro);
   color: var(--gray-700);
 }
 
@@ -501,38 +456,13 @@
   accent-color: var(--color-green);
 }
 
-/* ── Overlay — inventory-style toggles (attune / equip) ───────────── */
-
 .bag-ov-card .inventory-edit-toggles {
-  gap: 4px 12px;
-}
-
-.bag-ov-card .inv-toggle {
-  font-size: 11px;
-  gap: 7px;
-}
-
-.bag-ov-card .inv-track {
-  width: 32px;
-  height: 18px;
-  border-radius: 9px;
-}
-
-.bag-ov-card .inv-thumb {
-  width: 12px;
-  height: 12px;
-  top: 2px;
-  left: 2px;
-}
-
-.bag-ov-card .inv-toggle input[type="checkbox"]:checked ~ .inv-track .inv-thumb {
-  transform: translateX(14px);
+  gap: var(--space-1) var(--space-5);
 }
 
 .bag-ov-card .inv-state-btn {
-  font-size: 11px;
-  gap: 4px;
-  padding: 3px 6px;
+  gap: var(--space-1);
+  padding: var(--space-3px) var(--space-2);
 }
 
 .bag-ov-card .inv-state-btn.inv-state-chain svg {
@@ -545,13 +475,11 @@
   height: 15px;
 }
 
-/* ── Overlay — drawing canvas ─────────────────────────────────────── */
-
 .bag-ov-cw {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .bag-ov-da {
@@ -560,7 +488,7 @@
 }
 
 .bag-ov-da canvas {
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   cursor: crosshair;
   touch-action: none;
   z-index: 2;
@@ -568,7 +496,7 @@
 }
 
 .bag-ov-da .canvas-container {
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
@@ -577,7 +505,7 @@
   inset: 0;
   pointer-events: none;
   z-index: 3;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
@@ -586,27 +514,25 @@
   inset: 0;
   pointer-events: none;
   z-index: 10;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .bag-ov-gc {
   position: absolute;
-  transition: background .12s;
+  transition: background var(--transition-micro);
   border: 1px solid rgba(255, 255, 255, .03) !important;
 }
 
-/* ── Overlay — drawing tools ──────────────────────────────────────── */
-
 .bag-ov-tw {
   display: flex;
-  gap: 3px;
+  gap: var(--space-3px);
 }
 
 .bag-ov-tb {
   width: 28px;
   height: 28px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 255, 255, .06);
   background: rgba(255, 255, 255, .03);
   cursor: pointer;
@@ -614,13 +540,12 @@
   align-items: center;
   justify-content: center;
   color: var(--gray-600);
-  font-size: 12px;
 }
 
 .bag-ov-tb.on {
   border-color: rgba(76, 175, 80, .5) !important;
   background: rgba(76, 175, 80, .2) !important;
-  color: #4CAF50 !important;
+  color: var(--color-green) !important;
 }
 
 .bag-ov-dd {
@@ -628,34 +553,28 @@
   background: currentColor;
 }
 
-/* ── Overlay — cell detection info ────────────────────────────────── */
-
 .bag-ov-det {
-  font-size: 10px;
   color: var(--gray-700);
   text-align: center;
 }
 
 .bag-ov-det b {
-  color: #4CAF50;
+  color: var(--color-green);
 }
 
 .bag-ov-det.em {
   color: var(--gray-500);
 }
 
-/* ── Overlay — action buttons ─────────────────────────────────────── */
-
 .bag-ov-btns {
   display: flex;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .bag-ov-btn {
   flex: 1;
-  padding: 9px;
-  border-radius: 7px;
-  font-size: 12px;
+  padding: var(--space-9px);
+  border-radius: var(--radius-md);
   cursor: pointer;
   text-align: center;
   font-family: inherit;
@@ -664,7 +583,7 @@
 
 .bag-ov-sv {
   background: rgba(76, 175, 80, .25);
-  color: #4CAF50;
+  color: var(--color-green);
 }
 
 .bag-ov-cn {
@@ -673,19 +592,17 @@
   border: 1px solid rgba(255, 255, 255, .06);
 }
 
-/* ── Overlay — responsive two-column layout ───────────────────────── */
-
 .bag-ov-layout {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-5);
 }
 
 .bag-ov-left,
 .bag-ov-right {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-4);
 }
 
 .bag-ov-right {
@@ -697,64 +614,53 @@
     max-width: 760px;
     width: 92vw;
   }
-
   .bag-ov-layout {
     flex-direction: row;
     gap: 24px;
   }
-
   .bag-ov-left {
     flex: 0 0 260px;
   }
-
   .bag-ov-right {
     flex: 1;
     min-width: 0;
   }
-
-  /* Tools overlay on left edge of canvas in wide mode */
   .bag-ov-right .bag-ov-cw {
     position: relative;
   }
-
   .bag-ov-right .bag-ov-tw {
     position: absolute;
     left: 8px;
     top: 8px;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--space-2px);
     z-index: 10;
     background: rgba(20, 20, 20, .55);
-    border-radius: 6px;
-    padding: 3px;
+    border-radius: var(--radius-sm);
+    padding: var(--space-3px);
   }
-
-  /* Hide cell-count line in wide mode */
   .bag-ov-right .bag-ov-det {
     display: none;
   }
-
-  /* Description box fills remaining left-column height */
   .bag-ov-left > div:has(.bag-ov-textarea) {
     flex: 1;
     display: flex;
     flex-direction: column;
   }
-
   .bag-ov-left .bag-ov-textarea {
     flex: 1;
   }
 }
 
-/* ==================================================================*/
-/* ====================== DESCRIPTION LINK UI ======================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ======================== DESCRIPTION LINK UI ========================= */
+/* ====================================================================== */
 
 .bag-ov-label-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .bag-ov-label-row .bag-ov-label {
@@ -764,16 +670,15 @@
 .bag-ov-link-btn {
   background: none;
   border: 1px solid rgba(255,255,255,.08);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   color: var(--gray-600);
-  font-size: 11px;
   font-family: inherit;
   letter-spacing: 0.03em;
-  padding: 2px 7px;
+  padding: var(--space-2px) var(--space-7px);
   line-height: 1.6;
   opacity: 0.7;
-  transition: opacity 0.2s, background 0.2s;
+  transition: opacity var(--transition-medium), background var(--transition-medium);
   flex-shrink: 0;
 }
 
@@ -790,12 +695,12 @@
 .bag-ov-link-mini {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 6px;
-  padding: 10px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  padding: var(--space-4);
   background: rgba(255,255,255,.03);
   border: 1px solid rgba(255,255,255,.08);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .bag-ov-link-mini.bag-link-mini-hidden {
@@ -804,19 +709,18 @@
 
 .bag-ov-link-mini-btns {
   display: flex;
-  gap: 6px;
+  gap: var(--space-2);
   justify-content: flex-end;
 }
 
 .bag-ov-link-confirm,
 .bag-ov-link-cancel-mini {
-  padding: 4px 12px;
-  border-radius: 5px;
-  font-size: 11px;
+  padding: var(--space-1) var(--space-5);
+  border-radius: var(--radius-sm);
   font-family: inherit;
   cursor: pointer;
   border: 1px solid rgba(255,255,255,.1);
-  transition: background 0.2s;
+  transition: background var(--transition-medium);
 }
 
 .bag-ov-link-confirm {
@@ -837,13 +741,12 @@
   background: rgba(255,255,255,.05);
 }
 
-/* Links in the item view popup */
 .bpp-b a {
   color: var(--color-cyan);
   text-decoration: underline;
   text-underline-offset: 2px;
   opacity: 0.85;
-  transition: opacity 0.15s;
+  transition: opacity var(--transition-fast);
 }
 
 .bpp-b a:hover {

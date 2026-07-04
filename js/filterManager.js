@@ -208,7 +208,7 @@ export const filterManager = (() => {
                     } else if (!existing) {
                         // Create new chip
                         const chip = document.createElement('button');
-                        chip.classList.add('tag-button', state);
+                        chip.classList.add('tag-button', 'tag-button--compact', state);
                         if (tagClass) chip.classList.add(tagClass);
                         chip.dataset.tag = tag;
                         chip.textContent = tag;

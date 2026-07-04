@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoBlocks — Design System</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg" sizes="any">
+
+<!-- ============================================================ -->
+<!-- LIVE APP STYLESHEETS — identical to index.html. This page    -->
+<!-- always reflects whatever these files currently look like.    -->
+<!-- ============================================================ -->
+<link rel="stylesheet" href="./css/Colourpalette.css">
+<link rel="stylesheet" href="./css/base-layout.css">
+<link rel="stylesheet" href="./css/buttons.css">
+<link rel="stylesheet" href="./css/forms.css">
+<link rel="stylesheet" href="./css/tags.css">
+<link rel="stylesheet" href="./css/splitView.css">
+<link rel="stylesheet" href="./css/diceRoller.css">
+<link rel="stylesheet" href="./css/CharacterSheet.css">
+<link rel="stylesheet" href="./css/inventoryBag.css">
+<link rel="stylesheet" href="./css/detectiveBoard.css">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   STYLE-GUIDE CHROME ONLY — everything prefixed "sg-" below is
+   scaffolding for THIS page and is not part of the app itself.
+   It overrides the app-shell layout rules (which assume a fixed,
+   non-scrolling viewport) so this can be a normal scrolling page,
+   then otherwise leans entirely on the real app CSS above for
+   every component shown.
+   ============================================================ */
+
+html, body {
+    height: auto;
+    overflow: visible;
+    display: block;
+}
+body { padding: 0; }
+
+.sg-nav {
+    position: sticky;
+    top: 0;
+    z-index: 500;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 14px 24px;
+    background: var(--gray-150);
+    border-bottom: var(--glass-border);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+}
+.sg-nav a {
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    color: var(--gray-800);
+    background: var(--gray-400);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: background-color 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+.sg-nav a:hover { background: var(--gray-500); color: var(--gray-900); }
+
+.sg-page { max-width: 1140px; margin: 0 auto; padding: 40px 28px 140px; }
+
+.sg-hero { padding-bottom: 28px; margin-bottom: 44px; border-bottom: var(--glass-border); }
+.sg-hero h1 { margin-bottom: 10px; }
+.sg-hero p { color: var(--gray-800); font-size: 14px; line-height: 1.6; max-width: 720px; }
+.sg-hero .sg-meta { margin-top: 14px; font-size: 12px; color: var(--gray-600); font-family: monospace; }
+
+.sg-section { margin-bottom: 68px; scroll-margin-top: 70px; }
+.sg-section > h2 { font-size: 20px; letter-spacing: 0.03em; margin-bottom: 8px; color: var(--gray-900); }
+.sg-section-desc { color: var(--gray-800); font-size: 13.5px; line-height: 1.6; max-width: 760px; margin-bottom: 24px; }
+
+.sg-sub { margin-top: 32px; margin-bottom: 16px; }
+.sg-sub h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray-700); font-weight: 500; margin-bottom: 14px; }
+
+.sg-grid { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+.sg-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+
+.sg-swatch { width: 108px; }
+.sg-swatch-color { height: 62px; border-radius: 10px; border: var(--glass-border); margin-bottom: 6px; }
+.sg-swatch-label { font-size: 11px; color: var(--gray-850); line-height: 1.4; }
+.sg-swatch-value { font-size: 10px; color: var(--gray-600); font-family: monospace; }
+
+.sg-demo-box {
+    padding: 22px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.02);
+    border: 1px dashed rgba(255,255,255,0.1);
+}
+
+.sg-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.sg-table th, .sg-table td { text-align: left; padding: 7px 12px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.sg-table th { color: var(--gray-700); font-weight: 500; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.06em; }
+.sg-table td { color: var(--gray-850); }
+.sg-table code { font-family: monospace; color: var(--color-cyan); font-size: 12px; }
+
+.sg-tag-label {
+    font-size: 10.5px;
+    font-family: monospace;
+    color: var(--gray-600);
+    margin-top: 4px;
+}
+
+.sg-spacer-row { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.sg-spacer-bar { background: var(--color-blue); height: 14px; border-radius: 3px; }
+.sg-spacer-row span { font-size: 11.5px; font-family: monospace; color: var(--gray-800); width: 46px; }
+
+.sg-type-area { margin-top: 36px; margin-bottom: 8px; }
+.sg-type-area h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-orange); font-weight: 500; }
+.sg-type-list { border-top: 1px solid rgba(255,255,255,0.08); }
+.sg-type-row {
+    display: grid;
+    grid-template-columns: 1fr 70px 70px;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.sg-type-name { min-width: 0; }
+.sg-type-sample { color: var(--gray-900); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sg-type-caption { font-size: 11px; font-family: monospace; color: var(--gray-700); margin-top: 4px; }
+.sg-type-weight, .sg-type-size { font-size: 12px; color: var(--gray-800); text-align: right; white-space: nowrap; }
+.sg-note-plain { font-size: 12px; color: var(--gray-700); line-height: 1.6; margin-top: 20px; }
+
+.sg-radius-box {
+    width: 74px; height: 74px;
+    background: var(--gray-400);
+    border: 1px solid var(--gray-500);
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 6px;
+}
+.sg-radius-box span { font-size: 10px; font-family: monospace; color: var(--gray-800); }
+
+.sg-icon-wrap {
+    width: 42px; height: 42px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+}
+.sg-icon-wrap svg { width: 20px; height: 20px; stroke: var(--gray-800); fill: none; stroke-width: 1.8; }
+
+.sg-uch-demo { display: flex; justify-content: center; padding: 10px 0 26px; }
+
+.sg-relative { position: relative !important; top: auto !important; left: auto !important; }
+</style>
+</head>
+
+<body>
+
+<nav class="sg-nav">
+    <a href="#colors">Colors</a>
+    <a href="#typography">Typography</a>
+    <a href="#spacing">Spacing</a>
+    <a href="#radius">Radius</a>
+    <a href="#shadows">Shadows &amp; Glass</a>
+    <a href="#buttons">Buttons</a>
+    <a href="#tags">Tags</a>
+    <a href="#forms">Forms</a>
+    <a href="#blocks">Blocks / Cards</a>
+    <a href="#modals">Modals &amp; Popovers</a>
+    <a href="#nav">Header / Nav</a>
+    <a href="#misc">Circles &amp; Coins</a>
+    <a href="#icons">Icons</a>
+    <a href="#motion">Motion</a>
+</nav>
+
+<div class="sg-page">
+
+    <div class="sg-hero">
+        <h1>InfoBlocks Design System</h1>
+        <p>A living reference for every color, type style, and UI component currently in the app. This page links the app's real stylesheets directly, so it always shows the current look — edit the CSS files and reload this page to see the change reflected here. Use it to spot-check consistency before adding new UI.</p>
+        <div class="sg-meta">Sources: Colourpalette.css · base-layout.css · buttons.css · forms.css · tags.css · CharacterSheet.css · detectiveBoard.css · inventoryBag.css · diceRoller.css · splitView.css</div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- COLORS -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="colors">
+        <h2>Color Palette</h2>
+        <p class="sg-section-desc">All colors are defined once as CSS custom properties in <code>Colourpalette.css</code>. New UI should always reference one of these variables rather than a new hardcoded hex value.</p>
+
+        <div class="sg-sub"><h3>Gray Scale (dark → light)</h3></div>
+        <div class="sg-grid">
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--gray-150)"></div><div class="sg-swatch-label">gray-150</div><div class="sg-swatch-value">#1e1e1e</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--gray-400)"></div><div class="sg-swatch-label">gray-400</div><div class="sg-swatch-value">#444</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--gray-500)"></div><div class="sg-swatch-label">gray-500</div><div class="sg-swatch-value">#555</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--gray-600)"></div><div class="sg-swatch-label">gray-600</div><div class="sg-swatch-value">#666</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--gray-700)"></div><div class="sg-swatch-label">gray-700</div><div class="sg-swatch-value">#888</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--gray-800)"></div><div class="sg-swatch-label">gray-800</div><div class="sg-swatch-value">#bbb</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--gray-850)"></div><div class="sg-swatch-label">gray-850</div><div class="sg-swatch-value">#ddd</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--gray-900)"></div><div class="sg-swatch-label">gray-900</div><div class="sg-swatch-value">#fff</div></div>
+        </div>
+
+        <div class="sg-sub"><h3>Brand / Action Colors</h3></div>
+        <div class="sg-grid">
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--color-green)"></div><div class="sg-swatch-label">color-green</div><div class="sg-swatch-value">#4CAF50</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--color-green-dark)"></div><div class="sg-swatch-label">color-green-dark</div><div class="sg-swatch-value">#388e3c</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--color-orange)"></div><div class="sg-swatch-label">color-orange</div><div class="sg-swatch-value">#f4a261</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--color-red)"></div><div class="sg-swatch-label">color-red</div><div class="sg-swatch-value">#ff6b6b</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--color-blue)"></div><div class="sg-swatch-label">color-blue</div><div class="sg-swatch-value">#2d81ff</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--color-cyan)"></div><div class="sg-swatch-label">color-cyan</div><div class="sg-swatch-value">#06ade4</div></div>
+        </div>
+
+        <div class="sg-sub"><h3>Block State Colors</h3></div>
+        <p class="sg-section-desc" style="margin-bottom:14px;">Each state is a base tint + a highlight gradient + a border color. <strong>Pinned</strong> and <strong>Selected</strong> are wired up to a <code>.block</code> class today (see Blocks section below).</p>
+        <div class="sg-grid">
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--block-bg-pinned-base)"></div><div class="sg-swatch-label">pinned</div><div class="sg-swatch-value">wired ✓</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--block-bg-selected-base)"></div><div class="sg-swatch-label">selected</div><div class="sg-swatch-value">wired ✓</div></div>
+        </div>
+
+        <div class="sg-sub"><h3>Tag Colors</h3></div>
+        <div class="sg-grid">
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--user-color)"></div><div class="sg-swatch-label">user</div><div class="sg-swatch-value">#e4e0e0</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--characterType-color)"></div><div class="sg-swatch-label">characterType</div><div class="sg-swatch-value">#00e5ff</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--part-color)"></div><div class="sg-swatch-label">part</div><div class="sg-swatch-value">#CDF564</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--action-color)"></div><div class="sg-swatch-label">action</div><div class="sg-swatch-value">#07f371</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--ability-color)"></div><div class="sg-swatch-label">ability</div><div class="sg-swatch-value">#bf5eff</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--range-color)"></div><div class="sg-swatch-label">range</div><div class="sg-swatch-value">#2b7bf1</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--condition-color)"></div><div class="sg-swatch-label">condition</div><div class="sg-swatch-value">#ffa927</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--spellLevel-color)"></div><div class="sg-swatch-label">spellLevel</div><div class="sg-swatch-value">#49c1e6</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--infusion-color)"></div><div class="sg-swatch-label">infusion</div><div class="sg-swatch-value">#49c1e6 (dup)</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--attribute-color)"></div><div class="sg-swatch-label">attribute</div><div class="sg-swatch-value">#FF4632</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--charges-color)"></div><div class="sg-swatch-label">charges</div><div class="sg-swatch-value">#43ffef</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--itemCategory-color)"></div><div class="sg-swatch-label">itemCategory</div><div class="sg-swatch-value">= characterType</div></div>
+        </div>
+
+        <div class="sg-sub"><h3>Find/Replace &amp; String Colors</h3></div>
+        <div class="sg-grid">
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--color-find-active)"></div><div class="sg-swatch-label">find-active</div><div class="sg-swatch-value">rgba(255,200,0,.75)</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--string-red)"></div><div class="sg-swatch-label">string-red</div><div class="sg-swatch-value">#c0392b</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--string-amber)"></div><div class="sg-swatch-label">string-amber</div><div class="sg-swatch-value">#e67e22</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--string-yellow)"></div><div class="sg-swatch-label">string-yellow</div><div class="sg-swatch-value">#f1c40f</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--string-green)"></div><div class="sg-swatch-label">string-green</div><div class="sg-swatch-value">#27ae60</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--string-blue)"></div><div class="sg-swatch-label">string-blue</div><div class="sg-swatch-value">#2980b9</div></div>
+            <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--string-purple)"></div><div class="sg-swatch-label">string-purple</div><div class="sg-swatch-value">#8e44ad</div></div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TYPOGRAPHY -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="typography">
+        <h2>Typography</h2>
+        <p class="sg-section-desc">Single font family app-wide: <strong>Roboto</strong>, now loaded at weights 400/500/600/700 — every bolder weight below renders as true Roboto bold rather than a browser-synthesized fake.</p>
+
+        <p class="sg-section-desc">Every distinct text style actually in use, grouped by size and weight (largest/boldest first) rather than by app area — so styles that look alike sit next to each other no matter where they're used. Every sample below is the real class/tag from the app — nothing here is a mockup. Default letter-spacing app-wide is <code>0.03em</code> (a universal rule); a row's letter-spacing is only called out in its caption when it overrides that default.</p>
+
+        <div class="sg-type-area"><h3>36px · Weight 700</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="cs-ac-val">18</span></div>
+                    <div class="sg-type-caption"><code>.cs-ac-val</code> — armor class hero number</div>
+                </div>
+                <div class="sg-type-weight">700</div>
+                <div class="sg-type-size">36px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>28px · Weight 700</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="roll-value">17</div></div>
+                    <div class="sg-type-caption"><code>.roll-value</code> — hero roll-result number</div>
+                </div>
+                <div class="sg-type-weight">700</div>
+                <div class="sg-type-size">28px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>28px · Weight 400</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><h1 style="margin:0;">Heading</h1></div>
+                    <div class="sg-type-caption"><code>h1</code> (global) — 0.05em spacing; no <code>&lt;h1&gt;</code> is actually used in current content, kept for reference</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">28px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>26px · Weight 700</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="cs-mod-col"><span class="stat-value">+4</span></div></div>
+                    <div class="sg-type-caption"><code>.cs-mod-col .stat-value</code> — ability modifier hero value, the rule that actually renders (overrides base <code>.stat-value</code> above)</div>
+                </div>
+                <div class="sg-type-weight">700</div>
+                <div class="sg-type-size">26px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>18px · Weight 700</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="circle circle-button circle-add">+</div></div>
+                    <div class="sg-type-caption"><code>.circle-button</code> — uses/spell-slot +/− counters</div>
+                </div>
+                <div class="sg-type-weight">700</div>
+                <div class="sg-type-size">18px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>18px · Weight 500</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="hp-bar-area" style="position:relative;height:28px;width:70px;background:var(--gray-400);border-radius:var(--radius-md);"><div class="hp-bar-text" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">24/32</div></div></div>
+                    <div class="sg-type-caption"><code>.hp-bar-text</code> — 0.02em spacing</div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">18px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>18px · Weight 400</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><h3 style="margin:0;">Skills</h3></div>
+                    <div class="sg-type-caption"><code>h3</code> (global) · also <code>.session-viewer-title</code> — 0.045em spacing, section headers</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">18px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="add-block-button green-button">+</button></div>
+                    <div class="sg-type-caption"><code>.add-block-button</code> — used everywhere, incl. session-log context (previously had a stray 20px override there; now one size)</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">18px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="session-viewer-delete-btn" title="Delete">×</button></div>
+                    <div class="sg-type-caption"><code>.session-viewer-delete-btn</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">18px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button type="button" class="quest-objective-remove" title="Remove">×</button></div>
+                    <div class="sg-type-caption"><code>.quest-objective-remove</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">18px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>17.6px · Weight 700</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><h3 class="notes-edit-title" contenteditable="true" style="margin:0;">Session 12 Notes</h3></div>
+                    <div class="sg-type-caption"><code>.notes-edit-title</code> — 1.1rem, the one heading NOT on the shared type scale</div>
+                </div>
+                <div class="sg-type-weight">700</div>
+                <div class="sg-type-size">17.6px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>16px · Weight 400</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><p style="margin:0;">The quick brown fox jumps over the lazy dog.</p></div>
+                    <div class="sg-type-caption"><code>body</code> — default page text</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">16px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>~12.6–14.4px · Weight 500 (context-relative, not a fixed part of the scale)</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span>Cast Fireball: <button class="inline-dice-roll">2d6+3</button></span></div>
+                    <div class="sg-type-caption"><code>.inline-dice-roll</code> — 0.9em, relative to surrounding block-body text</div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">~12.6–14.4px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>~14.4px · Weight 400 (context-relative, not a fixed part of the scale)</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="sort-item">Newest</button></div>
+                    <div class="sg-type-caption"><code>.sort-item</code> / <code>.view-toggle-item</code> — 0.9em, relative to 16px body</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">~14.4px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>14px · Weight 700</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="clear_filters_button" title="Clear filters">✕</button></div>
+                    <div class="sg-type-caption"><code>.clear_filters_button</code></div>
+                </div>
+                <div class="sg-type-weight">700</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="character-name">Hazard</span></div>
+                    <div class="sg-type-caption"><code>.character-name</code></div>
+                </div>
+                <div class="sg-type-weight">700</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="stat-value">14</span></div>
+                    <div class="sg-type-caption"><code>.stat-value</code> (base rule — in practice overridden by the ability-modifier version below)</div>
+                </div>
+                <div class="sg-type-weight">700</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="cs-ref-val">+2</span></div>
+                    <div class="sg-type-caption"><code>.cs-ref-val</code> · also <code>.cs-ref-spell .cs-ref-val</code></div>
+                </div>
+                <div class="sg-type-weight">700</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="spell-slot-title" style="font-size:14px;font-weight:700;letter-spacing:1px;color:#fff;">1st Level</span></div>
+                    <div class="sg-type-caption"><code>.spell-slot-title</code> (edit-overlay context) — 1px letter-spacing; uses a literal <code>white</code> instead of a gray token</div>
+                </div>
+                <div class="sg-type-weight">700</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>14px · Weight 500</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><input class="hp-input-field" type="number" placeholder="0" style="width:64px;"></div>
+                    <div class="sg-type-caption"><code>.hp-input-field</code></div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span style="display:inline-flex;align-items:center;gap:6px;"><button class="hd-qty-btn">−</button><div class="hd-qty-display">1</div><button class="hd-qty-btn">+</button></span></div>
+                    <div class="sg-type-caption"><code>.hd-qty-btn</code> / <code>.hd-qty-display</code></div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="coin-pill-num">120</span></div>
+                    <div class="sg-type-caption"><code>.coin-pill-num</code> / <code>.coin-pill-input</code> — 0.02em spacing</div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="hp-drag-delta" style="position:static;">+5</span></div>
+                    <div class="sg-type-caption"><code>.coin-delta-popup</code>, <code>.hp-drag-delta</code></div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="bag-ov-title" style="color:#fff;">Add Item</div></div>
+                    <div class="sg-type-caption"><code>.bpp-n</code> / <code>.bag-ov-title</code></div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button id="roll-button">Roll!</button></div>
+                    <div class="sg-type-caption"><code>#roll-button</code> — was the app's only 14px/600 text; now uses the same 500-weight "emphasis" tier as HP input, coin/currency deltas, etc.</div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>14px · Weight 400</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="button green-button" style="margin:0;">Confirm</button></div>
+                    <div class="sg-type-caption"><code>.button</code> — dialog/action buttons</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="menu-item-button">Upload</button></div>
+                    <div class="sg-type-caption"><code>.menu-item-button</code> — hamburger menu items</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="tag-button tag-user">Homebrew</span></div>
+                    <div class="sg-type-caption"><code>.tag-button</code> (base/full size) — 0.3px letter-spacing</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="block-title" style="display:inline-block;"><h3 style="margin:0;">Longsword</h3></div></div>
+                    <div class="sg-type-caption"><code>.block-title h3</code> · also <code>.block-title-minimized h3</code>, session-log variant, <code>.map-card-title h3</code>, <code>.book-card-title h3</code> — one title style for every card/block type (map/book cards previously had a stray 500-weight override)</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span style="color:var(--gray-600);">Long Rest</span></div>
+                    <div class="sg-type-caption"><code>#long_rest_button</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="board-zoom-btn">−</button></div>
+                    <div class="sg-type-caption"><code>.board-zoom-btn</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="board-string-picker-delete" title="Remove connection" style="color:rgba(255,255,255,0.7);">×</button></div>
+                    <div class="sg-type-caption"><code>.board-string-picker-delete</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button id="clear-selected-button">Clear All</button></div>
+                    <div class="sg-type-caption"><code>#clear-selected-button</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><input type="text" class="quest-overlay-input" placeholder="e.g. Ionia — leave blank for none" style="width:220px;"></div>
+                    <div class="sg-type-caption"><code>.editor-toolbar-wrapper</code> / <code>.text-toolbar button</code> / <code>.fr-btn</code> / <code>.quest-overlay-input</code> / <code>.quest-objective-input</code> / <code>.find-replace-row input</code> — unified 14px input/toolbar style</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="text-tooltip" style="position:static;display:inline-block;">Tooltip text here</div></div>
+                    <div class="sg-type-caption"><code>.text-tooltip</code> — bug: <code>letter-spacing: 1.2</code> has no unit, so browsers ignore it and fall back to the 0.03em default</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">14px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>12px · Weight 600</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><input class="sb-row-val" value="+2" style="width:36px;"></div>
+                    <div class="sg-type-caption"><code>.stat-breakdown-popover .sb-row-val</code></div>
+                </div>
+                <div class="sg-type-weight">600</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="board-card-title-wrap" style="color:#fff;"><span class="board-card-title">Case File #12</span></div></div>
+                    <div class="sg-type-caption"><code>.board-card-title</code> / <code>.board-card-title-input</code></div>
+                </div>
+                <div class="sg-type-weight">600</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="board-section-subheader" style="color:rgba(255,255,255,0.9);">Evidence</div></div>
+                    <div class="sg-type-caption"><code>.board-section-subheader</code></div>
+                </div>
+                <div class="sg-type-weight">600</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="roll-chip modifier">+2</span></div>
+                    <div class="sg-type-caption"><code>.roll-chip</code> / <code>svg.roll-die-chip .die-number</code></div>
+                </div>
+                <div class="sg-type-weight">600</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="delete-confirm-buttons" style="display:inline-flex;gap:8px;"><button class="button red-button" style="margin:0;">Yes</button><button class="button" style="margin:0;">No</button></div></div>
+                    <div class="sg-type-caption"><code>.delete-confirm-buttons button</code> / <code>.clear-data-confirm-buttons button</code></div>
+                </div>
+                <div class="sg-type-weight">600</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>12px · Weight 500</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="ds-roll-btn">Death Save</button></div>
+                    <div class="sg-type-caption"><code>.ds-roll-btn</code> / <code>.hd-type</code> / <code>.hd-roll-btn</code></div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="hp-action-btn" data-action="dmg">Dmg</button></div>
+                    <div class="sg-type-caption"><code>.hp-action-btn</code></div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="long-rest-popup-message" style="position:static;">Long rest — refill all suit uses and spell slots?</span></div>
+                    <div class="sg-type-caption"><code>.long-rest-popup-message</code> — shares its style with the modal confirm-message group below</div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="roll-label" style="color:rgba(255,255,255,0.5);">Perception check</div></div>
+                    <div class="sg-type-caption"><code>.roll-label</code> — uppercase</div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><a class="map-link-popup-action" href="#" style="color:var(--color-blue);">Open in new tab</a></div>
+                    <div class="sg-type-caption"><code>.map-link-popup-action</code></div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="delete-confirm-message">Are you sure you want to delete this block?</span></div>
+                    <div class="sg-type-caption"><code>.delete-confirm-message</code> / <code>.clear-data-confirm-message</code></div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>12px · Weight 400</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="inline-edit-controls" style="display:inline-flex;gap:8px;"><button class="button green-button" style="margin:0;">Save</button><button class="button red-button" style="margin:0;">Cancel</button></div></div>
+                    <div class="sg-type-caption"><code>.block.inline-editing .inline-edit-controls .button</code> — inline-edit Save/Cancel</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="tag-button tag-button--compact tag-characterType selected">NPC</span></div>
+                    <div class="sg-type-caption"><code>.tag-button--compact</code> — filter bar tags</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="tag-accordion-chips" style="display:inline-flex;"><button class="tag-button tag-button--compact tag-user selected" data-tag="druid">druid</button></span></div>
+                    <div class="sg-type-caption"><code>.tag-accordion-chips .tag-button</code> — 0.3px letter-spacing (inherited from base tag-button, not the app default)</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="tag-accordion-pill" data-category="characterType">Character Type</button></div>
+                    <div class="sg-type-caption"><code>.tag-accordion-pill</code> / <code>.tag-accordion-header</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="block-property">Requires attunement</span></div>
+                    <div class="sg-type-caption"><code>.block-property</code> — normal (0) letter-spacing, overrides the app default</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="inline-edit-add-tag"></span></div>
+                    <div class="sg-type-caption"><code>.inline-edit-add-tag</code> · also condensed selected tag variants</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="tab3-location-pill selected">All · 12</button></div>
+                    <div class="sg-type-caption"><code>.tab3-location-pill</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="block-body">This blade hums with a faint arcane resonance.</div></div>
+                    <div class="sg-type-caption"><code>.block-body</code> — 0.00em letter-spacing override</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="notes-card-description">The party arrives at the sunken keep as the storm breaks.</div></div>
+                    <div class="sg-type-caption"><code>.book-card-description</code>, <code>.notes-card-description</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="quest-objectives"><div class="quest-objective" style="display:flex;gap:8px;"><span class="quest-objective-checkbox"></span><span class="quest-objective-text">Find the lost amulet</span></div></div></div>
+                    <div class="sg-type-caption"><code>.quest-objectives</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="property-remove-btn" style="display:inline-flex;">×</span></div>
+                    <div class="sg-type-caption"><code>.property-remove-btn</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="descriptor-value">10</span></div>
+                    <div class="sg-type-caption"><code>.descriptor-value</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="hp-max-edit">Max: <span class="hp-max-val">32</span></span></div>
+                    <div class="sg-type-caption"><code>.hp-max-edit</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="hd-remaining">2 remaining</span></div>
+                    <div class="sg-type-caption"><code>.hd-remaining</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="save-label">Strength</span></div>
+                    <div class="sg-type-caption"><code>.save-label</code> / <code>.skill-label</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="skill-plus">+2</span></div>
+                    <div class="sg-type-caption"><code>.skill-plus</code> — 0.05em spacing</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="currency-tooltip" style="position:static;display:inline-block;">Click to adjust · Drag up/down · Scroll</span></div>
+                    <div class="sg-type-caption"><code>.cs-currency-card .currency-tooltip</code> — 0.02em spacing</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="circle circle-button circle-remove">−</div></div>
+                    <div class="sg-type-caption"><code>.resources-strip .circle-remove</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="ghost-chip"><span class="ghost-chip-plus">+</span></span></div>
+                    <div class="sg-type-caption"><code>.resources-strip .ghost-chip .ghost-chip-plus</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="board-section-notes" style="color:rgba(255,255,255,0.75);">Suspect fled north.</div></div>
+                    <div class="sg-type-caption"><code>.board-section-notes</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="board-obj-item-text" style="color:rgba(255,255,255,0.75);">Find the missing key</span></div>
+                    <div class="sg-type-caption"><code>.board-obj-item-text</code> / <code>.board-obj-item-input</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="board-picker-floating-tip" style="position:static;display:inline-block;">Subheader</div></div>
+                    <div class="sg-type-caption"><code>.board-picker-floating-tip</code> — 0.02em spacing</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><p style="color:rgba(255,255,255,0.4);margin:0;">Double-click anywhere to add a block</p></div>
+                    <div class="sg-type-caption"><code>.board-empty-hint p</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="bf on">All<span class="bfc">5</span></button></div>
+                    <div class="sg-type-caption"><code>.bf</code> / <code>.bf-dd-item</code> / <code>.bpp-b</code> / <code>.bpp-s</code> / <code>.bem</code> / <code>.bag-ov-input</code> / <code>.bag-ov-btn</code> / <code>.inv-toggle</code> — same 12px/400 combination</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="fr-feedback">3 of 8 matches</div></div>
+                    <div class="sg-type-caption"><code>.fr-feedback</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="notes-edit-body" contenteditable="true">Write session notes here…</div></div>
+                    <div class="sg-type-caption"><code>.notes-edit-body</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button type="button" class="quest-add-objective-btn">+ Add objective</button></div>
+                    <div class="sg-type-caption"><code>.quest-add-objective-btn</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="uch-tooltip" style="position:static;display:inline-block;">Hazard</span></div>
+                    <div class="sg-type-caption"><code>.uch-tooltip</code> — 0.02em spacing</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="quest-status-item" data-status="active">Active</button></div>
+                    <div class="sg-type-caption"><code>.quest-status-item</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">12px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>10px · Weight 700</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="coin-icon coin-icon-gold" style="display:flex;align-items:center;justify-content:center;"><span class="coin-icon-letter">G</span></div></div>
+                    <div class="sg-type-caption"><code>.coin-icon-letter</code></div>
+                </div>
+                <div class="sg-type-weight">700</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="dice-count-badge has-selection" style="position:static;display:inline-flex;">2</span></div>
+                    <div class="sg-type-caption"><code>.dice-count-badge</code> — uses a literal <code>#111</code> color, not a token</div>
+                </div>
+                <div class="sg-type-weight">700</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>10px · Weight 600</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="roll-error" style="color:rgba(255,255,255,0.6);">Error rolling dice</span></div>
+                    <div class="sg-type-caption"><code>.roll-error</code> — uppercase</div>
+                </div>
+                <div class="sg-type-weight">600</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>10px · Weight 500</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="quest-status-pill status-active">Active</button></div>
+                    <div class="sg-type-caption"><code>.quest-status-pill</code> / <code>.quest-location-pill</code></div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="spell-slot-title" style="color:var(--gray-700);">L1</span></div>
+                    <div class="sg-type-caption"><code>.resources-strip .spell-slot-title</code> — 0em spacing override</div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="ghost-chip">3</span></div>
+                    <div class="sg-type-caption"><code>.resources-strip .ghost-chip</code></div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><label class="quest-overlay-label">Location</label></div>
+                    <div class="sg-type-caption"><code>.quest-overlay-label</code> — uppercase</div>
+                </div>
+                <div class="sg-type-weight">500</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+        </div>
+
+        <div class="sg-type-area"><h3>10px · Weight 400</h3></div>
+        <div class="sg-type-list">
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="actions-trigger" title="Actions">···</button></div>
+                    <div class="sg-type-caption"><code>.actions-trigger</code> — 0.5px letter-spacing, block-card "···" menu</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="tag-button tag-button--tiny tag-characterType selected">NPC</span></div>
+                    <div class="sg-type-caption"><code>.tag-button--tiny</code> — block-card tags (shares its pill shape with quest pills below)</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="map-card-url">https://example.com/map.png</span></div>
+                    <div class="sg-type-caption"><code>.map-card-url</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="quest-progress-count">3 / 5</span></div>
+                    <div class="sg-type-caption"><code>.quest-progress-count</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="tab3-location-label">Location</span></div>
+                    <div class="sg-type-caption"><code>.tab3-location-label</code> — uppercase</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="block-property-wrap" style="display:inline-flex;"><span class="block-property">Heavy</span></span></div>
+                    <div class="sg-type-caption"><code>.block.inline-editing .block-property-wrap</code> / <code>.inline-edit-new-prop</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="stat-label">AC</span></div>
+                    <div class="sg-type-caption"><code>.stat-label</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="stat-subvalue">10</span></div>
+                    <div class="sg-type-caption"><code>.stat-subvalue</code> (base)</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="descriptor-label">Level</span></div>
+                    <div class="sg-type-caption"><code>.descriptor-label</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="hp-section-label">HP</span></div>
+                    <div class="sg-type-caption"><code>.hp-section-label</code> / <code>.hd-label</code> — uppercase, 0.05em spacing</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="ds-group-label">Saves</span></div>
+                    <div class="sg-type-caption"><code>.ds-group-label</code> — uppercase, 0.04em spacing</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="hd-roll-detail">(rolled 6)</span></div>
+                    <div class="sg-type-caption"><code>.hd-roll-detail</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="cs-ref-label">Initiative</span></div>
+                    <div class="sg-type-caption"><code>.cs-ref-label</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="cs-mod-label">STR</span></div>
+                    <div class="sg-type-caption"><code>.cs-mod-label</code> — uppercase, 0.02em spacing</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="cs-mod-col"><span class="stat-subvalue">18</span></div></div>
+                    <div class="sg-type-caption"><code>.cs-mod-col .stat-subvalue</code> — raw ability score under the modifier</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="saving-throws-and-skills-column" style="display:inline-block;"><h3 style="margin:0;">Saving Throws</h3></div></div>
+                    <div class="sg-type-caption"><code>.saving-throws-and-skills-column h3</code> — a small muted label, not styled like the global h3</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button id="edit_spell_slots_button" title="Edit spell slots">✎</button></div>
+                    <div class="sg-type-caption"><code>#edit_spell_slots_button</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><input class="sb-row-desc" value="Shield spell" style="width:120px;"></div>
+                    <div class="sg-type-caption"><code>.stat-breakdown-popover .sb-row-desc</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="sb-add">+ Add</span></div>
+                    <div class="sg-type-caption"><code>.stat-breakdown-popover .sb-add</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="circle circle-button circle-add">+</div></div>
+                    <div class="sg-type-caption"><code>.resources-strip .circle-add</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="board-zoom-label">100%</span></div>
+                    <div class="sg-type-caption"><code>.board-zoom-label</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><button class="board-add-obj-item-btn" style="color:rgba(255,255,255,0.5);">+ Add objective</button></div>
+                    <div class="sg-type-caption"><code>.board-add-obj-item-btn</code> / <code>.board-card-add-section-btn</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="bat">2/3</span></div>
+                    <div class="sg-type-caption"><code>.bfc</code> / <code>.bf-dd-cnt</code> / <code>.bat</code> / <code>.bpp-t</code> / <code>.bag-ov-cat</code> / <code>.inv-state-btn</code> — same 10px/400 combination</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><div class="bag-ov-label">Name</div></div>
+                    <div class="sg-type-caption"><code>.bag-ov-label</code> — uppercase</div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+            <div class="sg-type-row">
+                <div class="sg-type-name">
+                    <div class="sg-type-sample"><span class="dice-label">D4</span></div>
+                    <div class="sg-type-caption"><code>.dice-label</code></div>
+                </div>
+                <div class="sg-type-weight">400</div>
+                <div class="sg-type-size">10px</div>
+            </div>
+        </div>
+
+        <div class="sg-note-plain">Not shown above: a full "card add/edit modal" system in <code>detectiveBoard.css</code> (~15 text styles, lines ~900–1470) that has no matching markup anywhere in <code>detectiveBoard.js</code> — dead code from an unbuilt feature. Flagging for awareness only, per your request not to change any styling yet.</div>
+
+        <div class="sg-sub"><h3>Weight &amp; letter-spacing reference</h3></div>
+        <div class="sg-row" style="margin-bottom:10px;">
+            <span style="font-weight:400;">Regular 400</span>
+            <span style="font-weight:500;">Medium 500</span>
+            <span style="font-weight:600;">Semi-bold 600</span>
+            <span style="font-weight:700;">Bold 700</span>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SPACING -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="spacing">
+        <h2>Spacing Scale</h2>
+        <p class="sg-section-desc">There is no formal spacing token system today — every padding/margin/gap is a hardcoded value. These are the recurring values found across the CSS, shown to scale.</p>
+        <div class="sg-demo-box">
+            <div class="sg-spacer-row"><span>4px</span><div class="sg-spacer-bar" style="width:4px;"></div></div>
+            <div class="sg-spacer-row"><span>6px</span><div class="sg-spacer-bar" style="width:6px;"></div></div>
+            <div class="sg-spacer-row"><span>8px</span><div class="sg-spacer-bar" style="width:8px;"></div></div>
+            <div class="sg-spacer-row"><span>10px</span><div class="sg-spacer-bar" style="width:10px;"></div></div>
+            <div class="sg-spacer-row"><span>12px</span><div class="sg-spacer-bar" style="width:12px;"></div></div>
+            <div class="sg-spacer-row"><span>15px</span><div class="sg-spacer-bar" style="width:15px;"></div></div>
+            <div class="sg-spacer-row"><span>16px</span><div class="sg-spacer-bar" style="width:16px;"></div></div>
+            <div class="sg-spacer-row"><span>20px</span><div class="sg-spacer-bar" style="width:20px;"></div></div>
+            <div class="sg-spacer-row"><span>25px</span><div class="sg-spacer-bar" style="width:25px;"></div></div>
+            <div class="sg-spacer-row"><span>30px</span><div class="sg-spacer-bar" style="width:30px;"></div></div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- BORDER RADIUS -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="radius">
+        <h2>Border Radius</h2>
+        <p class="sg-section-desc">Now driven by a token scale (<code>--radius-2xs</code> through <code>--radius-xl</code>, plus <code>--radius-pill</code>) defined in Colourpalette.css. Every <code>border-radius</code> in the app references one of these — no more one-off px values to keep in sync by hand.</p>
+        <div class="sg-grid">
+            <div class="sg-swatch" style="width:96px;text-align:center;">
+                <div class="sg-radius-box" style="border-radius:50%;margin:0 auto 6px;"><span>50%</span></div>
+                <div class="sg-swatch-label">Circles<br><span class="sg-swatch-value">left as literal 50%</span></div>
+            </div>
+            <div class="sg-swatch" style="width:96px;text-align:center;">
+                <div class="sg-radius-box" style="border-radius:999px;margin:0 auto 6px;"><span>pill</span></div>
+                <div class="sg-swatch-label">--radius-pill<br><span class="sg-swatch-value">badges, toggles, search</span></div>
+            </div>
+            <div class="sg-swatch" style="width:96px;text-align:center;">
+                <div class="sg-radius-box" style="border-radius:2px;margin:0 auto 6px;"><span>2px</span></div>
+                <div class="sg-swatch-label">--radius-2xs<br><span class="sg-swatch-value">thin progress bars</span></div>
+            </div>
+            <div class="sg-swatch" style="width:96px;text-align:center;">
+                <div class="sg-radius-box" style="border-radius:4px;margin:0 auto 6px;"><span>4px</span></div>
+                <div class="sg-swatch-label">--radius-xs<br><span class="sg-swatch-value">focus rings, checkboxes</span></div>
+            </div>
+            <div class="sg-swatch" style="width:96px;text-align:center;">
+                <div class="sg-radius-box" style="border-radius:6px;margin:0 auto 6px;"><span>6px</span></div>
+                <div class="sg-swatch-label">--radius-sm<br><span class="sg-swatch-value">chips</span></div>
+            </div>
+            <div class="sg-swatch" style="width:96px;text-align:center;">
+                <div class="sg-radius-box" style="border-radius:8px;margin:0 auto 6px;"><span>8px</span></div>
+                <div class="sg-swatch-label">--radius-md<br><span class="sg-swatch-value">buttons, inputs</span></div>
+            </div>
+            <div class="sg-swatch" style="width:96px;text-align:center;">
+                <div class="sg-radius-box" style="border-radius:10px;margin:0 auto 6px;"><span>10px</span></div>
+                <div class="sg-swatch-label">--radius-lg<br><span class="sg-swatch-value">content cards</span></div>
+            </div>
+            <div class="sg-swatch" style="width:96px;text-align:center;">
+                <div class="sg-radius-box" style="border-radius:15px;margin:0 auto 6px;"><span>15px</span></div>
+                <div class="sg-swatch-label">--radius-xl<br><span class="sg-swatch-value">structural panels, modals</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SHADOWS & GLASS -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="shadows">
+        <h2>Shadows &amp; Glass</h2>
+        <p class="sg-section-desc">The app's signature surface treatment is "frosted glass" — a shared translucent background + blur + hairline border, applied via <code>.frosted-glass</code> / <code>.glass-surface</code> (now merged into one rule under the hood; both class names still work). A <code>--shadow-sm/md/lg/xl</code> elevation scale has also been added to Colourpalette.css for the bespoke shadows below — not yet applied to existing components, so their current hand-picked values are shown as-is.</p>
+        <div class="sg-grid">
+            <div class="frosted-glass" style="padding:20px 24px;border-radius:14px;width:220px;">
+                <div style="font-size:13px;color:var(--gray-900);">.frosted-glass</div>
+                <div style="font-size:11px;color:var(--gray-700);margin-top:4px;">blur(12px) + rgba(30,30,30,.6) + hairline border</div>
+            </div>
+            <div style="padding:20px 24px;border-radius:12px;width:220px;background:var(--gray-400);box-shadow:0 10px 20px rgba(0,0,0,0.5);">
+                <div style="font-size:13px;color:var(--gray-900);">.cleardata-form shadow</div>
+                <div style="font-size:11px;color:var(--gray-700);margin-top:4px;">bespoke, not on the glass system</div>
+            </div>
+            <div style="padding:20px 24px;border-radius:10px;width:220px;background:var(--glass-bg);border:1px solid rgba(255,255,255,0.18);box-shadow:0 6px 28px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.4);">
+                <div style="font-size:13px;color:var(--gray-900);">.board-card:hover</div>
+                <div style="font-size:11px;color:var(--gray-700);margin-top:4px;">detective-board elevation, own values</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- BUTTONS -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="buttons">
+        <h2>Buttons</h2>
+        <p class="sg-section-desc">Two parallel button systems currently coexist: an older flat set in <code>buttons.css</code>, and a newer circular "UCH" set in <code>base-layout.css</code> used for the header. Both are shown below.</p>
+
+        <div class="sg-sub"><h3>Dialog / colored buttons (.button + modifier)</h3></div>
+        <div class="sg-row">
+            <button class="button green-button">Confirm</button>
+            <button class="button red-button">Cancel</button>
+            <button class="button blue-button">Blue</button>
+            <button class="button orange-button">Orange</button>
+            <button class="button clear-button" style="border:1px solid var(--gray-500);">Clear</button>
+            <button class="button green-border-button">Outline</button>
+        </div>
+
+        <div class="sg-sub"><h3>Action buttons (used on block cards)</h3></div>
+        <div class="sg-row">
+            <button class="action-button remove-button red-button" title="Remove" style="font-size:14px;">×</button>
+            <button class="action-button duplicate-button blue-button" title="Copy" style="font-size:12px;">❐</button>
+            <button class="action-button edit-button orange-button" title="Edit" style="font-size:12px;">✎</button>
+            <button class="actions-trigger" title="Actions">···</button>
+            <button class="pin-button pin-active" title="Unpin" style="opacity:1;">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--color-blue)" stroke-width="2"><path d="M12 2 L12 12 M8 12 L16 12 L14 22 L10 22 Z"/></svg>
+            </button>
+        </div>
+
+        <div class="sg-sub"><h3>UCH header buttons (current system, 42px)</h3></div>
+        <div class="sg-uch-demo">
+            <div class="uch-tab-group frosted-glass">
+                <button class="tab-button uch-tab active">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+                </button>
+                <button class="tab-button uch-tab">
+                    <svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="14" rx="3"/></svg>
+                </button>
+                <div class="uch-pill-divider"></div>
+                <button class="uch-btn uch-pill-btn">
+                    <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="sg-sub"><h3>Clear-filters button (still active)</h3></div>
+        <div class="sg-row">
+            <button class="clear_filters_button" title="Clear filters, 34px">✕</button>
+        </div>
+
+        <div class="sg-sub"><h3>Inline dice-roll chip</h3></div>
+        <div class="sg-row">
+            <button class="inline-dice-roll">Roll d20</button>
+            <button class="inline-dice-roll crank">Crank Roll</button>
+            <button class="inline-dice-roll hit">To-Hit</button>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TAGS -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="tags">
+        <h2>Tags / Badges</h2>
+        <p class="sg-section-desc">Category color-coding for block tags, defined in <code>tags.css</code>. Base size is 34px tall / 16px text — but two contextual overrides (filter bar, block cards) shrink this to two other sizes.</p>
+
+        <div class="sg-sub"><h3>Category colors (base size)</h3></div>
+        <div class="sg-row">
+            <span class="tag-button tag-characterType">Trap</span>
+            <span class="tag-button tag-partType">Weapon</span>
+            <span class="tag-button tag-actionType">Action</span>
+            <span class="tag-button tag-abilityType">Ability</span>
+            <span class="tag-button tag-rangeType">30 ft</span>
+            <span class="tag-button tag-conditionType">Poisoned</span>
+            <span class="tag-button tag-spellLevel">3rd Level</span>
+            <span class="tag-button tag-infusion">Infusion</span>
+            <span class="tag-button tag-attributeType">STR</span>
+            <span class="tag-button tag-Charges">3 Charges</span>
+            <span class="tag-button">Homebrew (user)</span>
+        </div>
+
+        <div class="sg-sub"><h3>Selection states</h3></div>
+        <div class="sg-row">
+            <span class="tag-button tag-actionType">Unselected</span>
+            <span class="tag-button tag-actionType selected">Selected</span>
+            <span class="tag-button tag-actionType selected-or">Selected (OR)</span>
+            <span class="tag-button tag-actionType selected-not">Excluded (NOT)</span>
+        </div>
+
+        <div class="sg-sub"><h3>Size variants (explicit modifier classes)</h3></div>
+        <div class="sg-row" style="align-items:flex-end;">
+            <div>
+                <span class="tag-button tag-characterType">Base (dropdown/picker lists)</span>
+            </div>
+            <div>
+                <span class="tag-button tag-button--compact tag-characterType">.tag-button--compact (filter bar, inline-edit)</span>
+            </div>
+            <div>
+                <span class="tag-button tag-button--tiny tag-characterType">.tag-button--tiny (on a block card)</span>
+            </div>
+        </div>
+
+        <div class="sg-sub"><h3>Related chip components</h3></div>
+        <div class="sg-row">
+            <span class="block-property">Range 150 ft.</span>
+            <span class="tag-accordion-pill">Damage Types <span style="width:6px;height:6px;border-radius:50%;background:var(--action-color);display:inline-block;"></span></span>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- FORMS -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="forms">
+        <h2>Form Elements</h2>
+
+        <div class="sg-sub"><h3>Text inputs</h3></div>
+        <div class="sg-grid" style="align-items:flex-start;">
+            <div class="uch-search-pill frosted-glass" style="width:220px;box-sizing:border-box;">
+                <input class="uch-search" type="text" placeholder="Current .uch-search">
+            </div>
+            <div style="width:200px;">
+                <input class="quest-overlay-input" type="text" placeholder="quest-overlay-input" style="width:100%;box-sizing:border-box;">
+                <div class="sg-tag-label">shared style — 8px radius · 14px text</div>
+            </div>
+            <div style="width:140px;">
+                <input class="hp-input-field" type="number" placeholder="0" style="width:100%;box-sizing:border-box;">
+                <div class="sg-tag-label">hp-input-field · hairline border</div>
+            </div>
+        </div>
+
+        <div class="sg-sub"><h3>Custom checkbox (no native checkbox is styled visibly)</h3></div>
+        <div class="sg-row">
+            <div class="quest-objective" style="display:flex;align-items:flex-start;gap:8px;">
+                <span class="quest-objective-checkbox">
+                    <svg class="quest-objective-tick" viewBox="0 0 9 9" stroke="currentColor"><path d="M1 4.5 L4 7 L8 1.5" stroke-width="1.6" fill="none"/></svg>
+                </span>
+                <span class="quest-objective-text">Unchecked objective</span>
+            </div>
+            <div class="quest-objective done" style="display:flex;align-items:flex-start;gap:8px;">
+                <span class="quest-objective-checkbox">
+                    <svg class="quest-objective-tick" viewBox="0 0 9 9" stroke="currentColor"><path d="M1 4.5 L4 7 L8 1.5" stroke-width="1.6" fill="none"/></svg>
+                </span>
+                <span class="quest-objective-text">Completed objective</span>
+            </div>
+        </div>
+
+        <div class="sg-sub"><h3>Toggle switch</h3></div>
+        <div class="sg-row">
+            <label class="inv-toggle inv-toggle-attune" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox">
+                <span class="inv-track"><span class="inv-thumb"></span></span>
+                Default size
+            </label>
+            <label class="inv-toggle inv-toggle--sm inv-toggle-attune" style="display:flex;align-items:center;cursor:pointer;">
+                <input type="checkbox" checked>
+                <span class="inv-track" style="background:var(--color-green);"><span class="inv-thumb" style="transform:translateX(14px);background:var(--gray-900);"></span></span>
+                .inv-toggle--sm (bag overlay)
+            </label>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- BLOCKS -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="blocks">
+        <h2>Blocks (Core Card Component)</h2>
+        <p class="sg-section-desc">The "block" is the app's single most-repeated component — every spell, item, action, and note renders through this same template (<code>blockTemplate.js</code>).</p>
+
+        <div class="sg-sub"><h3>Default</h3></div>
+        <div class="block expanded" style="max-width:480px;">
+            <div class="block-header">
+                <div class="block-header-left">
+                    <div class="block-title"><h3>Fireball</h3></div>
+                    <div class="block-uses"><span class="circle unfilled"></span></div>
+                </div>
+                <div class="block-actions">
+                    <button class="action-button pin-button" title="Pin">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--gray-700)" stroke-width="2"><path d="M12 2 L12 12 M8 12 L16 12 L14 22 L10 22 Z"/></svg>
+                    </button>
+                    <div class="block-actions-menu">
+                        <button class="actions-trigger" title="Actions">···</button>
+                    </div>
+                </div>
+            </div>
+            <div class="block-tags"><span class="tag-button tag-button--tiny tag-actionType">Action</span></div>
+            <div class="block-properties" style="margin-top:8px;"><span class="block-property">Range 150 ft.</span></div>
+            <div class="block-body" style="margin-top:8px;">A bright streak flashes to a point and blossoms into an explosion of flame.</div>
+        </div>
+
+        <div class="sg-sub"><h3>Pinned state</h3></div>
+        <div class="block expanded pinned" style="max-width:480px;">
+            <div class="block-header">
+                <div class="block-header-left">
+                    <div class="block-title"><h3>Second Wind</h3></div>
+                </div>
+                <div class="block-actions">
+                    <button class="action-button pin-button pin-active" title="Unpin" style="opacity:1;">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--color-blue)" stroke-width="2"><path d="M12 2 L12 12 M8 12 L16 12 L14 22 L10 22 Z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="block-body" style="margin-top:8px;">Regain 1d10 + level hit points.</div>
+        </div>
+
+        <div class="sg-sub"><h3>Selected / active state</h3></div>
+        <div class="block expanded notes-block-active" style="max-width:480px;">
+            <div class="block-header">
+                <div class="block-header-left"><div class="block-title"><h3>Session Notes — Ch. 4</h3></div></div>
+            </div>
+            <div class="block-body" style="margin-top:8px;">Highlighted when active in the notes viewer.</div>
+        </div>
+
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- MODALS -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="modals">
+        <h2>Modals &amp; Popovers</h2>
+        <p class="sg-section-desc">Both dialog "languages" now share the same glass treatment.</p>
+
+        <div class="sg-grid" style="align-items:flex-start;">
+            <div class="cleardata-form" style="position:static;width:260px;">
+                <h2 style="font-size:16px;padding-bottom:8px;">Long Rest</h2>
+                <p style="font-size:13px;color:var(--gray-800);">Now glass-styled — same background/blur/border/radius/shadow as .board-modal, plus a fade+scale-in transition.</p>
+                <div style="margin-top:12px;display:flex;gap:8px;">
+                    <button class="button green-button" style="margin:0;">Yes</button>
+                    <button class="button red-button" style="margin:0;">No</button>
+                </div>
+            </div>
+            <div class="board-modal" style="position:static;width:260px;padding:16px;">
+                <div class="board-modal-title" style="font-size:15px;color:var(--gray-900);margin-bottom:6px;">Edit Card</div>
+                <p style="font-size:13px;color:var(--gray-800);">Frosted glass, --radius-xl, 0.55 backdrop blur, slide-in animation.</p>
+            </div>
+        </div>
+
+        <div class="sg-sub"><h3>Popovers (now fully glass-based)</h3></div>
+        <div class="dice-popover" style="position:static;width:220px;padding:16px;">
+            <div style="font-size:13px;color:var(--gray-900);">.dice-popover</div>
+            <div style="font-size:11px;color:var(--gray-700);margin-top:4px;">glass background, 16px radius, ease-out in / ease-in out</div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- HEADER / NAV -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="nav">
+        <h2>Header / Navigation (UCH)</h2>
+        <p class="sg-section-desc">The Universal Control Header is the app's single top nav bar and its most internally-consistent component family.</p>
+        <div class="sg-uch-demo">
+            <div id="uch" style="max-width:640px;">
+                <div class="uch-edge-group">
+                    <div class="uch-tab-group frosted-glass">
+                        <button class="tab-button uch-tab active">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+                        </button>
+                        <button class="tab-button uch-tab">
+                            <svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="14" rx="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="uch-center-group">
+                    <div class="uch-pill-solo uch-pill-green frosted-glass">
+                        <button class="uch-btn uch-pill-btn">
+                            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </button>
+                    </div>
+                    <div class="uch-search-pill frosted-glass">
+                        <input class="uch-search" type="text" placeholder="Search...">
+                        <button class="uch-inline-btn">
+                            <svg viewBox="0 0 24 24" stroke-width="1.6"><path d="M3 6h18M3 12h12M3 18h6"/></svg>
+                        </button>
+                    </div>
+                    <div class="uch-pill-solo frosted-glass">
+                        <button class="uch-btn uch-pill-btn">
+                            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- CIRCLES & COINS -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="misc">
+        <h2>Circles, Toggles &amp; Currency</h2>
+
+        <div class="sg-sub"><h3>Use-tracking circles</h3></div>
+        <div class="sg-row">
+            <span class="circle unfilled"></span>
+            <span class="circle filled"></span>
+            <span class="circle toggle-circle"></span>
+        </div>
+
+        <div class="sg-sub"><h3>Death saves</h3></div>
+        <div class="sg-row">
+            <span class="ds-circle ds-success"></span>
+            <span class="ds-circle ds-success filled"></span>
+            <span class="ds-circle ds-fail"></span>
+        </div>
+
+        <div class="sg-sub"><h3>Currency coins</h3></div>
+        <div class="sg-row">
+            <div class="coin-pill" style="width:150px;">
+                <span class="coin-icon coin-icon-gold" style="display:flex;align-items:center;justify-content:center;"><span class="coin-icon-letter">G</span></span>
+                <span class="coin-pill-num">120</span>
+            </div>
+            <div class="coin-pill" style="width:150px;">
+                <span class="coin-icon coin-icon-silver" style="display:flex;align-items:center;justify-content:center;"><span class="coin-icon-letter">S</span></span>
+                <span class="coin-pill-num">45</span>
+            </div>
+            <div class="coin-pill" style="width:150px;">
+                <span class="coin-icon coin-icon-copper" style="display:flex;align-items:center;justify-content:center;"><span class="coin-icon-letter">C</span></span>
+                <span class="coin-pill-num">8</span>
+            </div>
+        </div>
+
+        <div class="sg-sub"><h3>Equip / attune indicator icons</h3></div>
+        <div class="sg-row">
+            <button class="inv-state-btn inv-state-chain inv-state-on">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6M8 8h1a3 3 0 010 6H8a3 3 0 010-6zM16 8h-1a3 3 0 000 6h1a3 3 0 000-6z"/></svg>
+                Attuned
+            </button>
+            <button class="inv-state-btn inv-state-hand inv-state-on">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11V6a2 2 0 114 0v5M11 11V4a2 2 0 114 0v7M15 11V6a2 2 0 114 0v6"/></svg>
+                Equipped
+            </button>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- ICONS -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="icons">
+        <h2>Icons</h2>
+        <p class="sg-section-desc">Three delivery methods are currently mixed:</p>
+        <div class="sg-grid">
+            <div class="sg-swatch" style="width:180px;text-align:center;">
+                <div class="sg-icon-wrap" style="margin:0 auto 8px;"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div>
+                <div class="sg-swatch-label">Inline SVG (~95% of icons)<br><span class="sg-swatch-value">recolorable via CSS</span></div>
+            </div>
+            <div class="sg-swatch" style="width:180px;text-align:center;">
+                <div class="sg-icon-wrap" style="margin:0 auto 8px;"><img src="images/Pin_Icon_Blue.svg" alt="Pin" style="width:25px;height:25px;"></div>
+                <div class="sg-swatch-label">&lt;img&gt; file (pin, dice)<br><span class="sg-swatch-value">needs pre-colored file variants</span></div>
+            </div>
+            <div class="sg-swatch" style="width:180px;text-align:center;">
+                <div class="sg-icon-wrap" style="margin:0 auto 8px;font-size:18px;">Aa</div>
+                <div class="sg-swatch-label">Font Awesome (8 icons)<br><span class="sg-swatch-value">rich-text toolbar only</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- MOTION -->
+    <!-- ============================================================ -->
+    <section class="sg-section" id="motion">
+        <h2>Motion</h2>
+        <table class="sg-table">
+            <tr><th>Duration</th><th>Uses</th><th>Typical role</th></tr>
+            <tr><td><code>0.15s</code></td><td>76</td><td>Hover color/background — most common</td></tr>
+            <tr><td><code>0.2s</code></td><td>62</td><td>Hover / opacity transitions</td></tr>
+            <tr><td><code>0.3s</code></td><td>42</td><td>Panel slide, tag select, filter open</td></tr>
+            <tr><td><code>0.5s</code></td><td>24</td><td>HP bar / progress fills</td></tr>
+            <tr><td><code>0.4s</code></td><td>10</td><td>Overlay fade-in</td></tr>
+        </table>
+    </section>
+</div>
+</body>
+</html>

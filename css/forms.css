@@ -1,70 +1,15 @@
-/* ==================================================================*/
-/* ====================== Form and input styles =====================*/
-/* ==================================================================*/
-
-.search-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 100%;
-}
-
-.search_input {
-    width: 100%;
-    height: 34px;
-    padding: 0 30px 0 12px;
-    font-size: 16px;
-    background-color: var(--gray-400);
-    color: var(--gray-900);
-    border: 0px;
-    border-radius: 17px;
-    transition: border-color 0.3s;
-    box-sizing: border-box;
-}
-
-.clear-search {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    color: #000;
-    opacity: 0;
-    transition: opacity 0.15s;
-}
-
-.clear-search:hover .clear-icon:hover {
-    stroke: var(--gray-900);
-}
-
-.clear-icon {
-    width: 22px;
-    height: 22px;
-    stroke: var(--gray-600);
-    stroke-width: 2;
-}
-
-/* ==================================================================*/
-/* ========================= Text Toolbar ==========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ============================ TEXT TOOLBAR ============================ */
+/* ====================================================================== */
 
 .editor-toolbar-wrapper {
     width: 100%;
-    font-size: 16px;
     background-color: var(--gray-400);
     color: var(--gray-900);
     border: 1px solid var(--gray-500);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     box-sizing: border-box;
-    transition: border-color 0.3s;
+    transition: border-color var(--transition-slow);
     text-align: left;
 }
 
@@ -80,8 +25,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 12px;
-    gap: 7px;
+    padding: var(--space-5);
+    gap: var(--space-7px);
     z-index: 2;
     pointer-events: none;
     overflow: auto;
@@ -91,18 +36,17 @@
     background-color: var(--gray-500);
     border: none;
     color: var(--gray-900);
-    border-radius: 8px;
-    padding: 8px 7px 7px 7px;
-    font-size: 14px;
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-7px) var(--space-7px) var(--space-7px);
     cursor: pointer;
     opacity: 0.5;
-    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    transition: background-color var(--transition-slow), color var(--transition-slow), border-color var(--transition-slow);
     z-index: 3;
     pointer-events: auto;
 }
 
 .text-toolbar button:hover {
-    background-color: var(--gray-650);
+    background-color: var(--gray-600);
 }
 
 .text-toolbar button.selected {
@@ -112,15 +56,14 @@
     opacity: 1;
 }
 
-/* ─── List styling inside the editable box ─── */
 .block-body ul,
 .block-body ol {
-    margin: 4px 0 0 0;
+    margin: var(--space-1) 0 0 0;
     padding-left: 1.25em;
 }
 
 .block-body li {
-    margin: 0 0 3px 0;
+    margin: 0 0 var(--space-3px) 0;
     line-height: 1.5;
 }
 
@@ -128,9 +71,9 @@
     margin-bottom: 0;
 }
 
-/* ==================================================================*/
-/* ========================= Overlay Styles =========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* =========================== OVERLAY STYLES =========================== */
+/* ====================================================================== */
 
 .cleardata-overlay {
     position: fixed;
@@ -138,12 +81,14 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: none;
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.4s;
+    transition: opacity var(--transition-medium);
     z-index: 1000;
 }
 
@@ -154,22 +99,30 @@
 }
 
 .cleardata-form {
-    background-color: var(--gray-350);
-    padding: 30px;
-    border-radius: 12px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    padding: var(--space-10);
+    border-radius: var(--radius-xl);
     width: 350px;
     text-align: center;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--glass-shadow);
+    transform: translateY(10px) scale(0.98);
+    transition: transform var(--transition-medium) ease;
 }
 
-/* Find & Replace Panel */
+.cleardata-overlay.show .cleardata-form {
+    transform: translateY(0) scale(1);
+}
+
 .find-replace-panel {
     background-color: var(--gray-400);
     border-bottom: 1px solid var(--gray-500);
-    padding: 12px 12px;
+    padding: var(--space-5) var(--space-5);
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-3);
     position: sticky;
     top: 0;
     z-index: 5;
@@ -182,37 +135,49 @@
 .find-replace-row {
     display: flex;
     flex-direction: row;
-    gap: 8px;
+    gap: var(--space-3);
     align-items: center;
+}
+
+.quest-overlay-input,
+.quest-objective-input,
+.find-replace-row input {
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--gray-400);
+    color: var(--gray-900);
+    border: 1px solid var(--gray-500);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color var(--transition-slow);
+}
+
+.quest-overlay-input:focus,
+.quest-objective-input:focus,
+.find-replace-row input:focus {
+    outline: none;
+    border-color: var(--color-green);
 }
 
 .find-replace-row input {
     flex: 1;
-    padding: 6px 10px;
-    font-size: 14px;
-    background-color: var(--gray-400);
-    color: var(--gray-900);
-    border: 1px solid var(--gray-500);
-    border-radius: 6px;
-    box-sizing: border-box;
     margin: 0;
 }
 
 .fr-btn {
-    padding: 6px 10px;
-    font-size: 14px;
+    padding: var(--space-2) var(--space-4);
     background-color: var(--gray-500);
     color: var(--gray-900);
     border: 1px solid var(--gray-500);
     opacity: 0.5;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     white-space: nowrap;
-    transition: background-color 0.2s;
+    transition: background-color var(--transition-medium);
 }
 
 .fr-btn:hover {
-    background-color: var(--gray-650);
+    background-color: var(--gray-600);
 }
 
 .fr-close:hover {
@@ -221,34 +186,30 @@
 }
 
 .fr-feedback {
-    font-size: 12px;
-    color: var(--gray-750);
+    color: var(--gray-800);
 }
 
 .fr-highlight {
     background-color: var(--color-find);
-    border-radius: 2px;
+    border-radius: var(--radius-2xs);
 }
 
 .fr-highlight-active {
     background-color: var(--color-find-active);
-    border-radius: 2px;
+    border-radius: var(--radius-2xs);
     outline: 1px solid var(--color-find-active-outline);
 }
 
-/* ==================================================================*/
-/* ================ INVENTORY TOGGLE STYLES ========================*/
-/* ==================================================================*/
-
-/* ── Toggle switch (requires attunement / equipable) ──────────── */
+/* ====================================================================== */
+/* ====================== INVENTORY TOGGLE STYLES ======================= */
+/* ====================================================================== */
 
 .inv-toggle {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-4);
     cursor: pointer;
     user-select: none;
-    font-size: 13px;
     color: var(--gray-850);
     letter-spacing: 0.03em;
 }
@@ -264,12 +225,12 @@
 .inv-track {
     width: 40px;
     height: 22px;
-    border-radius: 11px;
-    background: var(--gray-350);
-    border: 1px solid var(--gray-450);
+    border-radius: var(--radius-pill);
+    background: var(--gray-400);
+    border: 1px solid var(--gray-500);
     position: relative;
     flex-shrink: 0;
-    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: background-color var(--transition-medium) ease, border-color var(--transition-medium) ease, box-shadow var(--transition-medium) ease;
 }
 
 .inv-thumb {
@@ -280,7 +241,7 @@
     height: 16px;
     border-radius: 50%;
     background: var(--gray-700);
-    transition: transform 0.2s ease, background-color 0.2s ease;
+    transition: transform var(--transition-medium) ease, background-color var(--transition-medium) ease;
 }
 
 .inv-toggle input[type="checkbox"]:checked ~ .inv-track .inv-thumb {
@@ -288,36 +249,52 @@
     background: var(--gray-900);
 }
 
+.inv-toggle--sm {
+    gap: var(--space-7px);
+}
+
+.inv-toggle--sm .inv-track {
+    width: 32px;
+    height: 18px;
+}
+
+.inv-toggle--sm .inv-thumb {
+    width: 12px;
+    height: 12px;
+    top: 2px;
+    left: 2px;
+}
+
+.inv-toggle--sm input[type="checkbox"]:checked ~ .inv-track .inv-thumb {
+    transform: translateX(14px);
+}
+
 .inv-toggle-attune input[type="checkbox"]:checked ~ .inv-track {
-    background: color-mix(in srgb, var(--color-cyan) 55%, var(--gray-300));
+    background: color-mix(in srgb, var(--color-cyan) 55%, var(--gray-400));
     border-color: rgba(6, 173, 228, 0.75);
-    box-shadow: 0 0 10px rgba(6, 173, 228, 0.55),
-                inset 0 0 6px rgba(6, 173, 228, 0.4);
+    box-shadow: var(--shadow-toggle-glow-attune);
 }
 
 .inv-toggle-equip input[type="checkbox"]:checked ~ .inv-track {
-    background: color-mix(in srgb, #ff8c00 55%, var(--gray-300));
+    background: color-mix(in srgb, #ff8c00 55%, var(--gray-400));
     border-color: rgba(255, 140, 0, 0.75);
-    box-shadow: 0 0 10px rgba(255, 140, 0, 0.55),
-                inset 0 0 6px rgba(255, 140, 0, 0.4);
+    box-shadow: var(--shadow-toggle-glow-equip);
 }
-
-/* ── State buttons (Attuned to / Equipped) ────────────────────── */
 
 .inv-state-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-2);
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px 6px;
-    color: var(--gray-550);
-    font-size: 13px;
+    padding: var(--space-1) var(--space-2);
+    color: var(--gray-600);
+    font-size: var(--font-md);
     letter-spacing: 0.03em;
     font-family: inherit;
-    border-radius: 6px;
-    transition: color 0.2s, filter 0.2s;
+    border-radius: var(--radius-sm);
+    transition: color var(--transition-medium), filter var(--transition-medium);
 }
 
 .inv-state-btn svg { display: block; flex-shrink: 0; }
@@ -333,86 +310,58 @@
     filter: drop-shadow(0 0 6px rgba(255, 140, 0, 0.7));
 }
 
-/* ==================================================================*/
-/* ===================== QUEST/NOTES FIELD STYLES ==================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ===================== QUEST / NOTES FIELD STYLES ===================== */
+/* ====================================================================== */
 
 .quest-overlay-field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-2);
 }
 
 .quest-overlay-label {
-    font-size: 11px;
+    font-size: var(--font-micro);
     font-weight: 500;
     color: var(--gray-700);
-    letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
 .quest-overlay-input {
     width: 100%;
-    padding: 8px 10px;
-    background-color: var(--gray-400);
-    color: var(--gray-900);
-    border: 1px solid var(--gray-500);
-    border-radius: 6px;
-    font-size: 14px;
-    font-family: inherit;
-    box-sizing: border-box;
-}
-
-.quest-overlay-input:focus {
-    outline: none;
-    border-color: var(--color-green);
 }
 
 .quest-status-button-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: var(--space-2);
 }
 
 .quest-objectives-editor {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-bottom: 6px;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
 }
 
 .quest-objective-editor-row {
     display: flex;
-    gap: 6px;
+    gap: var(--space-2);
     align-items: center;
 }
 
 .quest-objective-input {
     flex: 1;
-    padding: 6px 10px;
-    background-color: var(--gray-400);
-    color: var(--gray-900);
-    border: 1px solid var(--gray-500);
-    border-radius: 6px;
-    font-size: 13px;
-    font-family: inherit;
-    box-sizing: border-box;
-}
-
-.quest-objective-input:focus {
-    outline: none;
-    border-color: var(--color-green);
 }
 
 .quest-objective-remove {
     width: 28px;
     height: 28px;
     flex-shrink: 0;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--color-red);
     border: 1px solid var(--gray-500);
-    font-size: 18px;
     line-height: 1;
     cursor: pointer;
     display: inline-flex;
@@ -428,12 +377,11 @@
 
 .quest-add-objective-btn {
     align-self: flex-start;
-    padding: 6px 12px;
-    border-radius: 6px;
+    padding: var(--space-2) var(--space-5);
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--gray-800);
     border: 1px dashed var(--gray-500);
-    font-size: 12px;
     font-family: inherit;
     cursor: pointer;
 }

@@ -1,6 +1,171 @@
-/* ==================================================================*/
-/* ============================ ROOT & BASE =========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================= SHARED TEXT STYLES ========================= */
+/* ====================================================================== */
+/* Selectors below share identical font-size declarations, */
+/* consolidated from ~10 separate files into one rule per size. */
+/* ====================================================================== */
+
+/* Group A: var(--font-micro) (10px) */
+.stat-label,
+.stat-subvalue,
+.descriptor-label,
+.hd-roll-detail,
+.cs-ref-label,
+.cs-mod-col .stat-subvalue,
+.saving-throws-and-skills-column h3,
+.stat-breakdown-popover .sb-row-desc,
+.stat-breakdown-popover .sb-add,
+.resources-strip .circle-add,
+.map-card-url,
+.quest-progress-count,
+.block.inline-editing .block-property-wrap,
+.inline-edit-new-prop,
+.block.inline-editing .uses-field .circle-button,
+.board-zoom-label,
+.board-add-obj-item-btn,
+.board-card-add-section-btn,
+.dice-label,
+.tag-accordion-pill::after,
+.bf .bfc,
+.bf-dd-cnt,
+.bat,
+.bag-ov-det,
+.bag-ov-link-btn,
+.bag-ov-link-confirm,
+.bag-ov-link-cancel-mini,
+.inv-toggle--sm,
+.bag-ov-card .inv-state-btn {
+    font-size: var(--font-micro);
+}
+
+/* Group B: var(--font-md) (12px) */
+.tag-accordion-pill,
+.tag-accordion-header,
+.block.condensed .block-tags-condensed .tag-button.selected,
+.block.condensed .block-tags-condensed .tag-button.selected-or,
+.inline-edit-add-tag,
+.book-card-description,
+.notes-card-description,
+.quest-objectives-empty,
+.quest-objectives,
+.property-remove-btn,
+.hp-max-edit,
+.hd-remaining,
+.descriptor-value,
+.save-label,
+.skill-label,
+.resources-strip .circle-remove,
+.resources-strip .ghost-chip .ghost-chip-plus,
+.board-section-notes,
+.board-obj-item-text,
+.board-obj-item-input,
+.board-empty-hint p,
+.fr-feedback,
+.notes-edit-body,
+.quest-add-objective-btn,
+.quest-status-item,
+.bf,
+.bf-dd-item,
+.bpp-b,
+.bpp-s,
+.bem,
+.bag-ov-input,
+.bag-ov-textarea,
+.bag-ov-tb,
+.bag-ov-btn,
+.inv-toggle {
+    font-size: var(--font-md);
+}
+
+/* Group C: var(--font-lg) (14px) */
+.button,
+.block-title h3,
+.block-title-minimized h3,
+.block.session-log .block-title h3,
+.map-card-title h3,
+.book-card-title h3,
+.menu-item-button,
+#long_rest_button,
+.board-zoom-btn,
+.board-string-picker-delete,
+#clear-selected-button,
+.editor-toolbar-wrapper,
+.text-toolbar button,
+#font-size-select,
+.fr-btn,
+.quest-overlay-input,
+.quest-objective-input,
+.find-replace-row input,
+.text-tooltip {
+    font-size: var(--font-lg);
+}
+
+/* Group D: var(--font-md) (12px), font-weight: 500 */
+.ds-roll-btn,
+.hd-type,
+.hd-roll-btn,
+.hp-action-btn,
+.long-rest-popup-message,
+.map-link-popup-action,
+.delete-confirm-message,
+.clear-data-confirm-message {
+    font-size: var(--font-md);
+}
+
+/* Group E: var(--font-md) (12px), font-weight: 600 */
+.board-card-title,
+.board-card-title-input,
+.board-section-subheader,
+.roll-chip,
+.delete-confirm-buttons button,
+.clear-data-confirm-buttons button,
+.stat-breakdown-popover .sb-row-val {
+    font-size: var(--font-md);
+}
+
+/* Group F: var(--font-lg) (14px), font-weight: 500 */
+.hp-input-field,
+.hd-qty-btn,
+.hd-qty-display,
+.coin-delta-popup,
+.hp-drag-delta,
+.bpp-n,
+.bag-ov-title,
+#roll-button {
+    font-size: var(--font-lg);
+}
+
+/* Group G: var(--font-lg) (14px), font-weight: 700 */
+.character-name,
+.stat-value,
+.cs-ref-val,
+.cs-ref-spell .cs-ref-val {
+    font-size: var(--font-lg);
+}
+
+/* Group H: var(--font-3xl) (18px) */
+.add-block-button,
+.session-viewer-delete-btn,
+.quest-objective-remove {
+    font-size: var(--font-3xl);
+}
+
+/* Group I: var(--font-micro) (10px), font-weight: 700 */
+.coin-icon-letter,
+.dice-count-badge {
+    font-size: var(--font-micro);
+}
+
+/* Group J: var(--font-md) (12px), letter-spacing: 0.02em (kept individually) */
+.uch-tooltip,
+.cs-currency-card .currency-tooltip,
+.board-picker-floating-tip {
+    font-size: var(--font-md);
+}
+
+/* ====================================================================== */
+/* ============================ ROOT & BASE ============================= */
+/* ====================================================================== */
 
 html {
     height: 100%;
@@ -16,19 +181,11 @@ body {
     flex-direction: column;
     align-items: center;
     height: 100%;
-    padding: 20px;
+    padding: var(--space-8);
     overflow: hidden;
 }
 
-/* ── Frosted glass utility ────────────────────────────────────────── */
-
-.frosted-glass {
-    background: var(--glass-bg);
-    box-shadow: var(--glass-shadow);
-    border: var(--glass-border);
-    will-change: transform;
-}
-
+.frosted-glass,
 .glass-surface {
     background: var(--glass-bg);
     box-shadow: var(--glass-shadow);
@@ -36,7 +193,18 @@ body {
     will-change: transform;
 }
 
-/* ── Scroll-fade mask utility ────────────────────────────────────── */
+.dice-popover,
+.uch-dropdown-popover,
+.menu-popover,
+.stat-breakdown-popover {
+    position: fixed;
+    z-index: 9998;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
 
 .scroll-fade {
     --mask-top: 0px;
@@ -62,18 +230,18 @@ body {
     position: relative;
     z-index: 9999;
     width: 100%;
-    padding-bottom: 20px;
+    padding-bottom: var(--space-8);
 }
 
-/* ==================================================================*/
-/* ============== UCH (UNIVERSAL CONTROL HEADER) ====================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* =================== UCH (UNIVERSAL CONTROL HEADER) =================== */
+/* ====================================================================== */
 
 #uch {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 6px;
+    gap: var(--space-2);
     width: 100%;
 }
 
@@ -84,7 +252,7 @@ body {
 .uch-center-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-3);
     flex: 1;
     justify-content: center;
     min-width: 0;
@@ -92,15 +260,14 @@ body {
 
 .uch-tab-group {
     display: flex;
-    gap: 5px;
+    gap: var(--space-5px);
     flex-shrink: 0;
     position: relative;
-    padding: 5px;
-    border-radius: 25px;
+    padding: var(--space-5px);
+    border-radius: var(--radius-pill);
     align-items: center;
 }
 
-/* ── UCH slider (green glow behind active tab) ──────────────────── */
 .uch-slider {
     position: absolute;
     border-radius: 50%;
@@ -108,25 +275,23 @@ body {
     border: none;
     background-color: color-mix(in srgb, var(--color-green) 15%, transparent);
     background-image: radial-gradient(90% 110% at 50% 0%, var(--color-green) 0%, transparent 100%);
-    box-shadow: color-mix(in srgb, var(--color-green) 20%, transparent) 0px -6px 24px 0px;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                top 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-slider-glow);
+    transition: left var(--transition-slow) var(--easing-signature),
+                width var(--transition-slow) var(--easing-signature),
+                top var(--transition-slow) var(--easing-signature),
+                height var(--transition-slow) var(--easing-signature);
     z-index: 0;
 }
 
-/* Vertical divider inside pill groups */
 .uch-pill-divider {
     width: 1px;
     height: 20px;
     background-color: var(--gray-500);
     opacity: 0.4;
     flex-shrink: 0;
-    margin: 0 2px;
+    margin: 0 var(--space-2px);
 }
 
-/* Override old .tab-button base styles for UCH icon tabs */
 .tab-button.uch-tab {
     all: unset;
     box-sizing: border-box;
@@ -141,7 +306,7 @@ body {
     cursor: pointer;
     position: relative;
     z-index: 1;
-    transition: background-color 0.15s ease;
+    transition: background-color var(--transition-fast) ease;
     flex: 0 0 auto;
     padding: 0;
     -webkit-appearance: none;
@@ -168,7 +333,6 @@ body {
     stroke: var(--gray-900);
 }
 
-/* Tooltip on hover — delayed appearance */
 .uch-tooltip {
     position: absolute;
     bottom: -36px;
@@ -179,17 +343,16 @@ body {
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     color: var(--gray-900);
-    padding: 8px 12px;
-    border-radius: 10px;
+    padding: var(--space-3) var(--space-5);
+    border-radius: var(--radius-lg);
     box-shadow: var(--glass-shadow);
     border: var(--glass-border);
-    font-size: 13px;
     line-height: 1.4;
     letter-spacing: 0.02em;
     z-index: 10000;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--transition-fast) ease;
     transition-delay: 0s;
 }
 
@@ -197,10 +360,9 @@ body {
 .uch-pill-btn:hover .uch-tooltip,
 .uch-has-tooltip:hover .uch-tooltip {
     opacity: 1;
-    transition-delay: 0.5s;
+    transition-delay: var(--transition-slower);
 }
 
-/* Suppress tooltips when their associated menu/popover is open */
 #Menu_button.menu-button-open:hover .uch-tooltip,
 #dice-menu-button.active:hover .uch-tooltip,
 #dice-history-button.active:hover .uch-tooltip,
@@ -214,13 +376,12 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     transition-delay: 0s !important;
 }
 
-/* ── UCH search pill (looks like a tab group pill) ───────────────── */
 .uch-search-pill {
     display: flex;
     align-items: center;
     gap: 0;
-    padding: 5px;
-    border-radius: 25px;
+    padding: var(--space-5px);
+    border-radius: var(--radius-pill);
     max-width: 500px;
     flex: 1 1 500px;
     min-width: 200px;
@@ -230,9 +391,9 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     flex: 1;
     height: 42px;
     border: none;
-    border-radius: 25px;
-    padding: 0 16px;
-    font-size: 13px;
+    border-radius: var(--radius-pill);
+    padding: 0 var(--space-7);
+    font-size: var(--font-md);
     background: transparent;
     color: var(--gray-900);
     outline: none;
@@ -244,10 +405,9 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     color: var(--gray-600);
 }
 
-/* ── Solo pill containers (single icon in pill bg) ───────────────── */
 .uch-pill-solo {
     flex-shrink: 0;
-    padding: 5px;
+    padding: var(--space-5px);
     border-radius: 50%;
 }
 
@@ -260,7 +420,7 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
 }
 
 .uch-pill-solo .uch-btn svg {
-    transition: stroke 0.15s ease;
+    transition: stroke var(--transition-fast) ease;
 }
 
 .uch-pill-solo .uch-btn:hover svg {
@@ -280,14 +440,13 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     background-color: color-mix(in srgb, var(--color-green) 30%, transparent);
 }
 
-/* ── Floating dice pill — fixed bottom right ─────────────────────── */
 #dice-floating-pill {
     position: fixed;
     bottom: 20px;
     right: 20px;
     display: flex;
     align-items: center;
-    padding: 8px;
+    padding: var(--space-3);
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
@@ -303,13 +462,11 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     object-fit: contain;
 }
 
-/* Tooltip variant that appears above the button */
 .uch-tooltip-above {
     bottom: auto;
     top: -36px;
 }
 
-/* ── Inline buttons inside search pill (sort, view, clear) ────────── */
 .uch-inline-btn {
     width: 42px;
     height: 42px;
@@ -337,14 +494,13 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     stroke-width: 1.8;
     stroke-linecap: round;
     stroke-linejoin: round;
-    transition: stroke 0.15s ease;
+    transition: stroke var(--transition-fast) ease;
 }
 
 .uch-inline-btn:hover svg {
     stroke: var(--gray-900);
 }
 
-/* Search clear — hidden until search has value */
 #uch-search-clear {
     display: none;
 }
@@ -353,7 +509,6 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     display: flex;
 }
 
-/* ── Long rest inside char-tabs pill ─────────────────────────────── */
 #long_rest_button.uch-pill-btn {
     width: 42px;
     height: 42px;
@@ -373,7 +528,6 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     stroke: var(--color-orange);
 }
 
-/* ── UCH action buttons ──────────────────────────────────────────── */
 .uch-btn {
     width: 42px;
     height: 42px;
@@ -385,13 +539,12 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: background-color 0.15s ease;
+    transition: background-color var(--transition-fast) ease;
     padding: 0;
     -webkit-appearance: none;
     appearance: none;
 }
 
-/* Buttons inside a pill — no extra margin, same style */
 .uch-pill-btn {
     position: relative;
 }
@@ -425,20 +578,12 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     object-fit: contain;
 }
 
-/* UCH small dropdown popovers (sort, viewstate) */
 .uch-dropdown-popover {
-    position: fixed;
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    box-shadow: var(--glass-shadow);
-    border: var(--glass-border);
-    border-radius: 10px;
-    padding: 5px;
+    border-radius: var(--radius-lg);
+    padding: var(--space-5px);
     display: none;
     flex-direction: column;
-    z-index: 9998;
-    gap: 5px;
+    gap: var(--space-5px);
     width: max-content;
 }
 
@@ -449,15 +594,14 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
 
 .uch-dropdown-popover.open {
     display: flex;
-    animation: dice-popover-in 0.3s ease-out forwards;
+    animation: dice-popover-in var(--transition-slow) ease-out forwards;
 }
 
 .uch-dropdown-popover.closing {
     display: flex;
-    animation: popover-out 0.2s ease-in forwards;
+    animation: popover-out var(--transition-medium) ease-in forwards;
 }
 
-/* Menu button icon swap */
 .uch-btn .menu-icon-wrapper {
     display: flex;
     align-items: center;
@@ -478,9 +622,9 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
 .menu-button-open #menu-icon-default { display: none; }
 .menu-button-open #menu-icon-close { display: flex; }
 
-/* ==================================================================*/
-/* ======================= LAYOUT STRUCTURE =========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================== LAYOUT STRUCTURE ========================== */
+/* ====================================================================== */
 
 #main-row {
     display: flex;
@@ -521,8 +665,6 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     display: flex;
 }
 
-/* ── Portrait char-sheet overlay ──────────────────────────────── */
-
 #char-sheet-panel.cs-overlay-open {
     display: flex !important;
     position: fixed;
@@ -531,16 +673,16 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     width: 360px;
     max-width: calc(100vw - 40px);
     z-index: 9998;
-    padding: 10px;
-    gap: 8px;
-    border-radius: 16px;
+    padding: var(--space-4);
+    gap: var(--space-3);
+    border-radius: var(--radius-xl);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    animation: cs-overlay-in 0.3s ease-out forwards;
+    animation: cs-overlay-in var(--transition-slow) ease-out forwards;
 }
 
 #char-sheet-panel.cs-overlay-open.cs-overlay-closing {
-    animation: cs-overlay-out 0.2s ease-in forwards;
+    animation: cs-overlay-out var(--transition-medium) ease-in forwards;
 }
 
 @keyframes cs-overlay-in {
@@ -564,7 +706,7 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     min-height: 0;
     min-width: 0;
     box-sizing: border-box;
-    gap: 15px;
+    gap: var(--space-6);
 }
 
 .hidden {
@@ -574,20 +716,17 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
 .container {
     width: 100%;
     display: flex;
-    gap: 20px;
-    padding-bottom: 20px;
+    gap: var(--space-8);
+    padding-bottom: var(--space-8);
 }
 
 .container:last-of-type {
     padding-bottom: 0px;
 }
 
-/* ==================================================================*/
-/* ========================= PAGE LOAD REVEAL =======================*/
-/* ==================================================================*/
-
-/* Phase 1: Loading — hide UI, kill all transitions so saved state
-   restoration (filter panels, tabs, char-sheet) is instant.         */
+/* ====================================================================== */
+/* ========================== PAGE LOAD REVEAL ========================== */
+/* ====================================================================== */
 
 body.app-loading #header-row,
 body.app-loading #app-row {
@@ -602,8 +741,13 @@ body.app-loading *::after {
     animation-duration: 0s !important;
 }
 
-/* Phase 2: Reveal — coordinated entrance                           */
-/* Add more targets here to extend the sequence later.               */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        transition-duration: 0s !important;
+        animation-duration: 0s !important;
+        scroll-behavior: auto !important;
+    }
+}
 
 body.app-ready #header-row {
     animation: revealDown 1s cubic-bezier(0, 0.8, 0.8, 1);
@@ -624,31 +768,28 @@ body.app-ready #app-row {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ==================================================================*/
-/* =============================== TAB NAV ==========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ============================== TAB NAV =============================== */
+/* ====================================================================== */
 
 .tab-content {
     position: relative;
     width: 100%;
     flex: 1;
     min-height: 0;
-    gap: 20px;
+    gap: var(--space-8);
     display: flex;
     flex-direction: column;
 }
 
-
 #suit_uses_circles {
     display: flex;
-    gap: 6px;
+    gap: var(--space-2);
 }
 
-/* ==================================================================*/
-/* ======================== FILTER & RESULTS ========================*/
-/* ==================================================================*/
-
-/* ── Outer layout ─────────────────────────────────────────────────── */
+/* ====================================================================== */
+/* ========================== FILTER & RESULTS ========================== */
+/* ====================================================================== */
 
 .filter-and-results {
     position: relative;
@@ -657,8 +798,8 @@ body.app-ready #app-row {
     width: 100%;
     flex: 1;
     min-height: 0;
-    gap: 15px;
-    transition: gap 0.3s ease;
+    gap: var(--space-6);
+    transition: gap var(--transition-slow) ease;
 }
 
 .filter-and-results:has(.filter-section-wrapper.filter-panel-closed) {
@@ -670,6 +811,10 @@ body.app-ready #app-row {
     min-width: 0;
 }
 
+/* ====================================================================== */
+/* =========================== FILTER SECTION =========================== */
+/* ====================================================================== */
+
 .filter-divider {
     display: none;
 }
@@ -678,10 +823,6 @@ body.app-ready #app-row {
     max-width: 0;
     opacity: 0;
 }
-
-/* ==================================================================*/
-/* ========================= FILTER SECTION =========================*/
-/* ==================================================================*/
 
 .filter-divider {
     display: none;
@@ -697,11 +838,11 @@ body.app-ready #app-row {
     flex-direction: column;
     width: 33%;
     min-width: 290px;
-    border-radius: 15px;
-    padding: 15px;
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
     box-sizing: border-box;
     overflow: hidden;
-    transition: margin-right 0.3s ease, opacity 0.3s ease, visibility 0s;
+    transition: margin-right var(--transition-slow) ease, opacity var(--transition-slow) ease, visibility 0s;
 }
 
 .filter-section-wrapper.filter-panel-closed {
@@ -709,17 +850,15 @@ body.app-ready #app-row {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transition: margin-right 0.3s ease, opacity 0.3s ease, visibility 0s 0.3s;
+    transition: margin-right var(--transition-slow) ease, opacity var(--transition-slow) ease, visibility 0s var(--transition-slow);
 }
-
-/* ── Filter header ────────────────────────────────────────────────── */
 
 .filter-panel-header {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 8px;
-    padding: 0px 0px 15px 0px;
+    gap: var(--space-3);
+    padding: 0px 0px var(--space-6) 0px;
     flex-shrink: 0;
     position: relative;
     z-index: 2;
@@ -742,11 +881,11 @@ body.app-ready #app-row {
     justify-content: center;
     flex-shrink: 0;
     padding: 0;
-    transition: background-color 0.2s;
+    transition: background-color var(--transition-medium);
 }
 
 .filter-panel-header .toggle-filter-button:hover {
-    background-color: var(--gray-450);
+    background-color: var(--gray-500);
 }
 
 .filter-panel-header .toggle-filter-button svg {
@@ -756,8 +895,6 @@ body.app-ready #app-row {
     stroke: none;
 }
 
-/* ── Filter section ───────────────────────────────────────────────── */
-
 .filter-section {
     flex: 1;
     min-height: 0;
@@ -765,38 +902,32 @@ body.app-ready #app-row {
     position: relative;
     align-items: flex-start;
     flex-wrap: wrap;
-    column-gap: 5px;
-    row-gap: 6px;
+    column-gap: var(--space-5px);
+    row-gap: var(--space-2);
     overflow: auto;
     opacity: 1;
-    transition: opacity 0.3s ease-out;
+    transition: opacity var(--transition-slow) ease-out;
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
 
-/* ── Filter panel swipe preview ──────────────────────────────────── */
-
-/* Opening preview: reduce negative margin to show a 70px peek */
 .filter-section-wrapper.filter-panel-closed.filter-panel-preview {
     margin-right: calc(max(33%, 290px) * -1 + 70px);
     opacity: 0.6;
     visibility: visible;
     pointer-events: none;
-    transition: margin-right 0.15s ease, opacity 0.15s ease, visibility 0s;
+    transition: margin-right var(--transition-fast) ease, opacity var(--transition-fast) ease, visibility 0s;
 }
 
-/* Closing preview: stay full width, just dim */
 .filter-section-wrapper.filter-panel-preview:not(.filter-panel-closed) {
     opacity: 0.6;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--transition-fast) ease;
 }
 
-/* Restore gap during opening preview */
 .filter-and-results:has(.filter-section-wrapper.filter-panel-closed.filter-panel-preview) {
-    gap: 10px;
+    gap: var(--space-4);
 }
 
-/* Hide the open button while opening preview is showing */
 .filter-and-results:has(.filter-section-wrapper.filter-panel-closed.filter-panel-preview) .filter-open-btn {
     max-width: 0;
     opacity: 0;
@@ -804,9 +935,9 @@ body.app-ready #app-row {
     pointer-events: none;
 }
 
-/* ==================================================================*/
-/* ======================= RESULTS SECTION ==========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================== RESULTS SECTION =========================== */
+/* ====================================================================== */
 
 .results-section {
     padding: 0px;
@@ -819,8 +950,6 @@ body.app-ready #app-row {
     -ms-overflow-style: none;
 }
 
-/* Fade overlay: a zero-height sticky anchor whose ::before draws the gradient.
-   The sticky div contributes ~0px to scrollHeight, so no phantom overflow. */
 .results-fade {
     position: sticky;
     bottom: 0;
@@ -829,7 +958,7 @@ body.app-ready #app-row {
     pointer-events: none;
     z-index: 10;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transition: opacity var(--transition-medium) ease;
     background: linear-gradient(
         color-mix(in srgb, var(--gray-150) 0%, transparent) 0%,
         color-mix(in srgb, var(--gray-150) 50%, transparent) 50%,
@@ -837,11 +966,9 @@ body.app-ready #app-row {
     );
 }
 
-/* ── Glass card wrapper (reusable for any tab) ─────────────────── */
-
 .results-wrapper {
-    border-radius: 15px;
-    padding: 15px;
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
     flex: 1;
     min-width: 0;
     min-height: 0;
@@ -867,7 +994,7 @@ body.app-ready #app-row {
     justify-content: flex-end;
     align-items: flex-start;
     top: 0;
-    margin-bottom: 5px;
+    margin-bottom: var(--space-5px);
     width: 100%;
     height: 40px;
     z-index: 10;
@@ -879,17 +1006,17 @@ body.app-ready #app-row {
     );
 }
 
-/* ==================================================================*/
-/* ======================= BLOCK STRUCTURE ==========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================== BLOCK STRUCTURE =========================== */
+/* ====================================================================== */
 
 .block {
     --block-bg: var(--glass-bg);
     background-color: var(--block-bg);
     border: var(--glass-border);
-    border-radius: 10px;
-    padding: 10px 15px;
-    margin-bottom: 8px;
+    border-radius: var(--radius-lg);
+    padding: var(--space-4) var(--space-6);
+    margin-bottom: var(--space-3);
     position: relative;
     overflow: hidden;
 }
@@ -914,9 +1041,9 @@ body.app-ready #app-row {
     display: inline-block;
     width: auto;
     vertical-align: top;
-    padding: 10px 15px;
-    border-radius: 10px;
-    margin-right: 8px;
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-lg);
+    margin-right: var(--space-3);
 }
 
 .block-header {
@@ -925,52 +1052,43 @@ body.app-ready #app-row {
     flex-wrap: nowrap;
     align-items: start;
     width: 100%;
-    gap: 10px;
+    gap: var(--space-4);
 }
 
 .block.expanded {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-5);
 }
 
 .block.inline-editing {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--space-4);
 }
 
 .block.inline-editing .inline-edit-controls {
     display: flex;
-    gap: 6px;
+    gap: var(--space-2);
     flex-shrink: 0;
 }
 
 .block.inline-editing .inline-edit-controls .button {
     margin: 0;
-    padding: 5px 12px;
-    font-size: 12px;
+    padding: var(--space-5px) var(--space-5);
+    font-size: var(--font-md);
 }
 
 .block.inline-editing .inline-edit-block-types,
 .block.inline-editing .inline-edit-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-}
-
-.inline-edit-block-types .tag-button,
-.inline-edit-tags .tag-button {
-    padding: 4px 10px;
-    height: auto;
-    font-size: 13px;
-    border-radius: 12px;
-    letter-spacing: 0.03em;
+    gap: var(--space-5px);
 }
 
 .block.inline-editing .uses-field {
     background: none;
-    padding: 2px 0 0;
+    padding: var(--space-2px) 0 0;
     border-radius: 0;
 }
 
@@ -982,34 +1100,33 @@ body.app-ready #app-row {
 .block.inline-editing .uses-field .circle-button {
     width: 15px;
     height: 15px;
-    font-size: 10px;
     line-height: 1;
     background-color: transparent;
 }
 
 .block.inline-editing .uses-field .circle-add {
-    border: 1px dashed #f4a261;
-    color: #f4a261;
+    border: 1px dashed var(--color-orange);
+    color: var(--color-orange);
 }
 
 .block.inline-editing .uses-field .circle-remove {
-    border: 1px dashed var(--gray-550);
-    color: var(--gray-550);
+    border: 1px dashed var(--gray-600);
+    color: var(--gray-600);
 }
 
 .block.inline-editing .uses-row {
-    gap: 5px;
+    gap: var(--space-5px);
 }
 
 .block.inline-editing .uses-circles-container,
 .block.inline-editing .uses-controls-container {
-    gap: 5px;
+    gap: var(--space-5px);
 }
 
 .block.inline-editing ul,
 .block.inline-editing ol {
-    padding-left: 20px;
-    margin: 4px 0;
+    padding-left: var(--space-8);
+    margin: var(--space-1) 0;
 }
 
 .block.inline-editing .block-property {
@@ -1024,11 +1141,10 @@ body.app-ready #app-row {
     display: inline-flex;
     align-items: center;
     position: relative;
-    padding: 3px 7px;
+    padding: var(--space-3px) var(--space-7px);
     color: var(--gray-800);
     background-color: color-mix(in srgb, var(--gray-900) 8%, transparent);
-    border-radius: 6px;
-    font-size: 11px;
+    border-radius: var(--radius-sm);
 }
 
 .block.inline-editing .block-property-wrap .block-property {
@@ -1043,10 +1159,9 @@ body.app-ready #app-row {
     border: none;
     color: var(--gray-600);
     cursor: pointer;
-    font-size: 13px;
-    padding: 0 0 0 4px;
+    padding: 0 0 0 var(--space-1);
     line-height: 1;
-    transition: color 0.2s;
+    transition: color var(--transition-medium);
 }
 
 .block.inline-editing .property-remove-btn {
@@ -1068,10 +1183,9 @@ body.app-ready #app-row {
 }
 
 .inline-edit-new-prop {
-    padding: 3px 7px;
+    padding: var(--space-3px) var(--space-7px);
     background-color: color-mix(in srgb, var(--gray-900) 5%, transparent);
-    border-radius: 6px;
-    font-size: 11px;
+    border-radius: var(--radius-sm);
     color: var(--gray-800);
     min-width: 16px;
     display: inline-block;
@@ -1083,10 +1197,9 @@ body.app-ready #app-row {
 }
 
 .inline-edit-add-tag {
-    padding: 4px 10px;
+    padding: var(--space-1) var(--space-4);
     height: auto;
-    font-size: 13px;
-    border-radius: 12px;
+    border-radius: var(--radius-pill);
     background-color: color-mix(in srgb, var(--user-color) 8%, transparent);
     color: var(--gray-800);
     border: 1px dashed var(--gray-500);
@@ -1113,18 +1226,14 @@ body.app-ready #app-row {
     outline: none;
 }
 
-/* Hide chips when an accordion group is open in inline edit — prevents
-   the selected-tag chips duplicating the tag buttons visible in the body */
 .inline-edit-tags .tag-accordion-group.open > .tag-button {
     display: none;
 }
 
-/* Compact sizing for inline edit chips (same as filter accordion chips) */
 .inline-edit-tags .tag-accordion-group > .tag-button {
-    font-size: 12px;
-    padding: 2px 8px;
+    font-size: var(--font-md);
+    padding: var(--space-2px) var(--space-3);
 }
-
 
 .block.expanded .block-header {
     align-items: stretch;
@@ -1136,7 +1245,7 @@ body.app-ready #app-row {
     justify-content: start;
     flex: 1 1 auto;
     min-width: 0;
-    gap: 10px;
+    gap: var(--space-4);
 }
 
 .block-title {
@@ -1144,19 +1253,18 @@ body.app-ready #app-row {
     flex: 0 1 auto;
     width: auto;
     min-width: 0;
-    margin-right: 2px;
+    margin-right: var(--space-2px);
     text-wrap: balance;
 }
 
-.block-title h4,
-.block-title-minimized h4 {
-    font-size: 15px;
+.block-title h3,
+.block-title-minimized h3 {
     letter-spacing: 0.03em;
 }
 
 .block.session-log {
     background-color: transparent;
-    padding: 10px 0;
+    padding: var(--space-4) 0;
     margin-bottom: 0;
     border-radius: 0;
     border: none;
@@ -1167,8 +1275,7 @@ body.app-ready #app-row {
     border-bottom: 1px solid var(--gray-400);
 }
 
-.block.session-log .block-title h4 {
-    font-size: 14px;
+.block.session-log .block-title h3 {
     font-weight: 400;
     letter-spacing: 0.03em;
 }
@@ -1186,12 +1293,12 @@ body.app-ready #app-row {
     border: none;
     color: var(--color-red);
     cursor: pointer;
-    font-size: 18px;
+    font-size: var(--font-3xl);
     line-height: 1;
-    padding: 0 2px;
+    padding: 0 var(--space-2px);
     margin-left: auto;
     opacity: 0.6;
-    transition: opacity 0.2s;
+    transition: opacity var(--transition-medium);
     flex-shrink: 0;
 }
 
@@ -1204,11 +1311,11 @@ body.app-ready #app-row {
     flex: 0 1 auto;
     width: auto;
     min-width: 0;
-    margin-right: 2px;
+    margin-right: var(--space-2px);
     text-wrap: balance;
 }
 
-.block.condensed .block-title h4 {
+.block.condensed .block-title h3 {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1217,32 +1324,32 @@ body.app-ready #app-row {
 
 .block-uses {
     display: flex;
-    gap: 6px;
+    gap: var(--space-2);
     white-space: nowrap;
     align-items: start;
     width: fit-content;
-    margin-right: 9px;
+    margin-right: var(--space-9px);
     height: 100%;
-    padding-top: 2px;
+    padding-top: var(--space-2px);
 }
 
 .block-actions {
     display: flex;
-    gap: 7.5px;
+    gap: var(--space-7-5px);
     white-space: nowrap;
     margin-left: auto;
-    padding-top: 2px;
+    padding-top: var(--space-2px);
 }
 
-/* ==================================================================*/
-/* ========================= BLOCK CONTENT ==========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* =========================== BLOCK CONTENT ============================ */
+/* ====================================================================== */
 
 .block-tags {
     display: flex;
     flex-wrap: wrap;
-    column-gap: 6px;
-    row-gap: 8px;
+    column-gap: var(--space-2);
+    row-gap: var(--space-3);
 }
 
 .block.condensed .block-tags-condensed .tag-button {
@@ -1252,8 +1359,7 @@ body.app-ready #app-row {
 .block.condensed .block-tags-condensed .tag-button.selected,
 .block.condensed .block-tags-condensed .tag-button.selected-or {
     display: inline-flex;
-    font-size: 12px;
-    padding: 2px 8px;
+    padding: var(--space-2px) var(--space-3);
 }
 
 .block-tags-condensed {
@@ -1264,7 +1370,7 @@ body.app-ready #app-row {
     flex: 1;
     margin: 0;
     padding: 0;
-    gap: 4px;
+    gap: var(--space-1);
     min-width: 0;
     overflow: hidden;
     mask-image: linear-gradient(to right, black 70%, transparent 100%);
@@ -1276,16 +1382,16 @@ body.app-ready #app-row {
     flex-direction: column;
     width: 100%;
     padding: 0px;
-    font-size: 13px;
+    font-size: var(--font-md);
     line-height: 1.5;
     color: var(--gray-800);
     font-weight: 400;
     letter-spacing: 0.00em;
 }
 
-/* ==================================================================*/
-/* ====================== TYPOGRAPHY / RESET ========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================= TYPOGRAPHY / RESET ========================= */
+/* ====================================================================== */
 
 * {
     font-family: 'Roboto', sans-serif;
@@ -1303,17 +1409,12 @@ h1 {
 
 h2 {
     letter-spacing: 0.05em;
-    padding-bottom: 20px;
+    padding-bottom: var(--space-8);
 }
 
 h3 {
-    font-size: 18px;
-    color: var(--gray-900);
-}
-
-h4 {
-    font-size: 18px;
-    font-weight: Medium;
+    font-size: var(--font-3xl);
+    font-weight: normal;
     letter-spacing: 0.045em;
     color: var(--gray-900);
 }
@@ -1329,14 +1430,14 @@ u {
 .highlight {
     background-color: var(--color-find-active);
     color: var(--gray-900);
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
 }
 
 a {
     color: var(--color-green);
     text-decoration: none;
     font-weight: 500;
-    transition: color 0.2s;
+    transition: color var(--transition-medium);
     text-decoration: underline;
 }
 
@@ -1344,16 +1445,16 @@ a:hover {
     color: var(--color-green-dark);
 }
 
-/* ==================================================================*/
-/* ====================== SESSION LOG LAYOUT ========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================= SESSION LOG LAYOUT ========================= */
+/* ====================================================================== */
 
 .session-log-layout {
     display: flex;
     flex-direction: row;
     flex: 1;
     min-height: 0;
-    gap: 15px;
+    gap: var(--space-6);
     container-type: inline-size;
 }
 
@@ -1363,12 +1464,12 @@ a:hover {
     width: 33%;
     min-width: 290px;
     flex-shrink: 0;
-    gap: 10px;
+    gap: var(--space-4);
     min-height: 0;
     overflow: hidden;
-    border-radius: 15px;
-    padding: 15px;
-    transition: margin-right 0.3s ease, opacity 0.3s ease, visibility 0s;
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    transition: margin-right var(--transition-slow) ease, opacity var(--transition-slow) ease, visibility 0s;
 }
 
 .session-log-list-column.session-log-list-collapsed {
@@ -1376,7 +1477,7 @@ a:hover {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transition: margin-right 0.3s ease, opacity 0.3s ease, visibility 0s 0.3s;
+    transition: margin-right var(--transition-slow) ease, opacity var(--transition-slow) ease, visibility 0s var(--transition-slow);
 }
 
 .session-log-layout:has(.session-log-list-collapsed) {
@@ -1387,7 +1488,7 @@ a:hover {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-3);
     flex-shrink: 0;
 }
 
@@ -1399,7 +1500,6 @@ a:hover {
 .session-log-search-row .add-block-button {
     width: 34px;
     height: 34px;
-    font-size: 20px;
     flex-shrink: 0;
 }
 
@@ -1407,7 +1507,7 @@ a:hover {
     flex: 1;
     min-height: 0;
     height: 0;
-    padding: 0 0 0 5px;
+    padding: 0 0 0 var(--space-5px);
 }
 
 .session-log-viewer {
@@ -1417,8 +1517,8 @@ a:hover {
     min-width: 0;
     min-height: 0;
     overflow: hidden;
-    border-radius: 15px;
-    padding: 0 15px;
+    border-radius: var(--radius-xl);
+    padding: 0 var(--space-6);
     position: relative;
     scrollbar-width: none;
 }
@@ -1427,8 +1527,8 @@ a:hover {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 10px;
-    padding-top: 15px;
+    gap: var(--space-4);
+    padding-top: var(--space-6);
     flex-shrink: 0;
     z-index: 2;
 }
@@ -1436,16 +1536,16 @@ a:hover {
 .session-viewer-title {
     flex: 1;
     min-width: 0;
-    font-size: 18px;
+    font-size: var(--font-3xl);
     color: var(--gray-900);
     letter-spacing: 0.045em;
-    margin: 0 0 10px 0;
+    margin: 0 0 var(--space-4) 0;
 }
 
 .session-viewer-title {
     border-bottom: 1px solid transparent;
-    padding-bottom: 4px;
-    transition: border-color 0.2s;
+    padding-bottom: var(--space-1);
+    transition: border-color var(--transition-medium);
 }
 
 .session-viewer-title[contenteditable="true"] {
@@ -1466,7 +1566,7 @@ a:hover {
     align-items: center;
     justify-content: center;
     opacity: 0.4;
-    transition: opacity 0.2s, background-color 0.2s;
+    transition: opacity var(--transition-medium), background-color var(--transition-medium);
     padding: 0;
 }
 
@@ -1480,7 +1580,7 @@ a:hover {
     opacity: 1;
     width: 34px;
     height: 34px;
-    transition: background-color 0.2s;
+    transition: background-color var(--transition-medium);
 }
 
 .session-list-open-btn {
@@ -1496,7 +1596,7 @@ a:hover {
     transform: scale(0);
     width: 0;
     margin-right: 0;
-    transition: opacity 0.3s ease, transform 0.3s ease, width 0.3s ease, margin-right 0.3s ease;
+    transition: opacity var(--transition-slow) ease, transform var(--transition-slow) ease, width var(--transition-slow) ease, margin-right var(--transition-slow) ease;
     pointer-events: none;
 }
 
@@ -1526,31 +1626,30 @@ a:hover {
     overflow-y: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding: 15px;
+    padding: var(--space-6);
 }
 
 .session-viewer-body::-webkit-scrollbar { display: none; }
 
 .session-viewer-body ul,
 .session-viewer-body ol {
-    padding-left: 18px;
+    padding-left: var(--space-18px);
 }
 
 .session-viewer-body li {
-    margin-bottom: 12px;
+    margin-bottom: var(--space-5);
 }
 
 .session-viewer-header-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-3);
     flex-shrink: 0;
 }
 
 .session-viewer-delete-btn {
     width: 30px;
     height: 30px;
-    font-size: 18px;
     flex-shrink: 0;
     border-radius: 50%;
     border: none;
@@ -1565,7 +1664,7 @@ a:hover {
     transform-origin: center;
     margin-left: -36px;
     pointer-events: none;
-    transition: transform 0.2s ease, opacity 0.2s ease, margin-left 0.2s ease;
+    transition: transform var(--transition-medium) ease, opacity var(--transition-medium) ease, margin-left var(--transition-medium) ease;
 }
 
 .session-viewer-delete-btn.visible {
@@ -1578,16 +1677,12 @@ a:hover {
 .session-viewer-body[contenteditable="true"] {
 }
 
-/* When the editor toolbar wrapper replaces the body as a flex child of the
-   session viewer, it must inherit the same flex behaviour so the body inside
-   it remains height-bounded and scrollable. */
 .session-log-viewer .editor-toolbar-wrapper {
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    /* Reset the generic form-field appearance — not needed in the viewer */
     background-color: transparent;
     border: none;
     border-radius: 0;
@@ -1609,8 +1704,8 @@ a:hover {
 .session-viewer-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 7px;
-    margin-bottom: 10px;
+    gap: var(--space-7px);
+    margin-bottom: var(--space-4);
 }
 
 .session-viewer-placeholder {
@@ -1620,10 +1715,10 @@ a:hover {
     margin: 0;
 }
 
-#results_section_7 .block.session-log-active .block-title h4 {
+#results_section_7 .block.session-log-active .block-title h3 {
     color: var(--color-green);
     border-left: 3px solid var(--color-green);
-    padding-left: 10px;
+    padding-left: var(--space-4);
 }
 
 @container (max-width: 520px) {
@@ -1639,9 +1734,9 @@ a:hover {
     }
 }
 
-/* ==================================================================*/
-/* =========================== SCROLLBAR ============================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ============================= SCROLLBAR ============================== */
+/* ====================================================================== */
 
 * {
     scrollbar-width: none;
@@ -1660,77 +1755,67 @@ a:hover {
         ::-webkit-scrollbar {
             width: 10px;
             height: 10px;
-            margin: 20px;
+            margin: var(--space-8);
         }
 
         ::-webkit-scrollbar-thumb {
             background: var(--gray-400);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
         }
 
         ::-webkit-scrollbar-track {
             opacity: 0;
-            margin: 20px;
+            margin: var(--space-8);
         }
 
         ::-webkit-scrollbar-button {
             display: none;
         }
 
-/* ==================================================================*/
-/* ========================== MENU STYLING ==========================*/
-/* ==================================================================*/
-
-/* ── Menu popover (dropdown from UCH menu button) ──────────────────── */
+/* ====================================================================== */
+/* ============================ MENU STYLING ============================ */
+/* ====================================================================== */
 
 .menu-popover {
     display: none;
-    position: fixed;
-    z-index: 9998;
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border-radius: 16px;
-    padding: 16px;
+    border-radius: var(--radius-xl);
+    padding: var(--space-7);
     width: 260px;
-    box-shadow: var(--glass-shadow);
-    border: var(--glass-border);
 }
 
 .menu-popover.active {
     display: block;
-    animation: dice-popover-in 0.3s ease-out forwards;
+    animation: dice-popover-in var(--transition-slow) ease-out forwards;
 }
 
 .menu-popover.closing {
     display: block;
-    animation: popover-out 0.2s ease-in forwards;
+    animation: popover-out var(--transition-medium) ease-in forwards;
 }
 
 .menu-popover-buttons {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-3);
 }
 
 .menu-item-button {
     width: 100%;
-    padding: 10px 16px;
-    border-radius: 10px;
-    font-size: 14px;
+    padding: var(--space-4) var(--space-7);
+    border-radius: var(--radius-lg);
     text-align: left;
     display: flex;
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color var(--transition-medium);
     border: none;
     background-color: var(--gray-400);
     color: var(--gray-900);
 }
 
 .menu-item-button:hover {
-    background-color: var(--gray-450);
+    background-color: var(--gray-500);
 }
 
 .button-icon {
@@ -1739,9 +1824,9 @@ a:hover {
     justify-content: center;
 }
 
-/* ==================================================================*/
-/* ======================== INVENTORY STYLING =======================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================= INVENTORY STYLING ========================== */
+/* ====================================================================== */
 
 .permanent-items-container {
     display: inline-block;
@@ -1752,8 +1837,8 @@ a:hover {
     width: auto;
     height: auto;
     vertical-align: top;
-    padding: 9px 16px;
-    border-radius: 10px;
+    padding: var(--space-9px) var(--space-7);
+    border-radius: var(--radius-lg);
     margin-right: 0;
     margin-bottom: 0;
     position: relative;
@@ -1766,56 +1851,36 @@ a:hover {
     white-space: nowrap;
 }
 
-.gold-bg {
-    background-color: color-mix(in srgb, #ffd700 18%, var(--gray-300));
-    background-image: radial-gradient(90% 110% at 50% 0%, rgba(255, 215, 0, 0.48) 0%, transparent 100%);
-    border: 1px solid rgba(255, 215, 0, 0.38);
-}
-.silver-bg {
-    background-color: color-mix(in srgb, #c0c0c0 18%, var(--gray-300));
-    background-image: radial-gradient(90% 110% at 50% 0%, rgba(220, 220, 220, 0.48) 0%, transparent 100%);
-    border: 1px solid rgba(220, 220, 220, 0.38);
-}
-.copper-bg {
-    background-color: color-mix(in srgb, #c0551d 22%, var(--gray-300));
-    background-image: radial-gradient(90% 110% at 50% 0%, rgba(192, 85, 29, 0.5) 0%, transparent 100%);
-    border: 1px solid rgba(192, 85, 29, 0.42);
-}
-
-/* ── Inventory top bar (coins + attunement pill) ──────────────── */
-
 .inventory-top-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: var(--space-8);
     margin: 0 0 22px 0;
 }
 
 .inventory-pouches {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: var(--space-5);
 }
 
 .inventory-top-bar .permanent-block {
     margin-bottom: 0;
 }
 
-/* ── Attunement pill ──────────────────────────────────────────── */
-
-/* ==================================================================*/
-/* ======================= RESOURCES STRIP ==========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================== RESOURCES STRIP =========================== */
+/* ====================================================================== */
 
 .resources-strip {
     position: relative;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    border-radius: 25px;
-    padding: 16px 84px 16px 18px;
+    border-radius: var(--radius-pill);
+    padding: var(--space-7) 84px var(--space-7) var(--space-18px);
     box-sizing: border-box;
     width: 100%;
     flex: 0 0 auto;
@@ -1832,8 +1897,8 @@ a:hover {
     min-height: 0;
     width: auto;
     flex: 0 1 auto;
-    row-gap: 16px;
-    column-gap: 25px;
+    row-gap: var(--space-7);
+    column-gap: var(--space-9);
     box-sizing: border-box;
 }
 
@@ -1841,7 +1906,7 @@ a:hover {
     width: 13px;
     height: 13px;
     flex-shrink: 0;
-    color: var(--gray-750);
+    color: var(--gray-800);
 }
 
 .resources-strip .circle {
@@ -1850,7 +1915,7 @@ a:hover {
 }
 
 .resources-strip .spell-slot-group {
-    gap: 6px;
+    gap: var(--space-2);
     position: relative;
 }
 
@@ -1874,11 +1939,11 @@ a:hover {
 }
 
 .resources-strip .spell-slot-title {
-    font-size: 11px;
+    font-size: var(--font-micro);
     font-weight: 500;
     letter-spacing: 0;
     color: var(--gray-700);
-    margin-right: 1px;
+    margin-right: var(--space-1px);
 }
 
 .resources-strip-actions {
@@ -1888,29 +1953,28 @@ a:hover {
     right: 11px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-2);
     flex-shrink: 0;
 }
 
-/* Resources strip inside character sheet — tighter layout */
 #tab4 .resources-strip {
-    padding: 10px 36px 10px 14px;
+    padding: var(--space-4) 36px var(--space-4) var(--space-14px);
     min-height: 36px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
 }
 
 #tab4 .resources-strip .spell-slot-section {
-    row-gap: 8px;
-    column-gap: 16px;
+    row-gap: var(--space-3);
+    column-gap: var(--space-7);
 }
 
-/* ==================================================================*/
-/* ================ RESOURCES STRIP — EDIT MODE =====================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ==================== RESOURCES STRIP — EDIT MODE ===================== */
+/* ====================================================================== */
 
 .resources-strip.edit-mode {
     border: 1px solid rgba(244, 162, 97, 0.4);
-    padding: 16px 84px 16px 18px;
+    padding: var(--space-7) 84px var(--space-7) var(--space-18px);
 }
 
 .resources-strip.edit-mode #edit_suit_uses_button {
@@ -1919,18 +1983,18 @@ a:hover {
 
 .resources-strip.edit-mode #edit_spell_slots_button {
     background-color: rgba(244, 162, 97, 0.15);
-    color: #f4a261;
+    color: var(--color-orange);
     opacity: 1;
 }
 
 #tab4 .resources-strip.edit-mode .spell-slot-section,
 #tab8 .resources-strip.edit-mode .spell-slot-section {
     align-items: flex-start;
-    column-gap: 6px;
+    column-gap: var(--space-2);
 }
 
 .resources-strip.edit-mode .ghost-chip {
-    margin: 4px 0px 0px 0px;
+    margin: var(--space-1) 0px 0px 0px;
 }
 
 .resources-strip.edit-mode .spell-slot-group:not(.hidden) {
@@ -1941,51 +2005,48 @@ a:hover {
 .resources-strip .circle-remove {
     width: 16px;
     height: 16px;
-    font-size: 11px;
     line-height: 1;
     background-color: transparent;
 }
 
 .resources-strip .circle-add {
-    border: 1px dashed #f4a261;
-    color: #f4a261;
-    margin-left: 3px;
+    border: 1px dashed var(--color-orange);
+    color: var(--color-orange);
+    margin-left: var(--space-3px);
 }
 
 .resources-strip .circle-remove {
     border: 1px dashed #888;
     color: #888;
-    font-size: 13px;
 }
 
 .resources-strip .ghost-chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-2);
     height: 22px;
     margin: -3px 0;
-    padding: 0 9px;
-    border-radius: 999px;
+    padding: 0 var(--space-9px);
+    border-radius: var(--radius-pill);
     border: 1px dashed #555;
     color: #888;
     cursor: pointer;
-    font-size: 11px;
+    font-size: var(--font-micro);
     font-weight: 500;
     line-height: 1;
     user-select: none;
     box-sizing: border-box;
-    transition: border-color 0.2s, color 0.2s;
+    transition: border-color var(--transition-medium), color var(--transition-medium);
 }
 
 .resources-strip .ghost-chip:hover {
-    border-color: #f4a261;
-    color: #f4a261;
+    border-color: var(--color-orange);
+    color: var(--color-orange);
 }
 
 .resources-strip .ghost-chip .ghost-chip-plus {
-    font-size: 13px;
     line-height: 1;
-    color: #f4a261;
+    color: var(--color-orange);
 }
 
 .resources-strip:not(.edit-mode) .ghost-chip {
@@ -2001,14 +2062,13 @@ a:hover {
     border: none;
     background-color: var(--gray-900);
     color: var(--gray-600);
-    font-size: 14px;
     cursor: pointer;
     opacity: 0.25;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    transition: opacity 0.2s, background-color 0.2s, color 0.2s;
+    transition: opacity var(--transition-medium), background-color var(--transition-medium), color var(--transition-medium);
 }
 
 #long_rest_button svg {
@@ -2030,7 +2090,7 @@ a:hover {
     z-index: 1;
     opacity: 1;
     filter: blur(0);
-    transition: opacity 0.25s ease, filter 0.25s ease;
+    transition: opacity var(--transition-dim) ease, filter var(--transition-dim) ease;
 }
 
 #long_rest_button.swapping .lr-icon-wrap {
@@ -2042,8 +2102,8 @@ a:hover {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    border-radius: 30px;
-    gap: 7.5px;
+    border-radius: var(--radius-pill);
+    gap: var(--space-7-5px);
     box-sizing: border-box;
     width: auto;
 }
@@ -2058,7 +2118,7 @@ a:hover {
     align-items: flex-start;
     justify-content: flex-start;
     width: 100%;
-    margin-top: 10px;
+    margin-top: var(--space-4);
 }
 
 .spell-slot-section.edit-mode .spell-slot-group {
@@ -2067,8 +2127,8 @@ a:hover {
     align-items: center;
     justify-content: flex-start;
     background-color: #333;
-    padding: 15px;
-    border-radius: 10px;
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
 }
 
 .spell-slot-edit-overlay {
@@ -2077,49 +2137,64 @@ a:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.75);
+    background-color: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: none;
     align-items: center;
     justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition-medium);
     z-index: 1000;
 }
 
 .spell-slot-edit-overlay.show {
     display: flex;
+    opacity: 1;
     z-index: 10001;
 }
 
 .spell-slot-edit-container {
-    background-color: #2a2a2a;
-    padding: 25px;
-    border-radius: 20px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    padding: var(--space-9);
+    border-radius: var(--radius-xl);
     width: 55%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
+    transform: translateY(10px) scale(0.98);
+    transition: transform var(--transition-medium) ease;
+}
+
+.spell-slot-edit-overlay.show .spell-slot-edit-container {
+    transform: translateY(0) scale(1);
 }
 
 .spell-slot-title {
-    font-weight: bold;
-    font-size: 16px;
+    font-weight: 700;
+    font-size: var(--font-lg);
     color: white;
     letter-spacing: 1px;
-    margin-right: 3px;
+    margin-right: var(--space-3px);
 }
 
-/* ==================================================================*/
-/* ========================== USES STYLING ==========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ============================ USES STYLING ============================ */
+/* ====================================================================== */
 
 .uses-field {
     background-color: #2a2a2a;
-    border-radius: 30px;
-    padding: 10px;
+    border-radius: var(--radius-xl);
+    padding: var(--space-4);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--space-4);
 }
 
 .uses-row {
@@ -2128,14 +2203,14 @@ a:hover {
     align-items: center;
     justify-content: left;
     width: 100%;
-    gap: 7.5px;
+    gap: var(--space-7-5px);
 }
 
 .uses-circles-container {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 7.5px;
+    gap: var(--space-7-5px);
     width: fit-content;
 }
 
@@ -2144,13 +2219,13 @@ a:hover {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 7.5px;
+    gap: var(--space-7-5px);
     width: fit-content;
 }
 
-/* ==================================================================*/
-/* ============================ TOOLTIP =============================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ============================== TOOLTIP =============================== */
+/* ====================================================================== */
 
 .text-tooltip {
     position: absolute;
@@ -2158,28 +2233,20 @@ a:hover {
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     color: var(--gray-900);
-    padding: 15px 15px;
-    border-radius: 10px;
+    padding: var(--space-6) var(--space-6);
+    border-radius: var(--radius-lg);
     box-shadow: var(--glass-shadow);
     border: var(--glass-border);
-    font-size: 14px;
     line-height: 1.5;
-    letter-spacing: 1.2;
     z-index: 10000;
     max-width: 300px;
     word-break: break-word;
     pointer-events: none;
 }
 
-/* ==================================================================*/
-/* ====================== RESULTS DROPDOWNS =========================*/
-/* ==================================================================*/
-
-.results-settings img {
-    width: 20px;
-    height: 20px;
-    pointer-events: none;
-}
+/* ====================================================================== */
+/* ========================= RESULTS DROPDOWNS ========================== */
+/* ====================================================================== */
 
 .sort-dropdown,
 .view-toggle-dropdown {
@@ -2189,12 +2256,12 @@ a:hover {
     -webkit-backdrop-filter: var(--glass-blur);
     box-shadow: var(--glass-shadow);
     border: var(--glass-border);
-    border-radius: 10px;
-    padding: 5px;
+    border-radius: var(--radius-lg);
+    padding: var(--space-5px);
     display: flex;
     flex-direction: column;
     z-index: 1001;
-    gap: 5px;
+    gap: var(--space-5px);
 }
 
 .sort-dropdown.hidden,
@@ -2207,45 +2274,44 @@ a:hover {
     color: var(--gray-850);
     background: none;
     border: none;
-    border-radius: 5px;
-    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-5);
     cursor: pointer;
     font-size: 0.9em;
     text-align: left;
-    transition: background-color 0.3s ease;
+    transition: background-color var(--transition-slow) ease;
 }
 
 .sort-item:hover,
 .view-toggle-item:hover {
-    background: var(--gray-350);
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
+    background: var(--gray-400);
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition-slow) ease;
 }
-
 
 .sort-item.selected,
 .view-toggle-item.selected {
-    background: var(--gray-450);
-    border-radius: 5px;
+    background: var(--gray-500);
+    border-radius: var(--radius-sm);
 }
 
-/* ==================================================================*/
-/* ============================ DICE PANEL ==========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ============================= DICE PANEL ============================= */
+/* ====================================================================== */
 
 body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     padding-right: 0 !important;
 }
 
-/* ==================================================================*/
-/* ========================= PINNED BLOCKS ==========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* =========================== PINNED BLOCKS ============================ */
+/* ====================================================================== */
 
 .pinned-blocks-zone-wrapper {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    margin-bottom: 8px;
+    margin-bottom: var(--space-3);
 }
 
 .pinned-blocks-zone {
@@ -2257,48 +2323,44 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     background-color: var(--block-bg-pinned-base);
     background-image: radial-gradient(90% 110% at 50% 0%, var(--block-bg-pinned-highlight) 0%, transparent 100%);
     border: 1px solid var(--block-border-pinned);
-    padding: 9px 14px;
+    padding: var(--space-9px) var(--space-14px);
 }
 
 .block.pinned:not(.minimized)::after {
     display: none;
 }
 
-/* ── Pin button as drag handle on pinned blocks ────────────── */
-
 .block.pinned .pin-button {
     touch-action: none;
 }
 
-/* ── Dragging state ────────────────────────────────────────── */
-
 .block.pinned.dragging {
     opacity: 0.85;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    box-shadow: var(--shadow-block-pinned-dragging);
     pointer-events: none;
     z-index: 100;
 }
 
 .pinned-drag-placeholder {
     background: var(--gray-400);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     opacity: 0.3;
-    margin-bottom: 8px;
+    margin-bottom: var(--space-3);
 }
 
 .pinned-drag-placeholder:last-child {
     margin-bottom: 0;
 }
 
-/* ==================================================================*/
-/* ===================== TAB3 (NOTES) SECTIONS ======================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ======================= TAB3 (NOTES) SECTIONS ======================== */
+/* ====================================================================== */
 
 .tab3-section {
     display: grid;
     grid-template-rows: 1fr;
     opacity: 1;
-    transition: grid-template-rows 0.5s ease-in-out, opacity 0.5s ease-in, margin 0.5s ease-in-out;
+    transition: grid-template-rows var(--transition-slower) ease-in-out, opacity var(--transition-slower) ease-in, margin var(--transition-slower) ease-in-out;
     overflow: hidden;
 }
 
@@ -2308,7 +2370,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     margin-top: 0;
     margin-bottom: 0;
     pointer-events: none;
-    transition: grid-template-rows 0.5s ease-in-out, opacity 0.4s ease-out, margin 0.5s ease-in-out;
+    transition: grid-template-rows var(--transition-slower) ease-in-out, opacity var(--transition-overlay) ease-out, margin var(--transition-slower) ease-in-out;
 }
 
 .tab3-section-inner {
@@ -2318,43 +2380,53 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     overflow: hidden;
 }
 
-/* ==================================================================*/
-/* ======================= TAB3 QUEST BLOCKS ========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================= TAB3 QUEST BLOCKS ========================== */
+/* ====================================================================== */
 
 .block.quest-block.status-completed    { opacity: 0.55; }
 
-.block.quest-block.status-completed .block-title h4 {
+.block.quest-block.status-completed .block-title h3 {
     text-decoration: line-through;
     text-decoration-color: var(--gray-600);
 }
 
-/* ── Meta row (status pill + location pill) ────────────────────── */
-
 .quest-meta-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin: 6px 0 10px;
+    gap: var(--space-2);
+    margin: var(--space-2) 0 var(--space-4);
 }
 
-/* ── Status pill ──────────────────────────────────────────────── */
+/* Shared pill shapes — two canonical sizes used across the app: micro (10px text) and compact (12px text) */
+.quest-status-pill,
+.quest-location-pill,
+.tag-button--tiny {
+    font-size: var(--font-micro);
+    padding: var(--space-1) var(--space-4);
+    border-radius: var(--radius-pill);
+}
+
+.tag-button--compact,
+.tab3-location-pill {
+    font-size: var(--font-md);
+    padding: var(--space-1) var(--space-4);
+    border-radius: var(--radius-pill);
+}
 
 .quest-status-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-2);
     font-family: inherit;
-    font-size: 11px;
     font-weight: 500;
     line-height: 1;
-    padding: 4px 10px 4px 9px;
+    padding-left: var(--space-9px);
     border: none;
-    border-radius: 10px;
     cursor: pointer;
     background: rgba(228, 224, 224, 0.12);
     color: var(--gray-800);
-    transition: background 0.15s ease;
+    transition: background var(--transition-fast) ease;
 }
 
 .quest-status-pill:hover { background: rgba(228, 224, 224, 0.18); }
@@ -2379,42 +2451,35 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .quest-status-pill.status-completed:hover    { background: rgba(6, 173, 228, 0.28); }
 .quest-status-pill.status-failed:hover       { background: rgba(255, 107, 107, 0.28); }
 
-/* ── Location pill ────────────────────────────────────────────── */
-
 .quest-location-pill {
     display: inline-flex;
     align-items: center;
     font-family: inherit;
-    font-size: 11px;
     font-weight: 500;
     line-height: 1;
-    padding: 4px 10px;
-    border-radius: 10px;
     background: rgba(228, 224, 224, 0.10);
     color: var(--gray-800);
 }
 
-/* ── Progress bar ─────────────────────────────────────────────── */
-
 .quest-progress {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
 }
 
 .quest-progress.mini {
     margin-bottom: 0;
     flex-shrink: 0;
     margin-left: auto;
-    margin-right: 8px;
+    margin-right: var(--space-3);
 }
 
 .quest-progress-track {
     flex: 1;
     height: 4px;
     background: var(--gray-150);
-    border-radius: 2px;
+    border-radius: var(--radius-2xs);
     overflow: hidden;
     min-width: 40px;
 }
@@ -2428,7 +2493,8 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .quest-progress-fill {
     height: 100%;
     background: var(--gray-700);
-    transition: width 0.3s ease;
+    border-radius: var(--radius-2xs) 0 0 var(--radius-2xs);
+    transition: width var(--transition-slow) ease;
 }
 
 .block.quest-block.status-active       .quest-progress-fill { background: var(--color-green); }
@@ -2438,33 +2504,26 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .block.quest-block.status-failed       .quest-progress-fill { background: var(--color-red); }
 
 .quest-progress-count {
-    font-size: 11px;
     color: var(--gray-700);
     min-width: 32px;
     text-align: right;
 }
 
 .quest-progress.mini .quest-progress-count {
-    font-size: 10px;
+    font-size: var(--font-micro);
     min-width: 26px;
 }
 
-/* ── Objectives list ─────────────────────────────────────────── */
-
 .quest-objectives {
-    font-size: 13px;
     line-height: 1.55;
     width: 100%;
 }
 
-
-
-
 .quest-objective {
     display: flex;
     align-items: flex-start;
-    gap: 9px;
-    padding: 3px 0;
+    gap: var(--space-9px);
+    padding: var(--space-3px) 0;
     cursor: pointer;
     user-select: none;
 }
@@ -2473,14 +2532,14 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     width: 15px;
     height: 15px;
     flex-shrink: 0;
-    margin-top: 2px;
-    border-radius: 3px;
+    margin-top: var(--space-2px);
+    border-radius: var(--radius-xs);
     border: 1.5px solid var(--gray-700);
     background: transparent;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition: background var(--transition-fast) ease, border-color var(--transition-fast) ease;
 }
 
 .quest-objective-tick {
@@ -2488,7 +2547,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     height: 9px;
     stroke: var(--gray-150);
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--transition-fast) ease;
 }
 
 .quest-objective.done .quest-objective-checkbox {
@@ -2510,26 +2569,25 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 }
 
 .quest-objectives-empty {
-    font-size: 12px;
     color: var(--gray-700);
     font-style: italic;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
 }
-
-/* ── Status dropdown (shared) ────────────────────────────────── */
 
 .quest-status-dropdown {
     position: fixed;
     z-index: 10000;
-    background: var(--gray-300);
-    border: 1px solid var(--gray-450);
-    border-radius: 8px;
-    padding: 4px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-1);
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--space-2px);
     min-width: 140px;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    box-shadow: var(--glass-shadow);
 }
 
 .quest-status-dropdown.hidden { display: none; }
@@ -2539,9 +2597,8 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     border: none;
     color: var(--gray-850);
     font-family: inherit;
-    font-size: 13px;
-    padding: 6px 10px;
-    border-radius: 5px;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
     text-align: left;
     cursor: pointer;
 }
@@ -2549,38 +2606,37 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .quest-status-item:hover { background: var(--gray-400); }
 
 .quest-status-item.selected {
-    background: var(--gray-450);
+    background: var(--gray-500);
     color: var(--gray-900);
 }
 
-/* ==================================================================*/
-/* ==================== TAB3 LOCATION PILL ROW ======================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ======================= TAB3 LOCATION PILL ROW ======================= */
+/* ====================================================================== */
 
 .tab3-location-row {
-    margin: 4px 0 14px;
+    margin: var(--space-1) 0 var(--space-14px);
 }
 
 .tab3-location-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-    padding: 0 2px;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+    padding: 0 var(--space-2px);
     color: var(--gray-700);
 }
 
 .tab3-location-label {
-    font-size: 10px;
-    letter-spacing: 0.6px;
+    font-size: var(--font-micro);
     text-transform: uppercase;
 }
 
 .tab3-location-pills {
     display: flex;
-    gap: 6px;
+    gap: var(--space-2);
     overflow-x: auto;
-    padding-bottom: 2px;
+    padding-bottom: var(--space-2px);
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -2588,17 +2644,14 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .tab3-location-pills::-webkit-scrollbar { display: none; }
 
 .tab3-location-pill {
-    padding: 5px 12px;
     background: rgba(228, 224, 224, 0.06);
     color: var(--gray-800);
     border: 1px solid transparent;
-    border-radius: 14px;
-    font-size: 12px;
     font-family: inherit;
     cursor: pointer;
     white-space: nowrap;
     flex-shrink: 0;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition: background var(--transition-fast) ease, border-color var(--transition-fast) ease;
 }
 
 .tab3-location-pill:hover {
@@ -2611,9 +2664,9 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* ==================================================================*/
-/* ========================= TAB3 MAP CARDS =========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* =========================== TAB3 MAP CARDS =========================== */
+/* ====================================================================== */
 
 .block.map-block.condensed {
     cursor: pointer;
@@ -2626,12 +2679,11 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .block.map-block.condensed .block-header-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-5);
     flex: 1;
     min-width: 0;
 }
 
-/* ── Shared card-thumb base ──────────────────────────────────── */
 .quest-card-thumb,
 .notes-card-thumb,
 .map-card-thumb,
@@ -2639,7 +2691,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     width: 40px;
     height: 40px;
     flex-shrink: 0;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2662,14 +2714,12 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 0 12px;
-    gap: 2px;
+    padding: 0 var(--space-5);
+    gap: var(--space-2px);
 }
 
-.map-card-title h4 {
+.map-card-title h3 {
     margin: 0;
-    font-size: 14px;
-    font-weight: 500;
     color: var(--gray-900);
     line-height: 1.25;
     overflow: hidden;
@@ -2678,7 +2728,6 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 }
 
 .map-card-url {
-    font-size: 11px;
     color: var(--color-blue);
     line-height: 1.3;
     overflow: hidden;
@@ -2687,19 +2736,17 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     opacity: 0.75;
 }
 
-/* ── Map link confirmation popup ───────────────────────────── */
-
 .map-link-popup {
     position: fixed;
     z-index: 100000;
-    background: var(--gray-200);
+    background: var(--gray-150);
     border: 1px solid var(--gray-500);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 0;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    box-shadow: var(--shadow-popup);
     opacity: 0;
     transform: translateY(4px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition: opacity var(--transition-overlay) ease, transform var(--transition-overlay) ease;
     pointer-events: none;
 }
 
@@ -2707,21 +2754,20 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    transition: opacity var(--transition-fast) ease, transform var(--transition-fast) ease;
 }
 
 .map-link-popup-action {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-14px);
     color: var(--color-blue);
     text-decoration: none;
-    font-size: 13px;
     font-weight: 500;
     white-space: nowrap;
-    border-radius: 8px;
-    transition: background 0.15s ease;
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast) ease;
 }
 
 .map-link-popup-action:hover {
@@ -2733,37 +2779,35 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     stroke: currentColor;
 }
 
-/* ── Delete confirmation popup ─────────────────────────────── */
-
 .delete-confirm-popup {
     position: fixed;
     z-index: 100000;
-    background: rgba(34, 34, 34, 0.8);
-    border-radius: 8px;
-    padding: 12px 14px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-5) var(--space-14px);
+    box-shadow: var(--shadow-popup);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-4);
     opacity: 0;
     transform: translateY(4px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition: opacity var(--transition-overlay) ease, transform var(--transition-overlay) ease;
     pointer-events: none;
     min-width: 200px;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .delete-confirm-popup.visible {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    transition: opacity var(--transition-fast) ease, transform var(--transition-fast) ease;
 }
 
 .delete-confirm-message {
-    font-size: 13px;
     font-weight: 500;
     color: var(--gray-900);
     text-align: center;
@@ -2773,23 +2817,18 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .delete-confirm-buttons {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-2);
     width: 100%;
 }
 
 .delete-confirm-buttons button {
-    padding: 7px 16px;
+    padding: var(--space-7px) var(--space-7);
     border: none;
-    border-radius: 6px;
-    font-size: 12px;
+    border-radius: var(--radius-sm);
     font-weight: 600;
     width: 100%;
 }
 
-/* ── Hold-to-confirm fill animation (shared) ─────────────────────────
-   Apply this class to any button that should require a sustained hover
-   before its click fires.  Set --hold-fill-bg on the element to control
-   the fill colour; defaults to a subtle red tint.                      */
 .hold-to-confirm {
     position: relative;
     overflow: hidden;
@@ -2809,19 +2848,18 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     bottom: 0;
     width: 0;
     background: var(--hold-fill-bg, color-mix(in srgb, var(--color-red) 22%, transparent));
-    transition: width 0.25s ease-in;
+    transition: width var(--transition-dim) ease-in;
 }
 
 .hold-to-confirm:hover::after {
     width: 100%;
-    transition: width 0.5s linear;
+    transition: width var(--transition-slower) linear;
 }
 
 .hold-to-confirm.armed {
     cursor: pointer;
 }
 
-/* Delete-confirm yes: solid red fill over a dark-red base */
 .delete-confirm-yes {
     --hold-fill-bg: var(--color-red);
     background: #a33535;
@@ -2832,39 +2870,36 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     background: var(--gray-400);
     color: var(--gray-900);
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: background var(--transition-medium) ease;
 }
 
 .delete-confirm-no:hover {
     background: var(--gray-500);
 }
 
-/* ── Clear-all-data inline confirmation (inside menu popover) ── */
-
 .clear-data-confirm {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-4);
     height: 0;
     overflow: hidden;
     opacity: 0;
     padding: 0;
     margin: 0;
     border-top: 1px solid transparent;
-    transition: height 0.25s ease, opacity 0.25s ease, padding 0.25s ease,
-                margin 0.25s ease, border-color 0.25s ease;
+    transition: height var(--transition-dim) ease, opacity var(--transition-dim) ease, padding var(--transition-dim) ease,
+                margin var(--transition-dim) ease, border-color var(--transition-dim) ease;
 }
 
 .clear-data-confirm.visible {
     opacity: 1;
-    padding: 12px 0 0;
-    margin-top: 8px;
+    padding: var(--space-5) 0 0;
+    margin-top: var(--space-3);
     border-top-color: var(--gray-400);
 }
 
 .clear-data-confirm-message {
-    font-size: 13px;
     font-weight: 500;
     color: var(--gray-900);
     text-align: center;
@@ -2874,15 +2909,14 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .clear-data-confirm-buttons {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-2);
     width: 100%;
 }
 
 .clear-data-confirm-buttons button {
-    padding: 7px 16px;
+    padding: var(--space-7px) var(--space-7);
     border: none;
-    border-radius: 6px;
-    font-size: 12px;
+    border-radius: var(--radius-sm);
     font-weight: 600;
     width: 100%;
 }
@@ -2909,33 +2943,32 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     width: 0;
     background: var(--color-red);
     border-radius: 0;
-    transition: width 0.25s ease-in;
+    transition: width var(--transition-dim) ease-in;
 }
 
 .clear-data-confirm-yes:hover::after {
     width: 100%;
-    transition: width 0.5s linear;
+    transition: width var(--transition-slower) linear;
 }
 
 .clear-data-confirm-yes.armed {
     cursor: pointer;
 }
 
-
 .long-rest-popup {
     position: fixed;
     z-index: 100000;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     display: flex;
     align-items: center;
-    padding: 5px 18px 5px 70px;
+    padding: var(--space-5px) var(--space-18px) var(--space-5px) 70px;
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     box-shadow: var(--glass-shadow);
     border: var(--glass-border);
     opacity: 0;
-    transition: opacity 0.4s ease;
+    transition: opacity var(--transition-overlay) ease;
     pointer-events: none;
     white-space: nowrap;
 }
@@ -2945,7 +2978,6 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 }
 
 .long-rest-popup-message {
-    font-size: 12px;
     font-weight: 500;
     color: var(--gray-900);
     line-height: 1.3;
@@ -2993,22 +3025,22 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 #long_rest_button.arming.dismissing {
     opacity: 0.25;
     background-color: transparent;
-    transition: opacity 0.4s ease, background-color 0.4s ease;
+    transition: opacity var(--transition-overlay) ease, background-color var(--transition-overlay) ease;
 }
 
 #long_rest_button.arming.dismissing::before {
     width: 0 !important;
-    transition: width 0.3s ease;
+    transition: width var(--transition-slow) ease;
 }
 
 #long_rest_button.arming.dismissing svg {
     stroke: var(--gray-700);
-    transition: stroke 0.4s ease;
+    transition: stroke var(--transition-overlay) ease;
 }
 
-/* ============================================================== */
-/* ============ TAB3 NOTES SPLIT LAYOUT (list + viewer) ========= */
-/* ============================================================== */
+/* ====================================================================== */
+/* ============== TAB3 NOTES SPLIT LAYOUT (LIST + VIEWER) =============== */
+/* ====================================================================== */
 
 .notes-layout {
     display: flex;
@@ -3025,18 +3057,16 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     flex-shrink: 0;
     min-height: 0;
     overflow: hidden;
-    border-radius: 15px;
-    padding: 15px;
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
 }
 
 .notes-list-column .results-section {
     flex: 1;
     min-height: 0;
     height: 0;
-    padding: 0 5px 0 0;
+    padding: 0 var(--space-5px) 0 0;
 }
-
-/* ── Viewer (hidden by default, slides in for Books) ────────── */
 
 .notes-viewer {
     display: flex;
@@ -3048,17 +3078,15 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     padding: 0;
     opacity: 0;
     position: relative;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
 
 .notes-viewer::-webkit-scrollbar { display: none; }
 
-/* ── Viewer open state (toggled via JS .notes-viewer-open) ──── */
-
 .notes-layout.notes-viewer-open {
-    gap: 15px;
+    gap: var(--space-6);
 }
 
 .notes-layout.notes-viewer-open .notes-list-column {
@@ -3067,23 +3095,19 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 
 .notes-layout.notes-viewer-open .notes-viewer {
     width: 50%;
-    padding: 15px 18px;
+    padding: var(--space-6) var(--space-18px);
     opacity: 1;
     overflow-y: auto;
 }
 
-/* ── Viewer content ─────────────────────────────────────────── */
-
 .notes-viewer-content {
     opacity: 1;
-    transition: opacity 0.2s ease-in-out;
+    transition: opacity var(--transition-medium) ease-in-out;
 }
 
 .notes-viewer-content.fading {
     opacity: 0;
 }
-
-/* ── Viewer close button ────────────────────────────────────── */
 
 .notes-viewer-close-btn {
     position: absolute;
@@ -3101,7 +3125,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     justify-content: center;
     padding: 0;
     z-index: 2;
-    transition: background-color 0.2s, opacity 0.2s;
+    transition: background-color var(--transition-medium), opacity var(--transition-medium);
     opacity: 0.6;
 }
 
@@ -3115,25 +3139,21 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     opacity: 1;
 }
 
-/* ── Selected-state highlight on Book cards in list ─────────── */
-
 .block.notes-block-active {
     background-color: var(--block-bg-selected-base);
     background-image: radial-gradient(90% 110% at 50% 0%, var(--block-bg-selected-highlight) 0%, transparent 100%);
 }
 
 #results_section_3 .block:not(.permanent-block) {
-    transition: background-color 0.2s ease;
+    transition: background-color var(--transition-medium) ease;
 }
 
 #results_section_3 .block:not(.permanent-block):hover {
     cursor: pointer;
 }
 
-/* ── Notes wide mode: viewer always visible ────────────────── */
-
 .notes-layout.notes-wide-mode {
-    gap: 15px;
+    gap: var(--space-6);
 }
 
 .notes-layout.notes-wide-mode .notes-list-column {
@@ -3142,13 +3162,11 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 
 .notes-layout.notes-wide-mode .notes-viewer {
     width: 50%;
-    padding: 15px 18px;
+    padding: var(--space-6) var(--space-18px);
     opacity: 1;
     overflow-y: auto;
 }
 
-/* In wide mode the viewer is always visible, so the slide-in
-   class should not further alter widths. */
 .notes-layout.notes-wide-mode.notes-viewer-open .notes-list-column {
     width: 50%;
 }
@@ -3156,8 +3174,6 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .notes-layout.notes-wide-mode.notes-viewer-open .notes-viewer {
     width: 50%;
 }
-
-/* ── Notes narrow mode: viewer completely hidden ───────────── */
 
 .notes-layout:not(.notes-wide-mode) .notes-viewer {
     display: none !important;
@@ -3167,16 +3183,16 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     width: 100% !important;
 }
 
-/* ============================================================== */
-/* ============ BOOK ACCENT COLOUR SWATCHES (overlay) =========== */
-/* ============================================================== */
+/* ====================================================================== */
+/* =============== BOOK ACCENT COLOUR SWATCHES (OVERLAY) ================ */
+/* ====================================================================== */
 
 .book-accent-swatches {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-3);
     align-items: center;
-    padding: 4px 0;
+    padding: var(--space-1) 0;
 }
 
 .book-accent-swatch {
@@ -3186,8 +3202,8 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     border: 2px solid transparent;
     padding: 0;
     cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    transition: transform var(--transition-fast) ease, border-color var(--transition-fast) ease, box-shadow var(--transition-fast) ease;
+    box-shadow: var(--shadow-book-swatch);
 }
 
 .book-accent-swatch:hover {
@@ -3196,14 +3212,13 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 
 .book-accent-swatch.selected {
     border-color: var(--gray-900);
-    box-shadow: 0 0 0 2px var(--gray-300), 0 0 0 4px var(--gray-900);
+    box-shadow: var(--shadow-book-swatch-selected);
 }
 
-/* ============================================================== */
-/* ============ TAB3 BOOK CARD (condensed list view) ============ */
-/* ============================================================== */
+/* ====================================================================== */
+/* ================ TAB3 BOOK CARD (CONDENSED LIST VIEW) ================ */
+/* ====================================================================== */
 
-/* The book card itself — horizontal row: accent stripe | icon | text */
 .block.book-block.condensed {
     cursor: pointer;
 }
@@ -3215,20 +3230,18 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .block.book-block.condensed .block-header-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-5);
     flex: 1;
     min-width: 0;
 }
 
 .book-card-thumb {
-    background-color: color-mix(in srgb, var(--book-accent, #f4a261) 18%, var(--gray-400));
-    color: var(--book-accent, #f4a261);
+    background-color: color-mix(in srgb, var(--book-accent, var(--color-orange)) 18%, var(--gray-400));
+    color: var(--book-accent, var(--color-orange));
 }
 
-.book-card-title h4 {
+.book-card-title h3 {
     margin: 0;
-    font-size: 14px;
-    font-weight: 500;
     color: var(--gray-900);
     line-height: 1.25;
     overflow: hidden;
@@ -3238,7 +3251,6 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 
 .book-card-description,
 .notes-card-description {
-    font-size: 12px;
     color: var(--gray-700);
     line-height: 1.3;
     overflow: hidden;
@@ -3246,9 +3258,9 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     white-space: nowrap;
 }
 
-/* ============================================================== */
-/* ============ BOOK VIEWER ACCENT STRIPE (expanded) ============ */
-/* ============================================================== */
+/* ====================================================================== */
+/* ================ BOOK VIEWER ACCENT STRIPE (EXPANDED) ================ */
+/* ====================================================================== */
 
 .notes-viewer-content .block.expanded {
     padding: 0;
@@ -3266,17 +3278,15 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     display: none !important;
 }
 
-/* ============================================================== */
-/* ============ TAB3 — NOTES VIEWER/INLINE EDIT ================ */
-/* ============================================================== */
-
-/* ── Edit form layout (shared by viewer and inline) ─────────── */
+/* ====================================================================== */
+/* ================= TAB3 — NOTES VIEWER / INLINE EDIT ================== */
+/* ====================================================================== */
 
 .notes-edit-header {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
 }
 
 .notes-edit-title {
@@ -3297,31 +3307,30 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .notes-edit-inserts {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 8px;
+    gap: var(--space-4);
+    margin-bottom: var(--space-3);
 }
 
 .notes-edit-inserts .inline-edit-block-types {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: var(--space-5px);
 }
 
 .notes-edit-fields {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-3);
 }
 
 .notes-edit-body-wrap {
-    margin-top: 8px;
+    margin-top: var(--space-3);
 }
 
 .notes-edit-body {
     outline: none;
     min-height: 60px;
-    font-size: 13px;
-    padding: 12px;
+    padding: var(--space-5);
     overflow: auto;
     max-height: 60vh;
     position: relative;
@@ -3342,8 +3351,6 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     font-family: inherit;
 }
 
-/* ── Quest status pills: grey when unselected, colored when selected ── */
-
 .notes-edit-fields .quest-status-pill {
     background: var(--gray-400);
     color: var(--gray-800);
@@ -3359,8 +3366,6 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .notes-edit-fields .quest-status-pill.status-completed.selected   { background: rgba(6, 173, 228, 0.28);  color: var(--color-cyan); }
 .notes-edit-fields .quest-status-pill.status-failed.selected      { background: rgba(255, 107, 107, 0.28); color: var(--color-red); }
 
-/* ── Viewer-specific edit styles ───────────────────────────── */
-
 .notes-viewer.editing .notes-edit-form {
     padding: 0;
     border: none;
@@ -3371,26 +3376,24 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 
 .notes-viewer .inline-edit-controls {
     display: flex;
-    gap: 6px;
+    gap: var(--space-2);
     flex-shrink: 0;
 }
 
 .notes-viewer .inline-edit-controls .button {
     margin: 0;
-    padding: 5px 12px;
-    font-size: 12px;
+    padding: var(--space-5px) var(--space-5);
+    font-size: var(--font-md);
 }
 
-/* ── Inline-editing overrides for tab3 blocks ──────────────── */
-
-/* ============================================================== */
-/* ============ TAB3 QUEST CARD THUMB (status-colored) ========== */
-/* ============================================================== */
+/* ====================================================================== */
+/* =============== TAB3 QUEST CARD THUMB (STATUS-COLORED) =============== */
+/* ====================================================================== */
 
 .block.quest-block {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-3);
 }
 
 .block.quest-block .block-header {
@@ -3400,7 +3403,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 .block.quest-block .block-header-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-5);
     flex: 1;
     min-width: 0;
 }
@@ -3409,21 +3412,21 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     margin: 0;
 }
 
-.block.quest-block.status-active       .quest-card-thumb { background: rgba(76, 175, 80, 0.15); color: #4CAF50; }
-.block.quest-block.status-on-hold      .quest-card-thumb { background: rgba(244, 162, 97, 0.15); color: #f4a261; }
+.block.quest-block.status-active       .quest-card-thumb { background: rgba(76, 175, 80, 0.15); color: var(--color-green); }
+.block.quest-block.status-on-hold      .quest-card-thumb { background: rgba(244, 162, 97, 0.15); color: var(--color-orange); }
 .block.quest-block.status-not-started  .quest-card-thumb { background: var(--gray-400); color: var(--gray-700); }
-.block.quest-block.status-completed    .quest-card-thumb { background: rgba(6, 173, 228, 0.15); color: #06ade4; }
-.block.quest-block.status-failed       .quest-card-thumb { background: rgba(255, 107, 107, 0.15); color: #ff6b6b; }
+.block.quest-block.status-completed    .quest-card-thumb { background: rgba(6, 173, 228, 0.15); color: var(--color-cyan); }
+.block.quest-block.status-failed       .quest-card-thumb { background: rgba(255, 107, 107, 0.15); color: var(--color-red); }
 
 .quest-card-text {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--space-1);
 }
 
-.quest-card-text .block-title h4 {
+.quest-card-text .block-title h3 {
     margin: 0;
 }
 
@@ -3431,15 +3434,15 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     margin: 0;
 }
 
-/* ============================================================== */
-/* ============ TAB3 NOTES CARD THUMB + DESCRIPTION ============= */
-/* ============================================================== */
+/* ====================================================================== */
+/* ================ TAB3 NOTES CARD THUMB + DESCRIPTION ================= */
+/* ====================================================================== */
 
 #tab3 .block:not(.quest-block):not(.map-block):not(.book-block).condensed,
 #tab3 .block:not(.quest-block):not(.map-block):not(.book-block).expanded {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-3);
 }
 
 #tab3 .block:not(.quest-block):not(.map-block):not(.book-block) .block-header {
@@ -3449,7 +3452,7 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 #tab3 .block:not(.quest-block):not(.map-block):not(.book-block) .block-header-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-5);
     flex: 1;
     min-width: 0;
 }
@@ -3460,10 +3463,10 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 2px;
+    gap: var(--space-2px);
 }
 
-.notes-card-text .block-title h4 {
+.notes-card-text .block-title h3 {
     margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;

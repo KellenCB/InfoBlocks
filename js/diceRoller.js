@@ -859,7 +859,7 @@ document.addEventListener('click', async (e) => {
     if (!btn) return;
 
     const modifier = parseInt(btn.dataset.modifier, 10) || 0;
-    const label    = btn.closest('.block')?.querySelector('h4')?.textContent?.trim() || null;
+    const label    = btn.closest('.block')?.querySelector('h3')?.textContent?.trim() || null;
     const isHit    = btn.classList.contains('hit');
     const qty      = isHit ? 1   : parseInt(btn.dataset.qty,   10);
     const sides    = isHit ? 20  : parseInt(btn.dataset.sides, 10);

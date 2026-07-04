@@ -1,9 +1,7 @@
-/* splitView.css — landscape overrides only                                    */
-/* JS counterpart: layoutMode.js                                               */
-/* All portrait defaults live in base-layout.css                               */
-/* Landscape rules use body.landscape-mode (set by JS)                        */
+/* ====================================================================== */
+/* ==================== LANDSCAPE SPLIT VIEW LAYOUT ===================== */
+/* ====================================================================== */
 
-/* ── Left panel ───────────────────────────────────────────────────────────── */
 body.landscape-mode #char-sheet-panel {
     display: flex !important;
     flex-direction: column;
@@ -12,8 +10,8 @@ body.landscape-mode #char-sheet-panel {
     max-width: 360px;
     min-width: 0;
     min-height: 0;
-    gap: 8px;
-    padding: 10px;
+    gap: var(--space-3);
+    padding: var(--space-4);
     margin: -10px;
 }
 
@@ -23,30 +21,28 @@ body.landscape-mode #char-sheet-panel .tab-content {
     min-height: 0;
     height: auto !important;
     width: 100% !important;
-    gap: 15px;
+    gap: var(--space-6);
 }
 
 body.landscape-mode #char-sheet-panel .tab-content.active {
     display: flex !important;
 }
 
-/* ── Vertical divider ─────────────────────────────────────────────────────── */
 body.landscape-mode #landscape-divider {
     display: none;
     width: 2px;
     background-color: var(--gray-400);
     flex-shrink: 0;
-    border-radius: 2px;
+    border-radius: var(--radius-2xs);
     align-self: stretch;
 }
 
-/* ── Right panel ──────────────────────────────────────────────────────────── */
 body.landscape-mode #right-panel {
     display: flex !important;
     flex-direction: column;
     flex: 1;
     min-width: 0;
-    gap: 20px;
+    gap: var(--space-8);
 }
 
 body.landscape-mode #right-panel .tab-content {
@@ -61,7 +57,10 @@ body.landscape-mode #right-panel .tab-content.active {
     min-height: 0;
 }
 
-/* ── Overlays always above both panels ────────────────────────────────────── */
+/* ====================================================================== */
+/* ================= OVERLAY Z-INDEX FIXES (LANDSCAPE) ================== */
+/* ====================================================================== */
+
 .cleardata-overlay,
 .remove-block-overlay,
 .spell-slot-edit-overlay,

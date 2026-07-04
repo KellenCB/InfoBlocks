@@ -1,12 +1,10 @@
-/* ==================================================================*/
-/* ========================== TAG BUTTON ============================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* =================== TAG COLORS & SHARED VARIABLES ==================== */
+/* ====================================================================== */
 
-/* ── Shared tag spacing — one value controls all tag containers ─── */
-:root { --tag-gap: 7px; }
+:root { --tag-gap: var(--space-7px); }
 
-/* Accordion groups inherit their colour from the tag category */
-.tag-accordion-group                    { --accordion-color: var(--gray-750); }
+.tag-accordion-group                    { --accordion-color: var(--gray-800); }
 .tag-accordion-group.tag-characterType  { --accordion-color: var(--characterType-color); }
 .tag-accordion-group.tag-partType       { --accordion-color: var(--part-color); }
 .tag-accordion-group.tag-actionType     { --accordion-color: var(--action-color); }
@@ -19,44 +17,39 @@
 .tag-accordion-group.tag-Charges        { --accordion-color: var(--charges-color); }
 .tag-accordion-group.tag-itemCategory   { --accordion-color: var(--itemCategory-color); }
 
-/* ==================================================================*/
-/* ========================== TAG BUTTON ============================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ============================= TAG BUTTON ============================= */
+/* ====================================================================== */
 
 .tag-button {
     --tag-color: var(--user-color);
-    padding: 14px;
+    padding: var(--space-14px);
     height: 34px;
     color: var(--tag-color);
     background-color: color-mix(in srgb, var(--tag-color) var(--tag-bg-opacity), transparent);
     border: none;
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
     cursor: pointer;
-    font-size: 16px;
+    font-size: var(--font-lg);
     letter-spacing: 0.3px;
-    transition: background-color 0.3s, color 0.3s, outline-color 0.3s;
+    transition: background-color var(--transition-slow), color var(--transition-slow), outline-color var(--transition-slow);
     white-space: nowrap;
     display: inline-flex;
     align-items: center;
 }
 
-.filter-section .tag-button {
-    padding: 4px 10px;
+/* Shape (padding/font-size/radius) for these two now lives in the shared pill rules in base-layout.css,
+   alongside quest-status-pill/quest-location-pill (tiny) and tab3-location-pill (compact). */
+.tag-button--compact {
     height: auto;
-    font-size: 13px;
-    border-radius: 12px;
     letter-spacing: 0.03em;
 }
 
-.block-tags .tag-button {
-    padding: 2px 8px;
+.tag-button--tiny {
     height: auto;
-    font-size: 12px;
-    border-radius: 10px;
     letter-spacing: 0.03em;
 }
 
-/* Per-category colour — just sets the one variable, everything else derives from it */
 .tag-characterType              { --tag-color: var(--characterType-color); }
 .tag-partType                   { --tag-color: var(--part-color); }
 .tag-actionType                 { --tag-color: var(--action-color); }
@@ -69,21 +62,21 @@
 .tag-Charges                    { --tag-color: var(--charges-color); }
 .tag-button.tag-itemCategory    { --tag-color: var(--itemCategory-color); }
 
-/* ==================================================================*/
-/* ======================= AND-SELECTED STATE =======================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================= AND-SELECTED STATE ========================= */
+/* ====================================================================== */
 
 .tag-button.selected {
     background-color: var(--tag-color);
-    color: var(--gray-350);
+    color: var(--gray-400);
     font-weight: 600;
 }
 
-
-/* ==================================================================*/
-/* ======================= OR-SELECTED STATE ========================*/
-/* Shift+click — dashed outline around the default-state fill        */
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================= OR-SELECTED STATE ========================== */
+/* ====================================================================== */
+/* Shift+click — dashed outline around the default-state fill */
+/* ====================================================================== */
 
 .tag-button.selected-or {
     outline: 1px dashed var(--tag-color);
@@ -91,12 +84,11 @@
     font-weight: 400;
 }
 
-
-/* ==================================================================*/
-/* ====================== NOT-SELECTED STATE ========================*/
-/* Gray-wash fill + colored strikethrough                            */
-/* (CSS-ready — wire up the JS + .selected-not class when adding it) */
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================= NOT-SELECTED STATE ========================= */
+/* ====================================================================== */
+/* Gray-wash fill + colored strikethrough */
+/* ====================================================================== */
 
 .tag-button.selected-not {
     background-color: color-mix(in srgb, var(--gray-700) 18%, transparent);
@@ -106,39 +98,33 @@
     text-decoration-thickness: 1.5px;
 }
 
-/* ==================================================================*/
-/* ======================= TAG ACCORDION ============================*/
-/* ==================================================================*/
-
-/* ==================================================================*/
-/* ======================= TAG ACCORDION ============================*/
-/* Accordion groups flow inline — when opened, the body's chips      */
-/* appear after the pill as siblings in the same container.          */
-/* ==================================================================*/
+/* ====================================================================== */
+/* =========================== TAG ACCORDION ============================ */
+/* ====================================================================== */
+/* Accordion groups flow inline — when opened, the body's chips */
+/* appear after the pill as siblings in the same container. */
+/* ====================================================================== */
 
 .tag-accordion-group {
     display: contents;
-    margin-bottom: 2px;
+    margin-bottom: var(--space-2px);
 }
-
-/* ── The closed/open accordion toggle pill ────────────────────────── */
 
 .tag-accordion-pill {
     display: inline-flex;
     flex-shrink: 0;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-2);
     height: 24px;
-    padding: 0 10px;
-    background-color: var(--gray-300);
+    padding: 0 var(--space-4);
+    background-color: var(--gray-400);
     border: none;
-    border-radius: 12px;
+    border-radius: var(--radius-pill);
     color: var(--gray-800);
-    font-size: 13px;
     letter-spacing: 0.03em;
     white-space: nowrap;
     cursor: pointer;
-    transition: color 0.2s;
+    transition: color var(--transition-medium);
 }
 
 .tag-accordion-pill::before {
@@ -152,16 +138,13 @@
 
 .tag-accordion-pill::after {
     content: '▾';
-    margin-left: 2px;
-    font-size: 10px;
+    margin-left: var(--space-2px);
     opacity: 0.9;
 }
 
 .tag-accordion-pill:hover {
     color: var(--gray-900);
 }
-
-/* ── Open state ──────────────────────────────────────────────────── */
 
 .tag-accordion-group.open .tag-accordion-pill {
     color: var(--gray-900);
@@ -171,10 +154,6 @@
     content: '▸';
 }
 
-/* ── Body behaviour ──────────────────────────────────────────────── */
-/* Closed: body is hidden but the pill shows chips via JS            */
-/* Open: body reveals inline, stripped of its own container chrome   */
-
 .tag-accordion-body {
     display: none;
 }
@@ -183,58 +162,45 @@
     display: contents;
 }
 
-/* The static "Ability" style label inside the body (see main.js and
-   appManager.js — they render a <span class="tag-accordion-label">).
-   Now redundant because the pill itself names the group. */
 .tag-accordion-label {
     display: none;
 }
 
-/* ── Compact tag sizing inside accordion chip containers ────────── */
-/* These are standard .tag-button.selected elements, just rendered  */
-/* smaller when shown as summary chips in a collapsed accordion.    */
-
 .tag-accordion-chips .tag-button {
-    font-size: 12px;
-    padding: 2px 8px;
+    font-size: var(--font-md);
+    padding: var(--space-2px) var(--space-3);
 }
 
-/* ==================================================================*/
-/* ========= FILTER-SECTION: STACKED COLLAPSIBLE SECTIONS ==========*/
+/* ====================================================================== */
+/* ============ FILTER-SECTION: STACKED COLLAPSIBLE SECTIONS ============ */
+/* ====================================================================== */
 /* Scoped to .filter-section so overlays keep inline accordion style */
-/* ==================================================================*/
-
-/* ── Groups become stacked blocks instead of display:contents ────── */
+/* ====================================================================== */
 
 .filter-section .tag-accordion-group {
     display: block;
-    background-color: var(--gray-350);
-    border-radius: 13px;
-    padding: 2px;
+    background-color: var(--gray-400);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2px);
 }
-
-/* ── Container becomes a vertical column ─────────────────────────── */
 
 .filter-section [id^="dynamic_tags_section"] {
     flex-direction: column;
     flex-wrap: nowrap;
-    gap: 5px;
+    gap: var(--space-5px);
 }
-
-/* ── Full-width header row (replaces inline pill in filter panel) ── */
 
 .tag-accordion-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 5px 10px;
+    gap: var(--space-3);
+    padding: var(--space-5px) var(--space-4);
     background-color: transparent;
-    border-radius: 14px;
+    border-radius: var(--radius-xl);
     color: var(--gray-800);
-    font-size: 13px;
     letter-spacing: 0.03em;
     cursor: pointer;
-    transition: color 0.2s ease 0.1s;
+    transition: color var(--transition-medium) ease var(--transition-xfast);
 }
 
 .tag-accordion-header::before {
@@ -258,27 +224,23 @@
 .tag-accordion-name {
     flex-shrink: 0;
     white-space: nowrap;
-    margin-right: 3px;
+    margin-right: var(--space-3px);
 }
-
-/* ── Chips container (inside header, shows active filters when collapsed) ─ */
 
 .tag-accordion-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: var(--space-1);
     overflow: hidden;
     opacity: 1;
-    transition: opacity 0.15s ease 0.15s;
+    transition: opacity var(--transition-fast) ease var(--transition-fast);
 }
 
 .filter-section .tag-accordion-group.open .tag-accordion-chips {
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--transition-fast) ease;
 }
-
-/* ── Chevron ─────────────────────────────────────────────────────── */
 
 .tag-accordion-chevron {
     flex-shrink: 0;
@@ -287,7 +249,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.3s ease;
+    transition: transform var(--transition-slow) ease;
     margin-left: auto;
     color: var(--gray-700);
 }
@@ -301,13 +263,11 @@
     transform: rotate(90deg);
 }
 
-/* ── Body: animated reveal via grid-template-rows ────────────────── */
-
 .filter-section .tag-accordion-body {
     display: grid;
     grid-template-rows: 0fr;
     overflow: hidden;
-    transition: grid-template-rows 0.3s ease;
+    transition: grid-template-rows var(--transition-slow) ease;
 }
 
 .filter-section .tag-accordion-group.open .tag-accordion-body {
@@ -315,38 +275,33 @@
     grid-template-rows: 1fr;
 }
 
-/* ── Body inner: constant padding (clipped by overflow when closed),
-     opacity fade for tags ─────────────────────────────────────────── */
-
 .filter-section .tag-accordion-body-inner {
     overflow: hidden;
     min-height: 0;
     display: flex;
     flex-wrap: wrap;
     gap: var(--tag-gap);
-    padding: 0 10px;
+    padding: 0 var(--space-4);
     opacity: 0;
-    transition: opacity 0.2s ease, padding 0.3s ease;
+    transition: opacity var(--transition-medium) ease, padding var(--transition-slow) ease;
 }
 
 .filter-section .tag-accordion-group.open .tag-accordion-body-inner {
-    padding: 8px 10px 10px;
+    padding: var(--space-3) var(--space-4) var(--space-4);
     opacity: 1;
-    transition: opacity 0.25s ease 0.1s, padding 0.3s ease;
+    transition: opacity var(--transition-dim) ease var(--transition-xfast), padding var(--transition-slow) ease;
 }
-
-/* ── User-generated tags: visible row below category sections ──── */
 
 .filter-section .tag-category.user-tags {
     display: flex;
     flex-wrap: wrap;
     gap: var(--tag-gap);
-    margin-top: 10px;
+    margin-top: var(--space-4);
 }
 
-/* ==================================================================*/
-/* ====================== LAYOUT CONTAINERS =========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================= LAYOUT CONTAINERS ========================== */
+/* ====================================================================== */
 
 .tag-section {
     display: contents;
@@ -356,7 +311,7 @@
 
 .tag-category { display: contents; }
 
-[id="all_tags_container"] { margin: 15px 0px 0px 0px; }
+[id="all_tags_container"] { margin: var(--space-6) 0px 0px 0px; }
 
 [id^="user_tags_list"],
 [id^="dynamic_tags_section"] {
@@ -371,25 +326,24 @@
     gap: var(--tag-gap);
 }
 
-
-/* ==================================================================*/
-/* ======================== BLOCK PROPERTIES ========================*/
-/* ==================================================================*/
+/* ====================================================================== */
+/* ========================== BLOCK PROPERTIES ========================== */
+/* ====================================================================== */
 
 .block-properties {
     display: flex;
     flex-wrap: wrap;
-    column-gap: 5px;
-    row-gap: 6px;
+    column-gap: var(--space-5px);
+    row-gap: var(--space-2);
 }
 
 .block-property {
-    padding: 3px 7px;
+    padding: var(--space-3px) var(--space-7px);
     color: var(--gray-850);
     background-color: color-mix(in srgb, var(--gray-900) 8%, transparent);
     border: none;
-    border-radius: 6px;
-    font-size: 12px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-md);
     letter-spacing: normal;
     white-space: pre-wrap;
     display: inline-flex;
