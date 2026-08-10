@@ -38,15 +38,21 @@
     align-items: center;
 }
 
-/* Shape (padding/font-size/radius) for these two now lives in the shared pill rules in base-layout.css,
-   alongside quest-status-pill/quest-location-pill (tiny) and tab3-location-pill (compact). */
+/* The shared pill shape also lives in base-layout.css (alongside quest-status-pill/
+   quest-location-pill for tiny and tab3-location-pill for compact), but that file loads
+   BEFORE this one, so the base .tag-button rule above would otherwise win on equal
+   specificity. Restate font-size/padding here so --compact/--tiny size correctly. */
 .tag-button--compact {
     height: auto;
+    font-size: var(--font-12);
+    padding: var(--space-1) var(--space-4);
     letter-spacing: 0.03em;
 }
 
 .tag-button--tiny {
     height: auto;
+    font-size: var(--font-10);
+    padding: var(--space-1) var(--space-4);
     letter-spacing: 0.03em;
 }
 

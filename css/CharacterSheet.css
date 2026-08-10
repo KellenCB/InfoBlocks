@@ -531,8 +531,8 @@
 }
 
 .ds-circle {
-    width: 16px;
-    height: 16px;
+    width: var(--circle-size);
+    height: var(--circle-size);
     border-radius: 50%;
     border: 1.5px solid;
     cursor: pointer;
@@ -1058,8 +1058,6 @@
 }
 
 .toggle-circle {
-    width: 14px;
-    height: 14px;
     border: 1px solid var(--gray-900);
     border-radius: 50%;
     cursor: pointer;

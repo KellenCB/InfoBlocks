@@ -29,12 +29,6 @@ export function repositionAllSliders() {
 
 const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const highlightInText = (text, query) => {
-    if (!query) return text;
-    const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
-    return text.replace(re, '<span class="highlight">$1</span>');
-};
-
 const highlightInHTML = (html, query) => {
     if (!query) return html;
     const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
@@ -75,7 +69,7 @@ function applyHighlights(tabNumber, query) {
     sec.querySelectorAll('.block-title, .block-body, .block-property').forEach(stripHighlightsFrom);
 
     if (!query) return;
-    sec.querySelectorAll('.block-title').forEach(el => { el.innerHTML = highlightInText(el.innerHTML, query); });
+    sec.querySelectorAll('.block-title').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
     sec.querySelectorAll('.block-body').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
     sec.querySelectorAll('.block-property').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
 }
@@ -91,7 +85,7 @@ function applyViewerHighlights(query) {
 
     if (!query) return;
     if (titleEl && titleEl.contentEditable !== 'true') {
-        titleEl.innerHTML = highlightInText(titleEl.innerHTML, query);
+        titleEl.innerHTML = highlightInHTML(titleEl.innerHTML, query);
     }
     if (bodyEl && bodyEl.contentEditable !== 'true') {
         bodyEl.innerHTML = highlightInHTML(bodyEl.innerHTML, query);

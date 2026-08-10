@@ -133,8 +133,8 @@
 
 .circle {
     display: inline-block;
-    width: 30px;
-    height: 30px;
+    width: var(--circle-size);
+    height: var(--circle-size);
     background-color: var(--circle-color);
     border-radius: 50%;
     transition: background-color var(--transition-slow), border-color var(--transition-slow);
@@ -164,8 +164,6 @@
     border: 1px solid var(--circle-color);
     transition: background-color var(--transition-slow) ease;
 }
-
-.block-uses .circle { height: 15px; width: 15px; }
 
 /* ====================================================================== */
 /* ====================== RESULTS HEADER CONTROLS ======================= */

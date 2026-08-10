@@ -71,10 +71,10 @@
     --range-color:          #2b7bf1;
     --condition-color:      #ffa927;
     --spellLevel-color:     #49c1e6;
-    --infusion-color:       #49c1e6;
+    --infusion-color:       #6E6BFF;
     --attribute-color:      #FF4632;
     --charges-color:        #43ffef;
-    --itemCategory-color:   var(--characterType-color);
+    --itemCategory-color:   #FFCE3A;
    --or-selected-opacity: 50%;
    --tag-bg-opacity: 18%;
 
@@ -86,6 +86,7 @@
 
     /* -- Misc -- */
     --circle-color: #e4e0e0;
+    --circle-size: 15px;   /* single size for every circle (use dots, toggles, death saves, +/- buttons) */
 
     /* -- Glass surfaces -- */
     --glass-bg: rgba(30, 30, 30, 0.6);

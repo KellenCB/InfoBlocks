@@ -928,14 +928,7 @@ body.app-ready #app-row {
     border-radius: 0;
 }
 
-.block.inline-editing .uses-field .circle {
-    width: 15px;
-    height: 15px;
-}
-
 .block.inline-editing .uses-field .circle-button {
-    width: 15px;
-    height: 15px;
     line-height: 1;
     background-color: transparent;
 }
@@ -1740,11 +1733,6 @@ a:hover {
     color: var(--gray-800);
 }
 
-.resources-strip .circle {
-    width: 16px;
-    height: 16px;
-}
-
 .resources-strip .spell-slot-group {
     gap: var(--space-2);
     position: relative;
@@ -1834,8 +1822,6 @@ a:hover {
 
 .resources-strip .circle-add,
 .resources-strip .circle-remove {
-    width: 16px;
-    height: 16px;
     line-height: 1;
     background-color: transparent;
 }
