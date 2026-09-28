@@ -199,8 +199,26 @@ export const blockTemplate = (block, tab = "tab4") => {
            </button>`
         : '';
 
+    // Concentration button — tab9 only, and only on blocks that reference
+    // "concentration" (any capitalization) in their title, body text, or properties.
+    const blockPropertiesText = Array.isArray(block.properties) ? block.properties.join(' ') : '';
+    const hasConcentrationText = /concentration/i.test(`${block.title || ''} ${block.text || ''} ${blockPropertiesText}`);
+    // Rendered as inline SVG (rather than an <img src="...svg">) so CSS can
+    // animate the individual rings — idle state is just the center dot, which
+    // grows the two rings out around it on hover or once concentrating.
+    const concentrationButtonHTML = (viewState !== 'session-log' && isTab9 && hasConcentrationText)
+        ? `<button class="action-button concentration-button${block.concentrating ? ' concentration-active' : ''}" data-id="${block.id}" title="${block.concentrating ? 'Stop concentrating' : 'Concentrating'}">
+                <svg class="concentration-icon" viewBox="0 0 35 35" aria-hidden="true">
+                    <circle class="conc-ring conc-ring-outer" cx="17.5" cy="17.5" r="14.2"></circle>
+                    <circle class="conc-ring conc-ring-mid" cx="17.5" cy="17.5" r="9"></circle>
+                    <circle class="conc-dot" cx="17.5" cy="17.5" r="3.6"></circle>
+                </svg>
+           </button>`
+        : '';
+
     const actionMenuHTML = `
         <div class="block-actions">
+            ${concentrationButtonHTML}
             ${pinButtonHTML}
             <div class="block-actions-menu">
                 <div class="block-actions-reveal">

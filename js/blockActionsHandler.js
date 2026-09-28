@@ -170,6 +170,45 @@ export const blockActionsHandler = (() => {
             return;
         }
 
+        if (target.classList.contains('concentration-button')) {
+            const blocks = appManager.getBlocks(activeTab);
+            const idx    = blocks.findIndex(b => b.id === blockId);
+            if (idx !== -1) {
+                const turningOn = !blocks[idx].concentrating;
+                // D&D only allows concentrating on one spell at a time, so
+                // turning this one on clears concentration on every other block.
+                if (turningOn) {
+                    blocks.forEach(b => { b.concentrating = false; });
+                }
+                blocks[idx].concentrating = turningOn;
+                localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
+
+                // Update the DOM in place rather than calling reapplySearchAndFilters().
+                // The block-list render diff (appManager.js renderBlocks) reuses a
+                // block's existing DOM element untouched whenever its viewState
+                // hasn't changed — pinning always rebuilds because it moves the
+                // block between the pinned/unpinned zones, but concentrating alone
+                // doesn't, so a full re-render here would silently fail to repaint
+                // this button (or clear a previously-active one).
+                // Ring/dot color and the grow-into-a-target animation are pure
+                // CSS driven off this class (see .concentration-active rules
+                // in buttons.css) — no icon markup to swap here.
+                const setButtonState = (btn, on) => {
+                    btn.classList.toggle('concentration-active', on);
+                    btn.title = on ? 'Stop concentrating' : 'Concentrating';
+                };
+
+                setButtonState(target, turningOn);
+
+                if (turningOn && tabContent) {
+                    tabContent.querySelectorAll('.concentration-button.concentration-active').forEach(btn => {
+                        if (btn !== target) setButtonState(btn, false);
+                    });
+                }
+            }
+            return;
+        }
+
         if (target.classList.contains("duplicate-button")) {
             const blockTags = Array.isArray(block.tags) ? [...block.tags] : [];
             // For tab6, carry through the inventory booleans
