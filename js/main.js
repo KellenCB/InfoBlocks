@@ -29,12 +29,6 @@ export function repositionAllSliders() {
 
 const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const highlightInText = (text, query) => {
-    if (!query) return text;
-    const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
-    return text.replace(re, '<span class="highlight">$1</span>');
-};
-
 const highlightInHTML = (html, query) => {
     if (!query) return html;
     const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
@@ -75,7 +69,7 @@ function applyHighlights(tabNumber, query) {
     sec.querySelectorAll('.block-title, .block-body, .block-property').forEach(stripHighlightsFrom);
 
     if (!query) return;
-    sec.querySelectorAll('.block-title').forEach(el => { el.innerHTML = highlightInText(el.innerHTML, query); });
+    sec.querySelectorAll('.block-title').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
     sec.querySelectorAll('.block-body').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
     sec.querySelectorAll('.block-property').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
 }
@@ -91,7 +85,7 @@ function applyViewerHighlights(query) {
 
     if (!query) return;
     if (titleEl && titleEl.contentEditable !== 'true') {
-        titleEl.innerHTML = highlightInText(titleEl.innerHTML, query);
+        titleEl.innerHTML = highlightInHTML(titleEl.innerHTML, query);
     }
     if (bodyEl && bodyEl.contentEditable !== 'true') {
         bodyEl.innerHTML = highlightInHTML(bodyEl.innerHTML, query);
@@ -223,8 +217,10 @@ document.addEventListener("click", (e) => {
 /* ===================================================================*/
 
 // All overlays whose cancel/close button simply dismisses the overlay.
-// Note: cancel_remove_button is handled in blockActionsHandler because it
-// also needs to clear pendingDeleteBlockId.
+// Note: cancel_remove_button/confirm_remove_button and the
+// .remove-block-overlay they belong to are legacy — the delete flow now uses
+// blockActionsHandler's inline popup (showDeletePopup) instead, so that
+// overlay is never shown and isn't included here.
 const overlayCloseConfigs = [
     { buttonId: 'close_spell_slot_edit',       overlaySelector: '.spell-slot-edit-overlay' },
     { buttonId: 'cancel_long_rest_button',     overlaySelector: '.long-rest-overlay' },
@@ -267,12 +263,13 @@ function positionPopoverBelow(popover, button) {
 function positionPopoverAbove(popover, button) {
     const rect = button.getBoundingClientRect();
     const popWidth = popover.offsetWidth || 340;
-    const popHeight = popover.offsetHeight || 200;
     let left = rect.left + rect.width / 2 - popWidth / 2;
     if (left + popWidth > window.innerWidth - 10) left = window.innerWidth - popWidth - 10;
     if (left < 10) left = 10;
-    popover.style.top = (rect.top - popHeight - 8) + 'px';
-    popover.style.left = left + 'px';
+    // Anchor by bottom edge so the panel grows upward as content is added
+    popover.style.top    = 'auto';
+    popover.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+    popover.style.left   = left + 'px';
 }
 
 /** Animate a popover closed, then remove the open class */
@@ -307,7 +304,7 @@ function closeAllUchPopovers(except) {
         closePopoverAnimated(diceHistoryPanel);
         diceHistoryButton?.classList.remove('active');
     }
-    if (except !== 'latest') closeLatestRoll();
+    if (except !== 'latest' && except !== 'dice') closeLatestRoll();
     const breakdownPop = document.getElementById('stat-breakdown-popover');
     if (except !== 'breakdown' && breakdownPop?.classList.contains('open'))
         closePopoverAnimated(breakdownPop);
@@ -332,12 +329,14 @@ function setDicePanelState(open) {
         closeAllUchPopovers('dice');
         dicePanel.classList.add("open", "popover-above");
         diceMenuButton.classList.toggle("active", true);
-        if (diceMenuImg) diceMenuImg.src = "images/Dice_Button_v2_Green.svg";
-        positionPopoverAbove(dicePanel, diceMenuButton);
+        // Scroll results to bottom now that the panel is visible
+        requestAnimationFrame(() => {
+            const results = dicePanel.querySelector('.roll-results');
+            if (results) results.scrollTop = results.scrollHeight;
+        });
     } else {
         closePopoverAnimated(dicePanel);
         diceMenuButton.classList.remove("active");
-        if (diceMenuImg) diceMenuImg.src = "images/Dice_Button_v2.svg";
     }
 }
 
@@ -361,26 +360,27 @@ function setDiceHistoryState(open) {
 }
 
 function showLatestRoll() {
-    const latestEntry = document.querySelector('#dice-history-popover .roll-history-entry.latest-roll');
+    const latestEntry = document.querySelector('#dice-panel .roll-history-entry.latest-roll');
     if (!latestEntry || !diceLatestRoll) return;
 
-    clearTimeout(latestRollTimer);
-    diceLatestRoll.innerHTML = '';
-    const clone = latestEntry.cloneNode(true);
-    clone.classList.remove('new-entry');
-    clone.style.cssText = 'margin-bottom: 0;';
-    diceLatestRoll.appendChild(clone);
-    diceLatestRoll.classList.add('open', 'popover-above');
-    positionPopoverAbove(diceLatestRoll, document.getElementById('dice-floating-pill'));
+    const item = document.createElement('div');
+    item.classList.add('latest-roll-item');
 
-    latestRollTimer = setTimeout(() => closeLatestRoll(), 3000);
+    const clone = latestEntry.cloneNode(true);
+    clone.classList.remove('new-entry', 'latest-roll');
+    clone.style.cssText = 'margin-bottom: 0;';
+    item.appendChild(clone);
+    diceLatestRoll.appendChild(item);
+
+    // Remove this item when its fade animation completes
+    item.addEventListener('animationend', (e) => {
+        if (e.animationName === 'latest-roll-item-fade') item.remove();
+    });
 }
 
 function closeLatestRoll() {
     clearTimeout(latestRollTimer);
-    if (diceLatestRoll?.classList.contains('open')) {
-        closePopoverAnimated(diceLatestRoll);
-    }
+    diceLatestRoll?.querySelectorAll('.latest-roll-item').forEach(el => el.remove());
 }
 
 if (diceMenuButton && dicePanel) {
@@ -408,8 +408,8 @@ if (diceHistoryButton && diceHistoryPanel) {
 
 // Show latest roll result when any dice are rolled
 document.addEventListener("diceRolled", () => {
-    // If full history is open, just let the new entry appear there
-    if (diceHistoryPanel?.classList.contains("open")) return;
+    // If the combined panel is open, the result is already visible there
+    if (dicePanel?.classList.contains("open")) return;
     showLatestRoll();
 });
 
@@ -421,9 +421,6 @@ document.addEventListener("click", (e) => {
     if (diceHistoryPanel?.classList.contains("open") && !e.target.closest("#dice-history-popover") && !e.target.closest("#dice-history-button")) {
         setDiceHistoryState(false);
     }
-    if (diceLatestRoll?.classList.contains("open") && !e.target.closest("#dice-latest-roll")) {
-        closeLatestRoll();
-    }
 });
 
 // Stop clicks inside popovers from bubbling
@@ -433,13 +430,8 @@ diceLatestRoll?.addEventListener("click", (e) => e.stopPropagation());
 
 // Hover delay close
 if (diceMenuButton && dicePanel) setupPopoverHover(diceMenuButton, dicePanel, () => setDicePanelState(false));
-if (diceHistoryButton && diceHistoryPanel) setupPopoverHover(diceHistoryButton, diceHistoryPanel, () => setDiceHistoryState(false));
 
-// Pause latest-roll auto-close when hovering it
-diceLatestRoll?.addEventListener("mouseenter", () => clearTimeout(latestRollTimer));
-diceLatestRoll?.addEventListener("mouseleave", () => {
-    latestRollTimer = setTimeout(() => closeLatestRoll(), 3000);
-});
+// Hover pause is handled in CSS via .latest-roll-item:hover
 
 initDiceRoller();
 
@@ -639,7 +631,7 @@ function initBlockTypeFilterButtons() {
         const container = document.getElementById(`character_type_tags_${tabNum}`);
         if (!container) return;
         container.innerHTML = config.types.map(type =>
-            `<button class="tag-button ${config.className}" data-tag="${type}">${type}</button>`
+            `<button class="tag-button tag-button--compact ${config.className} text-body" data-tag="${type}">${type}</button>`
         ).join("");
         // filterManager.handleTagClick handles all interaction including shift+click
     });
@@ -897,10 +889,10 @@ document.addEventListener("DOMContentLoaded", () => {
         sortPopover.className = 'uch-dropdown-popover';
         sortPopover.id = 'uch-sort-popover';
         sortPopover.innerHTML = `
-            <button class="sort-item" data-sort="newest">Newest</button>
-            <button class="sort-item" data-sort="oldest">Oldest</button>
-            <button class="sort-item" data-sort="alpha">A–Z</button>
-            <button class="sort-item" data-sort="unalpha">Z–A</button>
+            <button class="sort-item text-md" data-sort="newest">Newest</button>
+            <button class="sort-item text-md" data-sort="oldest">Oldest</button>
+            <button class="sort-item text-md" data-sort="alpha">A–Z</button>
+            <button class="sort-item text-md" data-sort="unalpha">Z–A</button>
         `;
         document.body.appendChild(sortPopover);
 
@@ -942,9 +934,9 @@ document.addEventListener("DOMContentLoaded", () => {
         viewPopover.className = 'uch-dropdown-popover';
         viewPopover.id = 'uch-view-popover';
         viewPopover.innerHTML = `
-            <button class="view-toggle-item" data-state="expanded">Expand all</button>
-            <button class="view-toggle-item" data-state="condensed">Condense all</button>
-            <button class="view-toggle-item" data-state="minimized">Minimize all</button>
+            <button class="view-toggle-item text-md" data-state="expanded">Expand all</button>
+            <button class="view-toggle-item text-md" data-state="condensed">Condense all</button>
+            <button class="view-toggle-item text-md" data-state="minimized">Minimize all</button>
         `;
         document.body.appendChild(viewPopover);
 
@@ -1072,7 +1064,7 @@ document.addEventListener("click", (e) => {
         const target = chipsContainer || group;
         body.querySelectorAll(".tag-button.selected, .tag-button.selected-or").forEach(btn => {
             const chip = document.createElement("button");
-            chip.classList.add("tag-button", "selected");
+            chip.classList.add("tag-button", "tag-button--compact", "selected");
             if (tagClass) chip.classList.add(tagClass);
             if (btn.classList.contains("selected-or")) { chip.classList.remove("selected"); chip.classList.add("selected-or"); }
             chip.dataset.tag = btn.dataset.tag;
@@ -1227,7 +1219,7 @@ window.onload = async () => {
         popover.id = 'stat-breakdown-popover';
         popover.innerHTML = `
             <div class="sb-rows"></div>
-            <div class="sb-add">${plusSvg} Add</div>
+            <div class="sb-add text-body-sm">${plusSvg} Add</div>
         `;
         document.body.appendChild(popover);
 
@@ -1299,13 +1291,13 @@ window.onload = async () => {
             row.className = 'sb-row';
 
             const valInput = document.createElement('input');
-            valInput.className = 'sb-row-val';
+            valInput.className = 'sb-row-val text-body';
             valInput.value = val;
             valInput.placeholder = '±0';
             valInput.inputMode = 'numeric';
 
             const descInput = document.createElement('input');
-            descInput.className = 'sb-row-desc';
+            descInput.className = 'sb-row-desc text-body-sm';
             descInput.value = desc;
             descInput.placeholder = 'Source...';
 
@@ -1583,7 +1575,7 @@ window.onload = async () => {
             onSwipeRight:  () => appManager.setSessionListCollapsed(true),
         });
 
-        console.log('✅ Swipe gesture registered on tab 9 results section.');
+        console.log('✅ Swipe gesture registered on tab 7 results section.');
     }
 
 };

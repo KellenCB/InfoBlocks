@@ -77,7 +77,7 @@ export function activateCharTab(tabId) {
         if (!show) {
             el.querySelectorAll('.hp-drag-delta').forEach(d => {
                 d.style.animation = 'none';
-                d.className = 'hp-drag-delta';
+                d.className = 'hp-drag-delta text-md';
             });
             el.querySelectorAll('.coin-delta-popup').forEach(d => {
                 d.style.animation = 'none';

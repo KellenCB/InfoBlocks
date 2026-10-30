@@ -8,7 +8,11 @@ import { isSwipeGestureActive } from './swipeGesture.js';
 import { inventoryBag } from './inventoryBag.js';
 import { detectiveBoard } from './detectiveBoard.js';
 
-const normalizeTag = tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
+// Title-case a tag, word by word, so multi-word tags like "dungeon master"
+// become "Dungeon Master" instead of "Dungeon master".
+const normalizeTag = tag => tag.trim().split(/\s+/).filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
 
 export function stripHTML(html) {
   const tmp = document.createElement('div');
@@ -33,7 +37,7 @@ export function initUsesField(overlayElement, storageKeyPrefix, defaultSlots = 5
 
     const addButton = document.createElement("div");
     addButton.classList.add("circle", "circle-button", "circle-add");
-    addButton.innerHTML = "+";
+    addButton.innerHTML = '<span class="svg-icon icon-plus" style="width:70%;height:70%"></span>';
     addButton.addEventListener("click", () => {
         usesState.push(false);
         localStorage.setItem(storageKeyPrefix, JSON.stringify(usesState));
@@ -43,7 +47,7 @@ export function initUsesField(overlayElement, storageKeyPrefix, defaultSlots = 5
 
     const removeButton = document.createElement("div");
     removeButton.classList.add("circle", "circle-button", "circle-remove");
-    removeButton.innerHTML = "−";
+    removeButton.innerHTML = '<span class="svg-icon icon-minus" style="width:70%;height:70%"></span>';
     removeButton.addEventListener("click", () => {
         if (usesState.length > 0) {
             usesState.pop();
@@ -86,14 +90,14 @@ export function initToolbarForEditor(editor) {
       const toolbar = document.createElement('div');
       toolbar.className = 'text-toolbar';
       toolbar.innerHTML = `
-        <button type="button" data-action="bold" data-tooltip="Bold"><i class="fas fa-bold"></i></button>
-        <button type="button" data-action="italic" data-tooltip="Italic"><i class="fas fa-italic"></i></button>
-        <button type="button" data-action="underline" data-tooltip="Underline"><i class="fas fa-underline"></i></button>
-        <button type="button" data-action="link" data-tooltip="Link"><i class="fas fa-link"></i></button>
-        <button type="button" data-action="insertUnorderedList" data-tooltip="Unordered List"><i class="fas fa-list-ul"></i></button>
-        <button type="button" data-action="insertOrderedList" data-tooltip="Ordered List"><i class="fas fa-list-ol"></i></button>
-        <button type="button" data-action="increaseFont" data-tooltip="Increase Font"><i class="fas fa-arrow-up"></i></button>
-        <select id="font-size-select">
+        <button type="button" class="text-md" data-action="bold" data-tooltip="Bold"><i class="fas fa-bold"></i></button>
+        <button type="button" class="text-md" data-action="italic" data-tooltip="Italic"><i class="fas fa-italic"></i></button>
+        <button type="button" class="text-md" data-action="underline" data-tooltip="Underline"><i class="fas fa-underline"></i></button>
+        <button type="button" class="text-md" data-action="link" data-tooltip="Link"><i class="fas fa-link"></i></button>
+        <button type="button" class="text-md" data-action="insertUnorderedList" data-tooltip="Unordered List"><i class="fas fa-list-ul"></i></button>
+        <button type="button" class="text-md" data-action="insertOrderedList" data-tooltip="Ordered List"><i class="fas fa-list-ol"></i></button>
+        <button type="button" class="text-md" data-action="increaseFont" data-tooltip="Increase Font"><i class="fas fa-arrow-up"></i></button>
+        <select id="font-size-select" class="text-md">
             <option value="1">10px</option>
             <option value="2">13px</option>
             <option value="3">16px</option>
@@ -102,12 +106,12 @@ export function initToolbarForEditor(editor) {
             <option value="6">32px</option>
             <option value="7">48px</option>
         </select>
-        <button type="button" data-action="decreaseFont" data-tooltip="Decrease Font"><i class="fas fa-arrow-down"></i></button>
-        <button type="button" data-action="uppercase" data-tooltip="Uppercase">A↑</button>
-        <button type="button" data-action="sentencecase" data-tooltip="Sentence case">Aa</button>
-        <button type="button" data-action="lowercase" data-tooltip="Lowercase">a↓</button>
-        <button type="button" data-action="removeStyling" data-tooltip="Remove styling">✕</button>
-        <button type="button" data-action="findReplace" data-tooltip="Find and Replace">A→B</button>
+        <button type="button" class="text-md" data-action="decreaseFont" data-tooltip="Decrease Font"><i class="fas fa-arrow-down"></i></button>
+        <button type="button" class="text-md" data-action="uppercase" data-tooltip="Uppercase">A↑</button>
+        <button type="button" class="text-md" data-action="sentencecase" data-tooltip="Sentence case">Aa</button>
+        <button type="button" class="text-md" data-action="lowercase" data-tooltip="Lowercase">a↓</button>
+        <button type="button" class="text-md" data-action="removeStyling" data-tooltip="Remove styling">✕</button>
+        <button type="button" class="text-md" data-action="findReplace" data-tooltip="Find and Replace">A→B</button>
       `;
   
       const wrapper = document.createElement('div');
@@ -120,14 +124,14 @@ export function initToolbarForEditor(editor) {
       frPanel.className = 'find-replace-panel hidden';
       frPanel.innerHTML = `
         <div class="find-replace-row">
-            <input type="text" class="fr-find" placeholder="Find..." />
-            <input type="text" class="fr-replace" placeholder="Replace..." />
-            <button type="button" class="fr-btn fr-find-next">Find Next</button>
-            <button type="button" class="fr-btn fr-replace-one">Replace One</button>
-            <button type="button" class="fr-btn fr-replace-all">Replace All</button>
-            <button type="button" class="fr-btn fr-close">✕</button>
+            <input type="text" class="fr-find text-md" placeholder="Find..." />
+            <input type="text" class="fr-replace text-md" placeholder="Replace..." />
+            <button type="button" class="fr-btn fr-find-next text-md">Find Next</button>
+            <button type="button" class="fr-btn fr-replace-one text-md">Replace One</button>
+            <button type="button" class="fr-btn fr-replace-all text-md">Replace All</button>
+            <button type="button" class="fr-btn fr-close text-md">✕</button>
         </div>
-        <div class="fr-feedback"></div>
+        <div class="fr-feedback text-body"></div>
       `;
       wrapper.insertBefore(frPanel, editor);
 
@@ -249,7 +253,7 @@ export function initToolbarForEditor(editor) {
           editor.normalize();
         } else {
           frIndex = replacedIndex - 1;
-          if (frIndex < -1) frIndex = frMatches.length - 1;
+          if (frIndex < 0) frIndex = frMatches.length - 1;
           frFeedback.textContent = `${frMatches.length} match${frMatches.length !== 1 ? 'es' : ''} remaining — use Find Next to continue`;
           editor.querySelectorAll('span.fr-highlight').forEach(span => span.replaceWith(...span.childNodes));
           editor.normalize();
@@ -335,7 +339,7 @@ export function initToolbarForEditor(editor) {
             clearTimeout(btn._tooltipTimer);
             btn._tooltipTimer = setTimeout(() => {
               const tip = document.createElement('div');
-              tip.classList.add('text-tooltip');
+              tip.classList.add('text-tooltip', 'text-md');
               tip.textContent = tooltipText;
               document.body.appendChild(tip);
               const rect = btn.getBoundingClientRect();
@@ -634,7 +638,14 @@ export function setupSearchInput(inputEl, clearBtnEl, onInput, onClear) {
 /* ==================================================================*/
 
 const getActiveTab = () => {
-  return document.querySelector(".tab-button.active")?.dataset.tab || "tab4";
+  // In landscape split view, char-sheet tabs (tab4/tab8) use .uch-selected
+  // instead of .active — see layoutMode.js — so .tab-button.active reliably
+  // resolves to the active list tab there. If no button matches at all
+  // (e.g. queried before the DOM is ready), fall back to layoutMode's
+  // persisted value before defaulting to tab4.
+  return document.querySelector(".tab-button.active")?.dataset.tab
+      || localStorage.getItem('activeTab')
+      || "tab4";
 };
 
 /* ==================================================================*/
@@ -668,9 +679,9 @@ binButtons.forEach(binButton => {
         confirmSection.id = 'clear-data-confirm';
         confirmSection.className = 'clear-data-confirm';
         confirmSection.innerHTML = `
-          <span class="clear-data-confirm-message">Are you sure you want to clear all data?<br>This cannot be undone.</span>
+          <span class="clear-data-confirm-message text-body">Are you sure you want to clear all data?<br>This cannot be undone.</span>
           <div class="clear-data-confirm-buttons">
-            <button class="clear-data-confirm-yes"><span>Yes</span></button>
+            <button class="clear-data-confirm-yes text-body"><span>Yes</span></button>
           </div>
         `;
 
@@ -873,7 +884,7 @@ const applyPendingBlockAnim = () => {
       const userDefinedTags = [
           ...new Set(getBlocks(tab).flatMap(b => b.tags).map(t => t.toLowerCase()))
       ].filter(t => !predefinedTagList.map(pt => pt.toLowerCase()).includes(t))
-       .map(t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
+       .map(normalizeTag)
        .sort((a, b) => a.localeCompare(b));
 
       let html = '';
@@ -881,11 +892,11 @@ const applyPendingBlockAnim = () => {
           if (!data.tabs.includes(tab)) return;
           const label = data.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
           html += `<div class="tag-accordion-group ${data.className}" data-category="${category}">`;
-          html += `<button class="tag-accordion-pill" data-category="${category}">${label}</button>`;
+          html += `<button class="tag-accordion-pill text-body" data-category="${category}">${label}</button>`;
           html += `<div class="tag-accordion-body">`;
           html += `<span class="tag-accordion-label">${label}</span>`;
           html += data.tags.map(t =>
-              `<button class="tag-button ${data.className}${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
+              `<button class="tag-button tag-button--compact ${data.className}${blockTags.includes(t) ? ' selected' : ''} text-body" data-tag="${t}">${t}</button>`
           ).join('');
           html += `</div></div>`;
       });
@@ -893,10 +904,10 @@ const applyPendingBlockAnim = () => {
       html += `<div class="tag-category user-tags-edit">`;
       if (userDefinedTags.length > 0) {
           html += userDefinedTags.map(t =>
-              `<button class="tag-button tag-user${blockTags.includes(t) ? ' selected' : ''}" data-tag="${t}">${t}</button>`
+              `<button class="tag-button tag-button--compact tag-user${blockTags.includes(t) ? ' selected' : ''} text-body" data-tag="${t}">${t}</button>`
           ).join('');
       }
-      html += `<span class="inline-edit-add-tag"></span>`;
+      html += `<span class="inline-edit-add-tag text-body"></span>`;
       html += `</div>`;
 
       return html;
@@ -928,7 +939,7 @@ const applyPendingBlockAnim = () => {
       const createPropertyWrap = (text) => {
           const wrap = document.createElement('span');
           wrap.className = 'block-property-wrap';
-          wrap.innerHTML = '<span class="block-property" contenteditable="true"></span><span class="property-remove-btn">×</span>';
+          wrap.innerHTML = '<span class="block-property text-body" contenteditable="true"></span><span class="property-remove-btn text-body">×</span>';
           if (text) wrap.querySelector('.block-property').textContent = text;
           return wrap;
       };
@@ -1002,12 +1013,12 @@ const applyPendingBlockAnim = () => {
               const commit = () => {
                   const tagName = input.textContent.trim();
                   if (tagName) {
-                      const normalized = tagName.charAt(0).toUpperCase() + tagName.slice(1).toLowerCase();
+                      const normalized = normalizeTag(tagName);
                       const existing = blockEl.querySelector(`.inline-edit-tags .tag-button[data-tag="${normalized}"]`);
                       if (existing) { existing.classList.add('selected'); }
                       else {
                           const newBtn = document.createElement('button');
-                          newBtn.className = 'tag-button tag-user selected';
+                          newBtn.className = 'tag-button tag-button--compact tag-user selected';
                           newBtn.dataset.tag = normalized;
                           newBtn.textContent = normalized;
                           input.before(newBtn);
@@ -1032,7 +1043,7 @@ const applyPendingBlockAnim = () => {
           const tagClass = [...group.classList].find(c => c !== 'tag-accordion-group' && c !== 'open') || '';
           body.querySelectorAll('.tag-button.selected').forEach(btn => {
               const chip = document.createElement('button');
-              chip.classList.add('tag-button', 'selected');
+              chip.classList.add('tag-button', 'tag-button--compact', 'selected');
               if (tagClass) chip.classList.add(tagClass);
               chip.dataset.tag = btn.dataset.tag;
               chip.textContent = btn.dataset.tag;
@@ -1049,7 +1060,7 @@ const applyPendingBlockAnim = () => {
 
       const body = blockEl.querySelector('.inline-edit-body');
       const text = body ? body.innerHTML.trim() : '';
-      if (!text) { alert('Title and text are required.'); return null; }
+      if (!text) { alert('Block text is required.'); return null; }
 
       const selectedTypes = Array.from(blockEl.querySelectorAll('.inline-edit-block-types .tag-button.selected'))
           .map(b => b.dataset.tag);
@@ -1181,7 +1192,7 @@ const applyPendingBlockAnim = () => {
       const openClass = isOpen ? ' open' : '';
 
       html += `<div class="tag-accordion-group ${className}${openClass}" data-category="${category}">`;
-      html += `<div class="tag-accordion-header" data-category="${category}">`;
+      html += `<div class="tag-accordion-header text-body" data-category="${category}">`;
       html += `<span class="tag-accordion-name">${label}</span>`;
       html += `<span class="tag-accordion-chips"></span>`;
       html += `<span class="tag-accordion-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>`;
@@ -1189,7 +1200,7 @@ const applyPendingBlockAnim = () => {
       html += `<div class="tag-accordion-body" id="${category}_tags_list_${tabSuffix}">`;
       html += `<div class="tag-accordion-body-inner">`;
       html += usedPredefined.map(tag =>
-        `<button class="tag-button ${className}" data-tag="${tag}">${tag}</button>`
+        `<button class="tag-button tag-button--compact ${className} text-body" data-tag="${tag}">${tag}</button>`
       ).join("");
       html += `</div></div></div>`;
     });
@@ -1197,7 +1208,7 @@ const applyPendingBlockAnim = () => {
     if (userGeneratedTags.length > 0) {
       html += `<div class="tag-category user-tags" id="user_tags_${tabSuffix}">`;
       html += userGeneratedTags.map(tag =>
-        `<button class="tag-button tag-user" data-tag="${tag}">${tag}</button>`
+        `<button class="tag-button tag-button--compact tag-user text-body" data-tag="${tag}">${tag}</button>`
       ).join("");
       html += `</div>`;
     } else {
@@ -1224,7 +1235,7 @@ const applyPendingBlockAnim = () => {
         if (predefinedTags.has(tag)) {
           usedTags.add(tag);
         } else {
-          usedTags.add(tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase());
+          usedTags.add(normalizeTag(tag));
         }
       });
     });
@@ -1318,9 +1329,9 @@ const applyPendingBlockAnim = () => {
 
       viewer.innerHTML = `
           <div class="session-viewer-header">
-              <h4 class="session-viewer-title">${block.title}</h4>
+              <h3 class="session-viewer-title text-lg">${block.title}</h3>
               <div class="session-viewer-header-actions">
-                  <button class="session-viewer-delete-btn" data-id="${block.id}" title="Delete">×</button>
+                  <button class="session-viewer-delete-btn text-lg" data-id="${block.id}" title="Delete">×</button>
                   <button class="session-viewer-edit-btn" id="session_edit_toggle" title="Edit">                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                           <path d="M4 15.5V19h3.5l9.94-9.94-3.5-3.5L4 15.5zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.5 3.5 1.83-1.83z"/>
                       </svg>
@@ -1629,7 +1640,7 @@ const applyPendingBlockAnim = () => {
                   const prevId = activeSessionLogBlockId;
                   saveCurrentViewerEdits();
                   const listTitle = resultsSection.querySelector(
-                      `.block[data-id="${prevId}"] .block-title h4`
+                      `.block[data-id="${prevId}"] .block-title h3`
                   );
                   if (listTitle) {
                       const fresh = getBlocks('tab7').find(b => b.id === prevId);
@@ -1777,7 +1788,7 @@ const applyPendingBlockAnim = () => {
       return `
           <div class="tab3-section-header${collapsed ? ' tab3-collapsed' : ''}" data-section-key="${key}">
               <div class="tab3-section-left">
-                  <h3 class="tab3-section-title">${title}</h3>
+                  <h3 class="tab3-section-title text-lg">${title}</h3>
                   <span class="tab3-section-count">${count}</span>
               </div>
           </div>
@@ -1810,10 +1821,10 @@ const applyPendingBlockAnim = () => {
       });
 
       const total = Array.from(counts.values()).reduce((s, n) => s + n, 0);
-      const allPill = `<button class="tab3-location-pill${activeLocation === '' ? ' selected' : ''}" data-location="">All · ${total}</button>`;
+      const allPill = `<button class="text-body tab3-location-pill${activeLocation === '' ? ' selected' : ''}" data-location="">All · ${total}</button>`;
 
       const pills = entries.map(([loc, count]) =>
-          `<button class="tab3-location-pill${activeLocation === loc ? ' selected' : ''}" data-location="${loc}">${loc} · ${count}</button>`
+          `<button class="text-body tab3-location-pill${activeLocation === loc ? ' selected' : ''}" data-location="${loc}">${loc} · ${count}</button>`
       ).join('');
 
       const pinSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`;
@@ -1822,7 +1833,7 @@ const applyPendingBlockAnim = () => {
           <div class="tab3-location-row">
               <div class="tab3-location-header">
                   ${pinSVG}
-                  <span class="tab3-location-label">Location</span>
+                  <span class="tab3-location-label text-label">Location</span>
               </div>
               <div class="tab3-location-pills">
                   ${allPill}${pills}
@@ -1868,7 +1879,7 @@ const applyPendingBlockAnim = () => {
       const linkSVG = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
 
       popup.innerHTML = `
-          <a class="map-link-popup-action" href="${url}" target="_blank" rel="noopener">
+          <a class="map-link-popup-action text-body" href="${url}" target="_blank" rel="noopener">
               ${linkSVG}
               <span>Open in new tab</span>
           </a>
@@ -2032,7 +2043,7 @@ const applyPendingBlockAnim = () => {
           ? (Array.isArray(block.blockType) ? block.blockType : (block.blockType ? [block.blockType] : []))
           : ['Notes'];
       const blockTypeHTML = tabBTConfig.types.map(type =>
-          `<button class="tag-button ${tabBTConfig.className}${currentTypes.includes(type) ? ' selected' : ''}" data-tag="${type}">${type}</button>`
+          `<button class="tag-button tag-button--compact ${tabBTConfig.className}${currentTypes.includes(type) ? ' selected' : ''} text-body" data-tag="${type}">${type}</button>`
       ).join('');
 
       // ── Current type for initial field visibility ──
@@ -2073,8 +2084,8 @@ const applyPendingBlockAnim = () => {
       const objectives = isEdit && Array.isArray(block.objectives) ? block.objectives : [];
       const objectivesHTML = objectives.map(o => `
           <div class="quest-objective-editor-row" data-done="${o.done ? 'true' : 'false'}">
-              <input type="text" class="quest-objective-input" placeholder="Objective…" value="${(o.text || '').replace(/"/g, '&quot;')}" />
-              <button type="button" class="quest-objective-remove" title="Remove">×</button>
+              <input type="text" class="quest-objective-input text-md" placeholder="Objective…" value="${(o.text || '').replace(/"/g, '&quot;')}" />
+              <button type="button" class="quest-objective-remove text-lg" title="Remove">×</button>
           </div>
       `).join('');
 
@@ -2088,29 +2099,29 @@ const applyPendingBlockAnim = () => {
       const fieldsHTML = `
           <div class="notes-edit-fields">
               <div class="quest-overlay-field">
-                  <label class="quest-overlay-label">Location</label>
-                  <input type="text" class="notes-edit-location quest-overlay-input" placeholder="e.g. Ionia — leave blank for none" value="${location.replace(/"/g, '&quot;')}" />
+                  <label class="quest-overlay-label text-label">Location</label>
+                  <input type="text" class="notes-edit-location quest-overlay-input text-md" placeholder="e.g. Ionia — leave blank for none" value="${location.replace(/"/g, '&quot;')}" />
               </div>
               <div class="quest-overlay-field map-only-field" style="display:${showMap ? '' : 'none'};">
-                  <label class="quest-overlay-label">Link URL</label>
-                  <input type="url" class="notes-edit-url quest-overlay-input" placeholder="https://example.com" value="${url.replace(/"/g, '&quot;')}" />
+                  <label class="quest-overlay-label text-label">Link URL</label>
+                  <input type="url" class="notes-edit-url quest-overlay-input text-md" placeholder="https://example.com" value="${url.replace(/"/g, '&quot;')}" />
               </div>
               <div class="quest-overlay-field desc-only-field" style="display:${showDesc ? '' : 'none'};">
-                  <label class="quest-overlay-label">Description</label>
-                  <input type="text" class="notes-edit-description quest-overlay-input" placeholder="Short description shown on the card" maxlength="200" value="${description.replace(/"/g, '&quot;')}" />
+                  <label class="quest-overlay-label text-label">Description</label>
+                  <input type="text" class="notes-edit-description quest-overlay-input text-md" placeholder="Short description shown on the card" maxlength="200" value="${description.replace(/"/g, '&quot;')}" />
               </div>
               <div class="quest-overlay-field book-only-field" style="display:${showBook ? '' : 'none'};">
-                  <label class="quest-overlay-label">Accent colour</label>
+                  <label class="quest-overlay-label text-label">Accent colour</label>
                   <div class="notes-edit-swatches book-accent-swatches">${swatchesHTML}</div>
               </div>
               <div class="quest-overlay-field quest-only-field" style="display:${showQuest ? '' : 'none'};">
-                  <label class="quest-overlay-label">Status</label>
+                  <label class="quest-overlay-label text-label">Status</label>
                   <div class="notes-edit-status quest-status-button-row">${statusHTML}</div>
               </div>
               <div class="quest-overlay-field quest-only-field" style="display:${showQuest ? '' : 'none'};">
-                  <label class="quest-overlay-label">Objectives</label>
+                  <label class="quest-overlay-label text-label">Objectives</label>
                   <div class="notes-edit-objectives quest-objectives-editor">${objectivesHTML}</div>
-                  <button type="button" class="notes-edit-add-objective quest-add-objective-btn">+ Add objective</button>
+                  <button type="button" class="notes-edit-add-objective quest-add-objective-btn text-body">+ Add objective</button>
               </div>
           </div>
       `;
@@ -2267,7 +2278,7 @@ const applyPendingBlockAnim = () => {
       const newBody = bodyEl ? bodyEl.innerHTML.trim() : '';
       const textOptional = blockType === 'Quest' || blockType === 'Map';
       if (!textOptional && !newBody) {
-          alert('Title and text are required.');
+          alert('Block text is required.');
           return null;
       }
 
@@ -2311,10 +2322,10 @@ const applyPendingBlockAnim = () => {
 
       return `
           <div class="notes-edit-header">
-              <h4 contenteditable="true" class="notes-edit-title">${title}</h4>
+              <h3 contenteditable="true" class="notes-edit-title text-lg">${title}</h3>
               <div class="inline-edit-controls">
-                  <button class="button green-button notes-edit-save">Save</button>
-                  <button class="button red-button notes-edit-cancel">Cancel</button>
+                  <button class="button green-button notes-edit-save text-body">Save</button>
+                  <button class="button red-button notes-edit-cancel text-body">Cancel</button>
               </div>
           </div>
           <div class="notes-edit-inserts">
@@ -2322,7 +2333,7 @@ const applyPendingBlockAnim = () => {
               ${fieldsHTML}
           </div>
           <div class="notes-edit-body-wrap" style="display:${showBody ? '' : 'none'};">
-              <div contenteditable="true" class="notes-edit-body" data-placeholder="Enter block text here...">${bodyHTML}</div>
+              <div contenteditable="true" class="notes-edit-body text-body" data-placeholder="Enter block text here...">${bodyHTML}</div>
           </div>
       `;
   };
@@ -2609,11 +2620,11 @@ const applyPendingBlockAnim = () => {
           dropdown.id = 'quest-status-dropdown';
           dropdown.className = 'quest-status-dropdown hidden';
           dropdown.innerHTML = `
-              <button class="quest-status-item" data-status="active">Active</button>
-              <button class="quest-status-item" data-status="on hold">On hold</button>
-              <button class="quest-status-item" data-status="not started">Not started</button>
-              <button class="quest-status-item" data-status="completed">Completed</button>
-              <button class="quest-status-item" data-status="failed">Failed</button>
+              <button class="quest-status-item text-body" data-status="active">Active</button>
+              <button class="quest-status-item text-body" data-status="on hold">On hold</button>
+              <button class="quest-status-item text-body" data-status="not started">Not started</button>
+              <button class="quest-status-item text-body" data-status="completed">Completed</button>
+              <button class="quest-status-item text-body" data-status="failed">Failed</button>
           `;
           document.body.appendChild(dropdown);
       }
@@ -2838,8 +2849,6 @@ const applyPendingBlockAnim = () => {
   };
 
   const renderBlocks = (tab = getActiveTab(), filteredBlocks = null, skipTagUpdate = false) => {
-    console.log("🔍 Checking tab value:", tab, typeof tab);
-
     if (typeof tab !== "string") {
       console.error("❌ Error: 'tab' should be a string but got:", tab);
       tab = "tab4";
@@ -2941,8 +2950,6 @@ const applyPendingBlockAnim = () => {
         return ai - bi;
     });
 
-    console.log(`📦 Blocks to render for ${tab}:`, displayBlocks);
-
     // ── MAP EXISTING DOM BLOCKS ─────────────────────────────────────
     const existingDisplayEls = new Map();
     resultsSection.querySelectorAll(':scope > .block[data-id]').forEach(el => {
@@ -2980,7 +2987,6 @@ const applyPendingBlockAnim = () => {
             el.style.marginBottom = '0';
             el.style.paddingTop = '0';
             el.style.paddingBottom = '0';
-            console.log('🗑️ Animating block removal:', id);
             setTimeout(() => el.remove(), 650);
         }
     });
@@ -3171,7 +3177,6 @@ const applyPendingBlockAnim = () => {
     }
 
     applyInlineDiceRolls(resultsSection, tab);
-    console.log(`✅ UI updated: Blocks re-rendered for ${tab}`);
 
     if (!skipTagUpdate) updateTags();
     attachDynamicTooltips();
@@ -3263,7 +3268,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       );
       const formattedTags = tags.map(tag => {
         const predefined = predefinedTagsMap.get(tag.toLowerCase());
-        return predefined || (tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase());
+        return predefined || normalizeTag(tag);
       });
 
       newId = crypto.randomUUID();
@@ -3295,9 +3300,9 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
     return removed;
   };
 
-  const restoreBlock = (block) => {
+  const restoreBlock = (block, tabOverride = null) => {
     if (!block) return false;
-    const activeTab  = getActiveTab();
+    const activeTab  = tabOverride || getActiveTab();
     const userBlocks = getBlocks(activeTab);
     userBlocks.unshift(block);
     localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(userBlocks));
@@ -3317,7 +3322,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
     if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
     el._tooltipTimer = setTimeout(() => {
       const tip = document.createElement('div');
-      tip.classList.add('text-tooltip');
+      tip.classList.add('text-tooltip', 'text-md');
       tip.textContent = el.textContent;
       document.body.appendChild(tip);
       const rect = el.getBoundingClientRect();
@@ -3349,7 +3354,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
   );
 
   function attachDynamicTooltips() {
-    attachTooltipHandlers(document.querySelectorAll('.block-title h4, .action-name, .action-description'));
+    attachTooltipHandlers(document.querySelectorAll('.block-title h3, .action-name, .action-description'));
   }
 
 /* ==================================================================*/
@@ -3411,7 +3416,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       const tabBTConfig = blockTypeConfig[tab];
       const blockTypeHTML = tabBTConfig
           ? tabBTConfig.types.map(type =>
-              `<button class="tag-button ${tabBTConfig.className}${blockTypes.includes(type) ? ' selected' : ''}" data-tag="${type}">${type}</button>`
+              `<button class="tag-button tag-button--compact ${tabBTConfig.className}${blockTypes.includes(type) ? ' selected' : ''} text-body" data-tag="${type}">${type}</button>`
             ).join('')
           : '';
 
@@ -3425,20 +3430,20 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       blockEl.innerHTML = `
               <div class="block-header">
                   <div class="block-header-left">
-                      <div class="block-title"><h4 contenteditable="true" class="inline-edit-title">${block.title}</h4></div>
+                      <div class="block-title"><h3 contenteditable="true" class="inline-edit-title text-md">${block.title}</h3></div>
                   </div>
                   <div class="inline-edit-controls">
-                      <button class="button green-button inline-edit-save">Save</button>
-                      <button class="button red-button inline-edit-cancel">Cancel</button>
+                      <button class="button green-button inline-edit-save text-body">Save</button>
+                      <button class="button red-button inline-edit-cancel text-body">Cancel</button>
                   </div>
               </div>
               <div class="inline-edit-block-types">${blockTypeHTML}</div>
               <div class="uses-field inline-edit-uses"></div>
               <div class="inline-edit-tags">${tagsHTML}</div>
               <div class="block-properties inline-edit-properties">${(block.properties || []).map(p =>
-                  `<span class="block-property-wrap"><span class="block-property" contenteditable="true">${p}</span><span class="property-remove-btn">×</span></span>`
-              ).join('')}<span class="block-property inline-edit-new-prop"></span></div>
-              <div class="block-body"><span contenteditable="true" class="inline-edit-body">${bodyHTML}</span></div>
+                  `<span class="block-property-wrap"><span class="block-property text-body" contenteditable="true">${p}</span><span class="property-remove-btn text-body">×</span></span>`
+              ).join('')}<span class="block-property inline-edit-new-prop text-body"></span></div>
+              <div class="block-body text-body"><span contenteditable="true" class="inline-edit-body">${bodyHTML}</span></div>
       `;
 
       wireTab9FormHandlers(blockEl, usesKey);
@@ -3461,11 +3466,10 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
           filterManager.applyFilters('9');
       };
 
-      const saveBtn = blockEl.querySelector('.inline-edit-save');
-      const cancelBtn = blockEl.querySelector('.inline-edit-cancel');
-      console.log('SAVE BTN:', saveBtn);
-      console.log('CANCEL BTN:', cancelBtn);
-if (saveBtn) saveBtn.addEventListener('click', (e) => { e.stopPropagation(); console.log('SAVE CLICKED'); console.log('FORM DATA:', collectTab9FormData(blockEl, usesKey)); doSave(); });      if (cancelBtn) cancelBtn.addEventListener('click', (e) => { e.stopPropagation(); console.log('CANCEL CLICKED'); doCancel(); });
+      wireEditControls(blockEl, {
+          saveSel: '.inline-edit-save', cancelSel: '.inline-edit-cancel',
+          onSave: doSave, onCancel: doCancel,
+      });
 
       focusAndCursorToEnd(blockEl.querySelector('.inline-edit-title'));
 
@@ -3481,7 +3485,7 @@ if (saveBtn) saveBtn.addEventListener('click', (e) => { e.stopPropagation(); con
       const tabBTConfig = blockTypeConfig[tab];
       const blockTypeHTML = tabBTConfig
           ? tabBTConfig.types.map(type =>
-              `<button class="tag-button ${tabBTConfig.className}" data-tag="${type}">${type}</button>`
+              `<button class="tag-button tag-button--compact ${tabBTConfig.className} text-body" data-tag="${type}">${type}</button>`
             ).join('')
           : '';
 
@@ -3497,18 +3501,18 @@ if (saveBtn) saveBtn.addEventListener('click', (e) => { e.stopPropagation(); con
       blockEl.innerHTML = `
               <div class="block-header">
                   <div class="block-header-left">
-                      <div class="block-title"><h4 contenteditable="true" class="inline-edit-title"></h4></div>
+                      <div class="block-title"><h3 contenteditable="true" class="inline-edit-title text-md"></h3></div>
                   </div>
                   <div class="inline-edit-controls">
-                      <button class="button green-button inline-edit-save">Save</button>
-                      <button class="button red-button inline-edit-cancel">Cancel</button>
+                      <button class="button green-button inline-edit-save text-body">Save</button>
+                      <button class="button red-button inline-edit-cancel text-body">Cancel</button>
                   </div>
               </div>
               <div class="inline-edit-block-types">${blockTypeHTML}</div>
               <div class="uses-field inline-edit-uses"></div>
               <div class="inline-edit-tags">${tagsHTML}</div>
-              <div class="block-properties inline-edit-properties"><span class="block-property inline-edit-new-prop"></span></div>
-              <div class="block-body"><span contenteditable="true" class="inline-edit-body"></span></div>
+              <div class="block-properties inline-edit-properties"><span class="block-property inline-edit-new-prop text-body"></span></div>
+              <div class="block-body text-body"><span contenteditable="true" class="inline-edit-body"></span></div>
       `;
 
       
@@ -3527,7 +3531,6 @@ if (saveBtn) saveBtn.addEventListener('click', (e) => { e.stopPropagation(); con
       };
 
       const doCancel = () => {
-          console.log('CANCEL FIRED');
           localStorage.removeItem(usesKey);
           blockEl.remove();
       };

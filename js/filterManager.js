@@ -208,7 +208,7 @@ export const filterManager = (() => {
                     } else if (!existing) {
                         // Create new chip
                         const chip = document.createElement('button');
-                        chip.classList.add('tag-button', state);
+                        chip.classList.add('tag-button', 'tag-button--compact', state);
                         if (tagClass) chip.classList.add(tagClass);
                         chip.dataset.tag = tag;
                         chip.textContent = tag;
@@ -309,9 +309,11 @@ export const filterManager = (() => {
         }
 
         // 4. Search query (from universal search bar)
+        // For tab3 (detective board) the board handles search visually (dim + highlight),
+        // so skip block filtering here to keep all cards on the canvas.
         const query = document.getElementById('uch-search')
             ?.value.trim().toLowerCase() || '';
-        if (query) {
+        if (query && activeTab !== 'tab3') {
             blocks = blocks.filter(b =>
                 b.title.toLowerCase().includes(query) ||
                 stripHTML(b.text).toLowerCase().includes(query) ||
@@ -323,7 +325,12 @@ export const filterManager = (() => {
         // When !skipTagUpdate, renderBlocks already calls updateTags → tagsUpdated → _applySelectionClasses
         // When skipTagUpdate, we need to call it directly since tagsUpdated won't fire
         if (skipTagUpdate) _applySelectionClasses(activeTab);
-        document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: activeTab } }));
+        // tab3 (renderNotes) and tab7 (renderSessionLog) have their own sectioned
+        // render paths and already dispatch blocksRerendered internally — avoid
+        // firing it a second time for those tabs.
+        if (activeTab !== 'tab3' && activeTab !== 'tab7') {
+            document.dispatchEvent(new CustomEvent('blocksRerendered', { detail: { tab: activeTab } }));
+        }
     };
 
     // ── Tag click handler (AND / OR / deselect via shift) ─────────────────────

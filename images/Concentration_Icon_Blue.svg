@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 35 35" style="enable-background:new 0 0 35 35;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#00AAFF;}
+</style>
+<g>
+	<path class="st0" fill-rule="evenodd" clip-rule="evenodd" d="M33,17.5 A15.5,15.5 0 1,0 2,17.5 A15.5,15.5 0 1,0 33,17.5 Z
+		M30.4,17.5 A12.9,12.9 0 1,1 4.6,17.5 A12.9,12.9 0 1,1 30.4,17.5 Z
+		M27.8,17.5 A10.3,10.3 0 1,0 7.2,17.5 A10.3,10.3 0 1,0 27.8,17.5 Z
+		M25.2,17.5 A7.7,7.7 0 1,1 9.8,17.5 A7.7,7.7 0 1,1 25.2,17.5 Z"/>
+	<circle class="st0" cx="17.5" cy="17.5" r="3.6"/>
+</g>
+</svg>

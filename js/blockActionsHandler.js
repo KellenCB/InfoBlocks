@@ -2,7 +2,6 @@ import { filterManager } from './filterManager.js';
 import { appManager } from './appManager.js';
 
 export const blockActionsHandler = (() => {
-    let pendingDeleteBlockId = null;
     let lastDeletedBlock    = null;
     
     const initUndoLastDelete = () => {
@@ -16,7 +15,7 @@ export const blockActionsHandler = (() => {
             }
             const { tab, block } = lastDeletedBlock;
             document.querySelector(`.tab-button[data-tab="${tab}"]`)?.click();
-            appManager.restoreBlock(block);
+            appManager.restoreBlock(block, tab);
             lastDeletedBlock = null;
             reapplySearchAndFilters(tab);
             document.getElementById("menu_overlay")?.classList.remove("active");
@@ -38,10 +37,10 @@ export const blockActionsHandler = (() => {
         popup.id = 'delete-confirm-popup';
         popup.className = 'delete-confirm-popup';
         popup.innerHTML = `
-            <span class="delete-confirm-message">Are you sure you want<br>to delete this block?</span>
+            <span class="delete-confirm-message text-body">Are you sure you want<br>to delete this block?</span>
             <div class="delete-confirm-buttons">
-                <button class="delete-confirm-yes hold-to-confirm"><span>Yes</span></button>
-                <button class="delete-confirm-no">No</button>
+                <button class="delete-confirm-yes hold-to-confirm text-body"><span>Yes</span></button>
+                <button class="delete-confirm-no text-body">No</button>
             </div>
         `;
         document.body.appendChild(popup);
@@ -52,6 +51,12 @@ export const blockActionsHandler = (() => {
         let left = clickEvent.clientX - (popupRect.width / 2);
 
         if (top < 4) top = clickEvent.clientY + 14;
+        // Clamp to the bottom of the viewport too — the fallback above only
+        // pushes the popup further down (past the click), which can run the
+        // popup off the bottom edge for clicks in the lower part of the screen.
+        if (top + popupRect.height > window.innerHeight - 4) {
+            top = window.innerHeight - popupRect.height - 4;
+        }
         if (left < 4) left = 4;
         if (left + popupRect.width > window.innerWidth - 4) {
             left = window.innerWidth - popupRect.width - 4;
@@ -165,6 +170,45 @@ export const blockActionsHandler = (() => {
             return;
         }
 
+        if (target.classList.contains('concentration-button')) {
+            const blocks = appManager.getBlocks(activeTab);
+            const idx    = blocks.findIndex(b => b.id === blockId);
+            if (idx !== -1) {
+                const turningOn = !blocks[idx].concentrating;
+                // D&D only allows concentrating on one spell at a time, so
+                // turning this one on clears concentration on every other block.
+                if (turningOn) {
+                    blocks.forEach(b => { b.concentrating = false; });
+                }
+                blocks[idx].concentrating = turningOn;
+                localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
+
+                // Update the DOM in place rather than calling reapplySearchAndFilters().
+                // The block-list render diff (appManager.js renderBlocks) reuses a
+                // block's existing DOM element untouched whenever its viewState
+                // hasn't changed — pinning always rebuilds because it moves the
+                // block between the pinned/unpinned zones, but concentrating alone
+                // doesn't, so a full re-render here would silently fail to repaint
+                // this button (or clear a previously-active one).
+                // Ring/dot color and the grow-into-a-target animation are pure
+                // CSS driven off this class (see .concentration-active rules
+                // in buttons.css) — no icon markup to swap here.
+                const setButtonState = (btn, on) => {
+                    btn.classList.toggle('concentration-active', on);
+                    btn.title = on ? 'Stop concentrating' : 'Concentrating';
+                };
+
+                setButtonState(target, turningOn);
+
+                if (turningOn && tabContent) {
+                    tabContent.querySelectorAll('.concentration-button.concentration-active').forEach(btn => {
+                        if (btn !== target) setButtonState(btn, false);
+                    });
+                }
+            }
+            return;
+        }
+
         if (target.classList.contains("duplicate-button")) {
             const blockTags = Array.isArray(block.tags) ? [...block.tags] : [];
             // For tab6, carry through the inventory booleans
@@ -233,30 +277,8 @@ export const blockActionsHandler = (() => {
         filterManager.applyFilters(activeTab.replace('tab', ''));
     }
 
-    const initDeleteConfirmation = () => {
-        const confirmBtn = document.getElementById("confirm_remove_button");
-        const cancelBtn  = document.getElementById("cancel_remove_button");
-        if (confirmBtn && cancelBtn) {
-            confirmBtn.addEventListener("click", () => {
-                if (pendingDeleteBlockId) {
-                    const deletedTab   = appManager.getActiveTab();
-                    const deletedBlock = appManager.removeBlock(pendingDeleteBlockId);
-                    lastDeletedBlock   = { tab: deletedTab, block: deletedBlock };
-                    pendingDeleteBlockId = null;
-                    reapplySearchAndFilters();
-                }
-                document.querySelector(".remove-block-overlay").classList.remove("show");
-            });
-            cancelBtn.addEventListener("click", () => {
-                pendingDeleteBlockId = null;
-                document.querySelector(".remove-block-overlay").classList.remove("show");
-            });
-        }
-    };
-
     const attachBlockActions = () => {
         initUndoLastDelete();
-        initDeleteConfirmation();
 
         document.querySelectorAll(".results-section").forEach(resultsSection => {
             resultsSection.removeEventListener("click", handleBlockActions);
