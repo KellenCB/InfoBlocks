@@ -281,6 +281,12 @@
     box-shadow: var(--shadow-toggle-glow-equip);
 }
 
+/* Roll shortcuts switch (main menu + Feats & Magic edit form) — inline-roll green */
+.inventory-toggle-rolls input[type="checkbox"]:checked ~ .inventory-track {
+    background: color-mix(in srgb, var(--color-green) 55%, var(--gray-400));
+    border-color: color-mix(in srgb, var(--color-green) 75%, transparent);
+}
+
 .inventory-state-btn {
     display: inline-flex;
     align-items: center;

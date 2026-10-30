@@ -52,6 +52,12 @@
     --block-bg-pinned-base: color-mix(in srgb, var(--color-blue) 12%, var(--glass-bg));
     --block-bg-pinned-highlight: rgba(45, 129, 255, 0.35);
     --block-border-pinned: rgba(45, 129, 255, 0.25);
+    /* Concentrating: a lighter, brighter blue than pinned (same hue as the
+       active concentration icon) so it reads as the tier above pinned */
+    --color-concentration: #00AAFF;
+    --block-bg-concentrating-base: color-mix(in srgb, var(--color-concentration) 12%, var(--glass-bg));
+    --block-bg-concentrating-highlight: rgba(0, 170, 255, 0.35);
+    --block-border-concentrating: rgba(0, 170, 255, 0.25);
     --block-bg-selected-base: color-mix(in srgb, var(--gray-900) 8%, var(--glass-bg));
     --block-bg-selected-highlight: rgba(255, 255, 255, 0.25);
     --block-border-selected: rgba(255, 255, 255, 0.22);

@@ -1,6 +1,7 @@
 import { filterManager } from './filterManager.js';
 import { categoryTags, blockTypeConfig, BOOK_ACCENT_COLORS, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
 import { toggleBlockUse } from './uiHandlers.js';
+import { extractRollSummary } from './diceRoller.js';
 
 // Title-case a tag, word by word (mirrors appManager.js's normalizeTag) so
 // multi-word tags like "Dungeon Master" don't get mangled to "Dungeon master"
@@ -83,6 +84,25 @@ const buildQuestObjectivesHTML = (blockId, objectives) => {
             `).join('')}
         </div>
     `;
+};
+
+// ── Roll summary chips (condensed Feats & Magic headers) ───────────
+// Lists the block's inline rolls as plain text inside .roll-summary-source
+// spans; applyInlineDiceRolls (diceRoller.js) then converts them into the
+// same clickable roll buttons used in the block body.
+const ROLL_SUMMARY_MAX = 3;
+
+export const buildRollSummaryHTML = (html) => {
+    const rolls = extractRollSummary(html);
+    if (rolls.length === 0) return '';
+    const shown = rolls.slice(0, ROLL_SUMMARY_MAX);
+    const extra = rolls.length - shown.length;
+    const chipsHTML = shown.map(r =>
+        `<span class="roll-summary-source"${r.label ? ` data-roll-label="${escapeHtml(r.label)}"` : ''}>${escapeHtml(r.text)}</span>`
+    ).join('');
+    // "+N more" isn't excluded from the block click handler, so clicking it expands the block
+    const moreHTML = extra > 0 ? `<span class="roll-summary-more" title="Show all rolls">+${extra} more</span>` : '';
+    return `<div class="block-roll-summary">${chipsHTML}${moreHTML}</div>`;
 };
 
 export const blockTemplate = (block, tab = "tab4") => {
@@ -252,6 +272,7 @@ export const blockTemplate = (block, tab = "tab4") => {
     const bookDescription = isTab3Book ? (block.description || '') : '';
 
     let content = "";
+    let rollSummaryHTML = "";   // set in the generic condensed branch below
     if (viewState === 'expanded') {
         if (isTab3Quest) {
             const questIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`;
@@ -413,12 +434,18 @@ export const blockTemplate = (block, tab = "tab4") => {
                     ${tab3LocationTagHTML}
                 </div>
             ` : "";
+            // Roll chips — Feats & Magic only, unless switched off for this block.
+            // A missing showRollSummary (older blocks) counts as on.
+            rollSummaryHTML = (isTab9 && block.showRollSummary !== false)
+                ? buildRollSummaryHTML(block.text)
+                : "";
             content = `
                 <div class="block-header">
                     ${chainHTML}
                     ${handHTML}
                     <div class="block-title"><h3 class="text-md">${escapeHtml(block.title)}</h3></div>
                     ${ usesHTML ? `<div class="block-uses">${usesHTML}</div>` : "" }
+                    ${rollSummaryHTML}
                     ${condensedTagsHTML}
                     ${tab6ActionMenu}
                 </div>
@@ -448,7 +475,7 @@ export const blockTemplate = (block, tab = "tab4") => {
 
         const bookStyle = isTab3Book ? ` style="--book-accent:${bookAccentHex};"` : '';
         return `
-            <div class="block ${viewState}${(block.pinned && !isTab3) ? ' pinned' : ''}${questClass}${mapClass}${bookClass}" data-id="${block.id}"${bookStyle}>
+            <div class="block ${viewState}${(block.pinned && !isTab3) ? ' pinned' : ''}${(isTab9 && block.concentrating === true) ? ' concentrating' : ''}${rollSummaryHTML ? ' has-roll-summary' : ''}${questClass}${mapClass}${bookClass}" data-id="${block.id}"${bookStyle}>
             ${content}
         </div>
     `;

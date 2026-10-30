@@ -951,6 +951,13 @@
             <button id="undo_delete_button" class="menu-item-button text-md">
                 Undo Last Delete
             </button>
+            <label class="menu-item-button text-md" for="roll_chips_toggle" data-tooltip="Show roll chips on condensed Feats &amp; Magic blocks">
+                Roll Shortcuts
+                <span class="inventory-toggle inventory-toggle--sm inventory-toggle-rolls">
+                    <input type="checkbox" id="roll_chips_toggle" checked />
+                    <span class="inventory-track"><span class="inventory-thumb"></span></span>
+                </span>
+            </label>
             <!-- <button id="settings_button" class="menu-item-button text-md">
                 Settings
                 <span class="button-icon">
@@ -963,7 +970,7 @@
             <button id="bin_button" class="menu-item-button bin-button text-md">
                 Clear All Data
                 <span class="button-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" stroke-width="3">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3">
                         <path d="M4 4L20 20"/>
                         <path d="M4 20L20 4"/>
                     </svg>
@@ -1040,6 +1047,7 @@
     <script type="module" src="js/uiHandlers.js"></script>
     <script type="module" src="js/diceRoller.js"></script>
     <script type="module" src="js/inventoryBag.js"></script>
+    <script type="module" src="js/tooltips.js"></script>
 
 </body>
 </html>

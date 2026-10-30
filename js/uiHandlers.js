@@ -1275,7 +1275,7 @@ const IMPORT_ALLOWED_KEY_PREFIXES = [
 const IMPORT_ALLOWED_KEYS = new Set([
     'circleStates', 'totalCircles', 'activeTab', 'activeCharTab',
     'splitViewActive', 'sessionListCollapsed', 'shared_header_condensed',
-    'resultsTitles',
+    'resultsTitles', 'rollChipsHidden',
 ]);
 function isImportAllowedKey(key) {
     return IMPORT_ALLOWED_KEYS.has(key)

@@ -165,6 +165,7 @@ export const blockActionsHandler = (() => {
                 }
                 if (nowPinned) localStorage.setItem(orderKey, JSON.stringify(order));
 
+                appManager.animateNextBlockMove();   // slide it up / down instead of fading
                 reapplySearchAndFilters(activeTab);
             }
             return;
@@ -183,28 +184,12 @@ export const blockActionsHandler = (() => {
                 blocks[idx].concentrating = turningOn;
                 localStorage.setItem(`userBlocks_${activeTab}`, JSON.stringify(blocks));
 
-                // Update the DOM in place rather than calling reapplySearchAndFilters().
-                // The block-list render diff (appManager.js renderBlocks) reuses a
-                // block's existing DOM element untouched whenever its viewState
-                // hasn't changed — pinning always rebuilds because it moves the
-                // block between the pinned/unpinned zones, but concentrating alone
-                // doesn't, so a full re-render here would silently fail to repaint
-                // this button (or clear a previously-active one).
-                // Ring/dot color and the grow-into-a-target animation are pure
-                // CSS driven off this class (see .concentration-active rules
-                // in buttons.css) — no icon markup to swap here.
-                const setButtonState = (btn, on) => {
-                    btn.classList.toggle('concentration-active', on);
-                    btn.title = on ? 'Stop concentrating' : 'Concentrating';
-                };
-
-                setButtonState(target, turningOn);
-
-                if (turningOn && tabContent) {
-                    tabContent.querySelectorAll('.concentration-button.concentration-active').forEach(btn => {
-                        if (btn !== target) setButtonState(btn, false);
-                    });
-                }
+                // Concentrating moves the block to the very top of the pinned
+                // zone (and stopping moves it back), so re-render like pinning
+                // does. renderBlocks rebuilds any block whose pinned /
+                // concentrating state changed, which repaints its button too.
+                appManager.animateNextBlockMove();   // slide it up / down instead of fading
+                reapplySearchAndFilters(activeTab);
             }
             return;
         }
@@ -220,6 +205,11 @@ export const blockActionsHandler = (() => {
                     attuned:            block.attuned === true,
                     equipped:           block.equipped === true
                 };
+            }
+            // For tab9, carry through the "show rolls when condensed" setting
+            // (passed in saveBlock's extras slot, same as the inventory fields)
+            if (activeTab === 'tab9' && block.showRollSummary === false) {
+                inventoryExtras = { showRollSummary: false };
             }
             // For tab3, carry through all type-specific fields
             let tab3Extras = null;

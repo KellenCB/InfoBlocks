@@ -619,27 +619,48 @@ document.addEventListener('keydown', (e) => {
 
 // ── Inline dice roll pattern & applier ───────────────────────────────────────
 
-const STAT_NAMES = 'STR|DEX|CON|INT|WIS|CHA|PROF|PB|INIT';
+// SPELL = the sheet's spell attack bonus. It needs a word boundary (\b) so
+// text like "1d8 + spellcasting modifier" isn't read as "1d8 + SPELL".
+const STAT_WORDS = 'STR|DEX|CON|INT|WIS|CHA|PROF|PB|INIT|SPELL\\b';
+
+// A stat word reads the block's own character sheet (Hazard → tab4,
+// Crank → tab8). Putting a name in front reads that character instead,
+// e.g. "2d10 +HAZARD INT" on a Crank block uses Hazard's INT.
+const CHARACTER_TABS = { HAZARD: 'tab4', CRANK: 'tab8' };
+const STAT_NAMES = `(?:(?:HAZARD|CRANK)\\s+)?(?:${STAT_WORDS})`;
 
 const DICE_PATTERN = new RegExp(
     `(\\d+)d(\\d+)((?:\\s*[+\\-]\\s*(?:\\d+|${STAT_NAMES}))*)`,
     'gi'
 );
 
-// ── NEW ──────────────────────────────────────────────────────────────────────
+// "+X to hit" — X can be one term or several added together,
+// e.g. "+10 to hit", "+SPELL to hit", "+PROF +INT +2 to hit".
 const HIT_PATTERN = new RegExp(
-    `([+\\-])\\s*(\\d+|${STAT_NAMES})\\s+to\\s+hit`,
+    `([+\\-]\\s*(?:\\d+|${STAT_NAMES})(?:\\s*[+\\-]\\s*(?:\\d+|${STAT_NAMES}))*)\\s+to\\s+hit`,
     'gi'
 );
+
+// "DC SPELL" — shows the sheet's spell save DC (display only, not a roll).
+// "DC HAZARD SPELL" / "DC CRANK SPELL" pick a character explicitly.
+const DC_PATTERN = /\bDC\s+(?:(HAZARD|CRANK)\s+)?SPELL\b/gi;
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Parse a stored value that may have a leading '+' sign (e.g. "+4" → 4). */
+/** Parse a stored sheet value: "+4" → 4, and typed sums like "4+5+1" → 10. */
 function safeInt(val) {
     if (val === null || val === undefined) return 0;
-    return parseInt(String(val).replace(/^\+/, ''), 10) || 0;
+    const terms = String(val).replace(/\s/g, '').match(/[+\-]?\d+(?:\.\d+)?/g);
+    if (!terms) return 0;
+    return Math.round(terms.reduce((sum, t) => sum + parseFloat(t), 0)) || 0;
 }
 
 function resolveStatValue(statName, tabPrefix) {
+    // "HAZARD INT" / "CRANK PROF" → read that character's sheet instead
+    const named = /^(HAZARD|CRANK)\s+(\w+)$/i.exec(statName.trim());
+    if (named) {
+        tabPrefix = CHARACTER_TABS[named[1].toUpperCase()];
+        statName  = named[2];
+    }
     const statMap = {
         STR:  `${tabPrefix}_str_bonus`,
         DEX:  `${tabPrefix}_dex_bonus`,
@@ -650,6 +671,7 @@ function resolveStatValue(statName, tabPrefix) {
         PROF: `${tabPrefix}_prof`,
         PB:   `${tabPrefix}_prof`,
         INIT: `${tabPrefix}_initiative`,
+        SPELL: `${tabPrefix}_spell_attack`,
     };
     const key = statMap[statName.toUpperCase()];
     return key ? safeInt(localStorage.getItem(key)) : 0;
@@ -657,7 +679,7 @@ function resolveStatValue(statName, tabPrefix) {
 
 function parseModifierString(modStr, tabPrefix) {
     if (!modStr) return { total: 0, display: '' };
-    const termRe = /([+\-])\s*(\d+|STR|DEX|CON|INT|WIS|CHA|PROF|PB|INIT)/gi;
+    const termRe = new RegExp(`([+\\-])\\s*(\\d+|${STAT_NAMES})`, 'gi');
     let total = 0, m;
     while ((m = termRe.exec(modStr)) !== null) {
         const sign = m[1] === '+' ? 1 : -1;
@@ -680,46 +702,178 @@ function getBlockTypes(blockId, tab) {
         : (block.blockType ? [block.blockType] : []);
 }
 
+// Buttons keep the text they were made from (data-mod-expr / data-hit-*) so
+// refreshInlineRollButton can re-read the sheet whenever stats change.
 function makeInlineButton(qty, sides, modStr, tabPrefix, colorClass, originalText) {
-    const { total, display } = parseModifierString(modStr, tabPrefix);
     const btn = document.createElement('button');
     btn.className        = `inline-dice-roll ${colorClass}`;
-    btn.textContent      = `${qty}d${sides}${display}`;
     btn.dataset.qty      = qty;
     btn.dataset.sides    = sides;
-    btn.dataset.modifier = total;
+    btn.dataset.modExpr  = modStr || '';
     btn.dataset.tab      = tabPrefix;
     btn.title            = originalText;
+    refreshInlineRollButton(btn);
     return btn;
 }
 
-// ── NEW ──────────────────────────────────────────────────────────────────────
-function makeHitButton(sign, valueStr, tabPrefix, originalText) {
-    const isStatName = /^[A-Za-z]+$/.test(valueStr);
-    let modifier;
-    let displayText = originalText;
-
-    if (isStatName) {
-        const resolved     = resolveStatValue(valueStr.toUpperCase(), tabPrefix);
-        const effectiveVal = sign === '-' ? -resolved : resolved;
-        modifier           = effectiveVal;
-        const signedStr    = effectiveVal < 0 ? String(effectiveVal) : `+${effectiveVal}`;
-        displayText        = originalText.replace(
-            new RegExp(`[+\\-]\\s*${valueStr}`, 'i'),
-            signedStr
-        );
-    } else {
-        const num = parseInt(valueStr, 10);
-        modifier  = sign === '-' ? -num : num;
+// hitExpr is the "+PROF +INT +2" part; originalText is the whole "+PROF +INT +2 to hit".
+// A single plain number ("+10 to hit") is shown exactly as written.
+function computeHit(hitExpr, tabPrefix, originalText) {
+    const { total } = parseModifierString(hitExpr, tabPrefix);
+    if (/^[+\-]\s*\d+$/.test(hitExpr.trim())) {
+        return { modifier: total, text: originalText };
     }
+    const signedStr = total < 0 ? String(total) : `+${total}`;
+    return { modifier: total, text: signedStr + originalText.slice(hitExpr.length) };
+}
 
+function makeHitButton(hitExpr, tabPrefix, originalText) {
     const btn = document.createElement('button');
-    btn.className        = 'inline-dice-roll hit';
-    btn.textContent      = displayText;
-    btn.dataset.modifier = modifier;
-    btn.dataset.tab      = tabPrefix;
-    btn.title            = originalText;
+    btn.className          = 'inline-dice-roll hit';
+    btn.dataset.hitExpr    = hitExpr;
+    btn.dataset.hitText    = originalText;
+    btn.dataset.tab        = tabPrefix;
+    btn.title              = originalText;
+    refreshInlineRollButton(btn);
     return btn;
+}
+
+// "DC SPELL" → a non-clickable "DC 18" label that follows the sheet
+function makeSpellDCLabel(tabPrefix, colorClass, originalText) {
+    const span = document.createElement('span');
+    span.className   = `inline-stat-value ${colorClass}`;
+    span.dataset.tab = tabPrefix;
+    span.dataset.original = originalText;   // restored when a session log is edited
+    span.dataset.tooltip = `${tabPrefix === 'tab8' ? 'Crank' : 'Hazard'}'s spell save DC`;
+    refreshInlineRollButton(span);
+    return span;
+}
+
+/** Recalculate one button's modifier and label from the current sheet values. */
+function refreshInlineRollButton(btn) {
+    const tabPrefix = btn.dataset.tab;
+    if (btn.classList.contains('inline-stat-value')) {
+        btn.textContent = `DC ${safeInt(localStorage.getItem(`${tabPrefix}_spell_save`))}`;
+        return;
+    }
+    if (btn.classList.contains('hit')) {
+        if (btn.dataset.hitExpr === undefined) return;
+        const { modifier, text } = computeHit(btn.dataset.hitExpr, tabPrefix, btn.dataset.hitText || '');
+        btn.dataset.modifier = modifier;
+        // Condensed header chips drop " to hit" — the blue colour already says it
+        btn.textContent = btn.closest('.roll-summary-source')
+            ? text.replace(/\s*to\s+hit\s*$/i, '')
+            : text;
+    } else {
+        if (btn.dataset.modExpr === undefined) return;
+        const { total, display } = parseModifierString(btn.dataset.modExpr, tabPrefix);
+        btn.dataset.modifier = total;
+        btn.textContent      = `${btn.dataset.qty}d${btn.dataset.sides}${display}`;
+    }
+}
+
+/** Refresh every inline roll button under root (e.g. after a sheet stat changes). */
+export function refreshInlineRollValues(root = document) {
+    root.querySelectorAll('.inline-dice-roll, .inline-stat-value').forEach(refreshInlineRollButton);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Roll summary (condensed block header chips) ─────────────────────────────
+// Reads a block's stored HTML and lists the rolls to show as chips in its
+// condensed header. Order: "+X to hit" rolls first, then every other roll in
+// the order it appears. Rolls on lines starting with "Upcast" are skipped.
+// Each entry keeps the bold label at the start of its line (e.g. "One Handed")
+// so it can be shown on hover now, or next to the chip later.
+// Returns plain-text roll strings; applyInlineDiceRolls turns them into
+// buttons exactly as it does for rolls in the block body.
+
+const LINE_BREAK_TAGS = /^(LI|P|DIV|UL|OL|H[1-6]|TR|BLOCKQUOTE)$/;
+
+function isBoldElement(el, root) {
+    for (let e = el; e && e !== root; e = e.parentElement) {
+        if (e.tagName === 'B' || e.tagName === 'STRONG') return true;
+        const fw = e.style?.fontWeight;
+        if (fw && (fw === 'bold' || fw === 'bolder' || parseInt(fw, 10) >= 600)) return true;
+    }
+    return false;
+}
+
+// Split parsed block HTML into visual lines (<br>, list items, paragraphs...),
+// recording each line's full text and its leading bold text.
+function splitIntoLines(root) {
+    const lines = [];
+    let cur = { text: '', label: '', labelDone: false };
+    const flush = () => {
+        if (cur.text.trim()) lines.push(cur);
+        cur = { text: '', label: '', labelDone: false };
+    };
+    const walk = (node) => {
+        node.childNodes.forEach(child => {
+            if (child.nodeType === Node.TEXT_NODE) {
+                const t = child.textContent;
+                if (!cur.labelDone) {
+                    if (isBoldElement(child.parentElement, root)) cur.label += t;
+                    else if (t.trim()) cur.labelDone = true;
+                }
+                cur.text += t;
+            } else if (child.nodeType === Node.ELEMENT_NODE) {
+                if (child.tagName === 'BR') { flush(); return; }
+                const breaksLine = LINE_BREAK_TAGS.test(child.tagName);
+                if (breaksLine) flush();
+                walk(child);
+                if (breaksLine) flush();
+            }
+        });
+    };
+    walk(root);
+    flush();
+    return lines;
+}
+
+export function extractRollSummary(html) {
+    if (!html) return [];
+    // DOMParser builds an inert document — nothing in the block HTML loads or runs.
+    const doc   = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+    const lines = splitIntoLines(doc.body);
+
+    const hits   = [];
+    const dcs    = [];
+    const others = [];
+
+    lines.forEach(line => {
+        const text = line.text.replace(/\u00a0/g, ' ');
+        if (/^\s*upcast\b/i.test(text)) return;
+
+        const label = line.label.replace(/\u00a0/g, ' ').trim().replace(/:$/, '').trim();
+        const found = [];
+        let m;
+
+        // Same patterns and precedence as the inline buttons: dice first,
+        // then "to hit" matches that don't overlap a dice match.
+        const dice = new RegExp(DICE_PATTERN.source, 'gi');
+        while ((m = dice.exec(text)) !== null) {
+            found.push({ start: m.index, end: m.index + m[0].length, text: m[0].trim(), kind: 'dice' });
+        }
+        const hit = new RegExp(HIT_PATTERN.source, 'gi');
+        while ((m = hit.exec(text)) !== null) {
+            const start = m.index;
+            const end   = start + m[0].length;
+            if (found.some(f => start < f.end && end > f.start)) continue;
+            found.push({ start, end, text: m[0].trim(), kind: 'hit' });
+        }
+        const dc = new RegExp(DC_PATTERN.source, 'gi');
+        while ((m = dc.exec(text)) !== null) {
+            found.push({ start: m.index, end: m.index + m[0].length, text: m[0].trim(), kind: 'dc' });
+        }
+
+        found.sort((a, b) => a.start - b.start).forEach(f => {
+            const list = f.kind === 'hit' ? hits : f.kind === 'dc' ? dcs : others;
+            list.push({ text: f.text, label, kind: f.kind });
+        });
+    });
+
+    // To-hit first, then save DCs, then everything else in reading order
+    return [...hits, ...dcs, ...others];
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -729,8 +883,8 @@ export function applyInlineDiceRolls(container, tab = null) {
         NodeFilter.SHOW_TEXT,
         {
             acceptNode(node) {
-                if (node.parentElement?.closest('.inline-dice-roll')) return NodeFilter.FILTER_REJECT;
-                if (!node.parentElement?.closest('.block-body'))       return NodeFilter.FILTER_REJECT;
+                if (node.parentElement?.closest('.inline-dice-roll, .inline-stat-value')) return NodeFilter.FILTER_REJECT;
+                if (!node.parentElement?.closest('.block-body, .roll-summary-source')) return NodeFilter.FILTER_REJECT;
                 return NodeFilter.FILTER_ACCEPT;
             }
         }
@@ -795,8 +949,8 @@ export function applyInlineDiceRolls(container, tab = null) {
         NodeFilter.SHOW_TEXT,
         {
             acceptNode(node) {
-                if (node.parentElement?.closest('.inline-dice-roll')) return NodeFilter.FILTER_REJECT;
-                if (!node.parentElement?.closest('.block-body'))       return NodeFilter.FILTER_REJECT;
+                if (node.parentElement?.closest('.inline-dice-roll, .inline-stat-value')) return NodeFilter.FILTER_REJECT;
+                if (!node.parentElement?.closest('.block-body, .roll-summary-source')) return NodeFilter.FILTER_REJECT;
                 return NodeFilter.FILTER_ACCEPT;
             }
         }
@@ -825,7 +979,7 @@ export function applyInlineDiceRolls(container, tab = null) {
         let match;
 
         while ((match = HIT_PATTERN.exec(text)) !== null) {
-            const [full, sign, valueStr] = match;
+            const [full, hitExpr] = match;
             const originalText = full.trim();
 
             if (match.index > lastIdx) {
@@ -833,12 +987,12 @@ export function applyInlineDiceRolls(container, tab = null) {
             }
 
             if (hasCrank && !hasHazard) {
-                frag.appendChild(makeHitButton(sign, valueStr, 'tab8', originalText));
+                frag.appendChild(makeHitButton(hitExpr, 'tab8', originalText));
             } else if (hasHazard && hasCrank) {
-                frag.appendChild(makeHitButton(sign, valueStr, 'tab4', originalText));
-                frag.appendChild(makeHitButton(sign, valueStr, 'tab8', originalText));
+                frag.appendChild(makeHitButton(hitExpr, 'tab4', originalText));
+                frag.appendChild(makeHitButton(hitExpr, 'tab8', originalText));
             } else {
-                frag.appendChild(makeHitButton(sign, valueStr, 'tab4', originalText));
+                frag.appendChild(makeHitButton(hitExpr, 'tab4', originalText));
             }
 
             lastIdx = match.index + full.length;
@@ -850,7 +1004,106 @@ export function applyInlineDiceRolls(container, tab = null) {
 
         textNode.parentNode.replaceChild(frag, textNode);
     });
+
+    // ── Pass 3: "DC SPELL" → spell save DC label ─────────────────────────────
+    const walker3 = document.createTreeWalker(
+        container,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode(node) {
+                if (node.parentElement?.closest('.inline-dice-roll, .inline-stat-value')) return NodeFilter.FILTER_REJECT;
+                if (!node.parentElement?.closest('.block-body, .roll-summary-source')) return NodeFilter.FILTER_REJECT;
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        }
+    );
+
+    const dcNodes = [];
+    while ((node = walker3.nextNode())) dcNodes.push(node);
+
+    dcNodes.forEach(textNode => {
+        const text = textNode.textContent;
+        DC_PATTERN.lastIndex = 0;
+        if (!DC_PATTERN.test(text)) return;
+        DC_PATTERN.lastIndex = 0;
+
+        const blockEl = textNode.parentElement?.closest('.block[data-id]');
+        const blockId = blockEl?.dataset.id;
+        if (blockId && !(blockId in blockTypeCache)) {
+            blockTypeCache[blockId] = getBlockTypes(blockId, tab);
+        }
+        const blockTypes = blockId ? (blockTypeCache[blockId] || []) : [];
+        const hasHazard  = blockTypes.includes('Hazard');
+        const hasCrank   = blockTypes.includes('Crank');
+
+        const frag = document.createDocumentFragment();
+        let lastIdx = 0;
+        let match;
+
+        while ((match = DC_PATTERN.exec(text)) !== null) {
+            const [full, owner] = match;
+
+            if (match.index > lastIdx) {
+                frag.appendChild(document.createTextNode(text.slice(lastIdx, match.index)));
+            }
+
+            if (owner) {
+                // Named character ("DC HAZARD SPELL") — one label from that sheet
+                const ownerTab = CHARACTER_TABS[owner.toUpperCase()];
+                frag.appendChild(makeSpellDCLabel(ownerTab, ownerTab === 'tab8' ? 'crank' : 'hazard', full));
+            } else if (hasCrank && !hasHazard) {
+                frag.appendChild(makeSpellDCLabel('tab8', 'crank', full));
+            } else if (hasHazard && hasCrank) {
+                frag.appendChild(makeSpellDCLabel('tab4', 'hazard', full));
+                frag.appendChild(makeSpellDCLabel('tab8', 'crank', full));
+            } else {
+                frag.appendChild(makeSpellDCLabel('tab4', 'hazard', full));
+            }
+
+            lastIdx = match.index + full.length;
+        }
+
+        if (lastIdx < text.length) {
+            frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+        }
+
+        textNode.parentNode.replaceChild(frag, textNode);
+    });
+
+    // ── Bring every button up to date ────────────────────────────────────────
+    // Blocks that didn't change are reused between renders, so their buttons
+    // may hold old sheet values — recalculate them all (cheap). This also drops
+    // " to hit" from condensed header chips now that they're in the page.
+    refreshInlineRollValues(container);
+
+    // Condensed header chips show their line's bold label on hover (app
+    // tooltip), or what was written when the line has no label. Body buttons
+    // keep their title — the session log editor reads it to restore the text.
+    container.querySelectorAll('.roll-summary-source .inline-dice-roll').forEach(btn => {
+        const label = btn.closest('.roll-summary-source')?.dataset.rollLabel;
+        // (this runs on every render, so keep a tooltip set on an earlier pass)
+        btn.dataset.tooltip = label || btn.dataset.tooltip || btn.dataset.hitText || btn.title;
+        btn.removeAttribute('title');
+    });
+    container.querySelectorAll('.roll-summary-source .inline-stat-value').forEach(span => {
+        const label = span.closest('.roll-summary-source')?.dataset.rollLabel;
+        if (label) span.dataset.tooltip = label;
+    });
 }
+
+// ── Live refresh when the character sheet changes ────────────────────────────
+// Sheet fields save on blur/input and the stat breakdown popover saves on
+// click/input, so after any of those inside a sheet field or the popover,
+// re-read the sheet for every inline roll on the page (batched).
+let rollRefreshTimer = null;
+const SHEET_FIELD_SELECTOR = '[data-storage-key^="tab4_"], [data-storage-key^="tab8_"], #stat-breakdown-popover';
+['focusout', 'input', 'change', 'click'].forEach(type => {
+    document.addEventListener(type, (e) => {
+        if (!e.target?.closest?.(SHEET_FIELD_SELECTOR)) return;
+        clearTimeout(rollRefreshTimer);
+        rollRefreshTimer = setTimeout(() => refreshInlineRollValues(document), 100);
+    });
+});
 
 // ── Click handler ────────────────────────────────────────────────────────────
 
@@ -858,6 +1111,7 @@ document.addEventListener('click', async (e) => {
     const btn = e.target.closest('.inline-dice-roll');
     if (!btn) return;
 
+    refreshInlineRollButton(btn);   // always roll with the sheet's current values
     const modifier = parseInt(btn.dataset.modifier, 10) || 0;
     const label    = btn.closest('.block')?.querySelector('h3')?.textContent?.trim() || null;
     const isHit    = btn.classList.contains('hit');
@@ -872,3 +1126,95 @@ document.addEventListener('click', async (e) => {
         console.error('Inline dice roll failed:', err);
     }
 });
+
+// ── Edit-mode highlighting ───────────────────────────────────────────────────
+// While a block's text is being edited, colour anything that will become an
+// inline roll / DC label, so you can see it's been recognised. Uses the CSS
+// Custom Highlight API: it paints over text ranges without changing the DOM,
+// so the caret, typing and the saved HTML are all unaffected. Styles are the
+// ::highlight(...) rules in buttons.css. Browsers without the API just show
+// plain text, as before.
+//
+// Matching mirrors applyInlineDiceRolls: per text node, dice first, then
+// "to hit", then "DC SPELL", skipping anything overlapping an earlier match.
+
+const EDITOR_SELECTOR = '.inline-edit-body, .notes-edit-body, #session_viewer_body[contenteditable="true"]';
+const HIGHLIGHT_NAMES = ['roll-edit-hazard', 'roll-edit-crank', 'roll-edit-hit', 'roll-edit-dc-hazard', 'roll-edit-dc-crank'];
+const highlightsSupported = typeof CSS !== 'undefined' && 'highlights' in CSS && typeof Highlight !== 'undefined';
+
+// Which character the form currently says this block belongs to (block-type
+// buttons in the tab9 edit form). Mirrors the colouring rules for real rolls.
+function editorCharacter(editor) {
+    const form = editor.closest('.block, .notes-viewer, .notes-edit-form') || editor.parentElement;
+    const selected = [...(form?.querySelectorAll('.inline-edit-block-types .tag-button.selected') || [])]
+        .map(b => b.dataset.tag);
+    return selected.includes('Crank') && !selected.includes('Hazard') ? 'crank' : 'hazard';
+}
+
+function collectEditorRanges(editor, buckets) {
+    const character = editorCharacter(editor);
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    let textNode;
+    while ((textNode = walker.nextNode())) {
+        const text = textNode.textContent;
+        if (!text.trim()) continue;
+        const taken = [];
+        const add = (pattern, bucket, ownerGroup) => {
+            const re = new RegExp(pattern.source, 'gi');
+            let m;
+            while ((m = re.exec(text)) !== null) {
+                const start = m.index;
+                const end   = start + m[0].length;
+                if (taken.some(t => start < t.end && end > t.start)) continue;
+                taken.push({ start, end });
+                let name = bucket;
+                if (bucket === 'dc') {
+                    const owner = ownerGroup ? (m[ownerGroup] || '').toUpperCase() : '';
+                    const who   = owner ? (owner === 'CRANK' ? 'crank' : 'hazard') : character;
+                    name = `roll-edit-dc-${who}`;
+                }
+                const range = new Range();
+                range.setStart(textNode, start);
+                range.setEnd(textNode, end);
+                buckets[name].push(range);
+            }
+        };
+        add(DICE_PATTERN, `roll-edit-${character}`);
+        add(HIT_PATTERN,  'roll-edit-hit');
+        add(DC_PATTERN,   'dc', 1);
+    }
+}
+
+function refreshEditHighlights() {
+    if (!highlightsSupported) return;
+    const buckets = Object.fromEntries(HIGHLIGHT_NAMES.map(n => [n, []]));
+    document.querySelectorAll(EDITOR_SELECTOR).forEach(editor => {
+        if (editor.isContentEditable) collectEditorRanges(editor, buckets);
+    });
+    HIGHLIGHT_NAMES.forEach(name => {
+        if (buckets[name].length) CSS.highlights.set(name, new Highlight(...buckets[name]));
+        else CSS.highlights.delete(name);
+    });
+}
+
+if (highlightsSupported) {
+    let highlightQueued = false;
+    const queueHighlight = () => {
+        if (highlightQueued) return;
+        highlightQueued = true;
+        requestAnimationFrame(() => { highlightQueued = false; refreshEditHighlights(); });
+    };
+    // Typing in an editor
+    document.addEventListener('input', (e) => {
+        if (e.target?.closest?.(EDITOR_SELECTOR)) queueHighlight();
+    });
+    // Toggling Hazard / Crank in the edit form changes the colour
+    document.addEventListener('click', (e) => {
+        if (e.target?.closest?.('.inline-edit-block-types')) queueHighlight();
+    });
+    // Edit forms opening/closing (and the session log switching to edit mode).
+    // Only does work when an editor is on the page.
+    new MutationObserver(() => {
+        if (document.querySelector(EDITOR_SELECTOR) || CSS.highlights.size) queueHighlight();
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['contenteditable'] });
+}

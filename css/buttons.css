@@ -256,8 +256,8 @@
    stay none), the dot only ever has a fill. Grouping both properties onto
    both selectors previously gave the ring a solid fill too, turning it into
    a filled purple disc that swallowed the dot instead of a ring outline. */
-.concentration-button.concentration-active .conc-ring { stroke: #00AAFF; }
-.concentration-button.concentration-active .conc-dot { fill: #00AAFF; }
+.concentration-button.concentration-active .conc-ring { stroke: var(--color-concentration); }
+.concentration-button.concentration-active .conc-dot { fill: var(--color-concentration); }
 
 .concentration-button:hover,
 .concentration-button.concentration-active          { opacity: 1; background-color: transparent; }
@@ -288,6 +288,94 @@
 .inline-dice-roll:hover   { background-color: var(--roll-color); color: var(--gray-150); }
 .inline-dice-roll.crank   { --roll-color: var(--color-red); }
 .inline-dice-roll.hit     { --roll-color: var(--color-blue); }
+
+/* "DC SPELL" → spell save DC label. Same shape as a roll chip but outlined
+   and not clickable, so it reads as information rather than a button. */
+.inline-stat-value {
+    --roll-color: var(--color-green);
+    display: inline;
+    padding: var(--space-2px) var(--space-5px) var(--space-1px) var(--space-5px);
+    margin: 0 var(--space-2px);
+    border: 1px solid color-mix(in srgb, var(--roll-color) 45%, transparent);
+    border-radius: var(--radius-sm);
+    color: var(--roll-color);
+    font-size: 0.9em;
+    font-weight: 500;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.inline-stat-value.crank  { --roll-color: var(--color-red); }
+
+.block-roll-summary .inline-stat-value {
+    margin: 0;
+}
+
+/* "Show rolls when condensed" — dice icon next to Save in the Feats & Magic
+   edit form. Green with a soft circle when on, grey when off. */
+.roll-summary-toggle {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    align-self: center;
+    margin-right: var(--space-2);
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: transparent;
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color var(--transition-medium) ease, color var(--transition-medium) ease;
+}
+
+.roll-summary-toggle svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linejoin: round;
+}
+
+.roll-summary-toggle:hover {
+    color: var(--gray-800);
+}
+
+.roll-summary-toggle.on {
+    color: var(--color-green);
+    background-color: color-mix(in srgb, var(--color-green) 18%, transparent);
+}
+
+.roll-summary-toggle.on:hover {
+    background-color: color-mix(in srgb, var(--color-green) 28%, transparent);
+}
+
+/* Edit mode: text that will become an inline roll / DC label is tinted to
+   match (set from diceRoller.js via the CSS Custom Highlight API). Highlights
+   can only change colours and underlines — no padding or rounded corners. */
+::highlight(roll-edit-hazard) {
+    background-color: color-mix(in srgb, var(--color-green) 20%, transparent);
+    color: var(--color-green);
+}
+::highlight(roll-edit-crank) {
+    background-color: color-mix(in srgb, var(--color-red) 20%, transparent);
+    color: var(--color-red);
+}
+::highlight(roll-edit-hit) {
+    background-color: color-mix(in srgb, var(--color-blue) 20%, transparent);
+    color: var(--color-blue);
+}
+::highlight(roll-edit-dc-hazard) {
+    color: var(--color-green);
+    text-decoration: underline dotted;
+}
+::highlight(roll-edit-dc-crank) {
+    color: var(--color-red);
+    text-decoration: underline dotted;
+}
 
 /* ====================================================================== */
 /* ========================= BLOCK ACTIONS MENU ========================= */

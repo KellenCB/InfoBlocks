@@ -303,6 +303,22 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     top: -36px;
 }
 
+/* App-wide tooltip (js/tooltips.js): the same look as .uch-tooltip, but one
+   shared element on <body> positioned by script. Add data-tooltip="..." to
+   any element to use it — this is the default for all new tooltips. */
+.uch-tooltip.app-tooltip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: auto;
+    transform: none;
+}
+
+.uch-tooltip.app-tooltip.visible {
+    opacity: 1;
+    transition-delay: var(--transition-slower);
+}
+
 .uch-inline-btn {
     width: 42px;
     height: 42px;
@@ -1205,6 +1221,51 @@ body.app-ready #app-row {
     -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
 }
 
+/* ── Roll summary chips (condensed Feats & Magic headers) ── */
+.block-roll-summary {
+    display: flex;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+    align-items: center;
+    align-self: center;
+    gap: var(--space-2);
+    font-size: var(--font-12);
+    white-space: nowrap;
+}
+
+.roll-summary-source {
+    display: inline-flex;
+    gap: var(--space-2px);
+}
+
+.block-roll-summary .inline-dice-roll {
+    margin: 0;
+}
+
+.roll-summary-more {
+    color: var(--gray-700);
+    cursor: pointer;
+}
+
+/* Blocks with chips measure their own width, so the chips hide whenever the
+   block is narrow (phone, split view) rather than squashing the title */
+.block.has-roll-summary {
+    container-type: inline-size;
+}
+
+/* Keep 420px in sync with ROLL_SUMMARY_MIN_WIDTH in appManager.js (used for
+   the chips' fade-in while a block collapses) */
+@container (max-width: 420px) {
+    .block-roll-summary {
+        display: none;
+    }
+}
+
+/* Global "Roll shortcuts" switch in the main menu */
+body.roll-chips-hidden .block-roll-summary {
+    display: none;
+}
+
 .block-body {
     display: flex;
     flex-direction: column;
@@ -1600,11 +1661,13 @@ a:hover {
 /* ============================ MENU STYLING ============================ */
 /* ====================================================================== */
 
+/* Matches the Sort / View Mode dropdowns (.uch-dropdown-popover, .sort-item) */
 .menu-popover {
     display: none;
-    border-radius: var(--radius-xl);
-    padding: var(--space-7);
-    width: 260px;
+    border-radius: var(--radius-lg);
+    padding: var(--space-5px);
+    width: max-content;
+    min-width: 190px;
 }
 
 .menu-popover.active {
@@ -1620,32 +1683,57 @@ a:hover {
 .menu-popover-buttons {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
+    gap: var(--space-5px);
 }
 
 .menu-item-button {
     width: 100%;
-    padding: var(--space-4) var(--space-7);
-    border-radius: var(--radius-lg);
+    padding: var(--space-2) var(--space-5);
+    border-radius: var(--radius-sm);
     text-align: left;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--space-7);
+    white-space: nowrap;
     cursor: pointer;
-    transition: background-color var(--transition-medium);
+    transition: background-color var(--transition-slow) ease;
     border: none;
-    background-color: var(--gray-400);
-    color: var(--gray-900);
+    background: none;
+    color: var(--gray-850);
 }
 
 .menu-item-button:hover {
-    background-color: var(--gray-500);
+    background: var(--gray-400);
 }
 
 .button-icon {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.menu-item-button .button-icon svg {
+    width: 16px;
+    height: 16px;
+    color: var(--gray-700);
+}
+
+/* Clear All Data — red text and icon, red tint on hover */
+.menu-item-button.bin-button,
+.menu-item-button.bin-button .button-icon svg {
+    color: var(--color-red);
+}
+
+.menu-item-button.bin-button:hover {
+    background: color-mix(in srgb, var(--color-red) 15%, transparent);
+}
+
+/* The clear-data confirmation opens inside the menu — stop its text from
+   widening the menu (it wraps to the menu's width instead) */
+.menu-popover .clear-data-confirm {
+    width: 0;
+    min-width: 100%;
 }
 
 /* ====================================================================== */
@@ -2149,6 +2237,19 @@ body:has(#dice-panel.open) #app-row > #right-panel .tab-content {
 
 .block.pinned .pin-button {
     touch-action: none;
+}
+
+/* Concentrating (Feats & Magic): always first in the pinned zone, in a
+   lighter blue than pinned. Overrides .block.pinned when it's both. */
+.block.concentrating {
+    background-color: var(--block-bg-concentrating-base);
+    background-image: radial-gradient(90% 110% at 50% 0%, var(--block-bg-concentrating-highlight) 0%, transparent 100%);
+    border: 1px solid var(--block-border-concentrating);
+    padding: var(--space-9px) var(--space-14px);
+}
+
+.block.concentrating:not(.minimized)::after {
+    display: none;
 }
 
 .block.pinned.dragging {

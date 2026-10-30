@@ -1,6 +1,6 @@
 // appManager.js
 import { categoryTags, blockTypeConfig, BOOK_ACCENT_COLORS, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
-import { blockTemplate, sanitizeBlockHTML } from './blockTemplate.js';
+import { blockTemplate, sanitizeBlockHTML, buildRollSummaryHTML } from './blockTemplate.js';
 import { applyInlineDiceRolls } from './diceRoller.js';
 import { filterManager } from './filterManager.js';
 import { blockActionsHandler } from './blockActionsHandler.js';
@@ -745,17 +745,44 @@ export const appManager = (() => {
   // ── Block expand/collapse animation ─────────────────────────────
   let pendingBlockAnim = null;
 
-  const setPendingBlockAnim = (blockId, oldHeight) => {
-      pendingBlockAnim = { blockId, oldHeight };
+  // rollSummaryClone: on expand, a copy of the condensed header's roll chips,
+  // faded out in the new expanded header (see applyPendingBlockAnim)
+  const setPendingBlockAnim = (blockId, oldHeight, rollSummaryClone = null) => {
+      pendingBlockAnim = { blockId, oldHeight, rollSummaryClone };
+  };
+
+  // Roll chips are only visible when the global switch is on and the block
+  // is wide enough (mirrors the CSS container query in base-layout.css)
+  const ROLL_SUMMARY_MIN_WIDTH = 420;
+  const rollChipsCanShow = (blockEl) => {
+      if (document.body.classList.contains('roll-chips-hidden')) return false;
+      const cs = getComputedStyle(blockEl);
+      const contentWidth = blockEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      return contentWidth > ROLL_SUMMARY_MIN_WIDTH;
   };
 
 const applyPendingBlockAnim = () => {
       if (!pendingBlockAnim) return;
-      const { blockId, oldHeight } = pendingBlockAnim;
+      const { blockId, oldHeight, rollSummaryClone } = pendingBlockAnim;
       pendingBlockAnim = null;
 
       const blockEl = document.querySelector(`.block[data-id="${blockId}"]`);
       if (!blockEl) return;
+
+      // Expanding: the roll chips from the condensed header fade out in place
+      if (rollSummaryClone) {
+          const headerLeft = blockEl.querySelector('.block-header-left');
+          if (headerLeft) {
+              rollSummaryClone.style.pointerEvents = 'none';
+              rollSummaryClone.style.opacity = '1';
+              rollSummaryClone.style.transition = 'none';
+              headerLeft.appendChild(rollSummaryClone);
+              void rollSummaryClone.offsetWidth;
+              rollSummaryClone.style.transition = 'opacity 0.25s ease';
+              rollSummaryClone.style.opacity = '0';
+              setTimeout(() => rollSummaryClone.remove(), 300);
+          }
+      }
 
       const newHeight = blockEl.offsetHeight;
       if (Math.abs(newHeight - oldHeight) < 2) return;
@@ -920,6 +947,16 @@ const applyPendingBlockAnim = () => {
       const usesContainer = blockEl.querySelector('.inline-edit-uses');
       if (usesContainer) initUsesField(usesContainer, usesKey);
 
+      // "Show rolls when condensed" dice toggle
+      const rollToggle = blockEl.querySelector('.roll-summary-toggle');
+      rollToggle?.addEventListener('click', (e) => {
+          e.preventDefault();
+          const on = rollToggle.getAttribute('aria-pressed') === 'false';
+          rollToggle.setAttribute('aria-pressed', String(on));
+          rollToggle.classList.toggle('on', on);
+          rollToggle.dataset.tooltip = on ? ROLL_TOGGLE_TITLE_ON : ROLL_TOGGLE_TITLE_OFF;
+      });
+
       // Tag toggle
       blockEl.querySelector('.inline-edit-tags')?.addEventListener('click', (e) => {
           const btn = e.target.closest('.tag-button');
@@ -1083,16 +1120,48 @@ const applyPendingBlockAnim = () => {
 
       localStorage.removeItem(usesKey);
 
-      return { title, text, blockType: selectedTypes, tags: allTags, uses: usesState, properties };
+      // Defaults to on if the toggle is missing for any reason
+      const showRollSummary = blockEl.querySelector('.roll-summary-toggle')?.getAttribute('aria-pressed') !== 'false';
+
+      return { title, text, blockType: selectedTypes, tags: allTags, uses: usesState, properties, showRollSummary };
   };
 
+  // "Show rolls when condensed" — dice icon button in the tab9 edit/add form
+  // header, next to Save. Green when on, grey when off (styles in buttons.css).
+  // Toggled in wireTab9FormHandlers; read in collectTab9FormData.
+  const ROLL_TOGGLE_TITLE_ON  = 'Rolls shown when condensed (click to hide)';
+  const ROLL_TOGGLE_TITLE_OFF = 'Rolls hidden when condensed (click to show)';
+  const buildRollSummaryToggleHTML = (on = true) => `
+                      <button type="button" class="roll-summary-toggle${on ? ' on' : ''}" aria-pressed="${on}" data-tooltip="${on ? ROLL_TOGGLE_TITLE_ON : ROLL_TOGGLE_TITLE_OFF}">
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 21 7v10l-9 5-9-5V7z"/><path d="M12 2 7.5 9.5h9zM7.5 9.5 3 17M16.5 9.5 21 17M7.5 9.5 12 22l4.5-12.5M3 17h18"/></svg>
+                      </button>`;
+
   // Collapse animation: shrink height + fade content simultaneously on the
-  const animateBlockCollapse = (blockEl, callback) => {
+  const animateBlockCollapse = (blockEl, callback, tab = null) => {
       const headerEl = blockEl.querySelector('.block-header');
       if (!headerEl) { callback(); return; }
 
       const oldHeight = blockEl.offsetHeight;
       const cs = getComputedStyle(blockEl);
+
+      // Roll chips the condensed header will show (Feats & Magic) — build them
+      // now and fade them in during the collapse, like the condensed tags
+      let rollPreview = null;
+      if (tab === 'tab9' && rollChipsCanShow(blockEl)) {
+          const block = getBlocks(tab).find(b => b.id === blockEl.dataset.id);
+          const summaryHTML = (block && block.showRollSummary !== false) ? buildRollSummaryHTML(block.text) : '';
+          const headerLeft = headerEl.querySelector('.block-header-left');
+          if (summaryHTML && headerLeft) {
+              const holder = document.createElement('div');
+              holder.innerHTML = summaryHTML;
+              rollPreview = holder.firstElementChild;
+              rollPreview.style.opacity = '0';
+              rollPreview.style.transition = 'none';
+              rollPreview.style.pointerEvents = 'none';
+              headerLeft.appendChild(rollPreview);
+              applyInlineDiceRolls(rollPreview, tab);
+          }
+      }
 
       // Build condensed tags from selected tags and inject into header
       const selectedTags = blockEl.querySelectorAll('.block-tags .tag-button.selected, .block-tags .tag-button.selected-or');
@@ -1138,6 +1207,10 @@ const applyPendingBlockAnim = () => {
       if (previewContainer) {
           previewContainer.style.transition = 'opacity 0.3s ease 0.15s';
           previewContainer.style.opacity = '1';
+      }
+      if (rollPreview) {
+          rollPreview.style.transition = 'opacity 0.3s ease 0.15s';
+          rollPreview.style.opacity = '1';
       }
 
       setTimeout(() => {
@@ -1475,6 +1548,10 @@ const applyPendingBlockAnim = () => {
               // Strip inline dice buttons back to plain text
               bodyEl.querySelectorAll('.inline-dice-roll').forEach(btn => {
                   btn.replaceWith(document.createTextNode(btn.title));
+              });
+              // ...and "DC 18" labels back to the "DC SPELL" that was written
+              bodyEl.querySelectorAll('.inline-stat-value').forEach(span => {
+                  span.replaceWith(document.createTextNode(span.dataset.original || span.textContent));
               });
               bodyEl.normalize();
 
@@ -2706,7 +2783,9 @@ const applyPendingBlockAnim = () => {
       zone.addEventListener('pointerdown', (e) => {
           const pinBtn = e.target.closest('.pin-button');
           if (!pinBtn) return;
-          const block = pinBtn.closest('.block.pinned');
+          // The concentrating block always stays at the top, so it can't be dragged
+          // (its pin button still works as a normal click)
+          const block = pinBtn.closest('.block.pinned:not(.concentrating)');
           if (!block) return;
 
           e.preventDefault();
@@ -2763,7 +2842,7 @@ const applyPendingBlockAnim = () => {
           // Already in drag mode — reposition (viewport coords)
           block.style.top = (e.clientY - dragState.offsetY) + 'px';
 
-          const siblings = [...zone.querySelectorAll('.block.pinned:not(.dragging)')];
+          const siblings = [...zone.querySelectorAll('.block.pinned:not(.dragging):not(.concentrating)')];
           const dragMidY = e.clientY;
           let insertBefore = null;
           for (const sib of siblings) {
@@ -2848,7 +2927,16 @@ const applyPendingBlockAnim = () => {
       zone.addEventListener('pointercancel', endDrag);
   };
 
+  // Set just before a re-render that moves blocks between the pinned zone
+  // and the list (pin / unpin, concentrate / stop) so the next renderBlocks
+  // slides them into place instead of fading out and in.
+  let pendingMoveAnim = false;
+  const animateNextBlockMove = () => { pendingMoveAnim = true; };
+
   const renderBlocks = (tab = getActiveTab(), filteredBlocks = null, skipTagUpdate = false) => {
+    // Use up the move-animation request on this render, whichever path it takes
+    const moveAnim = pendingMoveAnim;
+    pendingMoveAnim = false;
     if (typeof tab !== "string") {
       console.error("❌ Error: 'tab' should be a string but got:", tab);
       tab = "tab4";
@@ -2894,6 +2982,8 @@ const applyPendingBlockAnim = () => {
 
         if (e.target.closest('.block-actions') || e.target.closest('.actions-trigger')) return;
         if (e.target.classList.contains('circle')) return;
+        // Roll chips in a condensed header roll the dice — they shouldn't also expand the block
+        if (e.target.closest('.inline-dice-roll')) return;
         if (blockEl.classList.contains('inline-editing')) return;
 
         if (!blockEl.classList.contains('condensed')) {
@@ -2927,21 +3017,31 @@ const applyPendingBlockAnim = () => {
         };
 
         if (isCollapsing) {
-            animateBlockCollapse(blockEl, doRerender);
+            // Roll chips only appear in the condensed view (not minimized)
+            animateBlockCollapse(blockEl, doRerender, targetBlock.viewState === 'condensed' ? tab : null);
         } else {
-            setPendingBlockAnim(blockId, blockEl.offsetHeight);
+            // Copy the visible roll chips so they can fade out after expanding
+            const summary = blockEl.querySelector('.block-roll-summary');
+            const rollSummaryClone = (summary && summary.offsetParent !== null) ? summary.cloneNode(true) : null;
+            setPendingBlockAnim(blockId, blockEl.offsetHeight, rollSummaryClone);
             doRerender();
         }
       });
     } // end one-time event setup
 
     // ── BLOCK DATA ──────────────────────────────────────────────────
+    // A block being concentrated on (Feats & Magic only) sits in the pinned
+    // zone above every pinned block, whether or not it's pinned itself, and
+    // goes back to its normal place when concentration stops.
+    const isConcentrating = b => tab === 'tab9' && b.concentrating === true;
     const allBlocks     = getBlocks(tab);
-    const pinnedBlocks  = allBlocks.filter(b => b.pinned);
-    const displayBlocks = (filteredBlocks || allBlocks).filter(b => !b.pinned);
+    const pinnedBlocks  = allBlocks.filter(b => b.pinned || isConcentrating(b));
+    const displayBlocks = (filteredBlocks || allBlocks).filter(b => !b.pinned && !isConcentrating(b));
 
     const pinnedOrder = JSON.parse(localStorage.getItem(`pinnedBlockOrder_${tab}`) || '[]');
     pinnedBlocks.sort((a, b) => {
+        const ac = isConcentrating(a), bc = isConcentrating(b);
+        if (ac !== bc) return ac ? -1 : 1;
         const ai = pinnedOrder.indexOf(a.id);
         const bi = pinnedOrder.indexOf(b.id);
         if (ai === -1 && bi === -1) return 0;
@@ -2968,11 +3068,29 @@ const applyPendingBlockAnim = () => {
         });
     }
 
+    // ── MOVE ANIMATION (pin / concentrate) ──────────────────────────
+    // When animateNextBlockMove() was called, remember where every block is
+    // now. Blocks that move between the pinned zone and the list are swapped
+    // instantly (no collapse / expand), then every block slides from its old
+    // position to its new one (FLIP) — see the end of the display sync.
+    const firstRects = new Map();
+    const firstZone  = new Map();   // id -> 'pinned' | 'list'
+    if (moveAnim) {
+        existingDisplayEls.forEach((el, id) => { firstRects.set(id, el.getBoundingClientRect()); firstZone.set(id, 'list'); });
+        existingPinnedEls.forEach((el, id)  => { firstRects.set(id, el.getBoundingClientRect()); firstZone.set(id, 'pinned'); });
+    }
+    const nextIds  = new Set([...pinnedBlocks, ...displayBlocks].map(b => b.id));
+    const isMoving = id => moveAnim && firstRects.has(id) && nextIds.has(id);
+
     // ── IDENTIFY & ANIMATE ORPHANS FIRST ────────────────────────────
     // Mark departing blocks before the sync loop so they collapse in-place
     // and the sync loop can skip over them when checking positions.
     const displayIdSet = new Set(displayBlocks.map(b => b.id));
     existingDisplayEls.forEach((el, id) => {
+        if (!displayIdSet.has(id) && isMoving(id)) {
+            el.remove();            // moving into the pinned zone — slides there instead
+            return;
+        }
         if (!displayIdSet.has(id) && !el.classList.contains('inline-editing')) {
             el.classList.add('block-removing');
             const h = el.offsetHeight;
@@ -3007,7 +3125,14 @@ const applyPendingBlockAnim = () => {
         pinnedBlocks.forEach(block => {
             const el = existingPinnedEls.get(block.id);
             const viewState = block.viewState || 'condensed';
-            if (el && el.classList.contains(viewState)) {
+            // Rebuild if the view state changed, or if pinning / concentrating
+            // changed while the block stayed in this zone (its colour and pin
+            // icon come from those)
+            const sameState = el
+                && el.classList.contains(viewState)
+                && el.classList.contains('pinned') === !!block.pinned
+                && el.classList.contains('concentrating') === isConcentrating(block);
+            if (sameState) {
                 pinnedZone.appendChild(el);
                 existingPinnedEls.delete(block.id);
             } else {
@@ -3016,7 +3141,11 @@ const applyPendingBlockAnim = () => {
             }
         });
 
-        existingPinnedEls.forEach(el => {
+        existingPinnedEls.forEach((el, id) => {
+            if (isMoving(id)) {
+                el.remove();        // moving back into the list — slides there instead
+                return;
+            }
             el.classList.add('block-removing');
             const h = el.offsetHeight;
             el.style.maxHeight = h + 'px';
@@ -3066,6 +3195,14 @@ const applyPendingBlockAnim = () => {
             const newEl = wrapper.firstElementChild;
             el.replaceWith(newEl);
             prevEl = newEl;
+        } else if (!el && isMoving(block.id)) {
+            // Moved here from the pinned zone — no fade-in, it slides into place
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = blockTemplate(block, tab);
+            const newEl = wrapper.firstElementChild;
+            if (prevEl) prevEl.after(newEl);
+            else resultsSection.prepend(newEl);
+            prevEl = newEl;
         } else if (!el) {
             // Genuinely new block — create with expand + fade in
             const wrapper = document.createElement('div');
@@ -3108,6 +3245,33 @@ const applyPendingBlockAnim = () => {
             prevEl = newEl;
         }
     });
+
+    // ── MOVE ANIMATION: slide every block from old to new position ──
+    if (moveAnim) {
+        resultsSection.querySelectorAll('.block[data-id]:not(.block-removing)').forEach(el => {
+            const first = firstRects.get(el.dataset.id);
+            if (!first) return;
+            const last = el.getBoundingClientRect();
+            const dx = first.left - last.left;
+            const dy = first.top  - last.top;
+            if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+            // The block that changed zone travels over the others
+            const nowZone = el.closest('.pinned-blocks-zone') ? 'pinned' : 'list';
+            if (firstZone.get(el.dataset.id) !== nowZone) el.style.zIndex = '20';
+            el.style.transition = 'none';
+            el.style.transform  = `translate(${dx}px, ${dy}px)`;
+            void el.offsetHeight;
+            requestAnimationFrame(() => {
+                el.style.transition = 'transform 0.45s var(--easing-signature, ease)';
+                el.style.transform  = '';
+                const done = () => { el.style.transition = ''; el.style.zIndex = ''; };
+                el.addEventListener('transitionend', (e) => {
+                    if (e.target === el && e.propertyName === 'transform') done();
+                }, { once: true });
+                setTimeout(done, 600);
+            });
+        });
+    }
 
     // ── PLACEHOLDER ─────────────────────────────────────────────────
     let placeholder = resultsSection.querySelector('.results-placeholder');
@@ -3237,7 +3401,9 @@ const applyPendingBlockAnim = () => {
 /* ======================== DATA MANAGEMENT ========================*/
 /* =================================================================*/
 
-const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType = null, blockId = null, timestamp = null, inventoryExtras = null, tab3Extras = null) => {
+// `extras` is merged onto the saved block as-is: inventory fields on tab6,
+// showRollSummary on tab9.
+const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType = null, blockId = null, timestamp = null, extras = null, tab3Extras = null) => {
     const blockTypesArr = Array.isArray(blockType) ? blockType : (blockType ? [blockType] : []);
     const textOptional  = tab === "tab6" || (tab === "tab3" && (blockTypesArr.includes("Quest") || blockTypesArr.includes("Map")));
     if (!blockTitle || (!textOptional && !text)) {
@@ -3255,7 +3421,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
           ...userBlocks[blockIndex],
           title: blockTitle, text, tags, uses, properties, blockType,
           timestamp: userBlocks[blockIndex].timestamp || Date.now(),
-          ...(inventoryExtras || {}),
+          ...(extras || {}),
           ...(tab3Extras || {})
         };
       } else {
@@ -3280,7 +3446,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
         blockType: blockType || null,
         timestamp: timestamp || Date.now(),
         viewState: "expanded",
-        ...(inventoryExtras || {}),
+        ...(extras || {}),
         ...(tab3Extras || {})
       });
     }
@@ -3432,7 +3598,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
                   <div class="block-header-left">
                       <div class="block-title"><h3 contenteditable="true" class="inline-edit-title text-md">${block.title}</h3></div>
                   </div>
-                  <div class="inline-edit-controls">
+                  <div class="inline-edit-controls">${buildRollSummaryToggleHTML(block.showRollSummary !== false)}
                       <button class="button green-button inline-edit-save text-body">Save</button>
                       <button class="button red-button inline-edit-cancel text-body">Cancel</button>
                   </div>
@@ -3454,7 +3620,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
           if (!data) return;
           inlineEditState = null;
           blockEl.classList.remove('inline-editing', 'expanded');
-          saveBlock(tab, data.title, data.text, data.tags, data.uses, data.properties, data.blockType, blockId, block.timestamp);
+          saveBlock(tab, data.title, data.text, data.tags, data.uses, data.properties, data.blockType, blockId, block.timestamp, { showRollSummary: data.showRollSummary });
           setPendingBlockAnim(blockId, blockEl.offsetHeight);
           filterManager.applyFilters('9');
       };
@@ -3503,7 +3669,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
                   <div class="block-header-left">
                       <div class="block-title"><h3 contenteditable="true" class="inline-edit-title text-md"></h3></div>
                   </div>
-                  <div class="inline-edit-controls">
+                  <div class="inline-edit-controls">${buildRollSummaryToggleHTML(true)}
                       <button class="button green-button inline-edit-save text-body">Save</button>
                       <button class="button red-button inline-edit-cancel text-body">Cancel</button>
                   </div>
@@ -3526,7 +3692,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       const doSave = () => {
           const data = collectTab9FormData(blockEl, usesKey);
           if (!data) return;
-          saveBlock(tab, data.title, data.text, data.tags, data.uses, data.properties, data.blockType);
+          saveBlock(tab, data.title, data.text, data.tags, data.uses, data.properties, data.blockType, null, null, { showRollSummary: data.showRollSummary });
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters(tabSuffix));
       };
 
@@ -3547,6 +3713,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
   return {
     getActiveTab,
     renderBlocks,
+    animateNextBlockMove,
     getBlocks,
     updateBlocksViewState,
     updateViewToggleDropdown,

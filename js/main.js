@@ -156,6 +156,29 @@ document.addEventListener("click", (e) => {
 });
 
 /* ===================================================================*/
+/* ===================== ROLL SHORTCUTS (GLOBAL) =====================*/
+/* ===================================================================*/
+
+// Hides/shows every condensed-header roll chip via a body class (CSS in
+// base-layout.css). Each block's own "Show rolls when condensed" setting is
+// left untouched, so switching this back on restores them exactly as before.
+const ROLL_CHIPS_HIDDEN_KEY = 'rollChipsHidden';
+const rollChipsToggle = document.getElementById('roll_chips_toggle');
+const applyRollChipsHidden = (hidden) => document.body.classList.toggle('roll-chips-hidden', hidden);
+
+const rollChipsHiddenSaved = localStorage.getItem(ROLL_CHIPS_HIDDEN_KEY) === 'true';
+applyRollChipsHidden(rollChipsHiddenSaved);
+
+if (rollChipsToggle) {
+    rollChipsToggle.checked = !rollChipsHiddenSaved;
+    rollChipsToggle.addEventListener('change', () => {
+        const hidden = !rollChipsToggle.checked;
+        localStorage.setItem(ROLL_CHIPS_HIDDEN_KEY, hidden ? 'true' : 'false');
+        applyRollChipsHidden(hidden);
+    });
+}
+
+/* ===================================================================*/
 /* ================ CHAR SHEET OVERLAY (PORTRAIT) ====================*/
 /* ===================================================================*/
 
