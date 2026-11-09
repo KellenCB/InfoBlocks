@@ -990,6 +990,43 @@ document.addEventListener("DOMContentLoaded", () => {
         setupPopoverHover(uchViewBtn, viewPopover, closeViewPopover);
     }
 
+    // ── UCH pins button (Feats & Magic only) ─────────────────────────────────
+    // Toggles pinned blocks between the pinned zone at the top and the normal
+    // list. Pins themselves are never changed. The state lives in appManager
+    // memory only, so it's always off after a load or refresh.
+    localStorage.removeItem('tab9_pinsHidden');   // clear the key used by an earlier version
+    const uchPinsBtn = document.getElementById('uch-pins-button');
+    if (uchPinsBtn) {
+        const pinsTooltip = uchPinsBtn.querySelector('.uch-tooltip');
+        const tab9Btn     = document.querySelector('.tab-button[data-tab="tab9"]');
+
+        const syncPinsButton = () => {
+            const hidden = appManager.getPinsHidden();
+            uchPinsBtn.classList.toggle('pins-hidden', hidden);
+            if (pinsTooltip) pinsTooltip.textContent = hidden ? 'Show Pins' : 'Hide Pins';
+            // Dims every block's pin icon and makes it unclickable (buttons.css)
+            document.getElementById('tab9')?.classList.toggle('pins-hidden-mode', hidden);
+            // Only Feats & Magic has pins, so only show the button there.
+            // .pins-collapsed animates its width, sliding Sort / View along.
+            uchPinsBtn.classList.toggle('pins-collapsed', !tab9Btn?.classList.contains('active'));
+        };
+
+        uchPinsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            appManager.setPinsHidden(!appManager.getPinsHidden());
+            syncPinsButton();
+            appManager.animateNextBlockMove();   // slide blocks between zones
+            filterManager.applyFilters('9');
+        });
+
+        // Show / hide the button as the active list tab changes
+        if (tab9Btn) new MutationObserver(syncPinsButton).observe(tab9Btn, { attributes: true, attributeFilter: ['class'] });
+
+        // Set the starting state without animating, then turn animation on
+        syncPinsButton();
+        requestAnimationFrame(() => requestAnimationFrame(() => uchPinsBtn.classList.add('pins-animate')));
+    }
+
     appManager.renderBlocks(activeTabId);
 });
 
@@ -1058,6 +1095,13 @@ document.addEventListener("click", (e) => {
     const wasOpen = group.classList.contains("open");
     group.classList.toggle("open");
 
+    // Edit-form groups have no .tag-accordion-chips container, so their chips
+    // sit directly inside the group. Clear them on every open/close so they
+    // don't pile up (collapse rebuilds them below).
+    if (!group.querySelector(".tag-accordion-chips")) {
+        group.querySelectorAll(":scope > .tag-button").forEach(c => c.remove());
+    }
+
     const container = group.closest('[id^="dynamic_tags_section"]')
         || group.closest('[id^="split-tags"]');
     if (container) {
@@ -1112,7 +1156,7 @@ document.addEventListener("click", (e) => {
 // Chip click — deselect the tag without opening the group.
 // Runs in capture phase so it intercepts before any tag-button handler fires.
 document.addEventListener("click", (e) => {
-    const chip = e.target.closest(".tag-accordion-chips .tag-button");
+    const chip = e.target.closest(".tag-accordion-chips .tag-button, .tag-accordion-group > .tag-button");
     if (!chip) return;
     e.stopPropagation();
     const group = chip.closest(".tag-accordion-group");
@@ -1123,6 +1167,8 @@ document.addEventListener("click", (e) => {
         chip.style.opacity = '0';
         chip.style.pointerEvents = 'none';
         bodyBtn.click(); // triggers applyFilters → _applySelectionClasses which rebuilds chips
+        // Edit-form chips aren't rebuilt by the filter, so remove this one directly
+        if (!chip.closest(".tag-accordion-chips")) chip.remove();
     }
 }, true);
 

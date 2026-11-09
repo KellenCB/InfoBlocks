@@ -66,6 +66,10 @@
                         <svg viewBox="0 0 24 24" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                         <span class="uch-tooltip text-body-sm">View Mode</span>
                     </button>
+                    <button id="uch-pins-button" class="uch-inline-btn uch-has-tooltip">
+                        <svg viewBox="0 0 24 24" stroke-width="1.6"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/><line class="pins-off-slash" x1="3" y1="3" x2="21" y2="21"/></svg>
+                        <span class="uch-tooltip text-body-sm">Hide Pins</span>
+                    </button>
                 </div>
 
                 <div class="uch-pill-solo frosted-glass">
@@ -349,6 +353,13 @@
                 </div>
 
                 <div class="resources-strip glass-surface">
+                    <div class="resources-strip-header">
+                        <span class="resources-strip-heading text-label">Spells &amp; Suit</span>
+                        <span class="prepared-counter" data-tooltip="Spells tagged Prepared / INT modifier + half level">
+                            <span class="prepared-counter-label text-label">Prepared</span>
+                            <span id="prepared_spells_count" class="prepared-counter-value">0 / 0</span>
+                        </span>
+                    </div>
                     <div class="spell-slot-section">
                         <div class="spell-slot-group">
                             <svg class="resources-strip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Suit Uses"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3z"/></svg>

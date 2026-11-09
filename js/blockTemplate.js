@@ -475,7 +475,7 @@ export const blockTemplate = (block, tab = "tab4") => {
 
         const bookStyle = isTab3Book ? ` style="--book-accent:${bookAccentHex};"` : '';
         return `
-            <div class="block ${viewState}${(block.pinned && !isTab3) ? ' pinned' : ''}${(isTab9 && block.concentrating === true) ? ' concentrating' : ''}${rollSummaryHTML ? ' has-roll-summary' : ''}${questClass}${mapClass}${bookClass}" data-id="${block.id}"${bookStyle}>
+            <div class="block ${viewState}${(block.pinned && !isTab3 && !block._pinsHidden) ? ' pinned' : ''}${block._pinsHidden ? ' pinned-hidden' : ''}${(isTab9 && block.concentrating === true && !block._pinsHidden) ? ' concentrating' : ''}${rollSummaryHTML ? ' has-roll-summary' : ''}${questClass}${mapClass}${bookClass}" data-id="${block.id}"${bookStyle}>
             ${content}
         </div>
     `;

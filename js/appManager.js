@@ -2933,6 +2933,12 @@ const applyPendingBlockAnim = () => {
   let pendingMoveAnim = false;
   const animateNextBlockMove = () => { pendingMoveAnim = true; };
 
+  // "Hide pins" header toggle (Feats & Magic). Kept in memory only, so it is
+  // always off (pinned zone showing) when the page loads or refreshes.
+  let pinsHidden = false;
+  const getPinsHidden = () => pinsHidden;
+  const setPinsHidden = (value) => { pinsHidden = !!value; };
+
   const renderBlocks = (tab = getActiveTab(), filteredBlocks = null, skipTagUpdate = false) => {
     // Use up the move-animation request on this render, whichever path it takes
     const moveAnim = pendingMoveAnim;
@@ -3034,9 +3040,21 @@ const applyPendingBlockAnim = () => {
     // zone above every pinned block, whether or not it's pinned itself, and
     // goes back to its normal place when concentration stops.
     const isConcentrating = b => tab === 'tab9' && b.concentrating === true;
+    // "Hide pins" header toggle (Feats & Magic): the pinned zone is skipped.
+    // Pinned and concentrating blocks join the normal list in sort order and
+    // follow filters like any other block. They lose their coloured styling;
+    // pins and concentration themselves are kept.
+    const hidePins      = tab === 'tab9' && pinsHidden;
     const allBlocks     = getBlocks(tab);
-    const pinnedBlocks  = allBlocks.filter(b => b.pinned || isConcentrating(b));
-    const displayBlocks = (filteredBlocks || allBlocks).filter(b => !b.pinned && !isConcentrating(b));
+    let pinnedBlocks, displayBlocks;
+    if (hidePins) {
+        pinnedBlocks  = [];
+        displayBlocks = (filteredBlocks || allBlocks)
+            .map(b => (b.pinned || isConcentrating(b)) ? { ...b, _pinsHidden: true } : b);
+    } else {
+        pinnedBlocks  = allBlocks.filter(b => b.pinned || isConcentrating(b));
+        displayBlocks = (filteredBlocks || allBlocks).filter(b => !b.pinned && !isConcentrating(b));
+    }
 
     const pinnedOrder = JSON.parse(localStorage.getItem(`pinnedBlockOrder_${tab}`) || '[]');
     pinnedBlocks.sort((a, b) => {
@@ -3175,7 +3193,15 @@ const applyPendingBlockAnim = () => {
         const el = existingDisplayEls.get(block.id);
         const viewState = block.viewState || 'condensed';
 
-        if (el && el.classList.contains(viewState) && !el.classList.contains('block-removing')) {
+        // Rebuild if its pin changed while pins are hidden (pin icon colour)
+        // or concentration changed while pins are hidden (button states)
+        const pinBtn  = el?.querySelector('.pin-button');
+        const concBtn = el?.querySelector('.concentration-button');
+        const samePin = el
+            && el.classList.contains('pinned-hidden') === !!block._pinsHidden
+            && (!pinBtn  || pinBtn.classList.contains('pin-active') === !!block.pinned)
+            && (!concBtn || concBtn.classList.contains('concentration-active') === (block.concentrating === true));
+        if (el && samePin && el.classList.contains(viewState) && !el.classList.contains('block-removing')) {
             existingDisplayEls.delete(block.id);
             // Find expected next sibling, skipping over departing blocks
             let expectedNext = prevEl ? prevEl.nextElementSibling : resultsSection.firstElementChild;
@@ -3714,6 +3740,8 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
     getActiveTab,
     renderBlocks,
     animateNextBlockMove,
+    getPinsHidden,
+    setPinsHidden,
     getBlocks,
     updateBlocksViewState,
     updateViewToggleDropdown,

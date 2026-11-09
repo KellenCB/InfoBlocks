@@ -15,7 +15,7 @@ export const categoryTags = {
 
     spell_level: {
         label: "Spell Level",
-        tags: ["Infusion", "Cantrip", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"], 
+        tags: ["Prepared", "Battle Smith", "Potion", "Infusion", "Cantrip", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"], 
         className: "tag-spellLevel",
         tabs: ["tab9"]
     },

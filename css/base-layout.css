@@ -353,6 +353,35 @@ body:has(.uch-dropdown-popover.open) .uch-has-tooltip:hover .uch-tooltip {
     stroke: var(--gray-900);
 }
 
+/* Pins button: shrinks to nothing off Feats & Magic. The width change lets
+   the search field grow / shrink, so Sort and View slide along with it. */
+#uch-pins-button.pins-animate {
+    transition: width 0.3s ease, opacity 0.2s ease;
+}
+
+#uch-pins-button.pins-animate svg {
+    transition: stroke var(--transition-fast) ease, transform 0.3s ease;
+}
+
+#uch-pins-button.pins-collapsed {
+    width: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#uch-pins-button.pins-collapsed svg {
+    transform: scale(0.4);
+}
+
+/* Pins button: slash only shows while pins are hidden */
+#uch-pins-button .pins-off-slash {
+    display: none;
+}
+
+#uch-pins-button.pins-hidden .pins-off-slash {
+    display: inline;
+}
+
 #uch-search-clear {
     display: none;
 }
@@ -1873,6 +1902,62 @@ a:hover {
 #tab4 .resources-strip .spell-slot-section {
     row-gap: var(--space-3);
     column-gap: var(--space-7);
+}
+
+/* Header row: section title + prepared spells counter */
+.resources-strip-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-7);
+    flex: 0 0 100%;
+    height: 16px;
+    margin-bottom: var(--space-3);
+}
+
+.resources-strip-heading {
+    color: var(--gray-700);
+    white-space: nowrap;
+}
+
+.prepared-counter {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    white-space: nowrap;
+}
+
+/* Same divider line used between the spell slot groups */
+.prepared-counter::before {
+    content: "";
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 14px;
+    background-color: var(--gray-400);
+}
+
+.prepared-counter-label {
+    color: var(--gray-700);
+}
+
+.prepared-counter-value {
+    font-size: var(--font-12);
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+.prepared-counter-value.over {
+    color: var(--color-red);
+}
+
+/* Keep the edit pencil level with the header row instead of the strip's centre */
+#tab4 .resources-strip-actions {
+    top: var(--space-4);
+    transform: none;
+    height: 16px;
 }
 
 /* ====================================================================== */

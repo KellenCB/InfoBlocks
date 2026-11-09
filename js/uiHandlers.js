@@ -77,6 +77,29 @@ function updateTab8AbilityBonuses() {
     );
 }
 
+// Prepared spells counter (resources strip on the Hazard sheet).
+// Count = Feats & Magic (tab9) blocks tagged "Prepared".
+// Max   = Hazard's INT modifier + half his level (rounded down), minimum 1.
+function updatePreparedCounter() {
+    const el = document.getElementById('prepared_spells_count');
+    if (!el) return;
+
+    let blocks = [];
+    try { blocks = JSON.parse(localStorage.getItem('userBlocks_tab9') || '[]'); } catch { blocks = []; }
+    const prepared = blocks.filter(b => Array.isArray(b.tags) && b.tags.includes('Prepared')).length;
+
+    const intMod = parseInt(localStorage.getItem('tab4_int_bonus') || '0', 10) || 0;
+    const level  = parseInt(localStorage.getItem('tab4_level') || '0', 10) || 0;
+    const max    = Math.max(1, intMod + Math.floor(level / 2));
+
+    el.textContent = `${prepared} / ${max}`;
+    el.classList.toggle('over', prepared > max);
+}
+
+// Recount whenever blocks are re-rendered (add, edit, delete, import)
+document.addEventListener('tagsUpdated', updatePreparedCounter);
+document.addEventListener('blocksRerendered', updatePreparedCounter);
+
 // Recalculate all derived stats (modifiers, saves, skills) — called by breakdown popover
 export function triggerStatRecalculation(key) {
     if (key && key.endsWith("_score")) {
@@ -87,6 +110,7 @@ export function triggerStatRecalculation(key) {
     updateTab8Saves();
     updateTab4Skills();
     updateTab8Skills();
+    updatePreparedCounter();
 }
 
 // Update all saving throws for Tab 4
@@ -195,6 +219,7 @@ window.addEventListener("load", () => {
         updateTab4Skills();
         updateTab8Skills();
         initSaveSkillRollHandlers();
+        updatePreparedCounter();
     }, 0);
 });
 
@@ -214,6 +239,7 @@ document.addEventListener("input", (e) => {
     updateTab8Saves();
     updateTab4Skills();
     updateTab8Skills();
+    updatePreparedCounter();
 });
 
 /* ==================================================================*/

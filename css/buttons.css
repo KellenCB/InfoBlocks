@@ -201,6 +201,13 @@
 .pin-button.pin-active          { opacity: 1; background-color: transparent; }
 .pin-button.pin-active:hover    { opacity: 0.5; }
 
+/* Header "Hide Pins" on: every pin icon dims and can't be clicked */
+#tab9.pins-hidden-mode .pin-button,
+#tab9.pins-hidden-mode .pin-button:hover {
+    opacity: 0.2;
+    pointer-events: none;
+}
+
 .pinned-zone-label { display: none; }
 
 /* ====================================================================== */
