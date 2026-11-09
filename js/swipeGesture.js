@@ -30,6 +30,12 @@ export function isSwipeGestureActive() {
     return _activeGestures.size > 0;
 }
 
+// The text currently highlighted on the page ('' if none)
+function getSelectedText() {
+    const sel = window.getSelection?.();
+    return (sel && !sel.isCollapsed) ? sel.toString().trim() : '';
+}
+
 /**
  * Register horizontal swipe detection on an element.
  *
@@ -67,6 +73,14 @@ export function registerSwipe(element, opts = {}) {
     let previewShowing = false;
     let previewDir     = null;   // 'left' | 'right'
     let didSwipe       = false;  // for click suppression after a committed swipe
+    let startSelection = '';     // text already highlighted when the gesture began
+
+    // True if this drag has highlighted text (an old highlight left over from
+    // before the drag, e.g. on touch screens, doesn't count)
+    const hasTextSelection = () => {
+        const text = getSelectedText();
+        return text.length > 0 && text !== startSelection;
+    };
 
     // ── Core gesture logic ────────────────────────────────────────────
 
@@ -78,6 +92,7 @@ export function registerSwipe(element, opts = {}) {
         startY         = y;
         previewShowing = false;
         previewDir     = null;
+        startSelection = getSelectedText();
     };
 
     const move = (x, y) => {
@@ -104,7 +119,10 @@ export function registerSwipe(element, opts = {}) {
 
         if (direction !== 'horizontal') return;
 
-        const swipeDir      = dx < 0 ? 'left' : 'right';
+        // Dragging across text to highlight it is not a swipe — give up
+        if (hasTextSelection()) { cancel(); return; }
+
+        const swipeDir     = dx < 0 ? 'left' : 'right';
         const pastThreshold = absDx >= threshold;
         const allowed       = swipeDir === 'left' ? canSwipeLeft() : canSwipeRight();
 
@@ -126,6 +144,9 @@ export function registerSwipe(element, opts = {}) {
 
     const end = () => {
         if (!tracking) return;
+
+        // Released after highlighting text — don't commit the swipe
+        if (hasTextSelection()) { cancel(); return; }
 
         if (previewShowing) {
             // Remove the preview first
