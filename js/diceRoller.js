@@ -3,8 +3,10 @@
 let diceRollerInitialized = false;
 let diceBox      = null;
 let diceBoxReady = false;
-let fadeTimer    = null;
-let isRolling    = false;
+let fadeTimer      = null;   // wait before the dice start fading out
+let fadeClearTimer = null;   // clears the dice once the fade has finished
+let isRolling      = false;
+let needsRebuild   = false;  // engine is broken/suspect — rebuild before next roll
 
 const diceImages = {
   4:  "images/d_4.svg",
@@ -109,8 +111,16 @@ function clearDiceBox() {
 function tearDown() {
   diceBox      = null;
   diceBoxReady = false;
-  isRolling    = false;
-  document.querySelectorAll('.dice-box-canvas, #dice-canvas').forEach(el => el.remove());
+  document.querySelectorAll('.dice-box-canvas, #dice-canvas').forEach(el => {
+    // Free the old 3D (WebGL) context — dice-box has no public dispose, and
+    // removing the canvas alone leaves the context alive until the browser
+    // force-closes it.
+    try {
+      const gl = el.getContext?.('webgl2') || el.getContext?.('webgl');
+      gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    } catch { /* not a WebGL canvas — ignore */ }
+    el.remove();
+  });
   document.getElementById('dice-canvas-presize')?.remove();
 }
 
@@ -118,23 +128,38 @@ function tearDown() {
    DICE-BOX INIT
 ───────────────────────────────────────────────────────────────────────────── */
 
-async function loadDiceBox() {
-  if (diceBox && diceBoxReady) return diceBox;
+// Only one dice-box build may run at a time; later callers share it
+let diceBoxLoading = null;
+// Bumped when a build is abandoned, so a late-finishing old build discards itself
+let buildGen = 0;
 
-  if (diceBox && !diceBoxReady) {
-    await new Promise(resolve => {
-      const check = setInterval(() => {
-        if (diceBoxReady) { clearInterval(check); resolve(); }
-      }, 50);
+function loadDiceBox() {
+  if (diceBox && diceBoxReady && !needsRebuild) return Promise.resolve(diceBox);
+  if (!diceBoxLoading) {
+    needsRebuild = false;
+    const p = buildDiceBox().finally(() => {
+      if (diceBoxLoading === p) diceBoxLoading = null;
     });
-    return diceBox;
+    diceBoxLoading = p;
   }
+  return diceBoxLoading;
+}
 
+// Give up on a build that is hanging (e.g. a file never finished loading)
+function abandonBuild() {
+  buildGen++;
+  diceBoxLoading = null;
+  tearDown();
+}
+
+async function buildDiceBox() {
+  const gen = ++buildGen;
   diceBoxReady = false;
 
   const { default: DiceBox } = await import(
     'https://cdn.jsdelivr.net/npm/@3d-dice/dice-box@1.1.3/dist/dice-box.es.js'
   );
+  if (gen !== buildGen) throw new Error('Dice engine build abandoned');
 
   tearDown();
 
@@ -179,12 +204,32 @@ async function loadDiceBox() {
     shadowTransparency: 0.8,
   });
 
+  // Grab this build's own canvas now (tearDown just removed any others), so
+  // a stale build can never touch a newer build's canvas
+  const ownCanvas = box.canvas || getDiceCanvas();
+
   await box.init();
+
+  const canvas = box.canvas || ownCanvas || (gen === buildGen ? getDiceCanvas() : null);
+
+  // This build was abandoned while it was starting — throw it away
+  if (gen !== buildGen) {
+    try {
+      const gl = canvas?.getContext?.('webgl2') || canvas?.getContext?.('webgl');
+      gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    } catch { /* ignore */ }
+    canvas?.remove();
+    throw new Error('Dice engine build abandoned');
+  }
 
   preStyle.remove();
 
-  const canvas = getDiceCanvas();
   if (canvas) {
+    // If the browser shuts down the 3D context (GPU reset, tab backgrounded,
+    // too many contexts), rebuild the engine before the next roll
+    canvas.addEventListener('webglcontextlost', () => {
+      if (diceBox === box) needsRebuild = true;
+    });
     Object.assign(canvas.style, {
       position:      'fixed',
       top:           `${offsetY}px`,
@@ -204,39 +249,180 @@ async function loadDiceBox() {
   return diceBox;
 }
 
-loadDiceBox().catch(err => console.warn('Dice-box eager init failed:', err));
+// Build the engine ahead of the first roll, but only once the page has fully
+// loaded and laid out — an engine built while the page is still loading gives
+// bad results on its first roll. (A roll made before then builds it itself.)
+function eagerLoadDiceBox() {
+  loadDiceBox().catch(err => console.warn('Dice-box eager init failed:', err));
+}
+if (document.readyState === 'complete') {
+  setTimeout(eagerLoadDiceBox, 0);
+} else {
+  window.addEventListener('load', () => setTimeout(eagerLoadDiceBox, 0), { once: true });
+}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    RESIZE
 ───────────────────────────────────────────────────────────────────────────── */
 
-let resizeTimer = null;
+let resizeTimer   = null;
+let resizePending = false;   // a resize happened mid-roll; rebuild once it ends
+
+async function rebuildDiceBox() {
+  // Never rebuild mid-roll (it would orphan the roll) — wait for it to end
+  if (isRolling) { resizePending = true; return; }
+  resizePending = false;
+  // Let any in-flight build finish first, so we don't end up with two
+  if (diceBoxLoading) { try { await diceBoxLoading; } catch { /* rebuilt below */ } }
+  if (isRolling) { resizePending = true; return; }
+  tearDown();
+  try {
+    await loadDiceBox();
+  } catch (err) {
+    console.warn('Dice canvas reinit failed:', err);
+  }
+}
+
+// Called when a roll finishes (success or not). If the window was resized
+// mid-roll, or the 3D dice failed, rebuild the engine now in the background
+// so the next roll doesn't have to wait for it.
+function rollFinished() {
+  isRolling = false;
+  if (resizePending || needsRebuild) rebuildDiceBox();
+}
+
 window.addEventListener('resize', () => {
   if (resizeTimer) clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(async () => {
-    const wasActive = diceBox !== null;
-    tearDown();
-    if (wasActive) {
-      try {
-        await loadDiceBox();
-      } catch (err) {
-        console.warn('Dice canvas reinit failed:', err);
-      }
-    }
-  }, 150);
+  resizeTimer = setTimeout(rebuildDiceBox, 150);
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ROLL WITH FALLBACK
+   dice-box occasionally can't read a die that comes to rest tilted
+   ("No value found for … mesh face -1") and never resolves the roll. If the
+   3D roll hasn't finished in time, the numbers are generated without the 3D
+   dice instead, and the result is flagged so the history can say so.
+───────────────────────────────────────────────────────────────────────────── */
+
+// dice-box forces dice to stop at settleTimeout (5000ms), so 5.5s is enough
+const ROLL_TIMEOUT_MS = 5500;
+
+// dice-box returns one entry per dice *group* (e.g. "2d6" → one entry whose
+// value is the group total, with the individual dice in .rolls). Turn that
+// into one { sides, value } entry per die so each die gets its own chip.
+// Entries that are already single dice are passed through unchanged.
+function flattenResults(results) {
+  const dice = [];
+  (Array.isArray(results) ? results : []).forEach(r => {
+    if (Array.isArray(r?.rolls)) {
+      r.rolls.forEach(d => dice.push({ sides: d.sides ?? r.sides, value: d.value }));
+    } else if (r) {
+      dice.push({ sides: r.sides, value: r.value });
+    }
+  });
+  return dice;
+}
+
+// How long the engine may take to load (first load downloads the library)
+const LOAD_TIMEOUT_MS = 15000;
+// A real physics throw takes well over a second. A "roll" that comes back
+// faster than this means the 3D dice aren't actually running.
+const MIN_REAL_ROLL_MS = 300;
+
+function withTimeout(promise, ms, message) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(message)), ms); })
+  ]).finally(() => clearTimeout(timer));
+}
+
+function randomResults(notation) {
+  const results = [];
+  notation.forEach(({ qty, sides }) => {
+    for (let i = 0; i < qty; i++) {
+      results.push({ sides, value: Math.floor(Math.random() * sides) + 1 });
+    }
+  });
+  return results;
+}
+
+// Reject anything that isn't a real roll: wrong number of dice, or a value
+// outside 1..sides (e.g. the all-0 results a broken engine returns).
+// dice-box reports a d10 "10" (and a d100 "100") as 0, so that maps to max.
+function validateResults(dice, notation) {
+  const expected = notation.reduce((n, g) => n + g.qty, 0);
+  if (dice.length !== expected) {
+    throw new Error(`Roll returned ${dice.length} dice, expected ${expected}`);
+  }
+  return dice.map(d => {
+    const sides = Number(d.sides);
+    let value   = Number(d.value);
+    if ((sides === 10 || sides === 100) && value === 0) value = sides;
+    if (!Number.isInteger(sides) || !Number.isInteger(value) || value < 1 || value > sides) {
+      throw new Error(`Invalid die result: d${d.sides} = ${d.value}`);
+    }
+    return { sides, value };
+  });
+}
+
+async function rollWithFallback(notation) {
+  // 1. Get a working engine — offline / failed / hanging load → fallback
+  let box;
+  try {
+    box = await withTimeout(loadDiceBox(), LOAD_TIMEOUT_MS, 'Dice engine took too long to load');
+  } catch (err) {
+    console.warn('3D dice unavailable — generating result without 3D dice:', err);
+    if (diceBoxLoading) abandonBuild();
+    return { results: randomResults(notation), fallback: true };
+  }
+
+  // 2. Throw the dice
+  showDiceCanvasNow();
+  clearDiceBox();
+  const started = performance.now();
+  try {
+    const raw = await withTimeout(box.roll(notation), ROLL_TIMEOUT_MS, 'Roll timed out');
+    if (performance.now() - started < MIN_REAL_ROLL_MS) {
+      throw new Error('Roll finished instantly — 3D dice not running');
+    }
+    return { results: validateResults(flattenResults(raw), notation), fallback: false };
+  } catch (err) {
+    console.warn('3D dice roll failed — generating result without 3D dice:', err);
+    clearDiceBox();
+    needsRebuild = true;   // engine may be stuck/broken — rebuilt after this roll
+    return { results: randomResults(notation), fallback: true };
+  }
+}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    FADE OUT
 ───────────────────────────────────────────────────────────────────────────── */
 
+function cancelFade() {
+  clearTimeout(fadeTimer);
+  clearTimeout(fadeClearTimer);
+  fadeTimer = fadeClearTimer = null;
+}
+
+// Show the dice canvas immediately (no fade-in) and stop any pending fade/clear
+function showDiceCanvasNow() {
+  cancelFade();
+  const canvas = getDiceCanvas();
+  if (!canvas) return;
+  canvas.style.transition = 'none';
+  canvas.style.opacity    = '1';
+  void canvas.offsetWidth;
+  canvas.style.transition = 'opacity 1.5s ease';
+}
+
 function fadeOutDice() {
   const canvas = getDiceCanvas();
   if (!canvas) return;
-  if (fadeTimer) clearTimeout(fadeTimer);
+  cancelFade();
   fadeTimer = setTimeout(() => {
     canvas.style.opacity = '0';
-    setTimeout(() => {
+    fadeClearTimer = setTimeout(() => {
       clearDiceBox();
       canvas.style.opacity = '1';
     }, 1500);
@@ -328,35 +514,21 @@ export function initDiceRoller() {
         }));
 
       try {
-        const box = await loadDiceBox();
-
-        const canvas = getDiceCanvas();
-        if (canvas) {
-          if (fadeTimer) clearTimeout(fadeTimer);
-          canvas.style.opacity = '1';
-        }
-
-        clearDiceBox();
-        const results = await Promise.race([
-          box.roll(notation),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Roll timed out')), 6000)
-          )
-        ]);
+        const { results, fallback } = await rollWithFallback(notation);
 
         const rolls = results.map(r => r.value);
         const sides = results.map(r => r.sides);
         const total = rolls.reduce((a, b) => a + b, 0);
-        appendHistoryEntry(rolls, sides, total);
+        appendHistoryEntry(rolls, sides, total, 0, null, fallback);
 
-        fadeOutDice();
+        if (!fallback) fadeOutDice();
 
       } catch (err) {
         console.error('Dice-box error:', err);
         appendResult('Error rolling dice');
       } finally {
-        isRolling           = false;
         rollButton.disabled = false;
+        rollFinished();
       }
     });
   }
@@ -372,30 +544,18 @@ export function initDiceRoller() {
     }));
 
     try {
-      const box = await loadDiceBox();
-      const canvas = getDiceCanvas();
-      if (canvas) {
-        if (fadeTimer) clearTimeout(fadeTimer);
-        canvas.style.opacity = '1';
-      }
-      clearDiceBox();
-      const results = await Promise.race([
-        box.roll(notation),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Roll timed out')), 6000)
-        )
-      ]);
+      const { results, fallback } = await rollWithFallback(notation);
       const rolls = results.map(r => r.value);
       const sides = results.map(r => r.sides);
       const total = rolls.reduce((a, b) => a + b, 0);
-      appendHistoryEntry(rolls, sides, total, modifier, label);
-      fadeOutDice();
+      appendHistoryEntry(rolls, sides, total, modifier, label, fallback);
+      if (!fallback) fadeOutDice();
       return { rolls, total };
     } catch (err) {
       console.error('Dice-box error:', err);
       appendResult('Error rolling dice');
     } finally {
-      isRolling = false;
+      rollFinished();
     }
   };
 
@@ -408,7 +568,7 @@ export function initDiceRoller() {
       });
       const canvas = getDiceCanvas();
       if (canvas) {
-        if (fadeTimer) clearTimeout(fadeTimer);
+        cancelFade();
         canvas.style.opacity = '0';
       }
     });
@@ -469,7 +629,7 @@ export function initDiceRoller() {
     return svg;
   }
 
-  function appendHistoryEntry(rolls, sides, total, modifier = 0, label = null) {
+  function appendHistoryEntry(rolls, sides, total, modifier = 0, label = null, fallback = false) {
     const entry = document.createElement("div");
     entry.classList.add("roll-history-entry");
 
@@ -483,7 +643,8 @@ export function initDiceRoller() {
     // Show modifier chip for any non-zero modifier, or always when the roll is
     // a named roll (label present) — +0 is meaningful info for a stat check.
     const showModifierChip = modifier !== 0 || displayLabel !== null;
-    const showBreakdown = rolls.length > 1 || showModifierChip;
+    // Always show the die chip(s), including for a single die
+    const showBreakdown = rolls.length > 0;
 
     // ── Label row (full width, only when present) ─────────────────────────────
     if (displayLabel) {
@@ -526,6 +687,15 @@ export function initDiceRoller() {
     }
 
     entry.appendChild(contentRow);
+
+    // The 3D dice failed to land, so this result was generated without them
+    if (fallback) {
+      const note = document.createElement("div");
+      note.classList.add("roll-fallback-note", "text-label");
+      note.textContent = "3D dice error · result rolled without dice";
+      entry.appendChild(note);
+    }
+
     insertHistoryEntry(entry);
   }
   

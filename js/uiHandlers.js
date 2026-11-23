@@ -273,15 +273,48 @@ function initHpSection(tabPrefix) {
     const hpSection = tabEl.querySelector('.hp-section');
     if (!hpSection) return;
 
-    const barArea    = hpSection.querySelector('.hp-bar-area');
-    const barTint    = barArea.querySelector('.hp-bar-tint');
-    const barFill    = barArea.querySelector('.hp-bar-fill');
-    const barHl      = barArea.querySelector('.hp-bar-hl');
-    const barTemp    = barArea.querySelector('.hp-bar-temp');
-    const barTempHl  = barArea.querySelector('.hp-bar-temp-hl');
-    const barGlow    = barArea.querySelector('.hp-bar-glow');
-    const barText    = barArea.querySelector('.hp-bar-text');
+    // Each character's HP is drawn in two places: its own (main) bar, and a
+    // faded mirror bar on the other character's sheet. Both are driven from
+    // this one state so they always render and animate identically.
+    const makeBar = (area, isMirror) => ({
+        area,
+        isMirror,
+        tint:   area.querySelector('.hp-bar-tint'),
+        fill:   area.querySelector('.hp-bar-fill'),
+        hl:     area.querySelector('.hp-bar-hl'),
+        temp:   area.querySelector('.hp-bar-temp'),
+        tempHl: area.querySelector('.hp-bar-temp-hl'),
+        glow:   area.querySelector('.hp-bar-glow'),
+        text:   area.querySelector('.hp-bar-text'),
+        delta:  null
+    });
+
+    const barArea  = hpSection.querySelector(':scope > .hp-bar-area');
+    const mainBar  = makeBar(barArea, false);
+    const mirrorEl = document.querySelector(`.hp-mirror[data-char="${tabPrefix}"]`);
+    const mirrorArea = mirrorEl?.querySelector('.hp-bar-area');
+    const bars     = mirrorArea ? [mainBar, makeBar(mirrorArea, true)] : [mainBar];
+
+    // Set bar text on every copy of this character's bar
+    const setBarHtml = (html) => bars.forEach(b => { b.text.innerHTML = html; });
+    const setBarText = (txt)  => bars.forEach(b => { b.text.textContent = txt; });
+
     const maxEl      = hpSection.querySelector(`[data-storage-key="${tabPrefix}_maxhp"]`);
+    const mirrorMaxEl = mirrorEl?.querySelector('.hp-mirror-max');
+
+    // "<Name>'s HP" labels (main + mirror)
+    const nameEl = document.querySelector(`[data-storage-key="${tabPrefix}_character_name"]`);
+    const hpLabels = [
+        hpSection.querySelector(':scope > .hp-section-header .hp-section-label'),
+        mirrorEl?.querySelector('.hp-section-label')
+    ].filter(Boolean);
+    const renderHpLabels = () => {
+        const name = (nameEl?.textContent || '').trim();
+        hpLabels.forEach(l => { l.textContent = name ? `${name}'s HP` : 'HP'; });
+    };
+    const renderMirrorMax = () => {
+        if (mirrorMaxEl) mirrorMaxEl.textContent = maxEl ? maxEl.textContent : String(maxHp);
+    };
     const inputEl    = hpSection.querySelector('.hp-input-field');
     const actionBtns = hpSection.querySelectorAll('.hp-action-btn');
 
@@ -349,51 +382,53 @@ const renderBar = () => {
         const atEnd  = Math.round(greenW + tempW) >= 100;
         const isFull = tempHp === 0 && currentHp >= maxHp;
 
-        barArea.classList.toggle('hp-full', isFull);
-        barArea.classList.toggle('hp-temp-end', atEnd && tempHp > 0);
+        bars.forEach(b => {
+        b.area.classList.toggle('hp-full', isFull);
+        b.area.classList.toggle('hp-temp-end', atEnd && tempHp > 0);
 
         // Tint
-        barTint.style.background = c.tint;
+        b.tint.style.background = c.tint;
 
         // Main fill
-        barFill.style.width      = greenW + '%';
-        barFill.style.background = `linear-gradient(90deg, ${c.bright} 0%, ${c.base} 60%)`;
+        b.fill.style.width      = greenW + '%';
+        b.fill.style.background = `linear-gradient(90deg, ${c.bright} 0%, ${c.base} 60%)`;
 
         // Top highlight
-        barHl.style.width      = greenW + '%';
-        barHl.style.background = `linear-gradient(180deg, ${c.highlight} 0%, transparent 50%, rgba(0,0,0,0.15) 100%)`;
+        b.hl.style.width      = greenW + '%';
+        b.hl.style.background = `linear-gradient(180deg, ${c.highlight} 0%, transparent 50%, rgba(0,0,0,0.15) 100%)`;
 
         // Outer glow
-        barGlow.style.width     = greenW + '%';
-        barGlow.style.boxShadow = greenW > 0
+        b.glow.style.width     = greenW + '%';
+        b.glow.style.boxShadow = greenW > 0
             ? `0 0 12px 2px ${c.shadow}, inset 0 1px 0 ${c.highlight}`
             : 'none';
 
         // Temp HP
         if (tempHp > 0) {
-            barTemp.style.opacity    = '0.35';
-            barTemp.style.left       = greenW + '%';
-            barTemp.style.width      = tempW + '%';
-            barTemp.style.background = `linear-gradient(90deg, ${c.bright} 0%, ${c.base} 70%)`;
-            barTemp.style.boxShadow  = `inset 2px 0 4px ${c.edge}, inset -2px 0 4px ${c.edgeDim}`;
+            b.temp.style.opacity    = '0.35';
+            b.temp.style.left       = greenW + '%';
+            b.temp.style.width      = tempW + '%';
+            b.temp.style.background = `linear-gradient(90deg, ${c.bright} 0%, ${c.base} 70%)`;
+            b.temp.style.boxShadow  = `inset 2px 0 4px ${c.edge}, inset -2px 0 4px ${c.edgeDim}`;
 
-            barTempHl.style.opacity    = '0.35';
-            barTempHl.style.left       = greenW + '%';
-            barTempHl.style.width      = tempW + '%';
-            barTempHl.style.background = `linear-gradient(180deg, ${c.highlight} 0%, transparent 50%, rgba(0,0,0,0.15) 100%)`;
+            b.tempHl.style.opacity    = '0.35';
+            b.tempHl.style.left       = greenW + '%';
+            b.tempHl.style.width      = tempW + '%';
+            b.tempHl.style.background = `linear-gradient(180deg, ${c.highlight} 0%, transparent 50%, rgba(0,0,0,0.15) 100%)`;
 
-            barText.innerHTML = `${currentHp}&nbsp;<span class="hp-bar-temp-text">+ ${tempHp}</span>`;
+            b.text.innerHTML = `${currentHp}&nbsp;<span class="hp-bar-temp-text">+ ${tempHp}</span>`;
         } else {
-            barTemp.style.opacity   = '0';
-            barTemp.style.width     = '0%';
-            barTemp.style.left      = greenW + '%';
-            barTemp.style.boxShadow = 'none';
-            barTempHl.style.opacity = '0';
-            barTempHl.style.width   = '0%';
-            barTempHl.style.left    = greenW + '%';
+            b.temp.style.opacity   = '0';
+            b.temp.style.width     = '0%';
+            b.temp.style.left      = greenW + '%';
+            b.temp.style.boxShadow = 'none';
+            b.tempHl.style.opacity = '0';
+            b.tempHl.style.width   = '0%';
+            b.tempHl.style.left    = greenW + '%';
 
-            barText.textContent = `${currentHp}`;
+            b.text.textContent = `${currentHp}`;
         }
+        });
     };
     
     
@@ -405,7 +440,7 @@ const renderBar = () => {
 
     // ── Count animation helper ────────────────────────────────────
     function hpCountTo(from, to) {
-        if (from === to) { barText.textContent = to; return; }
+        if (from === to) { setBarText(to); return; }
         const diff = Math.abs(to - from);
         const duration = Math.min(600, Math.max(200, diff * 15));
         const start = performance.now();
@@ -413,9 +448,9 @@ const renderBar = () => {
         function tick(now) {
             const t = Math.min((now - start) / duration, 1);
             const eased = t < 0.5 ? 2 * t * t : (1 - Math.pow(-2 * t + 2, 2) / 2);
-            barText.textContent = Math.round(from + delta * eased);
+            setBarText(Math.round(from + delta * eased));
             if (t < 1) requestAnimationFrame(tick);
-            else barText.textContent = to;
+            else setBarText(to);
         }
         requestAnimationFrame(tick);
     }
@@ -442,10 +477,10 @@ const renderBar = () => {
         dsFailCircles.forEach((c, i) => c.classList.toggle('filled', i < dsFailures));
 
         if (dsFailures >= 3) {
-            barText.innerHTML  = '<span class="hp-bar-dead">Dead</span>';
+            setBarHtml('<span class="hp-bar-dead">Dead</span>');
             dsRollBtn.disabled = true;
         } else if (dsSuccesses >= 3) {
-            barText.innerHTML  = '<span class="hp-bar-stabilized">Stabilized</span>';
+            setBarHtml('<span class="hp-bar-stabilized">Stabilized</span>');
             dsRollBtn.disabled = true;
         } else {
             if (active) renderBar();
@@ -622,9 +657,13 @@ const renderBar = () => {
         const newMax = Math.max(0, parseInt(maxEl.textContent) || 0);
         maxHp = newMax;
         if (currentHp > maxHp) currentHp = maxHp;
+        renderMirrorMax();
         saveHp();
         renderBar();
     });
+
+    // Character name edit → update "<Name>'s HP" labels
+    nameEl?.addEventListener('input', renderHpLabels);
 
     // Hit die quantity buttons
     hdMinusBtn?.addEventListener('click', () => {
@@ -692,11 +731,15 @@ const renderBar = () => {
     const HP_DRAG_THRESHOLD = 5;
     let hpDragState = null;
 
-    const hpDragDelta = document.createElement('div');
-    hpDragDelta.className = 'hp-drag-delta text-md';
-    barArea.appendChild(hpDragDelta);
+    // Floating +/- number element on each bar
+    bars.forEach(b => {
+        b.delta = document.createElement('div');
+        b.delta.className = 'hp-drag-delta text-md';
+        b.area.appendChild(b.delta);
+    });
 
-    function showHpDelta(d) {
+    function showHpDelta(d, bar = mainBar) {
+        const hpDragDelta = bar.delta;
         hpDragDelta.style.animation = 'none';
         hpDragDelta.offsetHeight;
         hpDragDelta.style.animation = '';
@@ -705,7 +748,8 @@ const renderBar = () => {
         hpDragDelta.className = 'hp-drag-delta text-md hp-drag-live ' + (d > 0 ? 'hp-drag-pos' : 'hp-drag-neg');
     }
 
-    function floatHpDelta() {
+    function floatHpDelta(bar = mainBar) {
+        const hpDragDelta = bar.delta;
         if (!hpDragDelta.classList.contains('hp-drag-live')) return;
         const color = hpDragDelta.classList.contains('hp-drag-pos') ? 'hp-drag-pos' : 'hp-drag-neg';
         hpDragDelta.style.animation = 'none';
@@ -716,6 +760,10 @@ const renderBar = () => {
             hpDragDelta.className = 'hp-drag-delta text-md';
         }, { once: true });
     }
+
+    // Same drag behaviour on the main bar and the faded mirror bar
+    bars.forEach(bar => {
+    const barArea = bar.area;
 
     barArea.addEventListener('pointerdown', (e) => {
         hpDragState = {
@@ -757,7 +805,7 @@ const renderBar = () => {
         }
 
         const netChange = (hpDragState.targetHp + hpDragState.targetTemp) - (hpDragState.startHp + hpDragState.startTemp);
-        showHpDelta(netChange);
+        showHpDelta(netChange, bar);
     });
 
     barArea.addEventListener('pointerup', () => {
@@ -770,7 +818,13 @@ const renderBar = () => {
         tempHp = hpDragState.targetTemp;
         hpDragState = null;
 
-        if (!wasMoved) return;
+        if (!wasMoved) {
+            // Plain click on the faded bar → switch to that character's sheet
+            if (bar.isMirror) {
+                document.querySelector(`.tab-button[data-tab="${tabPrefix}"]`)?.click();
+            }
+            return;
+        }
 
         if (currentHp === 0 && startHp > 0) {
             resetDs();
@@ -785,15 +839,16 @@ const renderBar = () => {
 
         const netChange = (currentHp + tempHp) - (startHp + startTemp);
         if (netChange !== 0) {
-            requestAnimationFrame(() => floatHpDelta());
+            requestAnimationFrame(() => floatHpDelta(bar));
         }
     });
 
     barArea.addEventListener('pointercancel', () => {
         if (!hpDragState) return;
         hpDragState = null;
-        hpDragDelta.style.animation = 'none';
-        hpDragDelta.className = 'hp-drag-delta text-md';
+        bar.delta.style.animation = 'none';
+        bar.delta.className = 'hp-drag-delta text-md';
+    });
     });
 
     // ── Long rest listener ───────────────────────────────────────────
@@ -825,6 +880,8 @@ const renderBar = () => {
     });
 
     // ── Initial render ───────────────────────────────────────────────
+    renderHpLabels();
+    renderMirrorMax();
     renderBar();
     renderHd();
     renderDs();
@@ -1665,6 +1722,9 @@ function initHpCardToggle(tabPrefix) {
         // Don't toggle if clicking on editable fields
         if (e.target.closest('.editable')) return;
 
+        // Don't toggle when clicking/dragging the faded other-character bar
+        if (e.target.closest('.hp-mirror .hp-bar-area')) return;
+
         const isCondensed = card.classList.contains('cs-hp-condensed');
         const oldHeight = card.offsetHeight;
         const dsPanel = hpSection.querySelector('.ds-panel');
@@ -1672,6 +1732,7 @@ function initHpCardToggle(tabPrefix) {
             !el.classList.contains('hp-section-header')
             && !el.classList.contains('hp-bar-area')
             && !el.classList.contains('ds-panel')
+            && !el.classList.contains('hp-mirror')
         );
 
         if (!isCondensed) {

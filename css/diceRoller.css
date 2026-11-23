@@ -397,6 +397,16 @@
   text-align: left;
 }
 
+/* Shown under a result when the 3D dice failed and numbers were generated */
+.roll-fallback-note {
+  font-size: var(--font-10);
+  font-weight: 600;
+  color: rgba(255, 107, 107, 0.6);
+  text-transform: uppercase;
+  width: 100%;
+  text-align: left;
+}
+
 .roll-content {
   display: flex;
   align-items: center;

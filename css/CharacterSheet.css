@@ -325,6 +325,17 @@
     margin-top: var(--space-3);
 }
 
+/* Other character's HP bar (faded mirror) — label row + bar only */
+.hp-mirror {
+    display: flex;
+    flex-direction: column;
+    opacity: 0.5;
+}
+
+.hp-mirror > * + * {
+    margin-top: var(--space-4);
+}
+
 .hp-section-header {
     display: flex;
     justify-content: space-between;
