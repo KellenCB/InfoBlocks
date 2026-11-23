@@ -314,10 +314,22 @@ export const filterManager = (() => {
         const query = document.getElementById('uch-search')
             ?.value.trim().toLowerCase() || '';
         if (query && activeTab !== 'tab3') {
+            // Inventory items: attunement / equip states are only shown as
+            // icons, so make their names searchable for items that have them
+            const statusText = b => {
+                if (activeTab !== 'tab6') return '';
+                const words = [];
+                if (b.requiresAttunement === true) words.push('requires attunement');
+                if (b.attuned === true)            words.push('attuned');
+                if (b.equipable === true)          words.push('equipable');
+                if (b.equipped === true)           words.push('equipped');
+                return words.join(' | ');
+            };
             blocks = blocks.filter(b =>
                 b.title.toLowerCase().includes(query) ||
                 stripHTML(b.text).toLowerCase().includes(query) ||
-                (b.properties || []).some(p => p.toLowerCase().includes(query))
+                (b.properties || []).some(p => p.toLowerCase().includes(query)) ||
+                statusText(b).includes(query)
             );
         }
 
