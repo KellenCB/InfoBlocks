@@ -1,6 +1,6 @@
 // appManager.js
 import { categoryTags, blockTypeConfig, BOOK_ACCENT_COLORS, DEFAULT_BOOK_ACCENT } from './tagConfig.js';
-import { blockTemplate, sanitizeBlockHTML, buildRollSummaryHTML } from './blockTemplate.js';
+import { blockTemplate, sanitizeBlockHTML, buildRollSummaryHTML, escapeHtml } from './blockTemplate.js';
 import { applyInlineDiceRolls } from './diceRoller.js';
 import { filterManager } from './filterManager.js';
 import { blockActionsHandler } from './blockActionsHandler.js';
@@ -1398,11 +1398,12 @@ const applyPendingBlockAnim = () => {
           b.classList.toggle('session-log-active', b.getAttribute('data-id') === blockId);
       });
 
-      const bodyHTML = sanitizeBlockHTML(block.text);
+      const cleanHighlightTags = html => (html || '').replace(/<span class="highlight">([\s\S]*?)<\/span>/gi, '$1');
+      const bodyHTML = cleanHighlightTags(sanitizeBlockHTML(block.text));
 
       viewer.innerHTML = `
           <div class="session-viewer-header">
-              <h3 class="session-viewer-title text-lg">${block.title}</h3>
+              <h3 class="session-viewer-title text-lg">${escapeHtml(block.title)}</h3>
               <div class="session-viewer-header-actions">
                   <button class="session-viewer-delete-btn text-lg" data-id="${block.id}" title="Delete">×</button>
                   <button class="session-viewer-edit-btn" id="session_edit_toggle" title="Edit">                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1509,9 +1510,11 @@ const applyPendingBlockAnim = () => {
               deleteBtn.classList.remove('visible');
               setTimeout(() => {
                   applyInlineDiceRolls(viewer, 'tab7');
+                  document.dispatchEvent(new CustomEvent('sessionViewerRendered', { detail: { tab: 'tab7' } }));
               }, 200);
           } else {
               applyInlineDiceRolls(viewer, 'tab7');
+              document.dispatchEvent(new CustomEvent('sessionViewerRendered', { detail: { tab: 'tab7' } }));
           }
       };
 
@@ -1539,6 +1542,12 @@ const applyPendingBlockAnim = () => {
               // ── Enter edit mode ──────────────────────────────────
               sessionViewerEditMode = true;
               editBtn.classList.add('active');
+
+              // Strip search highlights before capturing snapshot and editing
+              titleEl.querySelectorAll('.highlight').forEach(s => s.replaceWith(s.textContent));
+              bodyEl.querySelectorAll('.highlight').forEach(s => s.replaceWith(s.textContent));
+              titleEl.normalize();
+              bodyEl.normalize();
 
               snapshot = {
                   title: titleEl.textContent,
@@ -2170,7 +2179,7 @@ const applyPendingBlockAnim = () => {
       const bodyHTML = sanitizeBlockHTML(isEdit ? block.text : '');
 
       // ── Title ──
-      const title = isEdit ? block.title : '';
+      const title = isEdit ? escapeHtml(block.title) : '';
 
       // ── Assemble type-specific fields ──
       const fieldsHTML = `
@@ -3586,6 +3595,11 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       // Capture height before replacing content for expand animation
       const oldHeight = blockEl.offsetHeight;
 
+      // If an edit on another block was already open, clean up its temp uses record
+      if (inlineEditState && inlineEditState.blockId !== blockId) {
+          localStorage.removeItem(`inline_edit_uses_${inlineEditState.blockId}`);
+      }
+
       // Snapshot for cancel
       inlineEditState = {
           blockId,
@@ -3614,7 +3628,8 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
 
       const tagsHTML = buildTab9TagsHTML(tab, blockTags);
 
-      const bodyHTML = sanitizeBlockHTML(block.text);
+      const cleanHighlightTags = html => (html || '').replace(/<span class="highlight">([\s\S]*?)<\/span>/gi, '$1');
+      const bodyHTML = cleanHighlightTags(sanitizeBlockHTML(block.text));
 
       const usesKey = `inline_edit_uses_${blockId}`;
       localStorage.setItem(usesKey, JSON.stringify(block.uses || []));
@@ -3622,7 +3637,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       blockEl.innerHTML = `
               <div class="block-header">
                   <div class="block-header-left">
-                      <div class="block-title"><h3 contenteditable="true" class="inline-edit-title text-md">${block.title}</h3></div>
+                      <div class="block-title"><h3 contenteditable="true" class="inline-edit-title text-md">${escapeHtml(block.title)}</h3></div>
                   </div>
                   <div class="inline-edit-controls">${buildRollSummaryToggleHTML(block.showRollSummary !== false)}
                       <button class="button green-button inline-edit-save text-body">Save</button>
@@ -3633,7 +3648,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
               <div class="uses-field inline-edit-uses"></div>
               <div class="inline-edit-tags">${tagsHTML}</div>
               <div class="block-properties inline-edit-properties">${(block.properties || []).map(p =>
-                  `<span class="block-property-wrap"><span class="block-property text-body" contenteditable="true">${p}</span><span class="property-remove-btn text-body">×</span></span>`
+                  `<span class="block-property-wrap"><span class="block-property text-body" contenteditable="true">${escapeHtml(p)}</span><span class="property-remove-btn text-body">×</span></span>`
               ).join('')}<span class="block-property inline-edit-new-prop text-body"></span></div>
               <div class="block-body text-body"><span contenteditable="true" class="inline-edit-body">${bodyHTML}</span></div>
       `;
@@ -3652,6 +3667,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       };
 
       const doCancel = () => {
+          localStorage.removeItem(usesKey);
           inlineEditState = null;
           blockEl.classList.remove('inline-editing', 'expanded');
           setPendingBlockAnim(blockId, blockEl.offsetHeight);
@@ -3718,6 +3734,7 @@ const saveBlock = (tab, blockTitle, text, tags, uses, properties = [], blockType
       const doSave = () => {
           const data = collectTab9FormData(blockEl, usesKey);
           if (!data) return;
+          blockEl.remove();
           saveBlock(tab, data.title, data.text, data.tags, data.uses, data.properties, data.blockType, null, null, { showRollSummary: data.showRollSummary });
           import('./filterManager.js').then(({ filterManager }) => filterManager.applyFilters(tabSuffix));
       };

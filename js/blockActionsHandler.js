@@ -229,6 +229,9 @@ export const blockActionsHandler = (() => {
                 if (blockTypesArr.includes('Notes')) {
                     tab3Extras.description = block.description || '';
                 }
+                if (blockTypesArr.includes('Map')) {
+                    tab3Extras.url = block.url || '';
+                }
             }
             const result = appManager.saveBlock(activeTab, `${block.title} (Copy)`, block.text, blockTags, block.uses || [], block.properties || [], block.blockType || null, null, null, inventoryExtras, tab3Extras);
             // On tab3, auto-select the duplicate in the viewer (wide mode)

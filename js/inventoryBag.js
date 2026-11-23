@@ -1146,9 +1146,169 @@ export const inventoryBag = (() => {
     }
   }
 
+  function serializeDescHTML(descEl) {
+    if (!descEl) return '';
+    return descEl.innerHTML
+        .replace(/<div><br\s*\/?><\/div>/gi, '<br>')
+        .replace(/<\/div><div>/gi, '<br>')
+        .replace(/<div>/gi, '<br>').replace(/<\/div>/gi, '')
+        .replace(/<p><br\s*\/?><\/p>/gi, '<br>')
+        .replace(/<\/p><p>/gi, '<br>')
+        .replace(/<p>/gi, '<br>').replace(/<\/p>/gi, '')
+        .trim().replace(/^<br\s*\/?>/, '');
+  }
+
+  function wireDescLinkEditor(ov, prefix) {
+    const descEditor = ov.querySelector(`#${prefix}-desc`);
+    const linkBtn    = ov.querySelector(`#${prefix}-link-btn`);
+    const linkMini   = ov.querySelector(`#${prefix}-link-mini`);
+    const linkUrl    = ov.querySelector(`#${prefix}-link-url`);
+    const cancelBtn  = ov.querySelector(`#${prefix}-link-cancel-mini`);
+    const confirmBtn = ov.querySelector(`#${prefix}-link-confirm`);
+    if (!descEditor || !linkBtn || !linkMini || !linkUrl) return () => {};
+
+    try { document.execCommand('defaultParagraphSeparator', false, 'br'); } catch(e) {}
+
+    let savedRange = null;
+    let linkTipEl  = null;
+
+    function showLinkBtnTip(text) {
+        hideLinkBtnTip();
+        linkTipEl = document.createElement('div');
+        linkTipEl.className = 'text-tooltip';
+        linkTipEl.textContent = text;
+        linkTipEl.style.opacity = '0';
+        linkTipEl.style.transition = 'opacity 0.15s ease';
+        document.body.appendChild(linkTipEl);
+        const r = linkBtn.getBoundingClientRect();
+        linkTipEl.style.left = (r.left + r.width / 2 - linkTipEl.offsetWidth / 2) + 'px';
+        linkTipEl.style.top  = (r.top - linkTipEl.offsetHeight - 6) + 'px';
+        linkTipEl.offsetHeight;
+        linkTipEl.style.opacity = '1';
+    }
+
+    function hideLinkBtnTip() {
+        if (linkTipEl) {
+            const el = linkTipEl; linkTipEl = null;
+            el.style.opacity = '0';
+            el.addEventListener('transitionend', () => el.remove(), { once: true });
+            setTimeout(() => el.remove(), 200);
+        }
+    }
+
+    function findLinkInRange(range) {
+        let node = range.startContainer;
+        while (node && node !== descEditor) { if (node.nodeName === 'A') return node; node = node.parentNode; }
+        node = range.endContainer;
+        while (node && node !== descEditor) { if (node.nodeName === 'A') return node; node = node.parentNode; }
+        for (const a of descEditor.querySelectorAll('a')) {
+            if (range.intersectsNode(a)) return a;
+        }
+        return null;
+    }
+
+    function getEditorRange() {
+        const sel = window.getSelection();
+        if (!sel || !sel.rangeCount || sel.isCollapsed) return null;
+        const range = sel.getRangeAt(0);
+        if (!descEditor.contains(range.commonAncestorContainer)) return null;
+        return range;
+    }
+
+    function updateLinkBtn() {
+        const range = getEditorRange();
+        linkBtn.classList.toggle('bag-link-btn-inactive', !range);
+    }
+    document.addEventListener('selectionchange', updateLinkBtn);
+
+    linkBtn.addEventListener('mouseenter', () => {
+        const range = getEditorRange();
+        let tip;
+        if (!range)                      tip = 'Highlight text and use this button to add a link to it';
+        else if (findLinkInRange(range)) tip = 'Edit text link';
+        else                             tip = 'Add a link to the highlighted text';
+        showLinkBtnTip(tip);
+    });
+    linkBtn.addEventListener('mouseleave', hideLinkBtnTip);
+
+    linkBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        const range = getEditorRange();
+        savedRange = range ? range.cloneRange() : null;
+    });
+
+    linkBtn.addEventListener('click', () => {
+        if (!savedRange) return;
+        const existingLink = findLinkInRange(savedRange);
+        linkUrl.value = existingLink ? existingLink.href : '';
+        linkMini.classList.remove('bag-link-mini-hidden');
+        linkUrl.focus();
+        linkUrl.select();
+    });
+
+    cancelBtn?.addEventListener('click', () => {
+        linkMini.classList.add('bag-link-mini-hidden');
+    });
+
+    confirmBtn?.addEventListener('click', () => {
+        const url = linkUrl.value.trim();
+        if (!url) { linkUrl.style.borderColor = 'rgba(255,107,107,.5)'; return; }
+        linkUrl.style.borderColor = '';
+        if (!savedRange) { linkMini.classList.add('bag-link-mini-hidden'); return; }
+
+        const selectedText = savedRange.toString() || url;
+        const existingLink = findLinkInRange(savedRange);
+        const newA = document.createElement('a');
+        newA.href = url; newA.target = '_blank'; newA.rel = 'noopener';
+        newA.textContent = selectedText;
+
+        const selectionWithinLink = existingLink
+            && existingLink.contains(savedRange.startContainer)
+            && existingLink.contains(savedRange.endContainer);
+
+        if (selectionWithinLink) {
+            const linkText = existingLink.textContent;
+            const measureRange = document.createRange();
+            measureRange.selectNodeContents(existingLink);
+            measureRange.setEnd(savedRange.startContainer, savedRange.startOffset);
+            const beforeLen = measureRange.toString().length;
+            const afterLen  = linkText.length - beforeLen - selectedText.length;
+
+            const frag = document.createDocumentFragment();
+            if (beforeLen > 0) frag.appendChild(document.createTextNode(linkText.substring(0, beforeLen)));
+            frag.appendChild(newA);
+            if (afterLen  > 0) frag.appendChild(document.createTextNode(linkText.substring(beforeLen + selectedText.length)));
+            existingLink.parentNode.replaceChild(frag, existingLink);
+        } else {
+            savedRange.deleteContents();
+            savedRange.insertNode(newA);
+        }
+
+        const sel = window.getSelection();
+        const after = document.createRange();
+        after.setStartAfter(newA); after.collapse(true);
+        sel.removeAllRanges(); sel.addRange(after);
+        descEditor.focus();
+
+        linkMini.classList.add('bag-link-mini-hidden');
+        savedRange = null;
+        updateLinkBtn();
+    });
+
+    linkUrl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') confirmBtn?.click();
+        if (e.key === 'Escape') linkMini.classList.add('bag-link-mini-hidden');
+    });
+
+    return () => {
+        document.removeEventListener('selectionchange', updateLinkBtn);
+        hideLinkBtnTip();
+    };
+  }
+
   function showAddOverlay() {
     let ovEl = document.getElementById('bag-add-ov');
-    if (ovEl) { ovEl.remove(); if (activeFc) destroyFabricCanvas(activeFc); return; }
+    if (ovEl) { ovEl._linkCleanup?.(); ovEl.remove(); if (activeFc) destroyFabricCanvas(activeFc); return; }
 
     ovCat = 'Consumables';
     const S = GCELL * GRID;
@@ -1170,7 +1330,20 @@ export const inventoryBag = (() => {
           <div><div class="bag-overview-label text-label">Type</div><div class="bag-overview-categories" id="bag-overview-cats">${catBtns}</div></div>
           ${bagTogglesHTML('bag-overview', false, false, false, false)}
           <div><div class="bag-overview-label text-label">Uses</div><div class="uses-field" id="bag-overview-uses"></div></div>
-          <div><div class="bag-overview-label text-label">Description (optional)</div><textarea class="bag-overview-textarea text-body" id="bag-overview-desc" placeholder="Item description..."></textarea></div>
+          <div>
+            <div class="bag-overview-label-row">
+              <div class="bag-overview-label text-label">Description (optional)</div>
+              <button class="bag-overview-link-btn bag-link-btn-inactive text-body-sm" id="bag-overview-link-btn" type="button">⎘ link</button>
+            </div>
+            <div class="bag-overview-link-mini bag-link-mini-hidden" id="bag-overview-link-mini">
+              <input class="bag-overview-input text-body" id="bag-overview-link-url" placeholder="https://...">
+              <div class="bag-overview-link-mini-btns">
+                <button class="bag-overview-link-cancel-mini text-body-sm" id="bag-overview-link-cancel-mini" type="button">Cancel</button>
+                <button class="bag-overview-link-confirm text-body-sm" id="bag-overview-link-confirm" type="button">Insert</button>
+              </div>
+            </div>
+            <div class="bag-overview-textarea bag-overview-desc-editor text-body" id="bag-overview-desc" contenteditable="true" spellcheck="false"></div>
+          </div>
           <div class="bag-overview-btns">
             <button class="bag-overview-btn bag-overview-cancel text-body" id="bag-overview-cancel">Cancel</button>
             <button class="bag-overview-btn bag-overview-save text-body" id="bag-overview-save">Add to bag</button>
@@ -1190,6 +1363,8 @@ export const inventoryBag = (() => {
       </div>
     </div>`;
     document.body.appendChild(ov);
+
+    ov._linkCleanup = wireDescLinkEditor(ov, 'bag-overview');
 
     const bovUsesKey = 'bag_add_uses_temp';
     localStorage.setItem(bovUsesKey, '[]');
@@ -1235,7 +1410,7 @@ export const inventoryBag = (() => {
         fc.renderAll();
       }));
 
-      document.getElementById('bag-overview-cancel').onclick = () => { destroyFabricCanvas(fc); localStorage.removeItem(bovUsesKey); ov.remove(); };
+      document.getElementById('bag-overview-cancel').onclick = () => { ov._linkCleanup?.(); destroyFabricCanvas(fc); localStorage.removeItem(bovUsesKey); ov.remove(); };
 
       document.getElementById('bag-overview-save').onclick = async () => {
         const name = document.getElementById('bag-overview-name').value.trim();
@@ -1250,7 +1425,8 @@ export const inventoryBag = (() => {
         const cellImgs = exportFabricCells(fc, oc, r1, c1);
         const fabricData = JSON.stringify(fc.toJSON());
         const cells = oc.map(o => ({ r: o.r - r1, c: o.c - c1 }));
-        const desc = document.getElementById('bag-overview-desc').value.trim();
+        const descEl = document.getElementById('bag-overview-desc');
+        const desc = serializeDescHTML(descEl);
         const reqAttune = document.getElementById('bag-overview-attune').checked;
         const equipable = document.getElementById('bag-overview-equip').checked;
         const attuned = reqAttune && document.getElementById('bag-overview-attuned-btn')?.dataset.on === 'true';
@@ -1266,7 +1442,7 @@ export const inventoryBag = (() => {
             bagGW: gw, bagGH: gh, bagCells: cells, bagCellImgs: cellImgs, bagFabricData: fabricData,
           });
 
-          destroyFabricCanvas(fc); ov.remove();
+          ov._linkCleanup?.(); destroyFabricCanvas(fc); ov.remove();
 
           const newBlocks = JSON.parse(localStorage.getItem('userBlocks_tab6') || '[]');
           const newBlock = newBlocks.find(nb => nb.id === newId);
@@ -1357,164 +1533,10 @@ export const inventoryBag = (() => {
     </div>`;
     document.body.appendChild(ov);
 
-    // ── Description editor — set initial content ──────────────────────
+    // ── Description editor — set initial content & link button ────────
     const bevDescEditor = document.getElementById('bag-edit-desc');
     bevDescEditor.innerHTML = b.text || '';
-    // Force <br> for new lines (prevents Chrome from using <div>)
-    try { document.execCommand('defaultParagraphSeparator', false, 'br'); } catch(e) {}
-
-    // ── Insert / Edit Link ────────────────────────────────────────────
-    const bevLinkBtn  = document.getElementById('bag-edit-link-btn');
-    const bevLinkMini = document.getElementById('bag-edit-link-mini');
-    const bevLinkUrl  = document.getElementById('bag-edit-link-url');
-    let bevSavedRange = null;
-    let bevLinkTipEl  = null;
-
-    // Custom tooltip — same pattern as showTip() / text-tooltip class
-    function showLinkBtnTip(text) {
-        hideLinkBtnTip();
-        bevLinkTipEl = document.createElement('div');
-        bevLinkTipEl.className = 'text-tooltip';
-        bevLinkTipEl.textContent = text;
-        bevLinkTipEl.style.opacity = '0';
-        bevLinkTipEl.style.transition = 'opacity 0.15s ease';
-        document.body.appendChild(bevLinkTipEl);
-        const r = bevLinkBtn.getBoundingClientRect();
-        bevLinkTipEl.style.left = (r.left + r.width / 2 - bevLinkTipEl.offsetWidth / 2) + 'px';
-        bevLinkTipEl.style.top  = (r.top - bevLinkTipEl.offsetHeight - 6) + 'px';
-        bevLinkTipEl.offsetHeight; // force reflow
-        bevLinkTipEl.style.opacity = '1';
-    }
-    function hideLinkBtnTip() {
-        if (bevLinkTipEl) {
-            const el = bevLinkTipEl; bevLinkTipEl = null;
-            el.style.opacity = '0';
-            el.addEventListener('transitionend', () => el.remove(), { once: true });
-            setTimeout(() => el.remove(), 200);
-        }
-    }
-
-    // Find an <a> element intersected by a Range
-    function findLinkInRange(range) {
-        let node = range.startContainer;
-        while (node && node !== bevDescEditor) { if (node.nodeName === 'A') return node; node = node.parentNode; }
-        node = range.endContainer;
-        while (node && node !== bevDescEditor) { if (node.nodeName === 'A') return node; node = node.parentNode; }
-        for (const a of bevDescEditor.querySelectorAll('a')) {
-            if (range.intersectsNode(a)) return a;
-        }
-        return null;
-    }
-
-    // Get a non-collapsed Range inside the editor, or null
-    function getEditorRange() {
-        const sel = window.getSelection();
-        if (!sel || !sel.rangeCount || sel.isCollapsed) return null;
-        const range = sel.getRangeAt(0);
-        if (!bevDescEditor.contains(range.commonAncestorContainer)) return null;
-        return range;
-    }
-
-    function updateLinkBtn() {
-        const range = getEditorRange();
-        bevLinkBtn.classList.toggle('bag-link-btn-inactive', !range);
-    }
-    document.addEventListener('selectionchange', updateLinkBtn);
-
-    // Dynamic tooltip on hover
-    bevLinkBtn.addEventListener('mouseenter', () => {
-        const range = getEditorRange();
-        let tip;
-        if (!range)                       tip = 'Highlight text and use this button to add a link to it';
-        else if (findLinkInRange(range))  tip = 'Edit text link';
-        else                              tip = 'Add a link to the highlighted text';
-        showLinkBtnTip(tip);
-    });
-    bevLinkBtn.addEventListener('mouseleave', hideLinkBtnTip);
-
-    // mousedown: prevent focus theft so the editor selection stays intact
-    bevLinkBtn.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        const range = getEditorRange();
-        bevSavedRange = range ? range.cloneRange() : null;
-    });
-
-    bevLinkBtn.addEventListener('click', () => {
-        if (!bevSavedRange) return;
-        const existingLink = findLinkInRange(bevSavedRange);
-        bevLinkUrl.value = existingLink ? existingLink.href : '';
-        bevLinkMini.classList.remove('bag-link-mini-hidden');
-        bevLinkUrl.focus();
-        bevLinkUrl.select();
-    });
-
-    document.getElementById('bag-edit-link-cancel-mini').addEventListener('click', () => {
-        bevLinkMini.classList.add('bag-link-mini-hidden');
-    });
-
-    document.getElementById('bag-edit-link-confirm').addEventListener('click', () => {
-        const url = bevLinkUrl.value.trim();
-        if (!url) { bevLinkUrl.style.borderColor = 'rgba(255,107,107,.5)'; return; }
-        bevLinkUrl.style.borderColor = '';
-        if (!bevSavedRange) { bevLinkMini.classList.add('bag-link-mini-hidden'); return; }
-
-        const selectedText = bevSavedRange.toString() || url;
-        const existingLink = findLinkInRange(bevSavedRange);
-        const newA = document.createElement('a');
-        newA.href = url; newA.target = '_blank'; newA.rel = 'noopener';
-        newA.textContent = selectedText;
-
-        const selectionWithinLink = existingLink
-            && existingLink.contains(bevSavedRange.startContainer)
-            && existingLink.contains(bevSavedRange.endContainer);
-
-        if (selectionWithinLink) {
-            // Selection is a subset of an existing link.
-            // Split the old <a> into: plain-before / new-<a> / plain-after
-            // so the unselected portions lose the link.
-            const linkText = existingLink.textContent;
-
-            // Measure how many characters precede the selection inside the link
-            const measureRange = document.createRange();
-            measureRange.selectNodeContents(existingLink);
-            measureRange.setEnd(bevSavedRange.startContainer, bevSavedRange.startOffset);
-            const beforeLen = measureRange.toString().length;
-            const afterLen  = linkText.length - beforeLen - selectedText.length;
-
-            const frag = document.createDocumentFragment();
-            if (beforeLen > 0) frag.appendChild(document.createTextNode(linkText.substring(0, beforeLen)));
-            frag.appendChild(newA);
-            if (afterLen  > 0) frag.appendChild(document.createTextNode(linkText.substring(beforeLen + selectedText.length)));
-            existingLink.parentNode.replaceChild(frag, existingLink);
-        } else {
-            // Selection spans a link boundary, or there is no existing link.
-            // deleteContents correctly strips any partial <a> overlap, then we insert fresh.
-            bevSavedRange.deleteContents();
-            bevSavedRange.insertNode(newA);
-        }
-
-        // Place cursor after the new link
-        const sel = window.getSelection();
-        const after = document.createRange();
-        after.setStartAfter(newA); after.collapse(true);
-        sel.removeAllRanges(); sel.addRange(after);
-        bevDescEditor.focus();
-
-        bevLinkMini.classList.add('bag-link-mini-hidden');
-        bevSavedRange = null;
-        updateLinkBtn();
-    });
-
-    bevLinkUrl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') document.getElementById('bag-edit-link-confirm').click();
-        if (e.key === 'Escape') bevLinkMini.classList.add('bag-link-mini-hidden');
-    });
-
-    // Cleanup helper called by cancel/save so the document listener doesn't leak
-    ov._linkCleanup = () => {
-        document.removeEventListener('selectionchange', updateLinkBtn);
-        hideLinkBtnTip();
-    };
+    ov._linkCleanup = wireDescLinkEditor(ov, 'bag-edit');
 
     const bevUsesKey = 'bag_edit_uses_temp';
     localStorage.setItem(bevUsesKey, JSON.stringify(b.uses || []));
@@ -1589,17 +1611,8 @@ export const inventoryBag = (() => {
       document.getElementById('bag-edit-save').onclick = async () => {
         const name = document.getElementById('bag-edit-name').value.trim();
         if (!name) { document.getElementById('bag-edit-name').style.borderColor = 'rgba(255,107,107,.5)'; return; }
-        // Serialize contenteditable → storage HTML
-        // Chrome wraps new lines in <div>; normalize to <br>
         const descEl = document.getElementById('bag-edit-desc');
-        const desc = descEl.innerHTML
-            .replace(/<div><br\s*\/?><\/div>/gi, '<br>')
-            .replace(/<\/div><div>/gi, '<br>')
-            .replace(/<div>/gi, '<br>').replace(/<\/div>/gi, '')
-            .replace(/<p><br\s*\/?><\/p>/gi, '<br>')
-            .replace(/<\/p><p>/gi, '<br>')
-            .replace(/<p>/gi, '<br>').replace(/<\/p>/gi, '')
-            .trim().replace(/^<br\s*\/?>/, '');
+        const desc = serializeDescHTML(descEl);
         const reqAttune = document.getElementById('bag-edit-attune').checked;
         const equipable = document.getElementById('bag-edit-equip').checked;
         const attuned = reqAttune && document.getElementById('bag-edit-attuned-btn')?.dataset.on === 'true';

@@ -61,17 +61,32 @@ function stripHighlightsFrom(el) {
     el.normalize();
 }
 
+const isInsideEditForm = (el) => {
+    return !!el.closest('.inline-editing, .notes-edit-form') ||
+           el.isContentEditable ||
+           !!el.closest('[contenteditable="true"]') ||
+           !!el.querySelector('[contenteditable="true"]');
+};
+
 function applyHighlights(tabNumber, query) {
     const sec = document.getElementById(`results_section_${tabNumber}`);
     if (!sec) return;
 
-    // Strip old highlights from the elements we're about to process
-    sec.querySelectorAll('.block-title, .block-body, .block-property').forEach(stripHighlightsFrom);
+    // Strip old highlights from elements not currently being edited
+    sec.querySelectorAll('.block-title, .block-body, .block-property').forEach(el => {
+        if (!isInsideEditForm(el)) stripHighlightsFrom(el);
+    });
 
     if (!query) return;
-    sec.querySelectorAll('.block-title').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
-    sec.querySelectorAll('.block-body').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
-    sec.querySelectorAll('.block-property').forEach(el => { el.innerHTML = highlightInHTML(el.innerHTML, query); });
+    sec.querySelectorAll('.block-title').forEach(el => {
+        if (!isInsideEditForm(el)) el.innerHTML = highlightInHTML(el.innerHTML, query);
+    });
+    sec.querySelectorAll('.block-body').forEach(el => {
+        if (!isInsideEditForm(el)) el.innerHTML = highlightInHTML(el.innerHTML, query);
+    });
+    sec.querySelectorAll('.block-property').forEach(el => {
+        if (!isInsideEditForm(el)) el.innerHTML = highlightInHTML(el.innerHTML, query);
+    });
 }
 
 function applyViewerHighlights(query) {
@@ -79,6 +94,8 @@ function applyViewerHighlights(query) {
     if (!viewer) return;
     const titleEl = viewer.querySelector('.session-viewer-title');
     const bodyEl  = viewer.querySelector('#session_viewer_body');
+    if (titleEl?.isContentEditable || bodyEl?.isContentEditable) return;
+    if (viewer.querySelector('.session-viewer-edit-btn.active')) return;
 
     if (titleEl) stripHighlightsFrom(titleEl);
     if (bodyEl) stripHighlightsFrom(bodyEl);

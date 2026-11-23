@@ -14,7 +14,7 @@ const normalizeTag = tag => tag.trim().split(/\s+/).filter(Boolean)
 // literal. Applied to block titles and other short user-entered fields that
 // are rendered as text (not as rich HTML, which goes through sanitizeBlockHTML
 // instead).
-const escapeHtml = (str) => String(str ?? '')
+export const escapeHtml = (str) => String(str ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
